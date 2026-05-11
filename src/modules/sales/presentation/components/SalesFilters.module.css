@@ -1,0 +1,57 @@
+.filtersCard {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-soft);
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.topRow h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.addButton {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  padding: 10px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.filterRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.fieldGroup input,
+.fieldGroup select {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+@media (max-width: 840px) {
+  .filterRow {
+    grid-template-columns: 1fr;
+  }
+}

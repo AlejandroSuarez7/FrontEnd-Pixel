@@ -1,0 +1,117 @@
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.section {
+  background: var(--surface-secondary);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.label {
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.productsSection,
+.historySection,
+.notesSection {
+  margin-bottom: 20px;
+}
+
+.productsTable {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.productsHeader,
+.productRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.8fr 1fr 1fr;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface-secondary);
+}
+
+.productsHeader {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.productRow {
+  background: var(--bg);
+}
+
+.totalsSection {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.totalsSection div {
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--surface-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notesSection p {
+  margin: 8px 0 0;
+}
+
+.historySection ul {
+  padding-left: 18px;
+  margin: 12px 0 0;
+}
+
+.historySection li {
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+}
+
+.actionsRow {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.outlineButton,
+.cancelButton {
+  border: none;
+  border-radius: 16px;
+  padding: 14px 18px;
+  cursor: pointer;
+}
+
+.outlineButton {
+  background: transparent;
+  color: var(--text-h);
+  border: 1px solid var(--border);
+}
+
+.cancelButton {
+  background: #fce8e6;
+  color: #c62828;
+}
+
+@media (max-width: 900px) {
+  .detailGrid,
+  .totalsSection {
+    grid-template-columns: 1fr;
+  }
+
+  .productsHeader,
+  .productRow {
+    grid-template-columns: 1fr;
+  }
+}

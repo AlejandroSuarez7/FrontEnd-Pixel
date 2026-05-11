@@ -1,0 +1,155 @@
+.form {
+  display: grid;
+  gap: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.field,
+.fieldFull {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--text-secondary);
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.field input,
+.field textarea,
+.field select,
+.fieldFull textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.itemsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.itemsHeader h3 {
+  margin: 0;
+}
+
+.secondaryButton,
+.primaryButton,
+.outlineButton {
+  border: none;
+  border-radius: 16px;
+  padding: 12px 18px;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  background: var(--surface-secondary);
+  color: var(--text-h);
+  border: 1px solid var(--border);
+}
+
+.primaryButton {
+  background: var(--primary);
+  color: white;
+}
+
+.itemsTable {
+  display: grid;
+  gap: 10px;
+}
+
+.itemRowHeader,
+.itemRow {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr 0.9fr 0.9fr 1fr 0.7fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--surface-secondary);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.itemRow {
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.itemRow input,
+.itemRow select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.itemSubtotal {
+  font-weight: 700;
+}
+
+.removeButton {
+  border: none;
+  background: #f8d7da;
+  color: #a41d2b;
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.totalSummary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 16px;
+  background: var(--surface-secondary);
+  padding: 18px;
+  border-radius: 20px;
+}
+
+.totalSummary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+
+.totalSummary strong {
+  color: var(--text-h);
+}
+
+.actionsRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .grid,
+  .totalSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .itemRowHeader,
+  .itemRow {
+    grid-template-columns: 1fr;
+  }
+
+  .itemRowHeader span,
+  .itemRow > * {
+    min-width: auto;
+  }
+}

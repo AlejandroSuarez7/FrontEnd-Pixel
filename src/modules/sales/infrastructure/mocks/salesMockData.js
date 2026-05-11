@@ -1,0 +1,102 @@
+export const salesMockData = [
+  {
+    id: 'VTA-001',
+    clientName: 'Cliente Creativa',
+    saleDate: '2026-05-09T10:30:00Z',
+    paymentMethod: 'Efectivo',
+    status: 'Pagada',
+    items: [
+      {
+        idProducto: 'P-101',
+        nombreProducto: 'Camiseta Premium',
+        tecnica: 'Sublimado',
+        quantity: 2,
+        unitPrice: 45000,
+        subtotal: 90000,
+      },
+      {
+        idProducto: 'P-102',
+        nombreProducto: 'Gorra Corporativa',
+        tecnica: 'Vinilo',
+        quantity: 1,
+        unitPrice: 32000,
+        subtotal: 32000,
+      },
+    ],
+    subtotal: 122000,
+    tax: 23180,
+    total: 145180,
+    observations: 'Entrega inmediata solicitada',
+    responsible: 'admin@pixel.com',
+    history: [
+      {
+        when: '2026-05-09T10:30:00Z',
+        action: 'Venta creada',
+        by: 'admin@pixel.com',
+      },
+    ],
+  },
+  {
+    id: 'VTA-002',
+    clientName: 'Agencia Nova',
+    saleDate: '2026-05-10T14:20:00Z',
+    paymentMethod: 'Transferencia',
+    status: 'Pendiente',
+    items: [
+      {
+        idProducto: 'P-103',
+        nombreProducto: 'Sudadera Lettering',
+        tecnica: 'Serigrafía',
+        quantity: 3,
+        unitPrice: 52000,
+        subtotal: 156000,
+      },
+    ],
+    subtotal: 156000,
+    tax: 29640,
+    total: 185640,
+    observations: 'Pendiente de confirmación de pago',
+    responsible: 'admin@pixel.com',
+    history: [
+      {
+        when: '2026-05-10T14:20:00Z',
+        action: 'Venta creada',
+        by: 'admin@pixel.com',
+      },
+    ],
+  },
+  {
+    id: 'VTA-003',
+    clientName: 'Eventos Alfa',
+    saleDate: '2026-05-11T08:45:00Z',
+    paymentMethod: 'Nequi',
+    status: 'Anulada',
+    items: [
+      {
+        idProducto: 'P-104',
+        nombreProducto: 'Lona Publicitaria',
+        tecnica: 'Tinta UV',
+        quantity: 1,
+        unitPrice: 78000,
+        subtotal: 78000,
+      },
+    ],
+    subtotal: 78000,
+    tax: 14820,
+    total: 92820,
+    observations: 'Venta cancelada por el cliente',
+    responsible: 'admin@pixel.com',
+    history: [
+      {
+        when: '2026-05-11T08:45:00Z',
+        action: 'Venta creada',
+        by: 'admin@pixel.com',
+      },
+      {
+        when: '2026-05-11T09:10:00Z',
+        action: 'Venta anulada',
+        by: 'admin@pixel.com',
+      },
+    ],
+  },
+];

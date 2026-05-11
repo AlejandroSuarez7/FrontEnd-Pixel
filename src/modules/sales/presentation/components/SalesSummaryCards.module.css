@@ -1,0 +1,37 @@
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.summaryCard {
+  background: var(--surface);
+  padding: 22px;
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardLabel {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.summaryCard strong {
+  font-size: 24px;
+}
+
+@media (max-width: 900px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}

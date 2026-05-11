@@ -1,0 +1,61 @@
+.salesPage {
+  padding: 24px 32px;
+  min-height: 100vh;
+  color: var(--text-h);
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb {
+  margin: 0;
+  color: var(--text-muted);
+  letter-spacing: 0.16em;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+.ctaButton {
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  padding: 14px 24px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+.ctaButton:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.summarySection,
+.controlsSection,
+.tableSection {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .pageHeader {
+    align-items: stretch;
+  }
+
+  .ctaButton {
+    width: 100%;
+  }
+}

@@ -1,0 +1,11 @@
+.purchaseForm {
+  display: grid;
+  gap: 20px;
+}
+
+.itemRow {
+  background: #f6f8fb;
+  padding: 16px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
