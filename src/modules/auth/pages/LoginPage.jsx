@@ -1,23 +1,28 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../../store/AuthContext';
+import { useAuth } from '../../../store/AuthContext';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
 
-  const handleSubmit = (e) => {
+  const { login }  = useAuth();
+  const navigate   = useNavigate();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      login(email, password);
+      await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Credenciales incorrectas');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,8 +57,8 @@ const LoginPage = () => {
             />
           </div>
 
-          <button type="submit" className="btn-primary">
-            Iniciar Sesión
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Ingresando...' : 'Iniciar Sesión'}
           </button>
         </form>
 

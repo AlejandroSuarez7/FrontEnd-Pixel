@@ -1,3 +1,3 @@
-export const getSalesUseCase = async (saleRepository) => {
-  return saleRepository.getAllSales();
+export const getSalesUseCase = async (saleRepository, filters = {}) => {
+  return saleRepository.list(filters);
 };

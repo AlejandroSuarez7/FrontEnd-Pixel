@@ -25,8 +25,9 @@ const SalesTable = ({ sales, isLoading, onView, onPdf, onAnnul, currentUserEmail
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>Número</th>
-            <th>Cliente</th>
+            <th>ID Venta</th>
+            <th>ID Pedido</th>
+            <th>ID Cliente</th>
             <th>Fecha</th>
             <th>Método</th>
             <th>Estado</th>
@@ -35,14 +36,17 @@ const SalesTable = ({ sales, isLoading, onView, onPdf, onAnnul, currentUserEmail
           </tr>
         </thead>
         <tbody>
-          {sales.map((sale) => (
+          {
+          console.log(sales),
+          sales.map((sale) => (
             <tr key={sale.id}>
               <td>{sale.id}</td>
-              <td>{sale.clientName}</td>
-              <td>{formatShortDate(sale.saleDate)}</td>
-              <td>{sale.paymentMethod}</td>
+              <td>{sale.id_pedido}</td>
+              <td>{sale.id_usuario}</td>
+              <td>{sale.created_at}</td>
+              <td>{sale.metodo_pago}</td>
               <td>
-                <SaleStatusBadge status={sale.status} />
+                <SaleStatusBadge status={sale.estado} />
               </td>
               <td>{formatCurrency(sale.total)}</td>
               <td className={styles.actionsCell}>

@@ -1,60 +1,50 @@
-const USERS_KEY = 'pixel_users';
-const SESSION_KEY = 'pixel_session';
+import { apiClient } from '../../../core/services/apiService.js';
+
+const TOKEN_KEY = 'token';
+const USER_KEY  = 'pixel_user';
 
 export const authService = {
 
-  register(userData) {
-    const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+  async login(email, password) {
+    const { data } = await apiClient.post('/auth/login', { email, password });
 
-    const userExists = users.find(
-      user => user.email === userData.email
-    );
+    // La respuesta esperada: { token: '...', user: { id, name, email, ... } }
+    // Ajusta los campos si el backend devuelve algo distinto
+    const { token, user } = data;
 
-    if (userExists) {
-      throw new Error('El usuario ya existe');
-    }
-
-    const newUser = {
-      ...userData,
-      role: 'admin',
-    };
-
-    users.push(newUser);
-
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-    return newUser;
-  },
-
-  login(email, password) {
-
-    const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-
-    const user = users.find(
-      user =>
-        user.email === email &&
-        user.password === password
-    );
-
-    if (!user) {
-      throw new Error('Credenciales incorrectas');
-    }
-
-    localStorage.setItem(
-      SESSION_KEY,
-      JSON.stringify(user)
-    );
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
 
     return user;
   },
 
+  async register(userData) {
+    const { data } = await apiClient.post('/auth/signup', {
+      name:     userData.name,
+      email:    userData.email,
+      password: userData.password,
+    });
+
+    // signup normalmente solo confirma el registro, no loguea automáticamente
+    // Si tu API devuelve token aquí también, guárdalo igual que en login
+    return data;
+  },
+
   logout() {
-    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  },
+
+  getToken() {
+    return localStorage.getItem(TOKEN_KEY);
   },
 
   getSession() {
-    return JSON.parse(
-      localStorage.getItem(SESSION_KEY)
-    );
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
   },
 };

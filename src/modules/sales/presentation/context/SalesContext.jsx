@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
 import 'sweetalert2/dist/sweetalert2.css';
-import { SaleLocalStorageRepository } from '../../infrastructure/repositories/SaleLocalStorageRepository.js';
+import { SaleApiRepository } from '../../infrastructure/repositories/SaleApiRepository.js';
 import { getSalesUseCase } from '../../application/useCases/getSalesUseCase.js';
 import { createSaleUseCase } from '../../application/useCases/createSaleUseCase.js';
 import { annulSaleUseCase } from '../../application/useCases/annulSaleUseCase.js';
@@ -12,7 +12,7 @@ import { createSale, SALE_STATUSES } from '../../domain/models/saleModel.js';
 const SalesContext = createContext();
 
 export const SalesProvider = ({ children }) => {
-  const repository = useMemo(() => new SaleLocalStorageRepository(), []);
+  const repository = useMemo(() => new SaleApiRepository(), []);
   const [sales, setSales] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -61,21 +61,13 @@ export const SalesProvider = ({ children }) => {
 
   const addSale = async (saleData) => {
     const newSale = createSale({
-      id: `VTA-${new Date().getTime()}`,
-      clientName: saleData.clientName,
-      saleDate: new Date().toISOString(),
-      paymentMethod: saleData.paymentMethod,
-      status: saleData.status,
-      items: saleData.items,
-      observations: saleData.observations,
-      responsible: saleData.responsible,
-      history: [
-        {
-          when: new Date().toISOString(),
-          action: 'Venta creada',
-          by: saleData.responsible,
-        },
-      ],
+      id: saleData.id,
+      id_usuario: saleData.id_usuario,
+      id_pedido: saleData.id_pedido,
+      created_at: new Date().toISOString(),
+      total: saleData.total,
+      metodo_pago: saleData.metodo_pago,
+      estado: saleData.estado,
     });
 
     const savedSale = await createSaleUseCase(repository, newSale);
