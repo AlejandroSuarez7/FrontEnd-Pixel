@@ -38,16 +38,8 @@ const SalesPage = () => {
     <div className={styles.salesPage}>
       <section className={styles.pageHeader}>
         <div>
-          <p className={styles.breadcrumb}>Ventas / Gestión</p>
-          <h1>Gestión de Ventas</h1>
-          <p className={styles.subtitle}>
-            Administra ventas, pagos, estado de transacciones y productos vendidos.
-          </p>
+          <p className={styles.breadcrumb}>Gestion de ventas</p>
         </div>
-
-        <button className={styles.ctaButton} type="button" onClick={openSaleForm}>
-          Nueva venta
-        </button>
       </section>
 
       <section className={styles.summarySection}>
