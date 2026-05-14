@@ -27,7 +27,7 @@ const SalesTable = ({ sales, isLoading, onView, onPdf, onAnnul, currentUserEmail
           <tr>
             <th>ID Venta</th>
             <th>ID Pedido</th>
-            <th>ID Cliente</th>
+            <th>Cliente</th>
             <th>Fecha</th>
             <th>Método</th>
             <th>Estado</th>
@@ -36,13 +36,12 @@ const SalesTable = ({ sales, isLoading, onView, onPdf, onAnnul, currentUserEmail
           </tr>
         </thead>
         <tbody>
-          {
-          console.log(sales),
-          sales.map((sale) => (
+          {sales.map((sale) => (
             <tr key={sale.id}>
+              {console.log(sale)}
               <td>{sale.id}</td>
-              <td>{sale.id_pedido}</td>
-              <td>{sale.id_usuario}</td>
+              <td>{sale.pedido?.idPedido}</td>
+              <td>{sale.usuario?.name}</td>
               <td>{sale.created_at}</td>
               <td>{sale.metodo_pago}</td>
               <td>
@@ -50,17 +49,27 @@ const SalesTable = ({ sales, isLoading, onView, onPdf, onAnnul, currentUserEmail
               </td>
               <td>{formatCurrency(sale.total)}</td>
               <td className={styles.actionsCell}>
-                <button type="button" className={styles.actionButton} onClick={() => onView(sale.id)}>
+                <button
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={() => onView(sale.idVenta)}
+                >
                   Ver
                 </button>
-                <button type="button" className={styles.actionButton} onClick={() => onPdf(sale)}>
+
+                <button
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={() => onPdf(sale)}
+                >
                   PDF
                 </button>
+
                 <button
                   type="button"
                   className={`${styles.actionButton} ${styles.cancelButton}`}
                   onClick={() => onAnnul(sale.id, currentUserEmail)}
-                  disabled={sale.status === 'Anulada'}
+                  disabled={sale.estado === 'Anulada'}
                 >
                   Anular
                 </button>

@@ -41,9 +41,13 @@ export class SaleApiRepository {
   }
 
   async cancel(id, reason) {
-    const { data } = await apiClient.patch(`${ENDPOINT}/${id}/cancel`, {
-      cancellationReason: reason,
-    });
-    return saleDTOAdapter.toEntity(data);
-  }
+  // El backend hace: const { idVenta, motivoAnulacion } = validateCancelSale(params, body);
+  const { data } = await apiClient.patch(`${ENDPOINT}/${id}/cancel`, {
+    motivoAnulacion: reason 
+  });
+  
+  // Importante: El backend devuelve { message, data: { ...venta } }
+  // Retornamos solo la data pasando por el adaptador
+  return saleDTOAdapter.toEntity(data.data);
+}
 }

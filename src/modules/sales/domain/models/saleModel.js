@@ -16,6 +16,10 @@ export const createSale = ({
   total,
   metodo_pago,
   estado,
+
+  // 👇 nuevas relaciones
+  usuario,
+  pedido,
 }) => {
   return {
     id,
@@ -25,5 +29,9 @@ export const createSale = ({
     total,
     metodo_pago,
     estado,
+
+    // 👇 retornarlas
+    usuario,
+    pedido,
   };
 };

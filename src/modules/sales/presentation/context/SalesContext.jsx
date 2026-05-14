@@ -82,37 +82,41 @@ export const SalesProvider = ({ children }) => {
       showConfirmButton: false,
     });
   };
-
+ 
   const annulSale = async (saleId, userEmail) => {
-    const confirmation = await Swal.fire({
-      title: '¿Anular venta?',
-      text: 'La venta no se eliminará, solo cambiará a estado anulada.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, anular',
-      cancelButtonText: 'Cancelar',
-    });
-
-    if (!confirmation.isConfirmed) {
-      return null;
+  // 1. Pedimos el motivo con SweetAlert
+  const { value: motivo, isConfirmed } = await Swal.fire({
+    title: '¿Anular venta?',
+    text: 'Ingresa el motivo de la anulación para el historial:',
+    input: 'text', // Crea un campo de texto
+    inputPlaceholder: 'Ej: Error en el precio, Cliente desistió...',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Confirmar Anulación',
+    cancelButtonText: 'Cancelar',
+    inputValidator: (value) => {
+      if (!value) {
+        return '¡Es obligatorio poner un motivo!';
+      }
     }
+  });
 
-    const updatedSale = await annulSaleUseCase(repository, saleId, userEmail);
-    setSales((prev) => prev.map((sale) => (sale.id === saleId ? updatedSale : sale)));
-    if (selectedSale?.id === saleId) {
-      setSelectedSale(updatedSale);
-    }
+  if (!isConfirmed) return null;
 
-    await Swal.fire({
-      icon: 'success',
-      title: 'Venta anulada',
-      text: `La venta ${saleId} ahora tiene estado ${SALE_STATUSES.CANCELED}.`,
-      timer: 2000,
-      showConfirmButton: false,
-    });
-
+  try {
+    // 2. Pasamos el ID y el MOTIVO al caso de uso
+    // En el backend tu validador espera "motivoAnulacion"
+    const updatedSale = await annulSaleUseCase(repository, saleId, motivo);
+    
+    // 3. Actualizamos el estado local
+    setSales((prev) => prev.map((s) => (s.idVenta === saleId ? updatedSale : s)));
+    
+    await Swal.fire('¡Anulada!', 'La venta y el historial se actualizaron.', 'success');
     return updatedSale;
-  };
+  } catch (error) {
+    Swal.fire('Error', 'No se pudo anular: ' + error.message, 'error');
+  }
+};
 
   const downloadSalePdf = (sale) => {
     generateSalePdf(sale);
