@@ -5,24 +5,24 @@ const USER_KEY  = 'pixel_user';
 
 export const authService = {
 
-  async login(email, password) {
-    const { data } = await apiClient.post('/auth/login', { email, password });
+  async login(correo, contrasena) {
+    const { data } = await apiClient.post('/api/auth/login', { correo, contrasena });
 
     // La respuesta esperada: { token: '...', user: { id, name, email, ... } }
     // Ajusta los campos si el backend devuelve algo distinto
-    const { token, user } = data;
+    const { token, usuario } = data.data;
 
     localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem(USER_KEY, JSON.stringify(usuario));
 
-    return user;
+    return usuario;
   },
 
   async register(userData) {
-    const { data } = await apiClient.post('/auth/signup', {
-      name:     userData.name,
-      email:    userData.email,
-      password: userData.password,
+    const { data } = await apiClient.post('/api/auth/register', {
+      nombre:     userData.nombre,
+      correo:    userData.correo,
+      contrasena: userData.contrasena,
     });
 
     // signup normalmente solo confirma el registro, no loguea automáticamente
