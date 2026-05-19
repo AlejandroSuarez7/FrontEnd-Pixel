@@ -1,27 +1,4 @@
-import { SALE_STATUSES } from '../../domain/models/saleModel.js';
-
-export const annulSaleUseCase = async (saleRepository, saleId, userEmail) => {
-  const sale = await saleRepository.getSaleById(saleId);
-  if (!sale) {
-    throw new Error('Venta no encontrada');
-  }
-
-  if (sale.status === SALE_STATUSES.CANCELED) {
-    return sale;
-  }
-
-  const updatedSale = {
-    ...sale,
-    status: SALE_STATUSES.CANCELED,
-    history: [
-      ...sale.history,
-      {
-        when: new Date().toISOString(),
-        action: 'Venta anulada',
-        by: userEmail,
-      },
-    ],
-  };
-
-  return saleRepository.updateSale(updatedSale);
+export const annulSaleUseCase = async (saleRepository, saleId, motivo) => {
+  // Simplemente llamamos al repositorio pasando el ID y el objeto con el motivo
+  return await saleRepository.cancel(saleId, motivo);
 };
