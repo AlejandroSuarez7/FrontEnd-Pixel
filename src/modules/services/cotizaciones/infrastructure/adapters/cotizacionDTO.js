@@ -1,59 +1,64 @@
-import { createCotizacion } from "../../domain/cotizacionesModel";
+// infrastructure/dtos/quotesDTO.js
+import { createQuote, createQuoteDetail } from "../../domain/cotizacionesModel";
 
-export const cotizacionDTO = {
-  toEntity(dto) {
-    const detallesMapeados = Array.isArray(dto.detalles) 
-            ? dto.detalles.map(d => ({
-                idDetalle: d.idDetalleCotizacion || d.id_detalle_cotizacion,
-                idTecnica: d.idTecnica || d.id_tecnica,
-                descripcion: d.descripcion || '',
-                cantidad: d.cantidad || 0,
-                precioUnitario: Number(d.precioUnitario || d.precio_unitario || 0),
-                costoDiseno: Number(d.costoDiseno || d.costo_diseno || 0),
-                subtotal: Number(d.subtotal || 0),
-                observaciones: d.observaciones || ''
-            }))
-            : [];
+export const quotesDTO = {
+  fromApi(apiData) {
+    if (!apiData) return null;
 
-    return createCotizacion({
-      // Mapeamos idCotizacion (del backend) al 'id' genérico que usa el Front
-      id: dto.idCotizacion || dto.id, 
-      costoDiseno: dto.costoDiseno || 0,
-      costosAdicionales: dto.costosAdicionales || 0,
-      creadoPorId: dto.creadoPorId,
-      estado: dto.estado || 'PENDIENTE',
-      fechaActualizacion: dto.fechaActualizacion,
-      fechaCreacion: dto.fechaCreacion,
-      id_cliente: dto.id_cliente || dto.idCliente, // Previene inconsistencias
-      observaciones: dto.observaciones || '',
-      subtotal: dto.subtotal || 0,
-      tipo_cotizacion: dto.tipo_cotizacion || dto.tipoCotizacion || 'NORMAL',
-      total: dto.total || 0,
+    // Mapear los detalles internos si existen
+    const mappedDetails = Array.isArray(apiData.detalles)
+      ? apiData.detalles.map(d => createQuoteDetail({
+          idDetalle: d.idDetalleCotizacion,
+          idCotizacion: d.idCotizacion,
+          idTecnica: d.idTecnica,
+          descripcion: d.descripcion,
+          cantidad: d.cantidad,
+          precioUnitario: d.precioUnitario,
+          costoDiseno: d.costoDiseno,
+          subtotal: d.subtotal,
+          imagenReferencia: d.imagenReferencia,
+          observaciones: d.observaciones
+        }))
+      : [];
 
-      cliente: dto.cliente,
-      creadoPor: dto.creadoPor,
-      detalles: detallesMapeados
+    return createQuote({
+      id: apiData.idCotizacion,
+      idCliente: apiData.idCliente,
+      creadoPorId: apiData.creadoPorId,
+      tipoCotizacion: apiData.tipoCotizacion,
+      estado: apiData.estado,
+      subtotal: apiData.subtotal,
+      costosAdicionales: apiData.costosAdicionales,
+      total: apiData.total,
+      observaciones: apiData.observaciones,
+      fechaCreacion: apiData.fechaCreacion,
+      detalles: mappedDetails
     });
   },
 
-  toDTO(entity) {
-        // Enviar con las claves exactas que tu servicio de TS desestructura y valida
-        return {
-            idCliente: Number(entity.idCliente),
-            observaciones: entity.observaciones || '',
-            costosAdicionales: Number(entity.costosAdicionales || 0),
-            
-            // Mapeamos los detalles al formato camelCase que espera tu Map del backend
-            detalles: Array.isArray(entity.detalles) 
-                ? entity.detalles.map(d => ({
-                    idTecnica: Number(d.idTecnica),
-                    descripcion: d.descripcion.trim(),
-                    cantidad: Number(d.cantidad),
-                    precioUnitario: Number(d.precioUnitario),
-                    costoDiseno: Number(d.costoDiseno || 0),
-                    observaciones: d.observaciones?.trim() || ''
-                }))
-                : []
-        };
-    }
+  fromApiList(apiDataList) {
+    if (!Array.isArray(apiDataList)) return [];
+    return apiDataList.map(item => this.fromApi(item));
+  },
+
+  // Estructura el payload para enviar al backend (tanto para Cliente como para Empleado)
+  toApi(domainData) {
+    if (!domainData) return null;
+    
+    return {
+      idCliente: domainData.idCliente,
+      observaciones: domainData.observaciones?.trim(),
+      costosAdicionales: domainData.costosAdicionales,
+      // Mapeamos los detalles listos para el createMany o updates del servicio
+      detalles: domainData.detalles?.map(d => ({
+        idTecnica: Number(d.idTecnica),
+        descripcion: d.descripcion?.trim(),
+        cantidad: Number(d.cantidad),
+        precioUnitario: d.precioUnitario ? Number(d.precioUnitario) : undefined,
+        costoDiseno: d.costoDiseno ? Number(d.costoDiseno) : undefined,
+        imagenReferencia: d.imagenReferencia,
+        observaciones: d.observaciones
+      }))
+    };
+  }
 };

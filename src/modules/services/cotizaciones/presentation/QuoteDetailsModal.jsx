@@ -11,9 +11,9 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
 
         <div className={styles.modalHeader}>
           <div>
-            <h3 className={styles.modalTitle}>Cotización #{quote.id}</h3>
+            <h3 className={styles.modalTitle}>Cotización #{quote.idCotizacion}</h3>
             <p className={styles.modalSubtitle}>
-              Cliente ID: {quote.id_cliente} · Tipo: {quote.tipo_cotizacion}
+              Cliente: {quote.cliente?.nombre || 'N/A'} · Tipo: {quote.tipoCotizacion}
             </p>
           </div>
           <button onClick={onClose} className={styles.modalCloseBtn}>✕</button>
@@ -29,7 +29,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
           {/* Creado por */}
           {quote.creadoPor?.nombre && (
             <p className={styles.detailsCreatedBy}>
-              Cotización creada por: {quote.creadoPor.nombre}
+              Cotización gestionada por: <strong>{quote.creadoPor.nombre}</strong>
             </p>
           )}
 
@@ -48,7 +48,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
                 </tr>
               </thead>
               <tbody>
-                {quote.detalles.length === 0 ? (
+                {!quote.detalles || quote.detalles.length === 0 ? (
                   <tr>
                     <td colSpan="5" className={styles.loadingText}>
                       Esta cotización no tiene ítems detallados asignados.
@@ -56,12 +56,12 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
                   </tr>
                 ) : (
                   quote.detalles.map((det, index) => {
-                    const precioUnitario = Number(det.precioUnitario || det.precio_unitario || 0);
-                    const costoDiseno    = Number(det.costoDiseno    || det.costo_diseno    || 0);
+                    const precioUnitario = Number(det.precioUnitario || 0);
+                    const costoDiseno    = Number(det.costoDiseno || 0);
                     const subtotal       = Number(det.subtotal || 0);
 
                     return (
-                      <tr key={det.idDetalle || index} className={styles.tableBodyRow}>
+                      <tr key={det.idDetalleCotizacion || index} className={styles.tableBodyRow}>
                         <td className={styles.tableCell}>{det.descripcion || 'Sin descripción'}</td>
                         <td className={styles.tableCell}>{det.cantidad || 0}</td>
                         <td className={styles.tableCell}>${precioUnitario.toLocaleString('es-CO')}</td>
@@ -81,15 +81,15 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
           <div className={styles.totalBlock}>
             <div className={styles.totalBlockRow}>
               <span>Subtotal general</span>
-              <span>${quote.subtotal.toLocaleString('es-CO')}</span>
+              <span>${Number(quote.subtotal || 0).toLocaleString('es-CO')}</span>
             </div>
             <div className={styles.totalBlockRow}>
               <span>Costos adicionales</span>
-              <span>${quote.costosAdicionales.toLocaleString('es-CO')}</span>
+              <span>${Number(quote.costosAdicionales || 0).toLocaleString('es-CO')}</span>
             </div>
             <div className={styles.grandTotal}>
               <span>Total</span>
-              <span>${quote.total.toLocaleString('es-CO')}</span>
+              <span>${Number(quote.total || 0).toLocaleString('es-CO')}</span>
             </div>
           </div>
         </div>

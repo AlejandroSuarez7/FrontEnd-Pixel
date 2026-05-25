@@ -1,61 +1,101 @@
-import { useState, useEffect } from 'react';
-import { quoteRepository } from '../infrastructure/quote.repository';
+// presentation/hooks/useQuotes.js
+import { useState, useEffect, useCallback } from 'react';
+import { QuoteApiRepository } from '../infrastructure/quote.repository';
+
+// Instanciamos el repositorio una sola vez afuera para no recrearlo en cada render
+const quoteRepository = new QuoteApiRepository();
 
 export const useQuotes = (filters = {}) => {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchQuotes = async () => {
+  // Usamos useCallback para que la función sea estable y no genere bucles infinitos en el useEffect
+  const fetchQuotes = useCallback(async () => {
     setLoading(true);
     try {
       const data = await quoteRepository.list(filters);
-      setQuotes(data); 
+      setQuotes(data);
     } catch (error) {
-      console.error("Error al cargar cotizaciones desde la API", error);
-      setQuotes([]); 
+      console.error("Error en useQuotes al listar:", error);
+      setQuotes([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [JSON.stringify(filters)]); // Se refresca de forma inteligente si cambian las propiedades del filtro
 
-  const handleCreate = async (quoteData) => {
+  const handleCreate = async (quoteData, isStaff = false) => {
     try {
-      await quoteRepository.create(quoteData);
-      await fetchQuotes(); 
+      if (isStaff) {
+        await quoteRepository.createAsStaff(quoteData);
+      } else {
+        await quoteRepository.createAsClient(quoteData);
+      }
+      await fetchQuotes();
     } catch (error) {
-      console.error("Error al crear cotización", error);
+      console.error("Error al crear cotización:", error);
+      throw error; // Lo relanzamos para que el Modal lo capture y muestre el alert
     }
   };
 
-  const handleUpdate = async (id, updatedData) => {
+  const handleUpdate = async (id, quoteData, isStaff = false) => {
     try {
-      await quoteRepository.update(id, updatedData);
-      await fetchQuotes(); 
+      if (isStaff) {
+        // Empleado asignando precios → PATCH /:id/cotizar
+        await quoteRepository.assignPrices(id, quoteData);
+      } else {
+        // Cliente editando su solicitud → PATCH /:id/cliente
+        await quoteRepository.updateAsClient(id, quoteData);
+      }
+      await fetchQuotes();
     } catch (error) {
-      console.error(`Error al actualizar la cotización #${id}`, error);
+      console.error("Error al actualizar cotización:", error);
+      throw error;
+    }
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      await quoteRepository.approve(id);
+      await fetchQuotes();
+    } catch (error) {
+      console.error("Error al aprobar cotización:", error);
+      throw error;
     }
   };
 
   const handleReject = async (id) => {
     try {
       await quoteRepository.reject(id);
-      // Recargamos la lista para ver el cambio de estado a "RECHAZADA" en tiempo real
-      await fetchQuotes(); 
+      await fetchQuotes();
     } catch (error) {
-      console.error(`Error al rechazar la cotización #${id}`, error);
+      console.error("Error al rechazar cotización:", error);
+      throw error;
     }
   };
 
+  const handleCancel = async (id) => {
+    try {
+      await quoteRepository.cancel(id);
+      await fetchQuotes();
+    } catch (error) {
+      console.error("Error al anular cotización:", error);
+      throw error;
+    }
+  };
+
+  // Se ejecuta automáticamente al montar el componente o cuando cambian los filtros
   useEffect(() => {
     fetchQuotes();
-  }, [filters.search, filters.status]); 
+  }, [fetchQuotes]);
 
-  return { 
-    quotes, 
-    loading, 
-    handleCreate, 
-    handleUpdate, 
+  return {
+    quotes,
+    loading,
+    handleCreate,
+    handleUpdate,
+    handleApprove,
     handleReject,
-    refreshQuotes: fetchQuotes 
+    handleCancel,
+    refreshQuotes: fetchQuotes
   };
 };
