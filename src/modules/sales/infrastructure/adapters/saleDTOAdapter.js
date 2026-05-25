@@ -1,36 +1,32 @@
-import { createSale, createSaleItem } from '../../domain/models/saleModel.js';
+import { createSale } from '../../domain/models/saleModel.js';
 
 export const saleDTOAdapter = {
-  toEntity(raw) {
-    if (!raw) return null;
+  // API → Entidad de dominio
+  toEntity(dto) {
     return createSale({
-      id: raw.id,
-      clientName: raw.clientName,
-      saleDate: raw.saleDate,
-      paymentMethod: raw.paymentMethod,
-      status: raw.status,
-      items: (raw.items || []).map((item) => createSaleItem(item)),
-      observations: raw.observations,
-      responsible: raw.responsible,
-      history: raw.history || [],
+      id: dto.idVenta,
+      id_usuario: dto.usuarioId,
+      id_pedido: dto.pedidoId,
+      created_at: dto.createdAt,
+
+      total: Number(dto.total),
+      metodo_pago: dto.metodoPago,
+      estado: dto.estado,
+
+      // 👇 relaciones
+      usuario: dto.usuario,
+      pedido: dto.pedido,
     });
   },
 
+  // Entidad de dominio → Payload para el API
   toDTO(entity) {
-    if (!entity) return null;
     return {
-      id: entity.id,
-      clientName: entity.clientName,
-      saleDate: entity.saleDate,
-      paymentMethod: entity.paymentMethod,
-      status: entity.status,
-      items: (entity.items || []).map((item) => createSaleItem(item)),
-      subtotal: entity.subtotal,
-      tax: entity.tax,
+      usuarioId: entity.id_usuario,
+      pedidoId: entity.id_pedido,
       total: entity.total,
-      observations: entity.observations,
-      responsible: entity.responsible,
-      history: entity.history || [],
+      metodoPago: entity.metodo_pago,
+      estado: entity.estado,
     };
   },
 };

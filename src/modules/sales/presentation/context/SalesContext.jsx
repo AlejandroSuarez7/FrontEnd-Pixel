@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
 import 'sweetalert2/dist/sweetalert2.css';
-import { SaleLocalStorageRepository } from '../../infrastructure/repositories/SaleLocalStorageRepository.js';
+import { SaleApiRepository } from '../../infrastructure/repositories/SaleApiRepository.js';
 import { getSalesUseCase } from '../../application/useCases/getSalesUseCase.js';
 import { createSaleUseCase } from '../../application/useCases/createSaleUseCase.js';
 import { annulSaleUseCase } from '../../application/useCases/annulSaleUseCase.js';
@@ -12,7 +12,7 @@ import { createSale, SALE_STATUSES } from '../../domain/models/saleModel.js';
 const SalesContext = createContext();
 
 export const SalesProvider = ({ children }) => {
-  const repository = useMemo(() => new SaleLocalStorageRepository(), []);
+  const repository = useMemo(() => new SaleApiRepository(), []);
   const [sales, setSales] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -61,21 +61,13 @@ export const SalesProvider = ({ children }) => {
 
   const addSale = async (saleData) => {
     const newSale = createSale({
-      id: `VTA-${new Date().getTime()}`,
-      clientName: saleData.clientName,
-      saleDate: new Date().toISOString(),
-      paymentMethod: saleData.paymentMethod,
-      status: saleData.status,
-      items: saleData.items,
-      observations: saleData.observations,
-      responsible: saleData.responsible,
-      history: [
-        {
-          when: new Date().toISOString(),
-          action: 'Venta creada',
-          by: saleData.responsible,
-        },
-      ],
+      id: saleData.id,
+      id_usuario: saleData.id_usuario,
+      id_pedido: saleData.id_pedido,
+      created_at: new Date().toISOString(),
+      total: saleData.total,
+      metodo_pago: saleData.metodo_pago,
+      estado: saleData.estado,
     });
 
     const savedSale = await createSaleUseCase(repository, newSale);
@@ -90,37 +82,41 @@ export const SalesProvider = ({ children }) => {
       showConfirmButton: false,
     });
   };
-
+ 
   const annulSale = async (saleId, userEmail) => {
-    const confirmation = await Swal.fire({
-      title: '¿Anular venta?',
-      text: 'La venta no se eliminará, solo cambiará a estado anulada.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, anular',
-      cancelButtonText: 'Cancelar',
-    });
-
-    if (!confirmation.isConfirmed) {
-      return null;
+  // 1. Pedimos el motivo con SweetAlert
+  const { value: motivo, isConfirmed } = await Swal.fire({
+    title: '¿Anular venta?',
+    text: 'Ingresa el motivo de la anulación para el historial:',
+    input: 'text', // Crea un campo de texto
+    inputPlaceholder: 'Ej: Error en el precio, Cliente desistió...',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Confirmar Anulación',
+    cancelButtonText: 'Cancelar',
+    inputValidator: (value) => {
+      if (!value) {
+        return '¡Es obligatorio poner un motivo!';
+      }
     }
+  });
 
-    const updatedSale = await annulSaleUseCase(repository, saleId, userEmail);
-    setSales((prev) => prev.map((sale) => (sale.id === saleId ? updatedSale : sale)));
-    if (selectedSale?.id === saleId) {
-      setSelectedSale(updatedSale);
-    }
+  if (!isConfirmed) return null;
 
-    await Swal.fire({
-      icon: 'success',
-      title: 'Venta anulada',
-      text: `La venta ${saleId} ahora tiene estado ${SALE_STATUSES.CANCELED}.`,
-      timer: 2000,
-      showConfirmButton: false,
-    });
-
+  try {
+    // 2. Pasamos el ID y el MOTIVO al caso de uso
+    // En el backend tu validador espera "motivoAnulacion"
+    const updatedSale = await annulSaleUseCase(repository, saleId, motivo);
+    
+    // 3. Actualizamos el estado local
+    setSales((prev) => prev.map((s) => (s.idVenta === saleId ? updatedSale : s)));
+    
+    await Swal.fire('¡Anulada!', 'La venta y el historial se actualizaron.', 'success');
     return updatedSale;
-  };
+  } catch (error) {
+    Swal.fire('Error', 'No se pudo anular: ' + error.message, 'error');
+  }
+};
 
   const downloadSalePdf = (sale) => {
     generateSalePdf(sale);

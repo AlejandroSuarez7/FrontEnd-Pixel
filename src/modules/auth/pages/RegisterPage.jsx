@@ -1,26 +1,26 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { useAuth } from '../../../store/AuthContext';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    name:            '',
+    email:           '',
+    password:        '',
     confirmPassword: '',
-    name: '',
   });
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [error, setError]     = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { register } = useAuth();
+  const navigate     = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -29,15 +29,18 @@ const RegisterPage = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      authService.register({
-        email: formData.email,
+      await register({
+        name:     formData.name,
+        email:    formData.email,
         password: formData.password,
-        name: formData.name,
       });
       navigate('/login');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Error al registrarse');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,8 +101,8 @@ const RegisterPage = () => {
             />
           </div>
 
-          <button type="submit" className="btn-primary">
-            Registrarse
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Registrando...' : 'Registrarse'}
           </button>
         </form>
 
