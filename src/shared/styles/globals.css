@@ -16,14 +16,8 @@ body,
   height: 100%;
 }
 
-a {
-  color: #3498db;
-  text-decoration: none;
-}
 
-a:hover {
-  text-decoration: underline;
-}
+
 
 button {
   cursor: pointer;
@@ -35,96 +29,3 @@ textarea,
 select {
   font-family: inherit;
 }
-
-.landing-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 40px;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-.landing-logo {
-  font-size: 24px;
-  font-weight: 700;
-  color: #6c63ff;
-}
-
-.landing-nav {
-  display: flex;
-  gap: 25px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-}
-
-.landing-nav a {
-  color: #2c3e50;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-
-.landing-nav a:hover {
-  color: #6c63ff;
-}
-
-.landing-actions {
-  display: flex;
-  align-items: center;
-}
-
-.btn-login {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 18px;
-  background-color: #6c63ff;
-  color: white;
-  border-radius: 999px;
-  text-decoration: none;
-  font-weight: 700;
-  transition: background-color 0.2s ease;
-}
-
-.btn-login:hover {
-  background-color: #594beb;
-}
-
-.hero {
-  padding: 120px 40px 80px;
-  text-align: center;
-}
-
-.hero h2 {
-  font-size: 48px;
-  margin-bottom: 20px;
-}
-
-.hero p {
-  font-size: 18px;
-  color: #5f6f82;
-}
-
-@media (max-width: 900px) {
-  .landing-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 18px;
-    padding: 20px;
-  }
-
-  .landing-nav {
-    justify-content: center;
-    gap: 15px;
-  }
-
-  .hero {
-    padding: 100px 20px;
-  }
-}
-
