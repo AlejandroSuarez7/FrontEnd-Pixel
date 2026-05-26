@@ -1,49 +1,45 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../modules/auth/services/authService';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const [user, setUser]       = useState(null);
+  const [loading, setLoading] = useState(true); // true mientras verifica sesión guardada
 
-  const [user, setUser] = useState(null);
-
+  // Al montar, restaura la sesión si hay token guardado
   useEffect(() => {
     const session = authService.getSession();
-
-    if (session) {
-      setUser(session);
-    }
+    if (session) setUser(session);
+    setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    try {
-      const loggedInUser = authService.login(email, password);
-      setUser(loggedInUser);
-    } catch (error) {
-      console.error('Error en login:', error);
-      throw error;
-    }
+  const login = async (email, password) => {
+    const loggedInUser = await authService.login(email, password);
+    setUser(loggedInUser);
+  };
+
+  const register = async (userData) => {
+    await authService.register(userData);
+    // Después del registro redirige al login — no logueamos automáticamente
+    // Si tu API devuelve token en signup, llama a login() aquí directamente
   };
 
   const logout = () => {
-    try {
-      authService.logout();
-      setUser(null);
-    } catch (error) {
-      console.error('Error en logout:', error);
-      throw error;
-    }
+    authService.logout();
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Hook de conveniencia — úsalo en cualquier componente
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider');
+  return context;
 };

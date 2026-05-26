@@ -8,47 +8,30 @@ export const SALE_STATUSES = {
 
 export const TECHNIQUE_OPTIONS = ['Sublimado', 'Vinilo', 'Serigrafía', 'Tinta UV'];
 
-export const createSaleItem = ({ idProducto, nombreProducto, tecnica, quantity, unitPrice }) => {
-  const quantityNumber = Number(quantity) || 0;
-  const unitPriceNumber = Number(unitPrice) || 0;
-  return {
-    idProducto: idProducto?.trim() || `PRD-${Math.floor(Math.random() * 9000 + 1000)}`,
-    nombreProducto: nombreProducto?.trim() || 'Producto sin nombre',
-    tecnica: tecnica || TECHNIQUE_OPTIONS[0],
-    quantity: quantityNumber,
-    unitPrice: unitPriceNumber,
-    subtotal: Number((quantityNumber * unitPriceNumber).toFixed(2)),
-  };
-};
-
 export const createSale = ({
   id,
-  clientName,
-  saleDate,
-  paymentMethod,
-  status,
-  items,
-  observations,
-  responsible,
-  history = [],
-}) => {
-  const normalizedItems = (items || []).map((item) => createSaleItem(item));
-  const subtotal = normalizedItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const tax = Number((subtotal * 0.19).toFixed(2));
-  const total = Number((subtotal + tax).toFixed(2));
+  id_usuario,
+  id_pedido,
+  created_at,
+  total,
+  metodo_pago,
+  estado,
 
+  // 👇 nuevas relaciones
+  usuario,
+  pedido,
+}) => {
   return {
     id,
-    clientName: clientName?.trim() || 'Cliente sin definir',
-    saleDate,
-    paymentMethod,
-    status,
-    items: normalizedItems,
-    subtotal,
-    tax,
+    id_usuario,
+    id_pedido,
+    created_at,
     total,
-    observations: observations?.trim() || '',
-    responsible,
-    history,
+    metodo_pago,
+    estado,
+
+    // 👇 retornarlas
+    usuario,
+    pedido,
   };
 };
