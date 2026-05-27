@@ -1,22 +1,21 @@
-// presentation/presentation/QuoteFormModal.jsx
+// cotizaciones/presentation/QuoteFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../../../core/services/apiService.js';
+import styles from './quotes.module.css';
 
 export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) => {
-  const [observaciones, setObservaciones] = useState('');
+  const [observaciones, setObservaciones]         = useState('');
   const [costosAdicionales, setCostosAdicionales] = useState(0);
-  const [idCliente, setIdCliente] = useState('');
-  const [detalles, setDetalles] = useState([]);
+  const [idCliente, setIdCliente]                 = useState('');
+  const [detalles, setDetalles]                   = useState([]);
 
-  // Estado para el listado de clientes disponibles
-  const [clientes, setClientes] = useState([]);
+  const [clientes, setClientes]               = useState([]);
   const [loadingClientes, setLoadingClientes] = useState(false);
 
-  // Banderas lógicas para facilitar el control de la interfaz
   const isEditing = !!quote;
-  const isPricing = isStaff && isEditing; // Empleado asignando costos a una cotización existente
+  const isPricing = isStaff && isEditing;
 
-  // Carga la lista de usuarios con rol Cliente cuando el Staff abre el modal en modo creación
+  // Carga clientes activos cuando el Staff crea una cotización
   useEffect(() => {
     if (isOpen && isStaff && !isEditing) {
       setLoadingClientes(true);
@@ -36,6 +35,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
     }
   }, [isOpen, isStaff, isEditing]);
 
+  // Precarga los datos garantizando siempre un único ítem
   useEffect(() => {
     if (quote) {
       setObservaciones(quote.observaciones || '');
@@ -46,16 +46,12 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
       setObservaciones('');
       setCostosAdicionales(0);
       setIdCliente('');
-      setDetalles([{ idTecnica: '', descripcion: '', cantidad: 1, precioUnitario: 0, costoDiseno: 0 }]);
+      // Obligatorio: un único detalle vacío por defecto para la creación
+      setDetalles([{ idTecnica: '', descripcion: '', cantidad: 1, observaciones: '' }]);
     }
   }, [quote, isOpen]);
 
   if (!isOpen) return null;
-
-  // Solo el Staff puede agregar más de un detalle (el backend exige exactamente 1 por cotización para clientes)
-  const handleAddDetail = () => {
-    setDetalles([...detalles, { idTecnica: '', descripcion: '', cantidad: 1, precioUnitario: 0, costoDiseno: 0 }]);
-  };
 
   const handleDetailChange = (index, field, value) => {
     const updated = [...detalles];
@@ -63,240 +59,177 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
     setDetalles(updated);
   };
 
-  const handleRemoveDetail = (index) => {
-    if (detalles.length > 1) {
-      setDetalles(detalles.filter((_, i) => i !== index));
-    }
-  };
-
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (isEditing) {
-        if (isStaff) {
-          // 1. El empleado envía precios de producción a una cotización existente
-          await onSubmit(quote.idCotizacion || quote.id, {
-            costosAdicionales: Number(costosAdicionales),
-            observaciones: observaciones || undefined,
-            detalles: detalles.map(d => ({
-              idDetalleCotizacion: d.idDetalleCotizacion || d.idDetalle,
-              precioUnitario: Number(d.precioUnitario || 0),
-              costoDiseno: Number(d.costoDiseno || 0)
-            }))
-          }, true);
-        } else {
-          // 2. El cliente actualiza su propia solicitud básica (solo 1 detalle, con idDetalleCotizacion)
-          await onSubmit(quote.idCotizacion || quote.id, {
-            detalles: detalles.map(d => ({
-              idDetalleCotizacion: d.idDetalleCotizacion || d.idDetalle,
-              idTecnica: Number(d.idTecnica),
-              descripcion: d.descripcion,
-              cantidad: Number(d.cantidad)
-            }))
-          }, false);
-        }
-      } else {
-        // 3. Creación desde cero de una nueva cotización
-        const payload = {
-          ...(isStaff && observaciones && { observaciones }),
-          ...(isStaff && { idCliente: Number(idCliente) }),
-          detalles: detalles.map(d => ({
-            idTecnica: Number(d.idTecnica),
-            descripcion: d.descripcion,
-            cantidad: Number(d.cantidad),
-            ...(isStaff && { precioUnitario: Number(d.precioUnitario || 0) }),
-            ...(isStaff && { costoDiseno: Number(d.costoDiseno || 0) }),
-          }))
-        };
+  e.preventDefault();
+  try {
+    const payload = {
+      observaciones: observaciones.trim() || null,
+      detalles,
+      ...(isPricing && { costosAdicionales: Number(costosAdicionales || 0) }),
+      ...(isStaff && !isEditing && idCliente && { idCliente: Number(idCliente) }),
+    };
 
-        await onSubmit(payload, isStaff);
-      }
-      onClose();
-    } catch (error) {
-      alert(error.message || "Ocurrió un error al procesar la cotización");
-    }
-  };
+    await onSubmit(payload);
+  } catch (err) {
+    alert(err.message || 'Ocurrió un error al procesar el formulario.');
+  }
+};
+
+  const modalTitle = isPricing
+    ? `Asignar valores · Cotización #${quote?.idCotizacion}`
+    : isEditing
+      ? 'Editar solicitud'
+      : 'Nueva solicitud de cotización';
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modalContainer}>
-        <h3 style={styles.modalTitle}>
-          {isEditing ? (isStaff ? "Asignar Precios de Producción" : "Editar Solicitud") : "Nueva Cotización"}
-        </h3>
+    <div className={styles.overlay}>
+      <div className={`${styles.modalContainer} ${styles.modalSm}`}>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className={styles.modalHeader}>
+          <h3 className={styles.modalTitle}>{modalTitle}</h3>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>✕</button>
+        </div>
 
-          {/* Selector de Cliente: solo Staff creando una cotización nueva */}
-          {!isEditing && isStaff && (
-            <label style={styles.label}>
-              Cliente asociado:
+        <form onSubmit={handleSubmit} className={styles.form}>
+
+          {/* Selector de cliente — Solo Staff creando presencial */}
+          {isStaff && !isEditing && (
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel}>Cliente responsable *</label>
               {loadingClientes ? (
-                <p style={styles.loadingText}>Cargando clientes...</p>
+                <p className={styles.inlineLoadingText}>Cargando clientes...</p>
               ) : clientes.length === 0 ? (
-                <p style={styles.errorText}>⚠️ No hay clientes activos registrados.</p>
+                <p className={styles.inlineErrorText}>No hay clientes activos registrados.</p>
               ) : (
                 <select
                   value={idCliente}
                   onChange={e => setIdCliente(e.target.value)}
-                  style={styles.select}
+                  className={styles.selectField}
                   required
                 >
-                  <option value="">— Selecciona un cliente —</option>
+                  <option value="">— Seleccione un usuario —</option>
                   {clientes.map(c => (
                     <option key={c.idUsuario} value={c.idUsuario}>
-                      {c.nombre} · {c.correo}
+                      {c.nombre} ({c.correo})
                     </option>
                   ))}
                 </select>
               )}
-            </label>
+            </div>
           )}
 
-          {/* Observaciones generales: Solo para Staff */}
-          {!isPricing && isStaff && (
-            <label style={styles.label}>
-              Observaciones Generales:
-              <input
-                type="text"
-                placeholder="Indicaciones adicionales de la orden..."
-                value={observaciones}
-                onChange={e => setObservaciones(e.target.value)}
-                style={styles.input}
-              />
-            </label>
-          )}
+          {/* Observaciones generales */}
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>Observaciones generales</label>
+            <textarea
+              value={observaciones}
+              onChange={e => setObservaciones(e.target.value)}
+              className={styles.inputField}
+              rows={2}
+              placeholder="Detalles sobre la entrega, urgencia o empaque..."
+            />
+          </div>
 
-          {/* Costos operacionales: Solo visibles para personal asignando precios */}
+          {/* Costos adicionales — Solo Staff en modo pricing */}
           {isPricing && (
-            <label style={styles.label}>
-              Costos Operacionales Adicionales ($):
+            <div className={styles.inputGroup} style={{ maxWidth: '200px' }}>
+              <label className={styles.inputLabel}>Costos adicionales ($)</label>
               <input
                 type="number"
                 value={costosAdicionales}
                 onChange={e => setCostosAdicionales(e.target.value)}
-                style={styles.input}
-                required
+                className={styles.inputFieldStaff}
+                min="0"
               />
-            </label>
+            </div>
           )}
 
-          {/* Lista de prendas */}
+          {/* Información del Producto Único */}
           <div>
-            <p style={{ fontWeight: '700', fontSize: '13px', margin: '8px 0', color: '#1e293b' }}>
-              {isStaff ? 'Ítems / Prendas a Estampar:' : 'Producto a Cotizar:'}
+            <p className={styles.detailsSectionLabel}>
+              {isPricing ? 'Valores del producto' : 'Producto a cotizar'}
             </p>
 
-            <div style={{ maxHeight: '240px', overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {detalles.map((detail, idx) => (
-                <div key={idx} style={styles.detailRow}>
-                  <input
-                    type="number"
-                    placeholder="ID Tec"
-                    value={detail.idTecnica}
-                    onChange={e => handleDetailChange(idx, 'idTecnica', e.target.value)}
-                    style={{ ...styles.input, width: '70px' }}
-                    disabled={isPricing}
-                    required
-                  />
+            <div className={styles.detailRowsWrapper}>
+              {detalles.map((det, idx) => (
+                <div key={det.idDetalleCotizacion || idx} className={styles.detailRow}>
+                  
+                  {/* ID Técnica — Oculto en pricing, requerido al crear/editar */}
+                  {!isPricing && (
+                    <input
+                      type="number"
+                      placeholder="ID Téc."
+                      value={det.idTecnica || ''}
+                      onChange={e => handleDetailChange(idx, 'idTecnica', e.target.value)}
+                      className={styles.detailRowInputSm}
+                      title="ID de la técnica de personalización"
+                      required
+                    />
+                  )}
+
                   <input
                     type="text"
-                    placeholder="Descripción (Ej: Camiseta Negra)"
-                    value={detail.descripcion}
+                    placeholder="Descripción de la prenda o artículo"
+                    value={det.descripcion || ''}
                     onChange={e => handleDetailChange(idx, 'descripcion', e.target.value)}
-                    style={{ ...styles.input, flex: 1 }}
-                    disabled={isPricing}
-                    required
-                  />
-                  <input
-                    type="number"
-                    placeholder="Cant"
-                    value={detail.cantidad}
-                    onChange={e => handleDetailChange(idx, 'cantidad', e.target.value)}
-                    style={{ ...styles.input, width: '65px' }}
+                    className={styles.detailRowInputFlex}
                     disabled={isPricing}
                     required
                   />
 
-                  {/* Inputs de Precios exclusivos para el Staff */}
-                  {isStaff && (
+                  <input
+                    type="number"
+                    placeholder="Cant."
+                    value={det.cantidad || 1}
+                    onChange={e => handleDetailChange(idx, 'cantidad', e.target.value)}
+                    className={styles.detailRowInputSm}
+                    min="1"
+                    disabled={isPricing}
+                    required
+                  />
+
+                  {/* Campos de precios — Solo Staff cuando está cotizando */}
+                  {isPricing && (
                     <>
                       <input
                         type="number"
                         placeholder="$ Unitario"
-                        value={detail.precioUnitario}
+                        value={det.precioUnitario || ''}
                         onChange={e => handleDetailChange(idx, 'precioUnitario', e.target.value)}
-                        style={{ ...styles.input, width: '95px', borderColor: '#276cf2', backgroundColor: '#f0f4ff' }}
+                        className={styles.detailRowInputStaff}
+                        min="0"
                         required
                       />
                       <input
                         type="number"
                         placeholder="$ Diseño"
-                        value={detail.costoDiseno}
+                        value={det.costoDiseno || ''}
                         onChange={e => handleDetailChange(idx, 'costoDiseno', e.target.value)}
-                        style={{ ...styles.input, width: '95px', borderColor: '#276cf2', backgroundColor: '#f0f4ff' }}
-                        required
+                        className={styles.detailRowInputStaff}
+                        min="0"
                       />
                     </>
-                  )}
-
-                  {/* Botón para remover fila: Solo Staff puede tener múltiples filas */}
-                  {!isPricing && isStaff && detalles.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveDetail(idx)}
-                      style={styles.removeBtn}
-                      title="Eliminar prenda"
-                    >
-                      ✕
-                    </button>
                   )}
                 </div>
               ))}
             </div>
 
-            {/* Aviso informativo para el cliente: una cotización = un producto */}
-            {!isStaff && !isEditing && (
-              <p style={styles.infoNote}>
-                💡 Cada cotización corresponde a un solo producto. Para otro artículo, crea una nueva cotización.
-              </p>
-            )}
+            <p className={styles.infoNote}>
+              Cada cotización corresponde estrictamente a un solo producto. Para solicitar valores de un artículo diferente, se debe procesar una nueva cotización por separado.
+            </p>
           </div>
 
-          {/* Botón añadir fila: Solo disponible para Staff */}
-          {!isPricing && isStaff && (
-            <button type="button" onClick={handleAddDetail} style={styles.addBtn}>
-              ➕ Añadir otra prenda
-            </button>
-          )}
-
-          <div style={styles.actions}>
-            <button type="button" onClick={onClose} style={styles.cancelBtn}>
+          <div className={styles.modalFooter}>
+            <button type="button" onClick={onClose} className={styles.btnSecondary}>
               Cancelar
             </button>
-            <button type="submit" style={styles.submitBtn}>
-              Procesar
+            <button type="submit" className={styles.btnPrimary}>
+              {isPricing ? 'Enviar precios' : 'Procesar solicitud'}
             </button>
           </div>
+
         </form>
       </div>
     </div>
   );
-};
-
-const styles = {
-  overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(34, 43, 69, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1200 },
-  modalContainer: { backgroundColor: '#fff', padding: '24px', borderRadius: '12px', width: '90%', maxWidth: '750px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' },
-  modalTitle: { margin: '0 0 14px 0', fontSize: '18px', fontWeight: '700', color: '#1e293b' },
-  label: { fontSize: '13px', fontWeight: '600', color: '#4f5e74', display: 'flex', flexDirection: 'column', gap: '5px' },
-  input: { padding: '8px 10px', borderRadius: '6px', border: '1px solid #edf1f7', fontSize: '13px', outline: 'none' },
-  select: { padding: '8px 10px', borderRadius: '6px', border: '1px solid #edf1f7', fontSize: '13px', outline: 'none', backgroundColor: '#fff', color: '#1e293b', cursor: 'pointer' },
-  detailRow: { display: 'flex', gap: '6px', alignItems: 'center' },
-  addBtn: { padding: '8px 12px', backgroundColor: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: '#475569', alignSelf: 'flex-start' },
-  removeBtn: { padding: '6px 10px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' },
-  actions: { display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid #edf1f7', paddingTop: '14px', marginTop: '6px' },
-  cancelBtn: { padding: '9px 16px', backgroundColor: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '500', color: '#64748b' },
-  submitBtn: { padding: '9px 16px', backgroundColor: '#276cf2', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' },
-  infoNote: { fontSize: '12px', color: '#8f9bb3', margin: '8px 0 0 0', fontStyle: 'italic' },
-  loadingText: { fontSize: '13px', color: '#8f9bb3', margin: '4px 0' },
-  errorText: { fontSize: '13px', color: '#ef4444', margin: '4px 0' },
 };

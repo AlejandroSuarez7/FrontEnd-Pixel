@@ -1,9 +1,8 @@
 /* ============================================================
-   quotes.module.css — Módulo de Cotizaciones · Pixel App
+   client-quotes.module.css — Módulo de Cotizaciones (Cliente/Staff) · Pixel App
    Estilo: minimalista refinado, coherente con el dashboard
    ============================================================ */
 
-/* ── Variables (deben coincidir con las globales del dashboard) ── */
 :root {
   --color-bg: #f4f6f9;
   --color-surface: #ffffff;
@@ -14,17 +13,23 @@
   --color-text-secondary: #8f9bb3;
   --color-text-muted: #b0bac9;
 
-  --color-accent: #6c5ce7;          /* violeta del dashboard */
+  --color-accent: #6c5ce7;
   --color-accent-light: #ede9ff;
   --color-accent-hover: #5a4bd1;
 
   --color-success: #00b894;
   --color-success-bg: #e6f9f5;
-  --color-warning: #e17b00;
-  --color-warning-bg: #fff4e0;
   --color-danger: #d63031;
   --color-danger-bg: #fff0f0;
-  --color-disabled: #c4cdd9;
+  --color-warning: #e17b00;
+  --color-warning-bg: #fff4e0;
+  --color-info: #0984e3;
+  --color-info-bg: #e8f4fd;
+  --color-neutral: #4f5e74;
+  --color-neutral-bg: #eef2f5;
+
+  --color-staff-field: #f5f3ff;
+  --color-staff-border: #c4b5fd;
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -78,38 +83,57 @@
   font-weight: 400;
 }
 
-/* ── KPI Grid ── */
-.kpiGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin-bottom: 24px;
+.primaryButton {
+  background-color: var(--color-accent);
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  font-family: var(--font-body);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.25);
 }
 
-.kpiCard {
-  background-color: var(--color-surface);
-  padding: 22px 24px;
-  border-radius: var(--radius-lg);
+.primaryButton:hover {
+  background-color: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.primaryButton:active {
+  transform: translateY(0);
+}
+
+/* ── Search ── */
+.filterSection {
+  margin-bottom: 18px;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 380px;
+  padding: 9px 14px;
   border: 1px solid var(--color-border);
-  box-shadow: 0 1px 4px var(--color-shadow);
-}
-
-.kpiLabel {
-  display: block;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.kpiValue {
-  font-size: 26px;
-  font-weight: 700;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
   color: var(--color-text-primary);
-  margin: 0;
-  letter-spacing: -0.5px;
+  background-color: var(--color-surface);
+  box-sizing: border-box;
+  outline: none;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.searchInput:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
 }
 
 /* ── Table container ── */
@@ -174,6 +198,19 @@
   font-size: 13.5px;
 }
 
+.tableCellId {
+  padding: 16px 20px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tableCellMuted {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 13px;
+}
+
 /* ── Status badges ── */
 .statusBadge {
   display: inline-block;
@@ -184,33 +221,25 @@
   letter-spacing: 0.3px;
 }
 
-.statusPending {
-  background-color: var(--color-warning-bg);
-  color: var(--color-warning);
-}
+.statusAprobada   { background-color: var(--color-success-bg); color: var(--color-success); }
+.statusSolicitada { background-color: var(--color-neutral-bg); color: var(--color-neutral); }
+.statusCotizada   { background-color: var(--color-info-bg);    color: var(--color-info); }
+.statusAnulada    { background-color: var(--color-danger-bg);  color: var(--color-danger); }
+.statusRechazada  { background-color: var(--color-danger-bg);  color: var(--color-danger); }
 
-.statusApproved {
-  background-color: var(--color-success-bg);
-  color: var(--color-success);
-}
-
-.statusRejected {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger);
-}
-
-/* ── Action buttons in table ── */
+/* ── Action buttons ── */
 .actionsCell {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 16px 20px;
+  flex-wrap: wrap;
 }
 
 .actionBtn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: none;
   border: none;
   padding: 5px 10px;
@@ -218,74 +247,36 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  font-family: var(--font-body);
+  transition: background-color 0.15s ease;
   white-space: nowrap;
 }
 
-.actionBtnView {
-  color: var(--color-accent);
-}
+.actionBtnView     { color: var(--color-accent); }
+.actionBtnView:hover     { background-color: var(--color-accent-light); }
 
-.actionBtnView:hover {
-  background-color: var(--color-accent-light);
-}
+.actionBtnEdit     { color: var(--color-warning); }
+.actionBtnEdit:hover     { background-color: var(--color-warning-bg); }
 
-.actionBtnEdit {
-  color: var(--color-warning);
-}
+.actionBtnPrice    { color: var(--color-info); }
+.actionBtnPrice:hover    { background-color: var(--color-info-bg); }
 
-.actionBtnEdit:hover {
-  background-color: var(--color-warning-bg);
-}
+.actionBtnApprove  { color: var(--color-success); }
+.actionBtnApprove:hover  { background-color: var(--color-success-bg); }
 
-.actionBtnEdit:disabled,
-.actionBtnReject:disabled {
-  color: var(--color-disabled);
-  cursor: not-allowed;
-  background: none;
-  opacity: 0.7;
-}
+.actionBtnReject   { color: var(--color-danger); }
+.actionBtnReject:hover   { background-color: var(--color-danger-bg); }
 
-.actionBtnReject {
-  color: var(--color-danger);
-}
+.actionBtnCancel   { color: var(--color-danger); }
+.actionBtnCancel:hover   { background-color: var(--color-danger-bg); }
 
-.actionBtnReject:hover {
-  background-color: var(--color-danger-bg);
-}
-
-/* ── Primary button (header) ── */
-.primaryButton {
-  background-color: var(--color-accent);
-  color: #fff;
-  border: none;
-  padding: 10px 22px;
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  letter-spacing: 0.2px;
-  transition: background-color 0.15s ease, transform 0.1s ease;
-  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.25);
-}
-
-.primaryButton:hover {
-  background-color: var(--color-accent-hover);
-  transform: translateY(-1px);
-}
-
-.primaryButton:active {
-  transform: translateY(0);
-}
-
-/* ── Action divider ── */
 .actionDivider {
   width: 1px;
   height: 14px;
   background-color: var(--color-border);
   margin: 0 2px;
+  flex-shrink: 0;
 }
-
 
 /* ══════════════════════════════════════════
    SHARED MODAL BASE
@@ -298,18 +289,18 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1100;
+  z-index: 1200;
   backdrop-filter: blur(2px);
 }
 
 .modalContainer {
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
-  width: 100%;
+  width: 90%;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  animation: modalIn 0.18s ease;
   max-height: 92vh;
   overflow-y: auto;
-  animation: modalIn 0.18s ease;
 }
 
 @keyframes modalIn {
@@ -317,9 +308,8 @@
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.modalSm { max-width: 480px; padding: 28px; }
-.modalMd { max-width: 580px; padding: 28px; }
-.modalLg { max-width: 720px; padding: 28px; }
+.modalSm { max-width: 480px;  padding: 28px; }
+.modalLg { max-width: 760px;  padding: 28px; }
 
 .modalHeader {
   display: flex;
@@ -355,7 +345,7 @@
   justify-content: center;
   cursor: pointer;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: 14px;
   transition: background-color 0.15s ease;
   flex-shrink: 0;
   margin-left: 12px;
@@ -376,7 +366,7 @@
 }
 
 /* ══════════════════════════════════════════
-   FORM ELEMENTS (compartidos entre modales)
+   FORM ELEMENTS
 ══════════════════════════════════════════ */
 
 .form {
@@ -385,16 +375,10 @@
   gap: 16px;
 }
 
-.formRow {
-  display: flex;
-  gap: 14px;
-}
-
 .inputGroup {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  flex: 1;
 }
 
 .inputLabel {
@@ -415,8 +399,8 @@
   background-color: var(--color-surface);
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   font-family: var(--font-body);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .inputField:focus {
@@ -424,11 +408,33 @@
   box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
-.inputFieldSm {
-  width: 80px;
+.inputField:disabled {
+  background-color: #fafbfc;
+  color: var(--color-text-muted);
+  cursor: not-allowed;
 }
 
-.textareaField {
+/* Input destacado para campos de precio (solo Staff) */
+.inputFieldStaff {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--color-staff-border);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  color: var(--color-text-primary);
+  background-color: var(--color-staff-field);
+  outline: none;
+  box-sizing: border-box;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inputFieldStaff:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.selectField {
   width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--color-border);
@@ -438,136 +444,167 @@
   background-color: var(--color-surface);
   outline: none;
   box-sizing: border-box;
-  min-height: 80px;
-  resize: vertical;
   font-family: var(--font-body);
+  cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.textareaField:focus {
+.selectField:focus {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
-.helperText {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-/* ── Info / Read-only section ── */
-.readOnlySection {
-  background-color: #fafbfc;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.readOnlyItem {
-  font-size: 12.5px;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.readOnlyItem strong {
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
-
-/* ── Items sub-section (QuoteModal) ── */
-.detalleSection {
-  background-color: #fafbfc;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 16px;
-}
-
-.detalleSectionTitle {
-  font-size: 13px;
+/* ── Details section title ── */
+.detailsSectionLabel {
+  font-size: 12px;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0 0 14px 0;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  margin: 4px 0 10px 0;
 }
 
-.subTable {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 14px;
-  background-color: var(--color-surface);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+/* ── Detail rows (items list) ── */
+.detailRowsWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.detailRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.detailRowInputSm {
+  width: 70px;
+  flex-shrink: 0;
+  padding: 8px 10px;
   border: 1px solid var(--color-border);
-}
-
-.subTableHead {
-  background-color: #f4f6f9;
-}
-
-.subTableTh {
-  padding: 8px 12px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-align: left;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.subTableRow {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.subTableRow:last-child {
-  border-bottom: none;
-}
-
-.subTableTd {
-  padding: 9px 12px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  outline: none;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease;
+}
+
+.detailRowInputSm:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.detailRowInputSm:disabled {
+  background-color: #fafbfc;
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.detailRowInputFlex {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  outline: none;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease;
+}
+
+.detailRowInputFlex:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.detailRowInputFlex:disabled {
+  background-color: #fafbfc;
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.detailRowInputStaff {
+  width: 95px;
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-staff-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background-color: var(--color-staff-field);
+  outline: none;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease;
+}
+
+.detailRowInputStaff:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
 .removeItemBtn {
-  background: none;
-  border: none;
+  padding: 6px 10px;
+  background-color: var(--color-danger-bg);
   color: var(--color-danger);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 6px;
+  border: none;
   border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-body);
   transition: background-color 0.15s ease;
+  flex-shrink: 0;
 }
 
 .removeItemBtn:hover {
-  background-color: var(--color-danger-bg);
+  background-color: #ffd5d5;
 }
 
-/* ── Total box ── */
-.totalBox {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  margin-left: auto;
-}
-
-.totalLabel {
-  font-size: 11px;
+/* ── Add item button ── */
+.addItemBtn {
+  padding: 8px 14px;
+  background-color: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--color-text-secondary);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  align-self: flex-start;
+  font-family: var(--font-body);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.totalValue {
-  font-size: 22px;
-  font-weight: 700;
+.addItemBtn:hover {
+  background-color: var(--color-accent-light);
   color: var(--color-accent);
-  letter-spacing: -0.5px;
+  border-color: var(--color-accent);
+}
+
+/* ── Info note ── */
+.infoNote {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 6px 0 0 0;
+  font-style: italic;
+}
+
+.inlineLoadingText {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 4px 0;
+}
+
+.inlineErrorText {
+  font-size: 13px;
+  color: var(--color-danger);
+  margin: 4px 0;
 }
 
 /* ── Buttons ── */
@@ -606,25 +643,6 @@
   color: var(--color-text-primary);
 }
 
-.btnAddItem {
-  padding: 9px 16px;
-  background-color: var(--color-accent);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  align-self: flex-end;
-  white-space: nowrap;
-  font-family: var(--font-body);
-  transition: background-color 0.15s ease;
-}
-
-.btnAddItem:hover {
-  background-color: var(--color-accent-hover);
-}
-
 /* ══════════════════════════════════════════
    QUOTE DETAILS MODAL
 ══════════════════════════════════════════ */
@@ -641,13 +659,12 @@
 
 .detailsCreatedBy {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 16px 0 8px 0;
+  color: var(--color-text-secondary);
+  margin: 14px 0 6px 0;
 }
 
 .detailsSectionTitle {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--color-text-secondary);
   text-transform: uppercase;
@@ -658,7 +675,6 @@
 .totalBlock {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   gap: 6px;
   margin-top: 20px;
   padding-top: 16px;
@@ -670,8 +686,7 @@
 .totalBlockRow {
   display: flex;
   justify-content: flex-end;
-  gap: 40px;
-  width: 100%;
+  gap: 48px;
 }
 
 .totalBlockRow span:first-child {
@@ -681,10 +696,55 @@
 .grandTotal {
   display: flex;
   justify-content: flex-end;
-  gap: 40px;
-  width: 100%;
+  gap: 48px;
   font-size: 17px;
   font-weight: 700;
   color: var(--color-accent);
   padding-top: 8px;
+}
+/* ══════════════════════════════════════════
+   CLASES FALTANTES — agregadas en corrección
+══════════════════════════════════════════ */
+
+/* Estado PENDIENTE — faltaba, los demás ya existían */
+.statusPendiente {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+/* Tamaño modal pequeño — faltaba .modalSm */
+.modalSm { max-width: 560px; padding: 28px; }
+
+/* Celda de cliente con nombre y correo apilados */
+.clientName {
+  display: block;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 13.5px;
+}
+
+.clientEmail {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+/* Badge de tipo de cotización */
+.typeBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  letter-spacing: 0.3px;
+}
+
+/* Precio total en la tabla */
+.totalPrice {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
