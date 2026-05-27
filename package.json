@@ -14,6 +14,7 @@
     "antd": "^6.3.7",
     "axios": "^1.16.0",
     "jspdf": "^2.5.1",
+    "lucide-react": "^1.16.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.57.0",
