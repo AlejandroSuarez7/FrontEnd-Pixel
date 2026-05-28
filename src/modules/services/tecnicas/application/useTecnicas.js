@@ -1,63 +1,69 @@
-// presentation/hooks/useTecnicas.js
+// tecnicas/application/useTecnicas.js
 import { useState, useEffect } from 'react';
 import { tecnicasRepository } from '../infrastructure/tecnicas.repository';
 
 export const useTecnicas = (filters = {}) => {
   const [tecnicas, setTecnicas] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]   = useState(false);
 
-  // 1. Cargar o listar técnicas desde el servidor
   const fetchTecnicas = async () => {
     setLoading(true);
     try {
-      // Le pasamos los filtros (como filtros.search) al repositorio
       const data = await tecnicasRepository.list(filters);
-      setTecnicas(data); // El DTO ya se encargó de dejarlo como un array estructurado
+      setTecnicas(data);
     } catch (error) {
-      console.error("Error en el hook al cargar las técnicas:", error);
-      setTecnicas([]); // Evitamos que la UI falle al hacer un .map()
+      console.error('Error en el hook al cargar las técnicas:', error);
+      setTecnicas([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. Crear una nueva técnica/servicio
   const handleCreate = async (tecnicaData) => {
     try {
       await tecnicasRepository.create(tecnicaData);
-      await fetchTecnicas(); // Recarga limpia de la tabla tras crear con éxito
+      await fetchTecnicas();
     } catch (error) {
-      console.error("Error en el hook al crear la técnica:", error);
-      throw error; // Lo lanzamos para que el modal del formulario pueda capturar el mensaje y mostrarlo en un alert/toast
+      console.error('Error en el hook al crear la técnica:', error);
+      throw error;
     }
   };
 
-  // 3. Editar una técnica/servicio existente
   const handleUpdate = async (id, updatedData) => {
     try {
       await tecnicasRepository.update(id, updatedData);
-      await fetchTecnicas(); // Refresca los cambios en la UI de inmediato
+      await fetchTecnicas();
     } catch (error) {
       console.error(`Error en el hook al actualizar la técnica #${id}:`, error);
       throw error;
     }
   };
 
-  // 4. Desactivar lógicamente una técnica (Borrado lógico)
+  // Desactivación lógica: DELETE /:id
   const handleDelete = async (id) => {
     try {
       await tecnicasRepository.delete(id);
-      await fetchTecnicas(); // Refresca el estado en la tabla (pasará de activo a inactivo o desaparecerá según tus filtros)
+      await fetchTecnicas();
     } catch (error) {
       console.error(`Error en el hook al desactivar la técnica #${id}:`, error);
       throw error;
     }
   };
 
-  // 5. Efecto para escuchar la barra de búsqueda en tiempo real
+  // Eliminación permanente: DELETE /:id/eliminar
+  const handleHardDelete = async (id) => {
+    try {
+      await tecnicasRepository.hardDelete(id);
+      await fetchTecnicas();
+    } catch (error) {
+      console.error(`Error en el hook al eliminar la técnica #${id}:`, error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchTecnicas();
-  }, [filters.search]); // Si el usuario escribe en el input 'search', se dispara la petición al endpoint de búsqueda parcial
+  }, [filters.search]);
 
   return {
     tecnicas,
@@ -65,6 +71,7 @@ export const useTecnicas = (filters = {}) => {
     handleCreate,
     handleUpdate,
     handleDelete,
-    refreshTecnicas: fetchTecnicas
+    handleHardDelete,
+    refreshTecnicas: fetchTecnicas,
   };
 };

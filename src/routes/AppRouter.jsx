@@ -9,7 +9,7 @@ import LoginPage from '../modules/auth/pages/LoginPage';
 import RegisterPage from '../modules/auth/pages/RegisterPage';
 import DashboardPage from '../modules/dashboard/pages/DashboardPage';
 import RolesPage from '../modules/configuration/pages/RolesPage';
-import UsersPage from '../modules/users/pages/UsersPage';
+import { UsersPage } from '../modules/users/pages/UsersPage.jsx';
 import EmployeesPage from '../modules/users/pages/EmployeesPage';
 import AccessPage from '../modules/users/pages/AccessPage';
 import ClientsPage from '../modules/users/pages/ClientsPage';

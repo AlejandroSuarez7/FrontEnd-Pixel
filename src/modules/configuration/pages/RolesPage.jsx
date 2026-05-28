@@ -6,7 +6,7 @@ import styles from '../roles/presentation/roles.module.css';
 
 const RolesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { roles, loading, handleCreate, handleUpdate, handleDelete } = useRoles({ search: searchTerm });
+  const { roles, loading, handleCreate, handleUpdate, handleHardDelete } = useRoles({ search: searchTerm });
 
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
@@ -25,9 +25,11 @@ const RolesPage = () => {
     setIsModalOpen(true);
   };
 
-  const onToggleEstadoClick = (id, nombre) => {
-    if (window.confirm(`¿Estás seguro de que deseas alternar el estado del rol "${nombre}"?`)) {
-      handleDelete(id);
+  const onHardDeleteClick = (id, nombre) => {
+    if (window.confirm(`¿Eliminar permanentemente el rol "${nombre}"? Esta acción no se puede deshacer.`)) {
+      handleHardDelete(id).catch(err =>
+        alert(err.message || 'No se pudo eliminar el rol.')
+      );
     }
   };
 
@@ -109,6 +111,7 @@ const RolesPage = () => {
                       </span>
                     </td>
                     <td className={styles.actionsCell}>
+
                       <button
                         onClick={() => handleOpenEdit(role)}
                         className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
@@ -119,11 +122,12 @@ const RolesPage = () => {
                       <span className={styles.actionDivider} />
 
                       <button
-                        onClick={() => onToggleEstadoClick(role.id, role.nombre)}
-                        className={`${styles.actionBtn} ${role.estado ? styles.actionBtnDeactivate : styles.actionBtnActivate}`}
+                        onClick={() => onHardDeleteClick(role.id, role.nombre)}
+                        className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
                       >
-                        {role.estado ? 'Desactivar' : 'Activar'}
+                        Eliminar
                       </button>
+
                     </td>
                   </tr>
                 ))}

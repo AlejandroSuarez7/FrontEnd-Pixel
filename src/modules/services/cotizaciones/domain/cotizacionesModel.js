@@ -1,19 +1,21 @@
 // domain/quotesModel.js
 export const createQuote = ({
-  id,
+  idCotizacion,
   idCliente,
   creadoPorId,
   tipoCotizacion = "NORMAL",
-  estado = "SOLICITADA",
+  estado = "PENDIENTE", // Actualizado al nuevo enum del backend
   subtotal = 0,
   costosAdicionales = 0,
   total = 0,
   observaciones = "",
   fechaCreacion,
+  cliente,
+  creadoPor,
   detalles = []
 }) => {
   return {
-    id,
+    idCotizacion, // Usamos la propiedad exacta del backend
     idCliente,
     creadoPorId,
     tipoCotizacion,
@@ -23,32 +25,36 @@ export const createQuote = ({
     total: Number(total),
     observaciones: observaciones || "",
     fechaCreacion,
-    detalles // Sub-arreglo con los ítems de producción
+    cliente,
+    creadoPor,
+    detalles
   };
 };
 
 export const createQuoteDetail = ({
-  idDetalle,
+  idDetalleCotizacion,
   idCotizacion,
   idTecnica,
   descripcion,
   cantidad = 1,
-  precioUnitario = 0,
+  precioUnitario = null, // Puede ser null inicialmente en el backend
   costoDiseno = 0,
-  subtotal = 0,
+  subtotal = null,
   imagenReferencia = "",
-  observaciones = ""
+  observaciones = "",
+  tecnica
 }) => {
   return {
-    idDetalle,
+    idDetalleCotizacion, // Exactamente como Prisma select
     idCotizacion,
     idTecnica,
     descripcion,
     cantidad: parseInt(cantidad, 10),
-    precioUnitario: Number(precioUnitario || 0),
+    precioUnitario: precioUnitario !== null ? Number(precioUnitario) : null,
     costoDiseno: Number(costoDiseno || 0),
-    subtotal: Number(subtotal || 0),
+    subtotal: subtotal !== null ? Number(subtotal) : null,
     imagenReferencia: imagenReferencia || "",
-    observaciones: observaciones || ""
+    observaciones: observaciones || "",
+    tecnica
   };
 };

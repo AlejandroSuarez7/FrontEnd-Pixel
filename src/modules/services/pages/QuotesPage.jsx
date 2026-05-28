@@ -3,22 +3,29 @@ import React, { useState } from 'react';
 import { useQuotes } from '../cotizaciones/application/useQuotes';
 import { QuoteFormModal } from '../cotizaciones/presentation/QuoteFormModal';
 import { QuoteDetailsModal } from '../cotizaciones/presentation/QuoteDetailsModal';
+import styles from '../cotizaciones/presentation/quotes.module.css';
 
 const QuotesPage = () => {
-  // Lee el usuario guardado en localStorage después del login
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
+  const session  = JSON.parse(localStorage.getItem('pixel_user') || '{}');
   const userRole = session?.rol?.nombre || 'Cliente';
+  const isStaff  = userRole === 'Admin' || userRole === 'Secretaria';
 
   const [searchTerm, setSearchTerm] = useState('');
-  const { quotes, loading, handleCreate, handleUpdate, handleApprove, handleReject, handleCancel } = useQuotes({ search: searchTerm });
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const {
+    quotes,
+    loading,
+    handleCreate,
+    handleUpdate,
+    handleApprove,
+    handleCancel,
+  } = useQuotes({ search: searchTerm });
+
+  const [isModalOpen, setIsModalOpen]     = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
 
+  const [isDetailsOpen, setIsDetailsOpen]                     = useState(false);
   const [selectedQuoteForDetails, setSelectedQuoteForDetails] = useState(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
-  const isStaff = userRole === "Admin" || userRole === "Secretaria";
 
   const handleOpenCreate = () => {
     setSelectedQuote(null);
@@ -30,143 +37,201 @@ const QuotesPage = () => {
     setIsModalOpen(true);
   };
 
+  const handleSubmitForm = async (payload) => {
+    if (selectedQuote) {
+      await handleUpdate(selectedQuote.idCotizacion, payload, isStaff);
+    } else {
+      await handleCreate(payload, isStaff);
+    }
+    setIsModalOpen(false);
+  };
+
+  // Solo existen PENDIENTE, APROBADA y ANULADA en el backend.
+  // Dentro de PENDIENTE distinguimos si ya tiene precios (total > 0) para mostrar badge distinto.
+  const getStatusLabel = (quote) => {
+    if (quote.estado === 'PENDIENTE' && Number(quote.total) > 0) return 'POR APROBAR';
+    return quote.estado;
+  };
+
+  const getStatusClass = (quote) => {
+    if (quote.estado === 'PENDIENTE' && Number(quote.total) > 0) return styles.statusCotizada;
+    switch (quote.estado) {
+      case 'PENDIENTE': return styles.statusPendiente;
+      case 'APROBADA':  return styles.statusAprobada;
+      case 'ANULADA':   return styles.statusAnulada;
+      default:          return '';
+    }
+  };
+
+  // Una cotización PENDIENTE es editable por el Staff siempre.
+  // El cliente solo puede editar si todavía no tiene precios (total === 0).
+  const canBePricedOrEdited = (quote) => {
+    if (quote.estado !== 'PENDIENTE') return false;
+    if (isStaff) return true;
+    return Number(quote.total) === 0;
+  };
+
+  // Solo el cliente puede aprobar, y solo cuando ya tiene precios asignados (total > 0).
+  const canBeApproved = (quote) => {
+    return !isStaff && quote.estado === 'PENDIENTE' && Number(quote.total) > 0;
+  };
+
+  // Solo se puede anular si está PENDIENTE.
+  const canBeCancelled = (quote) => quote.estado === 'PENDIENTE';
+
   return (
-    <div style={styles.pageContainer}>
-      <div style={styles.header}>
+    <div className={styles.pageContainer}>
+
+      {/* HEADER */}
+      <div className={styles.headerWrapper}>
         <div>
-          <h1 style={styles.title}>Módulo de Cotizaciones</h1>
-          <p style={styles.subtitle}>Seguimiento de pedidos, asignación de presupuestos y técnicas de estampado.</p>
+          <span className={styles.breadcrumb}>Servicios / Cotizaciones</span>
+          <h1 className={styles.pageTitle}>Gestión de Cotizaciones</h1>
+          <p className={styles.pageSubtitle}>
+            {isStaff
+              ? 'Administra, cotiza y gestiona las solicitudes de los clientes.'
+              : 'Solicita nuevas cotizaciones y revisa el estado de tus pedidos.'}
+          </p>
         </div>
-        <button onClick={handleOpenCreate} style={styles.createBtn}>
-          📋 {isStaff ? "Nueva Cotización Presencial" : "Solicitar Nueva Cotización"}
+        <button onClick={handleOpenCreate} className={styles.primaryButton}>
+          {isStaff ? 'Nueva cotización presencial' : 'Solicitar cotización'}
         </button>
       </div>
 
-      <div style={styles.filterSection}>
+      {/* BUSCADOR */}
+      <div className={styles.filterSection}>
         <input
           type="text"
-          placeholder="🔍 Buscar cotizaciones por ID u observaciones..."
+          placeholder="Buscar por cliente, descripción..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={styles.searchInput}
+          onChange={e => setSearchTerm(e.target.value)}
+          className={styles.searchInput}
         />
       </div>
 
-      <div style={styles.tableCard}>
+      {/* TABLA */}
+      <div className={styles.tableContainer}>
         {loading ? (
-          <p style={styles.loadingText}>Cargando registros del servidor...</p>
+          <p className={styles.loadingText}>Cargando cotizaciones...</p>
         ) : quotes.length === 0 ? (
-          <p style={styles.emptyText}>No se registran cotizaciones actualmente.</p>
+          <p className={styles.loadingText}>No se encontraron cotizaciones.</p>
         ) : (
-          <table style={styles.table}>
-            <thead>
-              <tr style={styles.tableHeadRow}>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Tipo</th>
-                <th style={styles.th}>Total</th>
-                <th style={styles.th}>Estado</th>
-                <th style={styles.th}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quotes.map((quote) => (
-                <tr key={quote.id} style={styles.tableBodyRow}>
-                  <td style={styles.td}><strong>#{quote.id}</strong></td>
-                  <td style={styles.td}>{quote.tipoCotizacion}</td>
-                  <td style={styles.td}>
-                    {quote.total > 0 ? `$${quote.total.toLocaleString('es-CO')}` : <em style={{ color: '#8f9bb3' }}>Por cotizar</em>}
-                  </td>
-                  <td style={styles.td}>
-                    <span style={{
-                      ...styles.statusBadge,
-                      backgroundColor:
-                        quote.estado === 'APROBADA' ? '#e3fcef' :
-                        quote.estado === 'SOLICITADA' ? '#eef2f5' :
-                        quote.estado === 'COTIZADA' ? '#e2f0ff' : '#ffe2e6',
-                      color:
-                        quote.estado === 'APROBADA' ? '#2bc475' :
-                        quote.estado === 'SOLICITADA' ? '#4f5e74' :
-                        quote.estado === 'COTIZADA' ? '#276cf2' : '#ff3d71'
-                    }}>
-                      {quote.estado}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    {/* Botones contextuales de CLIENTE */}
-                    {!isStaff && quote.estado === 'SOLICITADA' && (
-                      <button onClick={() => handleOpenEditOrPrice(quote)} style={{ ...styles.actionBtn, color: '#e3a100' }}>✏️ Editar</button>
-                    )}
-                    {!isStaff && quote.estado === 'COTIZADA' && (
-                      <>
-                        <button onClick={() => handleApprove(quote.id)} style={{ ...styles.actionBtn, color: '#2bc475' }}>✅ Aprobar</button>
-                        <button onClick={() => handleReject(quote.id)} style={{ ...styles.actionBtn, color: '#ff3d71', marginLeft: '10px' }}>❌ Rechazar</button>
-                      </>
-                    )}
-                    {quote.estado !== 'ANULADA' && quote.estado !== 'RECHAZADA' && quote.estado !== 'APROBADA' && (
-                      <button onClick={() => handleCancel(quote.id)} style={{ ...styles.actionBtn, color: '#ff3d71', marginLeft: '10px' }}>🚫 Anular</button>
-                    )}
-
-                    {/* Botones contextuales de EMPLEADO */}
-                    {isStaff && quote.estado === 'SOLICITADA' && (
-                      <button onClick={() => handleOpenEditOrPrice(quote)} style={{ ...styles.actionBtn, color: '#276cf2' }}>💰 Cotizar Precios</button>
-                    )}
-
-                    <button
-                      onClick={() => {
-                        setSelectedQuoteForDetails(quote);
-                        setIsDetailsOpen(true);
-                      }}
-                      style={{ ...styles.actionBtn, color: '#276cf2', marginLeft: '10px' }}
-                      title="Ver detalles"
-                    >
-                      👁 Ver
-                    </button>
-                  </td>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr className={styles.tableHeadRow}>
+                  <th className={styles.tableHeader}>ID</th>
+                  <th className={styles.tableHeader}>Cliente</th>
+                  <th className={styles.tableHeader}>Tipo</th>
+                  <th className={styles.tableHeader}>Estado</th>
+                  <th className={styles.tableHeader}>Total</th>
+                  <th className={styles.tableHeader}>Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {quotes.map((quote) => (
+                  <tr key={quote.idCotizacion} className={styles.tableBodyRow}>
+
+                    <td className={styles.tableCellId}>#{quote.idCotizacion}</td>
+
+                    <td className={styles.tableCell}>
+                      <span className={styles.clientName}>{quote.cliente?.nombre || 'N/A'}</span>
+                      <span className={styles.clientEmail}>{quote.cliente?.correo || ''}</span>
+                    </td>
+
+                    <td className={styles.tableCell}>
+                      <span className={styles.typeBadge}>{quote.tipoCotizacion}</span>
+                    </td>
+
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.statusBadge} ${getStatusClass(quote)}`}>
+                        {getStatusLabel(quote)}
+                      </span>
+                    </td>
+
+                    <td className={styles.tableCell}>
+                      <strong className={styles.totalPrice}>
+                        {Number(quote.total) > 0
+                          ? `$${Number(quote.total).toLocaleString('es-CO')}`
+                          : <span className={styles.tableCellMuted}>Por cotizar</span>
+                        }
+                      </strong>
+                    </td>
+
+                    <td className={styles.actionsCell}>
+
+                      {/* Cotizar (Staff) / Editar solicitud (Cliente sin precios aún) */}
+                      {canBePricedOrEdited(quote) && (
+                        <>
+                          <button
+                            onClick={() => handleOpenEditOrPrice(quote)}
+                            className={`${styles.actionBtn} ${isStaff ? styles.actionBtnPrice : styles.actionBtnEdit}`}
+                          >
+                            {isStaff && Number(quote.total) === 0 ? 'Cotizar' : 'Editar'}
+                          </button>
+                          <span className={styles.actionDivider} />
+                        </>
+                      )}
+
+                      {/* Aprobar — solo Cliente cuando ya tiene precios */}
+                      {canBeApproved(quote) && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(quote.idCotizacion)}
+                            className={`${styles.actionBtn} ${styles.actionBtnApprove}`}
+                          >
+                            Aprobar
+                          </button>
+                          <span className={styles.actionDivider} />
+                        </>
+                      )}
+
+                      {/* Anular — solo mientras esté PENDIENTE */}
+                      {canBeCancelled(quote) && (
+                        <>
+                          <button
+                            onClick={() => handleCancel(quote.idCotizacion)}
+                            className={`${styles.actionBtn} ${styles.actionBtnCancel}`}
+                          >
+                            Anular
+                          </button>
+                          <span className={styles.actionDivider} />
+                        </>
+                      )}
+
+                      {/* Ver detalles — siempre visible */}
+                      <button
+                        onClick={() => { setSelectedQuoteForDetails(quote); setIsDetailsOpen(true); }}
+                        className={`${styles.actionBtn} ${styles.actionBtnView}`}
+                      >
+                        Ver
+                      </button>
+
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
+      {/* MODALES */}
       <QuoteFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={selectedQuote ? handleUpdate : handleCreate}
+        onClose={() => { setIsModalOpen(false); setSelectedQuote(null); }}
+        onSubmit={handleSubmitForm}
         quote={selectedQuote}
         isStaff={isStaff}
       />
 
       <QuoteDetailsModal
         isOpen={isDetailsOpen}
-        onClose={() => {
-          setIsDetailsOpen(false);
-          setSelectedQuoteForDetails(null);
-        }}
+        onClose={() => { setIsDetailsOpen(false); setSelectedQuoteForDetails(null); }}
         quote={selectedQuoteForDetails}
       />
     </div>
   );
-};
-
-const styles = {
-  pageContainer: { padding: '24px', backgroundColor: '#f7f9fc', minHeight: '100vh' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
-  title: { margin: 0, fontSize: '26px', color: '#222b45', fontWeight: '800' },
-  subtitle: { margin: '4px 0 0 0', fontSize: '14px', color: '#8f9bb3' },
-  createBtn: { padding: '10px 20px', backgroundColor: '#276cf2', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' },
-  filterSection: { marginBottom: '16px' },
-  searchInput: { width: '100%', maxWidth: '400px', padding: '12px 16px', borderRadius: '8px', border: '1px solid #edf1f7' },
-  tableCard: { backgroundColor: '#fff', borderRadius: '12px', padding: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.03)' },
-  table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
-  tableHeadRow: { borderBottom: '2px solid #edf1f7' },
-  th: { padding: '12px 16px', fontSize: '13px', color: '#8f9bb3', fontWeight: '700' },
-  tableBodyRow: { borderBottom: '1px solid #edf1f7' },
-  td: { padding: '14px 16px', fontSize: '14px', color: '#222b45' },
-  statusBadge: { padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '700' },
-  actionBtn: { background: 'none', border: 'none', fontWeight: '600', fontSize: '13px', cursor: 'pointer' },
-  loadingText: { textAlign: 'center', color: '#8f9bb3', padding: '24px' },
-  emptyText: { textAlign: 'center', color: '#8f9bb3', padding: '24px' }
 };
 
 export default QuotesPage;

@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import styles from './services.module.css';
 
 export const ServiceFormModal = ({ isOpen, onClose, onSubmit, service }) => {
-  const [nombre, setNombre]         = useState('');
+  const [nombre, setNombre]           = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [estado, setEstado]         = useState(true);
+  const [estado, setEstado]           = useState(true);
 
   const isEditMode = !!service;
 
@@ -75,16 +75,20 @@ export const ServiceFormModal = ({ isOpen, onClose, onSubmit, service }) => {
           </div>
 
           {isEditMode && (
-            <div className={styles.checkboxGroup}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={estado}
-                  onChange={e => setEstado(e.target.checked)}
-                  className={styles.checkboxField}
-                />
-                Servicio habilitado / activo
-              </label>
+            <div className={styles.switchGroup}>
+              <span className={styles.switchLabel}>Estado del servicio</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={estado}
+                onClick={() => setEstado(prev => !prev)}
+                className={`${styles.switchTrack} ${estado ? styles.switchTrackOn : styles.switchTrackOff}`}
+              >
+                <span className={`${styles.switchThumb} ${estado ? styles.switchThumbOn : styles.switchThumbOff}`} />
+              </button>
+              <span className={`${styles.switchStatus} ${estado ? styles.switchStatusOn : styles.switchStatusOff}`}>
+                {estado ? 'Activo' : 'Inactivo'}
+              </span>
             </div>
           )}
 
