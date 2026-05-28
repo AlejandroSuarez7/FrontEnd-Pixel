@@ -1,3 +1,4 @@
+// presentation/UserFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../../core/services/apiService';
 import styles from './users.module.css';
@@ -17,7 +18,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
 
   const isEditing = !!user;
 
-  // Carga roles al abrir el modal
+  // Carga roles dinámicamente desde la API
   useEffect(() => {
     if (isOpen) {
       setLoadingRoles(true);
@@ -32,7 +33,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
     }
   }, [isOpen]);
 
-  // Precarga datos del usuario al editar
+  // Precarga los campos con los datos del usuario al editar
   useEffect(() => {
     if (user) {
       setNombre(user.nombre || '');
@@ -42,11 +43,16 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
       setDireccion(user.direccion || '');
       setIdRol(user.idRol || '');
       setEstado(user.estado ?? true);
-      setContrasena('');
+      setContrasena(''); // Siempre vacía al abrir en edición
     } else {
-      setNombre(''); setDocumento(''); setCorreo('');
-      setTelefono(''); setDireccion(''); setIdRol('');
-      setContrasena(''); setEstado(true);
+      setNombre('');
+      setDocumento('');
+      setCorreo('');
+      setTelefono('');
+      setDireccion('');
+      setIdRol('');
+      setContrasena('');
+      setEstado(true);
     }
   }, [user, isOpen]);
 
@@ -64,14 +70,15 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
         idRol:     Number(idRol),
         estado:    Boolean(estado),
       };
-      if (contrasena) payload.contrasena = contrasena;
 
-      if (isEditing) {
-        await onSubmit(user.id, payload);
-      } else {
-        await onSubmit(payload);
+      // Solo incluir contraseña si se escribió algo
+      if (contrasena.trim()) {
+        payload.contrasena = contrasena;
       }
-      onClose();
+
+      // onSubmit es la función unificada de la página (handleSubmitForm)
+      // que ya maneja internamente si es create o update
+      await onSubmit(payload);
     } catch (error) {
       alert(error.message || 'Error al procesar el usuario.');
     }
@@ -83,14 +90,14 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
 
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>
-            {isEditing ? 'Actualizar usuario' : 'Registrar nuevo usuario'}
+            {isEditing ? `Editar usuario · ${user.nombre}` : 'Registrar nuevo usuario'}
           </h3>
           <button type="button" onClick={onClose} className={styles.modalCloseBtn}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
 
-          {/* Nombre completo */}
+          {/* Nombre */}
           <div className={styles.inputGroup}>
             <label className={styles.inputLabel}>Nombre completo *</label>
             <input
@@ -98,6 +105,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
               value={nombre}
               onChange={e => setNombre(e.target.value)}
               className={styles.inputField}
+              placeholder="Ej: Juan Carlos Pérez"
               required
             />
           </div>
@@ -111,6 +119,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
                 value={correo}
                 onChange={e => setCorreo(e.target.value)}
                 className={styles.inputField}
+                placeholder="correo@ejemplo.com"
                 required
               />
             </div>
@@ -121,6 +130,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
                 value={documento}
                 onChange={e => setDocumento(e.target.value)}
                 className={styles.inputField}
+                placeholder="Ej: 1234567890"
               />
             </div>
           </div>
@@ -134,6 +144,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
                 value={telefono}
                 onChange={e => setTelefono(e.target.value)}
                 className={styles.inputField}
+                placeholder="Ej: 3001234567"
               />
             </div>
             <div className={styles.inputGroup}>
@@ -145,9 +156,13 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
                 required
                 disabled={loadingRoles}
               >
-                <option value="">— Selecciona un rol —</option>
+                <option value="">
+                  {loadingRoles ? 'Cargando roles...' : '— Selecciona un rol —'}
+                </option>
                 {roles.map(rol => (
-                  <option key={rol.idRol} value={rol.idRol}>{rol.nombre}</option>
+                  <option key={rol.idRol} value={rol.idRol}>
+                    {rol.nombre}
+                  </option>
                 ))}
               </select>
             </div>
@@ -161,10 +176,11 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
               value={direccion}
               onChange={e => setDireccion(e.target.value)}
               className={styles.inputField}
+              placeholder="Ej: Calle 123 # 45-67"
             />
           </div>
 
-          {/* Contraseña + Estado */}
+          {/* Contraseña + Estado (estado solo en edición) */}
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>
@@ -176,14 +192,14 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
                 onChange={e => setContrasena(e.target.value)}
                 className={styles.inputField}
                 required={!isEditing}
-                placeholder={isEditing ? 'Dejar vacío para no cambiar' : ''}
+                placeholder={isEditing ? 'Dejar vacío para no cambiar' : 'Mínimo 6 caracteres'}
               />
             </div>
             {isEditing && (
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Estado de cuenta</label>
                 <select
-                  value={estado}
+                  value={String(estado)}
                   onChange={e => setEstado(e.target.value === 'true')}
                   className={styles.selectField}
                 >

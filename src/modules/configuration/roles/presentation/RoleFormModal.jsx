@@ -77,17 +77,21 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
           </div>
 
           {isEditMode && (
-            <div className={styles.checkboxGroup}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={estado}
-                  onChange={e => setEstado(e.target.checked)}
-                  className={styles.checkboxField}
-                  disabled={role.nombre === 'Admin'}
-                />
-                Rol habilitado (permitir asignación a usuarios)
-              </label>
+            <div className={styles.switchGroup}>
+              <span className={styles.switchLabel}>Estado del rol</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={estado}
+                disabled={role.nombre === 'Admin'}
+                onClick={() => setEstado(prev => !prev)}
+                className={`${styles.switchTrack} ${estado ? styles.switchTrackOn : styles.switchTrackOff} ${role.nombre === 'Admin' ? styles.switchDisabled : ''}`}
+              >
+                <span className={`${styles.switchThumb} ${estado ? styles.switchThumbOn : styles.switchThumbOff}`} />
+              </button>
+              <span className={`${styles.switchStatus} ${estado ? styles.switchStatusOn : styles.switchStatusOff}`}>
+                {estado ? 'Activo' : 'Inactivo'}
+              </span>
             </div>
           )}
 

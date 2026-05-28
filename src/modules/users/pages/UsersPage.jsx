@@ -1,3 +1,4 @@
+// presentation/pages/UsersPage.jsx
 import React, { useState } from 'react';
 import { useUsers } from '../application/useUsers';
 import { UserFormModal } from '../presentation/UserFormModal';
@@ -5,7 +6,15 @@ import styles from '../presentation/users.module.css';
 
 export const UsersPage = () => {
   const [filters, setFilters] = useState({ search: '', idRol: '' });
-  const { users, loading, handleToggleStatus, handleCreate, handleUpdate } = useUsers(filters);
+
+  const {
+    users,
+    loading,
+    handleCreate,
+    handleUpdate,
+    handleToggleStatus,
+    handleHardDelete,
+  } = useUsers(filters);
 
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -23,6 +32,26 @@ export const UsersPage = () => {
     setSelectedUser(user);
     setIsModalOpen(true);
   };
+
+  // onSubmit unificado: el modal no necesita saber el ID por separado
+  const handleSubmitForm = async (payload) => {
+    if (selectedUser) {
+      await handleUpdate(selectedUser.id, payload);
+    } else {
+      await handleCreate(payload);
+    }
+    setIsModalOpen(false);
+  };
+
+  const onEliminarClick = (id, nombre) => {
+    if (window.confirm(
+      `¿Estás seguro de que deseas ELIMINAR permanentemente al usuario "${nombre}"?\n\nEsta acción no se puede deshacer.`
+    )) {
+      handleHardDelete(id).catch(err => alert(err.message));
+    }
+  };
+
+  const isAdmin = (user) => user.nombreRol === 'Admin' || user.nombreRol === 'Administrador';
 
   return (
     <div className={styles.pageContainer}>
@@ -117,6 +146,7 @@ export const UsersPage = () => {
                         </span>
                       </td>
                       <td className={styles.actionsCell}>
+
                         <button
                           onClick={() => handleOpenEdit(user)}
                           className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
@@ -124,14 +154,18 @@ export const UsersPage = () => {
                           Editar
                         </button>
 
-                        <span className={styles.actionDivider} />
+                        {!isAdmin(user) && (
+                          <>
+                            <span className={styles.actionDivider} />
+                            <button
+                              onClick={() => onEliminarClick(user.id, user.nombre)}
+                              className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
+                            >
+                              Eliminar
+                            </button>
+                          </>
+                        )}
 
-                        <button
-                          onClick={() => handleToggleStatus(user.id)}
-                          className={`${styles.actionBtn} ${user.estado ? styles.actionBtnDeactivate : styles.actionBtnActivate}`}
-                        >
-                          {user.estado ? 'Desactivar' : 'Activar'}
-                        </button>
                       </td>
                     </tr>
                   ))
@@ -145,8 +179,8 @@ export const UsersPage = () => {
       {/* MODAL */}
       <UserFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={selectedUser ? handleUpdate : handleCreate}
+        onClose={() => { setIsModalOpen(false); setSelectedUser(null); }}
+        onSubmit={handleSubmitForm}
         user={selectedUser}
       />
     </div>

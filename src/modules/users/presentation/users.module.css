@@ -499,3 +499,13 @@
   background-color: var(--color-bg);
   color: var(--color-text-primary);
 }
+/* ── Botón eliminar permanente ── */
+.actionBtnDelete {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.actionBtnDelete:hover {
+  background-color: var(--color-danger-bg);
+  text-decoration: underline;
+}

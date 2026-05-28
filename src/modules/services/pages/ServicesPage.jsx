@@ -7,10 +7,16 @@ import styles from '../tecnicas/presentation/services.module.css';
 
 const ServicesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { tecnicas, loading, handleCreate, handleUpdate, handleDelete } = useTecnicas({ search: searchTerm });
+  const {
+    tecnicas,
+    loading,
+    handleCreate,
+    handleUpdate,
+    handleHardDelete,
+  } = useTecnicas({ search: searchTerm });
 
-  const [isFormOpen, setIsFormOpen]       = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen]           = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen]     = useState(false);
   const [selectedService, setSelectedService] = useState(null);
 
   const totalServices    = tecnicas.length;
@@ -32,9 +38,11 @@ const ServicesPage = () => {
     setIsDetailsOpen(true);
   };
 
-  const onAlternarClick = (id, nombre) => {
-    if (window.confirm(`¿Estás seguro de que deseas cambiar el estado del servicio "${nombre}"?`)) {
-      handleDelete(id);
+  const onEliminarClick = (id, nombre) => {
+    if (window.confirm(
+      `¿Eliminar permanentemente el servicio "${nombre}"?\n\nEsta acción no se puede deshacer.`
+    )) {
+      handleHardDelete(id).catch(err => alert(err.message));
     }
   };
 
@@ -116,6 +124,7 @@ const ServicesPage = () => {
                       </span>
                     </td>
                     <td className={styles.actionsCell}>
+
                       <button
                         onClick={() => handleOpenDetails(service)}
                         className={`${styles.actionBtn} ${styles.actionBtnView}`}
@@ -135,11 +144,12 @@ const ServicesPage = () => {
                       <span className={styles.actionDivider} />
 
                       <button
-                        onClick={() => onAlternarClick(service.id, service.nombre)}
-                        className={`${styles.actionBtn} ${styles.actionBtnToggle}`}
+                        onClick={() => onEliminarClick(service.id, service.nombre)}
+                        className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
                       >
-                        Alternar estado
+                        Eliminar
                       </button>
+
                     </td>
                   </tr>
                 ))}

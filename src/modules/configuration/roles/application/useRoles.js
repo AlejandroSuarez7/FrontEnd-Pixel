@@ -39,6 +39,7 @@ export const useRoles = (filters = {}) => {
     }
   };
 
+  // Desactiva/activa lógicamente el rol
   const handleDelete = async (id) => {
     try {
       await rolesRepository.delete(id);
@@ -49,7 +50,17 @@ export const useRoles = (filters = {}) => {
     }
   };
 
-  // Reacciona automáticamente cada que el buscador cambie su texto
+  // Elimina físicamente el rol de la base de datos
+  const handleHardDelete = async (id) => {
+    try {
+      await rolesRepository.hardDelete(id);
+      await fetchRoles();
+    } catch (error) {
+      console.error(`Error en useRoles al eliminar #${id}:`, error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchRoles();
   }, [filters.search]);
@@ -60,6 +71,7 @@ export const useRoles = (filters = {}) => {
     handleCreate,
     handleUpdate,
     handleDelete,
-    refreshRoles: fetchRoles
+    handleHardDelete,
+    refreshRoles: fetchRoles,
   };
 };
