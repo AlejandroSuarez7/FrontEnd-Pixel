@@ -99,7 +99,9 @@ const Sidebar = () => {
             onClick={() => setCollapsed(!collapsed)}
             aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
           >
-            {collapsed ? '»' : '«'}
+            <span className="material-symbols-outlined sidebar-toggle-icon">
+              {collapsed ? 'menu' : 'close'}
+            </span>
           </button>
         </div>
 

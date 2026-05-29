@@ -46,69 +46,83 @@ const RegisterPage = () => {
 
   return (
     <div className="register-container">
-      <div className="register-card">
-        <h1>PIXEL</h1>
-        <h2>Registrarse</h2>
+      <div className="auth-split">
+        <div className="auth-form-panel">
+          <div className="register-card">
+            <span className="auth-badge"><div className="logo-forms">PIXEL</div></span>
+            <h2>Registrarse</h2>
 
-        {error && <div className="error-message">{error}</div>}
+            {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="name">Nombre</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="name">Nombre</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email">Correo Electrónico</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="password">Contraseña</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? 'Registrando...' : 'Registrarse'}
+              </button>
+
+              <button type="button" className="btn-secondary" onClick={() => navigate('/')}>Seguir explorando</button>
+            </form>
+
+            <p className="login-link">
+              ¿Ya tienes cuenta? <a href="/login">Iniciar Sesión</a>
+            </p>
           </div>
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Correo Electrónico</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+        <div className="auth-image-panel">
+          <div className="auth-image-content">
+            
+            <h3>Comienza tu viaje</h3>
+            <p>Regístrate y lleva tu control de proyectos al siguiente nivel.</p>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirmar Contraseña</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Registrando...' : 'Registrarse'}
-          </button>
-        </form>
-
-        <p className="login-link">
-          ¿Ya tienes cuenta? <a href="/login">Iniciar Sesión</a>
-        </p>
+        </div>
       </div>
     </div>
   );
