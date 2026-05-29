@@ -10,8 +10,15 @@ import {
   Printer,
   Mail,
   Phone,
-  MapPin
+  MapPin,
 } from "lucide-react";
+import {
+  FaInstagram,
+  FaFacebookF,
+  FaTwitter,
+  FaYoutube,
+} from "react-icons/fa";
+
 const LandingPage = () => {
   return (
     <div>
@@ -885,9 +892,10 @@ const LandingPage = () => {
             para diseños vibrantes y duraderos.
           </p>
 
-          <button className="product-btn">
+          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
+            <FaInstagram className="footer-social-icon" />
             Cotizar en Instagram
-          </button>
+          </a>
 
         </div>
 
@@ -921,9 +929,10 @@ const LandingPage = () => {
             con acabados profesionales y colores sólidos.
           </p>
 
-          <button className="product-btn">
+          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
+            <FaInstagram className="footer-social-icon" />
             Cotizar en Instagram
-          </button>
+          </a>
 
         </div>
 
@@ -957,9 +966,10 @@ const LandingPage = () => {
             madera, plástico, vidrio y más.
           </p>
 
-          <button className="product-btn">
+          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
+            <FaInstagram className="footer-social-icon" />
             Cotizar en Instagram
-          </button>
+          </a>
 
         </div>
 
@@ -993,9 +1003,10 @@ const LandingPage = () => {
             personalizados como mugs, termos y más.
           </p>
 
-          <button className="product-btn">
+          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
+            <FaInstagram className="footer-social-icon" />
             Cotizar en Instagram
-          </button>
+          </a>
 
         </div>
 
@@ -1006,9 +1017,10 @@ const LandingPage = () => {
     {/* BUTTON */}
     <div className="products-action">
 
-      <button className="products-main-btn">
+      <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="products-main-btn">
+        <FaInstagram className="footer-social-icon" />
         Solicitar Cotización en Instagram
-      </button>
+      </a>
 
     </div>
 
@@ -1016,7 +1028,7 @@ const LandingPage = () => {
 
 </section>
 
-<section id="cotizacion" className="contact-section">
+<section id="contacto" className="contact-section">
 
   {/* Background Shapes */}
   <div className="contact-bg-shape contact-shape-1"></div>
@@ -1211,20 +1223,20 @@ const LandingPage = () => {
         {/* Social */}
         <div className="footer-socials">
 
-          <a href="#" className="footer-social-link">
-            <i className="fab fa-instagram"></i>
+          <a href="#" className="footer-social-link" aria-label="Instagram">
+            <FaInstagram className="footer-social-icon" />
           </a>
 
-          <a href="#" className="footer-social-link">
-            <i className="fab fa-facebook-f"></i>
+          <a href="#" className="footer-social-link" aria-label="Facebook">
+            <FaFacebookF className="footer-social-icon" />
           </a>
 
-          <a href="#" className="footer-social-link">
-            <i className="fab fa-twitter"></i>
+          <a href="#" className="footer-social-link" aria-label="Twitter">
+            <FaTwitter className="footer-social-icon" />
           </a>
 
-          <a href="#" className="footer-social-link">
-            <i className="fab fa-youtube"></i>
+          <a href="#" className="footer-social-link" aria-label="YouTube">
+            <FaYoutube className="footer-social-icon" />
           </a>
 
         </div>
@@ -1234,7 +1246,7 @@ const LandingPage = () => {
       {/* Servicios */}
       <div className="footer-column">
 
-        <h4 className="footer-title purple">
+        <h4 className="footer-servicios-tittle">
           Servicios
         </h4>
 
@@ -1263,7 +1275,7 @@ const LandingPage = () => {
       {/* Productos */}
       <div className="footer-column">
 
-        <h4 className="footer-title blue">
+        <h4 className="footer-productos-tittle">
           Productos
         </h4>
 
@@ -1292,7 +1304,7 @@ const LandingPage = () => {
       {/* Empresa */}
       <div className="footer-column">
 
-        <h4 className="footer-title pink">
+        <h4 className="footer-empresa-tittle">
           Empresa
         </h4>
 
@@ -1321,7 +1333,7 @@ const LandingPage = () => {
       {/* Legal */}
       <div className="footer-column">
 
-        <h4 className="footer-title yellow">
+        <h4 className="footer-legal-tittle">
           Legal
         </h4>
 
