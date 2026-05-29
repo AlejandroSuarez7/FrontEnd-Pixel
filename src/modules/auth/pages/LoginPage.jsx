@@ -28,43 +28,57 @@ const LoginPage = () => {
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <h1>PIXEL</h1>
-        <h2>Iniciar Sesión</h2>
+      <div className="auth-split">
+        <div className="auth-form-panel">
+          <div className="login-card">
+            <span className="auth-badge"><div className="logo-forms">PIXEL</div></span>
+            <h2>Iniciar Sesión</h2>
 
-        {error && <div className="error-message">{error}</div>}
+            {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Correo Electrónico</label>
-            <input
-              type="email"
-              id="correo"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              required
-            />
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="email">Correo Electrónico</label>
+                <input
+                  type="email"
+                  id="correo"
+                  value={correo}
+                  onChange={(e) => setCorreo(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="password">Contraseña</label>
+                <input
+                  type="password"
+                  id="contrasena"
+                  value={contrasena}
+                  onChange={(e) => setContrasena(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+              </button>
+
+              <button type="button" className="btn-secondary" onClick={() => navigate('/')}>Seguir explorando</button>
+            </form>
+
+            <p className="register-link">
+              ¿No tienes cuenta? <a href="/register">Registrarse</a>
+            </p>
           </div>
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
-            <input
-              type="password"
-              id="contrasena"
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
-              required
-            />
+        <div className="auth-image-panel">
+          <div className="auth-image-content">
+            
+            <h3>Bienvenido de vuelta</h3>
+            <p>Accede a tu espacio creativo y gestiona tus proyectos con estilo.</p>
           </div>
-
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Ingresando...' : 'Iniciar Sesión'}
-          </button>
-        </form>
-
-        <p className="register-link">
-          ¿No tienes cuenta? <a href="/register">Registrarse</a>
-        </p>
+        </div>
       </div>
     </div>
   );
