@@ -59,12 +59,30 @@ export class QuoteApiRepository {
   }
 
   async approve(idCotizacion) {
-    const { data } = await apiClient.patch(`${ENDPOINT}/${idCotizacion}/aprobar`);
-    return data;
+    try {
+      const { data } = await apiClient.patch(`${ENDPOINT}/${idCotizacion}/aprobar`);
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'No se pudo aprobar la cotización');
+    }
   }
 
   async cancel(idCotizacion) {
-    const { data } = await apiClient.patch(`${ENDPOINT}/${idCotizacion}/anular`);
-    return data;
+    try {
+      const { data } = await apiClient.patch(`${ENDPOINT}/${idCotizacion}/anular`);
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'No se pudo anular la cotización');
+    }
+  }
+
+  // Eliminación permanente: DELETE /:id/eliminar
+  async hardDelete(idCotizacion) {
+    try {
+      const { data } = await apiClient.delete(`${ENDPOINT}/${idCotizacion}/eliminar`);
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'No se pudo eliminar la cotización');
+    }
   }
 }

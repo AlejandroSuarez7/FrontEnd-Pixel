@@ -19,6 +19,7 @@ const QuotesPage = () => {
     handleUpdate,
     handleApprove,
     handleCancel,
+    handleHardDelete,
   } = useQuotes({ search: searchTerm });
 
   const [isModalOpen, setIsModalOpen]     = useState(false);
@@ -53,6 +54,7 @@ const QuotesPage = () => {
     return quote.estado;
   };
 
+
   const getStatusClass = (quote) => {
     if (quote.estado === 'PENDIENTE' && Number(quote.total) > 0) return styles.statusCotizada;
     switch (quote.estado) {
@@ -73,11 +75,37 @@ const QuotesPage = () => {
 
   // Solo el cliente puede aprobar, y solo cuando ya tiene precios asignados (total > 0).
   const canBeApproved = (quote) => {
-    return !isStaff && quote.estado === 'PENDIENTE' && Number(quote.total) > 0;
+    return quote.estado === 'PENDIENTE' && Number(quote.total) > 0;
   };
 
   // Solo se puede anular si está PENDIENTE.
   const canBeCancelled = (quote) => quote.estado === 'PENDIENTE';
+
+  const cotizacionAprobada = (quote) => quote.estado === 'APROBADA';
+
+
+  // Solo Staff puede eliminar permanentemente una cotización
+  const onApproveClick = (idCotizacion) => {
+    if (window.confirm(
+      '¿Estás seguro de que deseas APROBAR esta cotización?\n\nEsta acción generará un pedido de producción y no se puede deshacer.'
+    )) {
+      handleApprove(idCotizacion).catch(err => alert(err.message));
+    }
+  };
+
+  const onCancelClick = (idCotizacion) => {
+    if (window.confirm('¿Estás seguro de que deseas ANULAR esta cotización?')) {
+      handleCancel(idCotizacion).catch(err => alert(err.message));
+    }
+  };
+
+  const onEliminarClick = (idCotizacion) => {
+    if (window.confirm(
+      '¿Estás seguro de que deseas ELIMINAR permanentemente esta cotización?\n\nEsta acción no se puede deshacer.'
+    )) {
+      handleHardDelete(idCotizacion).catch(err => alert(err.message));
+    }
+  };
 
   return (
     <div className={styles.pageContainer}>
@@ -177,7 +205,7 @@ const QuotesPage = () => {
                       {canBeApproved(quote) && (
                         <>
                           <button
-                            onClick={() => handleApprove(quote.idCotizacion)}
+                            onClick={() => onApproveClick(quote.idCotizacion)}
                             className={`${styles.actionBtn} ${styles.actionBtnApprove}`}
                           >
                             Aprobar
@@ -190,10 +218,23 @@ const QuotesPage = () => {
                       {canBeCancelled(quote) && (
                         <>
                           <button
-                            onClick={() => handleCancel(quote.idCotizacion)}
+                            onClick={() => onCancelClick(quote.idCotizacion)}
                             className={`${styles.actionBtn} ${styles.actionBtnCancel}`}
                           >
                             Anular
+                          </button>
+                          <span className={styles.actionDivider} />
+                        </>
+                      )}
+
+                      {/* Eliminar permanente — solo Staff */}
+                      {isStaff && !cotizacionAprobada(quote) && (
+                        <>
+                          <button
+                            onClick={() => onEliminarClick(quote.idCotizacion)}
+                            className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
+                          >
+                            Eliminar
                           </button>
                           <span className={styles.actionDivider} />
                         </>

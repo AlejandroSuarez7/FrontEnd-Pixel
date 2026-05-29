@@ -61,11 +61,10 @@ export const useQuotes = (filters = {}) => {
       await fetchQuotes();
     } catch (error) {
       console.error('Error al aprobar cotización:', error);
-      throw error;
+      throw error; // Relanzamos para que la página muestre el mensaje
     }
   };
 
-  // El backend usa el mismo endpoint /anular tanto para rechazar como anular
   const handleReject = async (idCotizacion) => {
     try {
       await quoteRepository.cancel(idCotizacion);
@@ -86,14 +85,25 @@ export const useQuotes = (filters = {}) => {
     }
   };
 
+  const handleHardDelete = async (idCotizacion) => {
+    try {
+      await quoteRepository.hardDelete(idCotizacion);
+      await fetchQuotes();
+    } catch (error) {
+      console.error('Error al eliminar cotización:', error);
+      throw error;
+    }
+  };
+
   return {
     quotes,
     loading,
-    refetch:       fetchQuotes,
+    refetch:         fetchQuotes,
     handleCreate,
     handleUpdate,
     handleApprove,
     handleReject,
     handleCancel,
+    handleHardDelete,
   };
 };

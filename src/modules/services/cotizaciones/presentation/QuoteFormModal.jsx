@@ -12,6 +12,9 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
   const [clientes, setClientes]               = useState([]);
   const [loadingClientes, setLoadingClientes] = useState(false);
 
+  const [tecnicas, setTecnicas]               = useState([]);
+  const [loadingTecnicas, setLoadingTecnicas] = useState(false);
+
   const isEditing = !!quote;
   const isPricing = isStaff && isEditing;
 
@@ -35,6 +38,24 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
     }
   }, [isOpen, isStaff, isEditing]);
 
+  // Carga técnicas activas cuando el modal está abierto y no es modo pricing
+  useEffect(() => {
+    if (isOpen && !isPricing) {
+      setLoadingTecnicas(true);
+      apiClient
+        .get('api/tecnicas')
+        .then(({ data }) => {
+          const soloActivas = (data.data || []).filter(t => t.estado === true);
+          setTecnicas(soloActivas);
+        })
+        .catch(err => {
+          console.error('Error al cargar técnicas:', err);
+          setTecnicas([]);
+        })
+        .finally(() => setLoadingTecnicas(false));
+    }
+  }, [isOpen, isPricing]);
+
   // Precarga los datos garantizando siempre un único ítem
   useEffect(() => {
     if (quote) {
@@ -46,7 +67,6 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
       setObservaciones('');
       setCostosAdicionales(0);
       setIdCliente('');
-      // Obligatorio: un único detalle vacío por defecto para la creación
       setDetalles([{ idTecnica: '', descripcion: '', cantidad: 1, observaciones: '' }]);
     }
   }, [quote, isOpen]);
@@ -60,20 +80,19 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const payload = {
-      observaciones: observaciones.trim() || null,
-      detalles,
-      ...(isPricing && { costosAdicionales: Number(costosAdicionales || 0) }),
-      ...(isStaff && !isEditing && idCliente && { idCliente: Number(idCliente) }),
-    };
-
-    await onSubmit(payload);
-  } catch (err) {
-    alert(err.message || 'Ocurrió un error al procesar el formulario.');
-  }
-};
+    e.preventDefault();
+    try {
+      const payload = {
+        observaciones: observaciones.trim() || null,
+        detalles,
+        ...(isPricing && { costosAdicionales: Number(costosAdicionales || 0) }),
+        ...(isStaff && !isEditing && idCliente && { idCliente: Number(idCliente) }),
+      };
+      await onSubmit(payload);
+    } catch (err) {
+      alert(err.message || 'Ocurrió un error al procesar el formulario.');
+    }
+  };
 
   const modalTitle = isPricing
     ? `Asignar valores · Cotización #${quote?.idCotizacion}`
@@ -107,7 +126,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
                   className={styles.selectField}
                   required
                 >
-                  <option value="">— Seleccione un usuario —</option>
+                  <option value="">— Seleccione un cliente —</option>
                   {clientes.map(c => (
                     <option key={c.idUsuario} value={c.idUsuario}>
                       {c.nombre} ({c.correo})
@@ -153,18 +172,31 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
             <div className={styles.detailRowsWrapper}>
               {detalles.map((det, idx) => (
                 <div key={det.idDetalleCotizacion || idx} className={styles.detailRow}>
-                  
-                  {/* ID Técnica — Oculto en pricing, requerido al crear/editar */}
+
+                  {/* Dropdown de técnica — Solo visible cuando NO es pricing */}
                   {!isPricing && (
-                    <input
-                      type="number"
-                      placeholder="ID Téc."
-                      value={det.idTecnica || ''}
-                      onChange={e => handleDetailChange(idx, 'idTecnica', e.target.value)}
-                      className={styles.detailRowInputSm}
-                      title="ID de la técnica de personalización"
-                      required
-                    />
+                    <div className={styles.inputGroup} style={{ width: '100%' }}>
+                      <label className={styles.inputLabel}>Técnica de personalización *</label>
+                      {loadingTecnicas ? (
+                        <p className={styles.inlineLoadingText}>Cargando técnicas...</p>
+                      ) : tecnicas.length === 0 ? (
+                        <p className={styles.inlineErrorText}>No hay técnicas activas disponibles.</p>
+                      ) : (
+                        <select
+                          value={det.idTecnica || ''}
+                          onChange={e => handleDetailChange(idx, 'idTecnica', e.target.value)}
+                          className={styles.selectField}
+                          required
+                        >
+                          <option value="">— Seleccione una técnica —</option>
+                          {tecnicas.map(t => (
+                            <option key={t.idTecnica} value={t.idTecnica}>
+                              {t.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   )}
 
                   <input

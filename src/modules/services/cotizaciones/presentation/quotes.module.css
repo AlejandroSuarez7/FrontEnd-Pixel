@@ -748,3 +748,6 @@
   font-weight: 700;
   color: var(--color-text-primary);
 }
+/* Botón eliminar permanente — solo Staff */
+.actionBtnDelete { color: #b91c1c; }
+.actionBtnDelete:hover { background-color: #fef2f2; }
