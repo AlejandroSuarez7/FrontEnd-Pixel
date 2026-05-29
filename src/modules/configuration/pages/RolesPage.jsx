@@ -121,12 +121,16 @@ const RolesPage = () => {
 
                       <span className={styles.actionDivider} />
 
-                      <button
-                        onClick={() => onHardDeleteClick(role.id, role.nombre)}
-                        className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
-                      >
-                        Eliminar
-                      </button>
+                      {role.nombre !== 'Admin' && (
+                        <>
+                          <button
+                            onClick={() => onHardDeleteClick(role.id, role.nombre)}
+                            className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
+                          >
+                            Eliminar
+                          </button>
+                        </>
+                      )}
 
                     </td>
                   </tr>
