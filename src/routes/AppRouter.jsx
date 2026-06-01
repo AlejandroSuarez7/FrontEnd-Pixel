@@ -17,13 +17,11 @@ import ComprasRoute from '../modules/compras/routes/ComprasRoutes.jsx';
 import ProvidersPage from '../modules/purchases/pages/ProvidersPage';
 import SuppliesPage from '../modules/purchases/pages/SuppliesPage';
 import PurchaseCategoriesPage from '../modules/purchases/pages/PurchaseCategoriesPage';
-import SalesRoute from '../modules/sales/routes/SalesRoutes';
 import SalesProductsPage from '../modules/sales/pages/SalesProductsPage';
 import SalesCategoriesPage from '../modules/sales/pages/SalesCategoriesPage';
 import SalesPaymentsPage from '../modules/sales/pages/SalesPaymentsPage';
 import SalesReturnsPage from '../modules/sales/pages/SalesReturnsPage';
-import { OrdersProvider } from '../modules/sales/orders/context/OrdersContext.jsx';
-import OrdersPage from '../modules/sales/orders/pages/OrdersPage.jsx';
+import PedidosPage from '../modules/sales/pages/PedidosPage.jsx';
 import ProductionPage from '../modules/production/pages/ProductionPage';
 import DesignsPage from '../modules/production/pages/DesignsPage';
 import DeliveryPage from '../modules/production/pages/DeliveryPage';
@@ -59,19 +57,11 @@ const AppRouter = () => {
           <Route path={PATHS.PURCHASES_PROVIDERS} element={<ProvidersPage />} />
           <Route path={PATHS.PURCHASES_SUPPLIES} element={<SuppliesPage />} />
           <Route path={PATHS.PURCHASES_CATEGORIES} element={<PurchaseCategoriesPage />} />
-          <Route path={PATHS.SALES} element={<SalesRoute />} />
           <Route path={PATHS.SALES_PRODUCTS} element={<SalesProductsPage />} />
           <Route path={PATHS.SALES_CATEGORIES} element={<SalesCategoriesPage />} />
           <Route path={PATHS.SALES_PAYMENTS} element={<SalesPaymentsPage />} />
           <Route path={PATHS.SALES_RETURNS} element={<SalesReturnsPage />} />
-          <Route
-            path={PATHS.ORDERS}
-            element={
-              <OrdersProvider>
-                <OrdersPage />
-              </OrdersProvider>
-            }
-          />
+          <Route path={PATHS.ORDERS} element={<PedidosPage />}/>
           <Route path={PATHS.PRODUCTION} element={<ProductionPage />} />
           <Route path={PATHS.PRODUCTION_DESIGNS} element={<DesignsPage />} />
           <Route path={PATHS.PRODUCTION_DELIVERY} element={<DeliveryPage />} />
