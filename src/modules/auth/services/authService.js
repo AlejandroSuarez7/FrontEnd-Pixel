@@ -7,26 +7,20 @@ export const authService = {
 
   async login(correo, contrasena) {
     const { data } = await apiClient.post('/api/auth/login', { correo, contrasena });
-
-    // La respuesta esperada: { token: '...', user: { id, name, email, ... } }
-    // Ajusta los campos si el backend devuelve algo distinto
     const { token, usuario } = data.data;
-
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(usuario));
-
     return usuario;
   },
 
+  // Campos requeridos por el backend: nombre, telefono, correo, contrasena
   async register(userData) {
     const { data } = await apiClient.post('/api/auth/register', {
       nombre:     userData.nombre,
-      correo:    userData.correo,
+      telefono:   userData.telefono,
+      correo:     userData.correo,
       contrasena: userData.contrasena,
     });
-
-    // signup normalmente solo confirma el registro, no loguea automáticamente
-    // Si tu API devuelve token aquí también, guárdalo igual que en login
     return data;
   },
 

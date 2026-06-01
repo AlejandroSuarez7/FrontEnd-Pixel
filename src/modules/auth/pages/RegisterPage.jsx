@@ -4,10 +4,11 @@ import { useAuth } from '../../../store/AuthContext';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
-    name:            '',
-    email:           '',
-    password:        '',
-    confirmPassword: '',
+    nombre:              '',
+    telefono:            '',
+    correo:              '',
+    contrasena:          '',
+    confirmarContrasena: '',
   });
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,17 +25,23 @@ const RegisterPage = () => {
     e.preventDefault();
     setError('');
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.contrasena !== formData.confirmarContrasena) {
       setError('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (formData.contrasena.length < 6) {
+      setError('La contraseña debe tener mínimo 6 caracteres');
       return;
     }
 
     setLoading(true);
     try {
       await register({
-        name:     formData.name,
-        email:    formData.email,
-        password: formData.password,
+        nombre:     formData.nombre,
+        telefono:   formData.telefono,
+        correo:     formData.correo,
+        contrasena: formData.contrasena,
       });
       navigate('/login');
     } catch (err) {
@@ -56,49 +63,63 @@ const RegisterPage = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label htmlFor="name">Nombre</label>
+                <label htmlFor="nombre">Nombre completo</label>
                 <input
                   type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
+                  id="nombre"
+                  name="nombre"
+                  value={formData.nombre}
                   onChange={handleChange}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="email">Correo Electrónico</label>
+                <label htmlFor="telefono">Teléfono</label>
+                <input
+                  type="tel"
+                  id="telefono"
+                  name="telefono"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="correo">Correo Electrónico</label>
                 <input
                   type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
+                  id="correo"
+                  name="correo"
+                  value={formData.correo}
                   onChange={handleChange}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="password">Contraseña</label>
+                <label htmlFor="contrasena">Contraseña</label>
                 <input
                   type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
+                  id="contrasena"
+                  name="contrasena"
+                  value={formData.contrasena}
                   onChange={handleChange}
+                  minLength={6}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+                <label htmlFor="confirmarContrasena">Confirmar Contraseña</label>
                 <input
                   type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
+                  id="confirmarContrasena"
+                  name="confirmarContrasena"
+                  value={formData.confirmarContrasena}
                   onChange={handleChange}
+                  minLength={6}
                   required
                 />
               </div>
@@ -107,7 +128,9 @@ const RegisterPage = () => {
                 {loading ? 'Registrando...' : 'Registrarse'}
               </button>
 
-              <button type="button" className="btn-secondary" onClick={() => navigate('/')}>Seguir explorando</button>
+              <button type="button" className="btn-secondary" onClick={() => navigate('/')}>
+                Seguir explorando
+              </button>
             </form>
 
             <p className="login-link">
@@ -118,7 +141,6 @@ const RegisterPage = () => {
 
         <div className="auth-image-panel">
           <div className="auth-image-content">
-            
             <h3>Comienza tu viaje</h3>
             <p>Regístrate y lleva tu control de proyectos al siguiente nivel.</p>
           </div>
