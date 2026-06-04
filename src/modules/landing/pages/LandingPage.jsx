@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
+import { motion } from 'motion/react';
 import {
   Upload,
   Palette,
@@ -125,7 +126,13 @@ const LandingPage = () => {
       className="how-section"
     >
 
-      <div className="how-container">
+      <motion.div
+        className="how-container"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.65, ease: 'easeOut' }}
+      >
 
         {/* Header */}
         <div className="how-header">
@@ -256,7 +263,7 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
     </section>
 
@@ -264,11 +271,17 @@ const LandingPage = () => {
     {/* ===== SERVICES SECTION ===== */}
 
 <section
-  id="servicios"
-  className="services-section"
->
+      id="servicios"
+      className="services-section"
+    >
 
-  <div className="services-container">
+      <motion.div
+        className="services-container"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.65, ease: 'easeOut' }}
+      >
 
     {/* Header */}
     <div className="services-header">
@@ -519,7 +532,7 @@ const LandingPage = () => {
 
     </div>
 
-  </div>
+  </motion.div>
 
 </section>
 
@@ -530,11 +543,17 @@ const LandingPage = () => {
 {/* ===== COMPARATIVO SECTION ===== */}
 
 <section
-  id="comparativo"
-  className="comparative-section"
->
+      id="comparativo"
+      className="comparative-section"
+    >
 
-  <div className="comparative-container">
+      <motion.div
+        className="comparative-container"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.65, ease: 'easeOut' }}
+      >
 
     {/* HEADER */}
     <div className="comparative-header">
@@ -831,7 +850,7 @@ const LandingPage = () => {
 
     </div>
 
-  </div>
+  </motion.div>
 
 </section>
 
@@ -839,11 +858,17 @@ const LandingPage = () => {
 {/* ===== PRODUCTOS SECTION ===== */}
 
 <section
-  id="productos"
-  className="products-section"
->
+      id="productos"
+      className="products-section"
+    >
 
-  <div className="products-container">
+      <motion.div
+        className="products-container"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.65, ease: 'easeOut' }}
+      >
 
     {/* HEADER */}
     <div className="products-header">
@@ -1024,7 +1049,7 @@ const LandingPage = () => {
 
     </div>
 
-  </div>
+  </motion.div>
 
 </section>
 
@@ -1034,7 +1059,14 @@ const LandingPage = () => {
   <div className="contact-bg-shape contact-shape-1"></div>
   <div className="contact-bg-shape contact-shape-2"></div>
 
-  <div className="contact-container">
+
+  <motion.div
+    className="contact-container"
+    initial={{ opacity: 0, y: 40 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.25 }}
+    transition={{ duration: 0.65, ease: 'easeOut' }}
+  >
 
     <div className="contact-grid">
 
@@ -1195,7 +1227,7 @@ const LandingPage = () => {
 
     </div>
 
-  </div>
+  </motion.div>
 
 </section>
 
@@ -1204,7 +1236,13 @@ const LandingPage = () => {
 
 <footer className="footer">
 
-  <div className="footer-container">
+  <motion.div
+    className="footer-container"
+    initial={{ opacity: 0, y: 40 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.2 }}
+    transition={{ duration: 0.65, ease: 'easeOut' }}
+  >
 
     {/* Top */}
     <div className="footer-grid">
@@ -1370,8 +1408,7 @@ const LandingPage = () => {
 
     </div>
 
-  </div>
-
+  </motion.div>
 </footer>
 
 
