@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
-
+import { motion } from 'motion/react';
 const LoginPage = () => {
   const [correo, setCorreo]       = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -28,7 +28,14 @@ const LoginPage = () => {
 
   return (
     <div className="login-container">
-      <div className="auth-split">
+    <motion.div
+        className="auth-split"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.80, ease: 'easeOut' }}
+      >
+      
         <div className="auth-form-panel">
           <div className="login-card">
             <span className="auth-badge"><div className="logo-forms">PIXEL</div></span>
@@ -79,7 +86,7 @@ const LoginPage = () => {
             <p>Accede a tu espacio creativo y gestiona tus proyectos con estilo.</p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -72,8 +72,13 @@ const LandingPage = () => {
       </div>
 
       {/* Content */}
-      <div className="hero-container">
-
+      <motion.div
+        className="hero-container"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.65, ease: 'easeOut' }}
+      >
         <div className="hero-content">
 
           <h1 className="hero-title">
@@ -115,7 +120,7 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
     </section>
 
@@ -156,7 +161,14 @@ const LandingPage = () => {
           <div className="how-grid">
 
             {/* Step 1 */}
-            <div className="how-card">
+            <motion.div
+              className="how-card"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.20, ease: 'easeOut' }}
+            >
+            
 
               <div className="step-number purple">
                 <span>01</span>
@@ -179,10 +191,16 @@ const LandingPage = () => {
                 Nuestro equipo te asesorará.
               </p>
 
-            </div>
+            </motion.div>
 
             {/* Step 2 */}
-            <div className="how-card">
+            <motion.div
+              className="how-card"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.40, ease: 'easeOut' }}
+            >
 
               <div className="step-number blue">
                 <span>02</span>
@@ -205,10 +223,16 @@ const LandingPage = () => {
                 tus necesidades y presupuesto.
               </p>
 
-            </div>
+            </motion.div>
 
             {/* Step 3 */}
-            <div className="how-card">
+            <motion.div
+              className="how-card"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.60, ease: 'easeOut' }}
+            >
 
               <div className="step-number pink">
                 <span>03</span>
@@ -231,10 +255,16 @@ const LandingPage = () => {
                 a tu diseño con la máxima calidad.
               </p>
 
-            </div>
+            </motion.div>
 
             {/* Step 4 */}
-            <div className="how-card">
+            <motion.div
+              className="how-card"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.80, ease: 'easeOut' }}
+            >
 
               <div className="step-number yellow">
                 <span>04</span>
@@ -257,7 +287,7 @@ const LandingPage = () => {
                 Tu creatividad lista para usar o vender.
               </p>
 
-            </div>
+            </motion.div>
 
           </div>
 
@@ -300,7 +330,13 @@ const LandingPage = () => {
     <div className="services-grid">
 
       {/* CARD 1 */}
-      <div className="service-card">
+      <motion.div
+        className="service-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.20, ease: 'easeOut' }}
+      >
 
         <div className="service-image-wrapper">
 
@@ -355,10 +391,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 2 */}
-      <div className="service-card">
+      <motion.div
+        className="service-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.40, ease: 'easeOut' }}
+      >
 
         <div className="service-image-wrapper">
 
@@ -413,10 +455,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 3 */}
-      <div className="service-card">
+      <motion.div
+        className="service-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.60, ease: 'easeOut' }}
+      >
 
         <div className="service-image-wrapper">
 
@@ -470,10 +518,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 4 */}
-      <div className="service-card">
+      <motion.div
+        className="service-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.80, ease: 'easeOut' }}
+      >
 
         <div className="service-image-wrapper">
 
@@ -528,7 +582,7 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
     </div>
 
@@ -573,7 +627,14 @@ const LandingPage = () => {
     <div className="comparative-grid">
 
       {/* CARD 1 */}
-      <div className="comparative-card">
+      <motion.div
+        className="comparative-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.20, ease: 'easeOut' }}
+      >
+      
 
         <div className="comparative-top-line purple-gradient"></div>
 
@@ -659,10 +720,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 2 */}
-      <div className="comparative-card">
+      <motion.div
+        className="comparative-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.40, ease: 'easeOut' }}
+      >
 
         <div className="comparative-top-line blue-gradient"></div>
 
@@ -720,10 +787,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 3 */}
-      <div className="comparative-card">
+      <motion.div
+        className="comparative-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.60, ease: 'easeOut' }}
+      >
 
         <div className="comparative-top-line pink-gradient"></div>
 
@@ -783,10 +856,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 4 */}
-      <div className="comparative-card">
+      <motion.div
+        className="comparative-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.80, ease: 'easeOut' }}
+      >
 
         <div className="comparative-top-line yellow-gradient"></div>
 
@@ -846,7 +925,7 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
     </div>
 
@@ -867,7 +946,7 @@ const LandingPage = () => {
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.65, ease: 'easeOut' }}
+        transition={{ duration: 0.20, ease: 'easeOut' }}
       >
 
     {/* HEADER */}
@@ -888,7 +967,14 @@ const LandingPage = () => {
     <div className="products-grid">
 
       {/* CARD 1 */}
-      <div className="product-card">
+      <motion.div
+        className="product-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.20, ease: 'easeOut' }}
+      >
+      
 
         {/* IMAGE */}
         <div className="product-image-wrapper">
@@ -924,10 +1010,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 2 */}
-      <div className="product-card">
+      <motion.div
+        className="product-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.40, ease: 'easeOut' }}
+      >
 
         <div className="product-image-wrapper">
 
@@ -961,10 +1053,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 3 */}
-      <div className="product-card">
+      <motion.div
+        className="product-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.60, ease: 'easeOut' }}
+      >
 
         <div className="product-image-wrapper">
 
@@ -998,10 +1096,16 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
       {/* CARD 4 */}
-      <div className="product-card">
+      <motion.div
+        className="product-card"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.80, ease: 'easeOut' }}
+      >
 
         <div className="product-image-wrapper">
 
@@ -1035,7 +1139,7 @@ const LandingPage = () => {
 
         </div>
 
-      </div>
+      </motion.div>
 
     </div>
 
