@@ -288,3 +288,88 @@
 
   transition: transform 0.3s ease;
 }
+/* ══════════════════════════════════════════
+   VALIDACIONES DE FORMULARIO
+══════════════════════════════════════════ */
+
+/* Contador / hint junto al label */
+.field-hint {
+  float: right;
+  font-size: 11px;
+  font-weight: 400;
+  color: #9ca3af;
+  margin-left: 8px;
+}
+
+/* Input válido */
+.form-group input.input-valid {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* Input inválido */
+.form-group input.input-invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Mensaje de error inline bajo el campo */
+.field-error-inline {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+/* ── Recuadro de requisitos de contraseña ── */
+.password-rules {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background-color: #f9f7ff;
+  border: 1px solid #e5dcff;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.password-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.password-rule.rule-passed {
+  color: #16a34a;
+}
+
+.password-rule.rule-failed {
+  color: #9ca3af;
+}
+
+.rule-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.rule-passed .rule-icon {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.rule-failed .rule-icon {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+}

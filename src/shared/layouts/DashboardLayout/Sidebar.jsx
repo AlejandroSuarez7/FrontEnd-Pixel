@@ -1,82 +1,27 @@
+// shared/layouts/DashboardLayout/Sidebar.jsx
 import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../routes/paths';
+import { SIDEBAR_BY_ROLE } from '../../../routes/SIDEBAR_CONFIG';
 
 const Sidebar = () => {
   const location = useLocation();
-  const [openMenu, setOpenMenu] = useState('dashboard');
+  const navigate  = useNavigate();
+  const [openMenu, setOpenMenu]   = useState(null);
   const [collapsed, setCollapsed] = useState(false);
 
-  const menu = [
-    {
-      label: 'Dashboard',
-      icon: 'dashboard',
-      to: PATHS.DASHBOARD,
-    },
-    {
-      label: 'Configuración',
-      icon: 'settings',
-      key: 'config',
-      items: [
-        { label: 'Roles', to: PATHS.ROLES },
-      ],
-    },
-    {
-      label: 'Usuarios',
-      icon: 'groups',
-      key: 'users',
-      items: [
-        { label: 'Gestión de Usuarios', to: PATHS.USERS },
-        { label: 'Gestión de Empleados', to: PATHS.USERS_EMPLOYEES },
-        { label: 'Gestión de Accesos', to: PATHS.USERS_ACCESS },
-        { label: 'Gestión de Clientes', to: PATHS.USERS_CLIENTS },
-      ],
-    },
-    {
-      label: 'Compras',
-      icon: 'shopping_cart',
-      key: 'purchases',
-      items: [
-        { label: 'Gestión de Compras', to: PATHS.PURCHASES },
-        { label: 'Gestión de Proveedores', to: PATHS.PURCHASES_PROVIDERS },
-        { label: 'Gestión de Insumos', to: PATHS.PURCHASES_SUPPLIES },
-        { label: 'Categoría Insumos', to: PATHS.PURCHASES_CATEGORIES },
-      ],
-    },
-    {
-      label: 'Ventas',
-      icon: 'sell',
-      key: 'sales',
-      items: [
-        { label: 'Gestión de Productos', to: PATHS.SALES_PRODUCTS },
-        { label: 'Categoría de Productos', to: PATHS.SALES_CATEGORIES },
-        { label: 'Gestión de Ventas', to: PATHS.SALES },
-        { label: 'Gestión de Abonos', to: PATHS.SALES_PAYMENTS },
-        { label: 'Gestión de Devoluciones', to: PATHS.SALES_RETURNS },
-        { label: 'Gestión de Pedidos', to: PATHS.ORDERS },
-      ],
-    },
-    {
-      label: 'Servicios',
-      icon: 'build',
-      key: 'services',
-      items: [
-        { label: 'Gestión de Servicios', to: PATHS.SERVICES },
-        { label: 'Gestión de Cotizaciones', to: PATHS.SERVICES_QUOTES },
-      ],
-    },
-    {
-      label: 'Producción',
-      icon: 'engineering',
-      key: 'production',
-      items: [
-        { label: 'Gestión de Producción', to: PATHS.PRODUCTION },
-        { label: 'Gestión de Diseños', to: PATHS.PRODUCTION_DESIGNS },
-        { label: 'Gestión de Entrega de Productos', to: PATHS.PRODUCTION_DELIVERY },
-      ],
-    },
-  ];
+  // Lee el usuario y rol desde localStorage (guardado por authService.login)
+  const session  = JSON.parse(localStorage.getItem('pixel_user') || '{}');
+  const userRole = session?.rol?.nombre || 'Cliente';
+  const userName = session?.nombre || 'Usuario';
 
+  // Inicial del nombre para el avatar
+  const avatarLetter = userName.charAt(0).toUpperCase();
+
+  // Menú filtrado según el rol — fallback a menú de Cliente si el rol no existe
+  const menu = SIDEBAR_BY_ROLE[userRole] ?? SIDEBAR_BY_ROLE['Cliente'];
+
+  // Abre automáticamente la sección activa al navegar
   const activeSection = menu.find((section) =>
     section.items?.some((item) => location.pathname.startsWith(item.to)) ||
     section.to === location.pathname
@@ -87,6 +32,12 @@ const Sidebar = () => {
       setOpenMenu(activeSection.key);
     }
   }, [activeSection?.key]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('pixel_user');
+    navigate('/login');
+  };
 
   return (
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
@@ -116,9 +67,7 @@ const Sidebar = () => {
                     to={section.to}
                     end
                     title={section.label}
-                    className={({ isActive }) =>
-                      isActive ? 'nav-link active' : 'nav-link'
-                    }
+                    className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
                   >
                     <span className="sidebar-icon material-symbols-outlined">{section.icon}</span>
                     <span className="sidebar-label">{section.label}</span>
@@ -128,9 +77,7 @@ const Sidebar = () => {
                     type="button"
                     title={section.label}
                     className={isSectionActive ? 'menu-toggle active' : 'menu-toggle'}
-                    onClick={() =>
-                      setOpenMenu(openMenu === section.key ? null : section.key)
-                    }
+                    onClick={() => setOpenMenu(openMenu === section.key ? null : section.key)}
                   >
                     <span className="sidebar-icon material-symbols-outlined">{section.icon}</span>
                     <span className="sidebar-label">{section.label}</span>
@@ -159,12 +106,21 @@ const Sidebar = () => {
         </nav>
       </div>
 
+      {/* Perfil con nombre real y botón de logout */}
       <div className={`sidebar-profile${collapsed ? ' collapsed' : ''}`}>
-        <div className="avatar">A</div>
+        <div className="avatar">{avatarLetter}</div>
         {!collapsed && (
-          <div>
-            <p>Administrador</p>
-            <small>Perfil activo</small>
+          <div className="sidebar-profile-info">
+            <p>{userName}</p>
+            <small>{userRole}</small>
+            <button
+              type="button"
+              className="sidebar-logout-btn"
+              onClick={handleLogout}
+              title="Cerrar sesión"
+            >
+              <span className="material-symbols-outlined">logout</span>
+            </button>
           </div>
         )}
       </div>
