@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
+import { motion } from 'motion/react';
 
 const PASSWORD_RULES = [
   { id: 'length',  label: 'Mínimo 8 caracteres',          test: (p) => p.length >= 8 },
@@ -77,7 +78,13 @@ const RegisterPage = () => {
 
   return (
     <div className="register-container">
-      <div className="auth-split">
+      <motion.div
+        className="auth-split"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.80, ease: 'easeOut' }}
+      >
         <div className="auth-form-panel">
           <div className="register-card">
             <span className="auth-badge"><div className="logo-forms">PIXEL</div></span>
@@ -217,7 +224,7 @@ const RegisterPage = () => {
             <p>Regístrate y lleva tu control de proyectos al siguiente nivel.</p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
