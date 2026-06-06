@@ -5,6 +5,7 @@ export const pedidoDTO = {
 
   fromApi(apiData) {
     if (!apiData) return null;
+    const fechaCreacion = apiData.fechaCreacion ?? apiData.fecha_creacion ?? apiData.createdAt ?? apiData.created_at;
 
     const detalles = Array.isArray(apiData.detalles)
       ? apiData.detalles.map(d => createDetallePedido({
@@ -29,7 +30,7 @@ export const pedidoDTO = {
       total:                apiData.total,
       totalPagado:          apiData.totalPagado,
       saldoPendiente:       apiData.saldoPendiente,
-      fechaCreacion:        apiData.fechaCreacion,
+      fechaCreacion,
       fechaEntregaEstimada: apiData.fechaEntregaEstimada,
       fechaFinalizado:      apiData.fechaFinalizado,
       fechaEntregado:       apiData.fechaEntregado,

@@ -174,7 +174,7 @@ const PedidosPage = () => {
 
                     <td className={styles.tableCell}>
                       <span className={pedido.fechaEntregaEstimada ? '' : styles.tableCellMuted}>
-                        {fmtFecha(pedido.fechaEntregaEstimada)}
+                        {pedido.fechaEntregaEstimada}
                       </span>
                     </td>
 
