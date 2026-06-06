@@ -1,5 +1,6 @@
 // pedidos/presentation/PedidoDetailsModal.jsx
 import React from 'react';
+import { formatDate } from '../../../../core/utils/fechaFormato';
 import styles from './pedidos.module.css';
 
 const ESTADO_PEDIDO_CLASS = {
@@ -15,14 +16,25 @@ const ESTADO_PAGO_CLASS = {
   COMPLETO:     styles.estadoPagoCompleto,
 };
 
+const ISO_DATE_IN_BRACKETS = /\[(\d{4}-\d{2}-\d{2}T[^\]]+)\]/g;
+
+const getFirstObservationDate = (observaciones) => {
+  const match = observaciones?.match(ISO_DATE_IN_BRACKETS);
+  return match?.[0]?.replace('[', '').replace(']', '') || null;
+};
+
+const formatObservaciones = (observaciones) => {
+  if (!observaciones) return 'Sin observaciones registradas';
+  return observaciones.replace(ISO_DATE_IN_BRACKETS, (_, date) => formatDate(date));
+};
+
 export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
   if (!isOpen || !pedido) return null;
 
   const fmt = (val) => `$${Number(val || 0).toLocaleString('es-CO')}`;
 
-  const fmtFecha = (val) => val
-    ? new Date(val).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
-    : '—';
+  const fechaCreacion = pedido.fechaCreacion || getFirstObservationDate(pedido.observaciones);
+
 
   return (
     <div className={styles.overlay}>
@@ -51,22 +63,22 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
           {/* Observaciones */}
           <div className={styles.detailsInfoBox}>
             <strong>Observaciones:</strong>{' '}
-            {pedido.observaciones || 'Sin observaciones registradas'}
+            {formatObservaciones(pedido.observaciones)}
           </div>
 
           {/* Fechas */}
           <div className={styles.readOnlyGrid}>
             <div className={styles.readOnlyItem}>
               Fecha de creación
-              <strong>{fmtFecha(pedido.fechaCreacion)}</strong>
+              <strong>{pedido.fechaCreacion}</strong>
             </div>
             <div className={styles.readOnlyItem}>
               Entrega estimada
-              <strong>{fmtFecha(pedido.fechaEntregaEstimada)}</strong>
+              <strong>{pedido.fechaEntregaEstimada ? pedido.fechaEntregaEstimada : "--"}</strong>
             </div>
             <div className={styles.readOnlyItem}>
               Fecha finalizado
-              <strong>{fmtFecha(pedido.fechaFinalizado)}</strong>
+              <strong>{pedido.fechaFinalizado ? pedido.fechaFinalizado : "--"}</strong>
             </div>
           </div>
 

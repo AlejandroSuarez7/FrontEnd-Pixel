@@ -10,11 +10,7 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido, isStaff }) 
     if (pedido) {
       setObservaciones(pedido.observaciones || '');
       // Formateamos la fecha ISO a yyyy-MM-dd para el input date
-      setFechaEntregaEstimada(
-        pedido.fechaEntregaEstimada
-          ? new Date(pedido.fechaEntregaEstimada).toISOString().split('T')[0]
-          : ''
-      );
+      setFechaEntregaEstimada(pedido.fechaEntregaEstimada)
     } else {
       setObservaciones('');
       setFechaEntregaEstimada('');
