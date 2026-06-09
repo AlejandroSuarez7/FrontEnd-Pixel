@@ -1,5 +1,7 @@
 // presentation/pages/RolesPage.jsx
 import React, { useState } from 'react';
+import { Pagination } from '../../../core/components/Pagination';
+import { usePagination } from '../../../core/hooks/usePagination';
 import { useRoles } from '../roles/application/useRoles';
 import { RoleFormModal } from '../roles/presentation/RoleFormModal';
 import styles from '../roles/presentation/roles.module.css';
@@ -14,6 +16,13 @@ const RolesPage = () => {
   const totalRoles    = roles.length;
   const activeRoles   = roles.filter(r => r.estado === true).length;
   const inactiveRoles = roles.filter(r => r.estado === false).length;
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems: paginatedRoles,
+    setCurrentPage,
+    totalPages,
+  } = usePagination(roles);
 
   const handleOpenCreate = () => {
     setSelectedRole(null);
@@ -96,7 +105,7 @@ const RolesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {roles.map((role) => (
+                {paginatedRoles.map((role) => (
                   <tr key={role.id} className={styles.tableBodyRow}>
                     <td className={styles.tableCellId}>#{role.id}</td>
                     <td className={styles.tableCellName}>{role.nombre}</td>
@@ -139,6 +148,14 @@ const RolesPage = () => {
             </table>
           </div>
         )}
+        <Pagination
+          classNames={styles}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          totalItems={roles.length}
+          totalPages={totalPages}
+        />
       </div>
 
       {/* MODAL */}

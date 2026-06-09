@@ -52,7 +52,7 @@ export class PedidoApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${id}/en-proceso`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo marcar el pedido en proceso');
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo marcar el pedido en proceso');
     }
   }
 

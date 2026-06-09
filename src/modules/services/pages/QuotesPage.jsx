@@ -1,5 +1,7 @@
 // presentation/pages/QuotesPage.jsx
 import React, { useState } from 'react';
+import { Pagination } from '../../../core/components/Pagination';
+import { usePagination } from '../../../core/hooks/usePagination';
 import { useQuotes } from '../cotizaciones/application/useQuotes';
 import { QuoteFormModal } from '../cotizaciones/presentation/QuoteFormModal';
 import { QuoteDetailsModal } from '../cotizaciones/presentation/QuoteDetailsModal';
@@ -27,6 +29,13 @@ const QuotesPage = () => {
 
   const [isDetailsOpen, setIsDetailsOpen]                     = useState(false);
   const [selectedQuoteForDetails, setSelectedQuoteForDetails] = useState(null);
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems: paginatedQuotes,
+    setCurrentPage,
+    totalPages,
+  } = usePagination(quotes);
 
   const handleOpenCreate = () => {
     setSelectedQuote(null);
@@ -157,7 +166,7 @@ const QuotesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {quotes.map((quote) => (
+                {paginatedQuotes.map((quote) => (
                   <tr key={quote.idCotizacion} className={styles.tableBodyRow}>
 
                     <td className={styles.tableCellId}>#{quote.idCotizacion}</td>
@@ -255,6 +264,14 @@ const QuotesPage = () => {
             </table>
           </div>
         )}
+        <Pagination
+          classNames={styles}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          totalItems={quotes.length}
+          totalPages={totalPages}
+        />
       </div>
 
       {/* MODALES */}

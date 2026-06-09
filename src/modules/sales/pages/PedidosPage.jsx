@@ -1,5 +1,7 @@
 // pedidos/presentation/PedidosPage.jsx
 import React, { useState } from 'react';
+import { Pagination } from '../../../core/components/Pagination';
+import { usePagination } from '../../../core/hooks/usePagination';
 import { usePedidos } from '../pedidos/application/usePedidos';
 import { PedidoDetailsModal } from '../pedidos/presentation/PedidoDetailsModal';
 import { PedidoEditModal } from '../pedidos/presentation/PedidoEditModal';
@@ -43,6 +45,13 @@ const PedidosPage = () => {
   const pendientes = pedidos.filter(p => p.estadoPedido === 'PENDIENTE').length;
   const enProceso  = pedidos.filter(p => p.estadoPedido === 'EN_PROCESO').length;
   const finalizados = pedidos.filter(p => p.estadoPedido === 'FINALIZADO').length;
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems: paginatedPedidos,
+    setCurrentPage,
+    totalPages,
+  } = usePagination(pedidos);
 
   const onEnProcesoClick = (id) => {
     if (window.confirm('¿Marcar este pedido como EN PROCESO?')) {
@@ -135,7 +144,7 @@ const PedidosPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {pedidos.map((pedido) => (
+                {paginatedPedidos.map((pedido) => (
                   <tr key={pedido.idPedido} className={styles.tableBodyRow}>
 
                     <td className={styles.tableCellId}>#{pedido.idPedido}</td>
@@ -247,6 +256,14 @@ const PedidosPage = () => {
             </table>
           </div>
         )}
+        <Pagination
+          classNames={styles}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          totalItems={pedidos.length}
+          totalPages={totalPages}
+        />
       </div>
 
       {/* MODALES */}
