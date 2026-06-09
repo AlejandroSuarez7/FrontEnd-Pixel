@@ -144,6 +144,25 @@ export const SIDEBAR_BY_ROLE = {
       key: 'orders',
       items: [
         { label: 'Estado de mis pedidos', to: PATHS.ORDERS },
+        { label: 'Mis Abonos', to: PATHS.SALES_PAYMENTS },
+        { label: 'Mis Diseños', to: PATHS.PRODUCTION_DESIGNS },
+      ],
+    },
+  ],
+
+  Diseñador: [
+    {
+      label: 'Dashboard',
+      icon: 'dashboard',
+      to: PATHS.DASHBOARD,
+    },
+    {
+      label: 'Producción',
+      icon: 'engineering',
+      key: 'production',
+      items: [
+        { label: 'Gestión de Diseños', to: PATHS.PRODUCTION_DESIGNS },
+        { label: 'Cola de Producción', to: PATHS.PRODUCTION },
       ],
     },
   ],
@@ -163,5 +182,12 @@ export const ALLOWED_PATHS_BY_ROLE = {
     PATHS.DASHBOARD,
     PATHS.SERVICES_QUOTES,
     PATHS.ORDERS,
+    PATHS.SALES_PAYMENTS,
+    PATHS.PRODUCTION_DESIGNS,
+  ],
+  Diseñador: [
+    PATHS.DASHBOARD,
+    PATHS.PRODUCTION,
+    PATHS.PRODUCTION_DESIGNS,
   ],
 };

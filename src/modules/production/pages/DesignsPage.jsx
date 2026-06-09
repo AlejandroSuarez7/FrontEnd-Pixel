@@ -1,10 +1,5 @@
-const DesignsPage = () => {
-  return (
-    <div>
-      <h1>Gestión de Diseños</h1>
-      <p>Módulo en construcción</p>
-    </div>
-  );
-};
+import { DisenosPage } from './../disenos/presentation/DisenosPage';
+
+const DesignsPage = () => <DisenosPage />;
 
 export default DesignsPage;

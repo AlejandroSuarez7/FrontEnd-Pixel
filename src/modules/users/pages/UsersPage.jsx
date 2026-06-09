@@ -1,5 +1,7 @@
 // presentation/pages/UsersPage.jsx
 import React, { useState } from 'react';
+import { Pagination } from '../../../core/components/Pagination';
+import { usePagination } from '../../../core/hooks/usePagination';
 import { useUsers } from '../application/useUsers';
 import { UserFormModal } from '../presentation/UserFormModal';
 import styles from '../presentation/users.module.css';
@@ -22,6 +24,13 @@ export const UsersPage = () => {
   const totalUsers    = users.length;
   const activeUsers   = users.filter(u => u.estado === true).length;
   const inactiveUsers = users.filter(u => u.estado === false).length;
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems: paginatedUsers,
+    setCurrentPage,
+    totalPages,
+  } = usePagination(users);
 
   const handleOpenCreate = () => {
     setSelectedUser(null);
@@ -132,7 +141,7 @@ export const UsersPage = () => {
                     </td>
                   </tr>
                 ) : (
-                  users.map(user => (
+                  paginatedUsers.map(user => (
                     <tr key={user.id} className={styles.tableBodyRow}>
                       <td className={styles.tableCellName}>{user.nombre}</td>
                       <td className={styles.tableCellSecondary}>{user.correo}</td>
@@ -174,6 +183,14 @@ export const UsersPage = () => {
             </table>
           </div>
         )}
+        <Pagination
+          classNames={styles}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          totalItems={users.length}
+          totalPages={totalPages}
+        />
       </div>
 
       {/* MODAL */}

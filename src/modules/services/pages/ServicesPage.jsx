@@ -1,5 +1,7 @@
 // presentation/pages/ServicesPage.jsx
 import React, { useState } from 'react';
+import { Pagination } from '../../../core/components/Pagination';
+import { usePagination } from '../../../core/hooks/usePagination';
 import { useTecnicas } from '../tecnicas/application/useTecnicas';
 import { ServiceFormModal } from '../tecnicas/presentation/ServiceFormModal';
 import { ServiceDetailsModal } from '../tecnicas/presentation/ServiceDetailsModal';
@@ -22,6 +24,13 @@ const ServicesPage = () => {
   const totalServices    = tecnicas.length;
   const activeServices   = tecnicas.filter(s => s.estado === true).length;
   const inactiveServices = tecnicas.filter(s => s.estado === false).length;
+  const {
+    currentPage,
+    pageSize,
+    paginatedItems: paginatedTecnicas,
+    setCurrentPage,
+    totalPages,
+  } = usePagination(tecnicas);
 
   const handleOpenCreate = () => {
     setSelectedService(null);
@@ -109,7 +118,7 @@ const ServicesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {tecnicas.map((service) => (
+                {paginatedTecnicas.map((service) => (
                   <tr key={service.id} className={styles.tableBodyRow}>
                     <td className={styles.tableCellId}>#{service.id}</td>
                     <td className={styles.tableCellBold}>{service.nombre}</td>
@@ -157,6 +166,14 @@ const ServicesPage = () => {
             </table>
           </div>
         )}
+        <Pagination
+          classNames={styles}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          totalItems={tecnicas.length}
+          totalPages={totalPages}
+        />
       </div>
 
       {/* MODALES */}
