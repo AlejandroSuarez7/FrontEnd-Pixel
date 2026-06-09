@@ -44,7 +44,7 @@ export class UserApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${id}`, userData);
       return userDTO.fromApi(data.data ?? data);
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo actualizar el usuario');
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo actualizar el usuario');
     }
   }
 

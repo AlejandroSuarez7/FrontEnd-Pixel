@@ -465,3 +465,42 @@
   .abonos-form-row,
   .abonos-read-only-grid { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 900px) {
+  .abonos-header-wrapper { gap: 16px; }
+  .abonos-primary-button { width: 100%; }
+  .abonos-search-input,
+  .abonos-input-field { max-width: none; }
+  .abonos-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .abonos-table { min-width: 900px; }
+  .abonos-modal-container {
+    width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+  }
+  .abonos-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .abonos-pagination-controls { flex-wrap: wrap; }
+}
+
+@media (max-width: 560px) {
+  .abonos-page-container { padding: 20px 12px; }
+  .abonos-kpi-grid { grid-template-columns: 1fr; }
+  .abonos-modal-container { padding: 20px; }
+  .abonos-modal-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .abonos-modal-footer button,
+  .abonos-btn-primary,
+  .abonos-btn-secondary { width: 100%; }
+  .abonos-total-block-row,
+  .abonos-grand-total {
+    justify-content: space-between;
+    gap: 16px;
+  }
+}

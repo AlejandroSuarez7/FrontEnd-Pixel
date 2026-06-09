@@ -726,25 +726,53 @@
   }
 
   .dashboard-panel {
-    padding: 18px;
+    padding: 16px;
+    overflow: hidden;
   }
 
   .dashboard-chart-layout {
-    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 6px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .dashboard-y-axis {
+    height: 220px;
+    padding-bottom: 21px;
+    font-size: 10px;
   }
 
   .dashboard-bars {
-    gap: 8px;
-    padding-inline: 8px;
+    height: 220px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 3px;
+    min-width: 0;
+    padding-inline: 5px;
   }
 
   .dashboard-bar-track {
-    max-width: 36px;
-    gap: 4px;
+    height: 190px;
+    max-width: 22px;
+    gap: 2px;
   }
 
   .dashboard-bar-track span {
-    width: 11px;
+    width: 7px;
+    border-radius: 5px 5px 0 0;
+  }
+
+  .dashboard-bar-group {
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .dashboard-bar-group strong {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 9px;
+    text-overflow: clip;
+    white-space: nowrap;
   }
 
   .dashboard-period-tabs {

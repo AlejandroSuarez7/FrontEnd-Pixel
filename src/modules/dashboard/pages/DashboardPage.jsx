@@ -292,7 +292,7 @@ const QuickActions = () => {
   const navigate = useNavigate();
   const actions = [
     { label: 'Crear cotizacion', icon: FileText, onClick: () => navigate(PATHS.SERVICES_QUOTES) },
-    { label: 'Actualizar perfil', icon: UserRound, onClick: () => navigate(PATHS.SETTINGS) },
+    { label: 'Actualizar perfil', icon: UserRound, onClick: () => navigate(PATHS.PROFILE) },
   ];
 
   return (

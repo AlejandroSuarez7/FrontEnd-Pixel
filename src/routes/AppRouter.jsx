@@ -13,7 +13,8 @@ import { UsersPage } from '../modules/users/pages/UsersPage.jsx';
 import EmployeesPage from '../modules/users/pages/EmployeesPage';
 import AccessPage from '../modules/users/pages/AccessPage';
 import ClientsPage from '../modules/users/pages/ClientsPage';
-import ComprasRoute from '../modules/compras/routes/ComprasRoutes.jsx';
+import ProfilePage from '../modules/users/pages/ProfilePage';
+import PurchasesPage from '../modules/purchases/pages/PurchasesPage';
 import ProvidersPage from '../modules/purchases/pages/ProvidersPage';
 import SuppliesPage from '../modules/purchases/pages/SuppliesPage';
 import PurchaseCategoriesPage from '../modules/purchases/pages/PurchaseCategoriesPage';
@@ -53,10 +54,12 @@ const AppRouter = () => {
           <Route path={PATHS.USERS_EMPLOYEES} element={<EmployeesPage />} />
           <Route path={PATHS.USERS_ACCESS} element={<AccessPage />} />
           <Route path={PATHS.USERS_CLIENTS} element={<ClientsPage />} />
-          <Route path={PATHS.PURCHASES} element={<ComprasRoute />} />
+          <Route path={PATHS.PROFILE} element={<ProfilePage />} />
+          <Route path={PATHS.PURCHASES} element={<PurchasesPage />} />
           <Route path={PATHS.PURCHASES_PROVIDERS} element={<ProvidersPage />} />
           <Route path={PATHS.PURCHASES_SUPPLIES} element={<SuppliesPage />} />
           <Route path={PATHS.PURCHASES_CATEGORIES} element={<PurchaseCategoriesPage />} />
+          <Route path={PATHS.SALES} element={<SalesProductsPage />} />
           <Route path={PATHS.SALES_PRODUCTS} element={<SalesProductsPage />} />
           <Route path={PATHS.SALES_CATEGORIES} element={<SalesCategoriesPage />} />
           <Route path={PATHS.SALES_PAYMENTS} element={<SalesPaymentsPage />} />

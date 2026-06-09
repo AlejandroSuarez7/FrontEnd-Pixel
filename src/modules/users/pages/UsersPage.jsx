@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
 import { usePagination } from '../../../core/hooks/usePagination';
+import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useUsers } from '../application/useUsers';
 import { UserFormModal } from '../presentation/UserFormModal';
 import styles from '../presentation/users.module.css';
@@ -155,26 +156,12 @@ export const UsersPage = () => {
                         </span>
                       </td>
                       <td className={styles.actionsCell}>
-
-                        <button
-                          onClick={() => handleOpenEdit(user)}
-                          className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
-                        >
-                          Editar
-                        </button>
-
-                        {!isAdmin(user) && (
-                          <>
-                            <span className={styles.actionDivider} />
-                            <button
-                              onClick={() => onEliminarClick(user.id, user.nombre)}
-                              className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
-                            >
-                              Eliminar
-                            </button>
-                          </>
-                        )}
-
+                        <TableActions
+                          actions={[
+                            { label: 'Editar', onClick: () => handleOpenEdit(user), variant: 'warning' },
+                            !isAdmin(user) && { label: 'Eliminar', onClick: () => onEliminarClick(user.id, user.nombre), variant: 'danger' },
+                          ]}
+                        />
                       </td>
                     </tr>
                   ))

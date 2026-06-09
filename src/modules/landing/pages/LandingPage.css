@@ -155,7 +155,7 @@
 /* Texto oculto en móvil */
 
 .btn-login-text {
-  display: none;
+  display: inline;
 }
 
 /* Mostrar texto en tablets+ */
@@ -166,6 +166,111 @@
     display: inline;
   }
 
+}
+
+.landing-profile-wrapper {
+  position: relative;
+}
+
+.landing-profile-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #ede9fe;
+  background: #ffffff;
+  color: #581c87;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.landing-profile-button:hover {
+  border-color: #c084fc;
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.12);
+}
+
+.landing-profile-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #9333ea, #ec4899);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.landing-profile-label {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .landing-profile-label {
+    display: inline;
+  }
+}
+
+.landing-profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 210px;
+  background: #ffffff;
+  border: 1px solid #edf1f7;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 16px 36px rgba(16, 24, 40, 0.14);
+  z-index: 80;
+}
+
+.landing-profile-name {
+  margin: 0 0 8px;
+  padding: 4px 6px 8px;
+  border-bottom: 1px solid #edf1f7;
+  color: #1a2038;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.landing-profile-menu-btn {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: #4b5563;
+  padding: 9px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.landing-profile-menu-btn:hover {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.landing-profile-menu-btn.danger:hover {
+  background: #fff0f0;
+  color: #d63031;
+}
+
+.mobile-profile-name {
+  margin: 0 0 10px;
+  color: #1a2038;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.mobile-logout-btn {
+  margin-top: 8px;
+  background: #fff0f0;
+  color: #d63031;
 }
 
 

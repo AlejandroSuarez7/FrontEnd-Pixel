@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
 import { usePagination } from '../../../core/hooks/usePagination';
+import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { usePedidos } from '../pedidos/application/usePedidos';
 import { PedidoDetailsModal } from '../pedidos/presentation/PedidoDetailsModal';
 import { PedidoEditModal } from '../pedidos/presentation/PedidoEditModal';
@@ -188,67 +189,19 @@ const PedidosPage = () => {
                     </td>
 
                     <td className={styles.actionsCell}>
-
-                      {/* Editar — Staff y Cliente (Staff puede cambiar fecha también) */}
-                      {pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && (
-                        <>
-                          <button
-                            onClick={() => { setSelectedPedido(pedido); setIsEditOpen(true); }}
-                            className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
-                          >
-                            Editar
-                          </button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-
-                      {/* En proceso — solo Staff, solo si está PENDIENTE */}
-                      {isStaff && pedido.estadoPedido === 'PENDIENTE' && (
-                        <>
-                          <button
-                            onClick={() => onEnProcesoClick(pedido.idPedido)}
-                            className={`${styles.actionBtn} ${styles.actionBtnProcess}`}
-                          >
-                            En proceso
-                          </button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-
-                      {/* Finalizar — solo Staff, solo si está EN_PROCESO */}
-                      {isStaff && pedido.estadoPedido === 'EN_PROCESO' && (
-                        <>
-                          <button
-                            onClick={() => onFinalizarClick(pedido.idPedido)}
-                            className={`${styles.actionBtn} ${styles.actionBtnFinish}`}
-                          >
-                            Finalizar
-                          </button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-
-                      {/* Anular — solo Staff, si no está ya finalizado/anulado */}
-                      {isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && (
-                        <>
-                          <button
-                            onClick={() => onAnularClick(pedido.idPedido)}
-                            className={`${styles.actionBtn} ${styles.actionBtnCancel}`}
-                          >
-                            Anular
-                          </button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-
-                      {/* Ver detalles — siempre visible */}
-                      <button
-                        onClick={() => { setSelectedPedido(pedido); setIsDetailsOpen(true); }}
-                        className={`${styles.actionBtn} ${styles.actionBtnView}`}
-                      >
-                        Ver
-                      </button>
-
+                      <TableActions
+                        primaryAction={{ label: 'Ver', onClick: () => { setSelectedPedido(pedido); setIsDetailsOpen(true); }, variant: 'accent' }}
+                        actions={[
+                          isStaff && pedido.estadoPedido === 'PENDIENTE' && { label: 'En proceso', onClick: () => onEnProcesoClick(pedido.idPedido), variant: 'info' },
+                          isStaff && pedido.estadoPedido === 'EN_PROCESO' && { label: 'Finalizar', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },
+                          isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },
+                          pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && {
+                            label: 'Editar',
+                            onClick: () => { setSelectedPedido(pedido); setIsEditOpen(true); },
+                            variant: 'warning',
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

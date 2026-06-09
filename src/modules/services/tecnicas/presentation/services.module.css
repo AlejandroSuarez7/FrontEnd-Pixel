@@ -715,3 +715,40 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+@media (max-width: 900px) {
+  .pageContainer { padding: 28px 20px; }
+  .headerWrapper {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .primaryButton { width: 100%; }
+  .kpiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .searchInput { max-width: none; }
+  .tableWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table { min-width: 720px; }
+  .modalContainer {
+    width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .pageContainer { padding: 20px 12px; }
+  .kpiGrid { grid-template-columns: 1fr; }
+  .modalSm,
+  .modalMd { padding: 20px; }
+  .modalFooter,
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .modalFooter button,
+  .btnPrimary,
+  .btnSecondary { width: 100%; }
+  .paginationControls { flex-wrap: wrap; }
+}

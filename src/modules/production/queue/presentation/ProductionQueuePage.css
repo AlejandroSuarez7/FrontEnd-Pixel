@@ -218,3 +218,19 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 900px) {
+  .production-queue-header-wrapper { gap: 16px; }
+  .production-queue-search-input { max-width: none; }
+  .production-queue-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .production-queue-table { min-width: 760px; }
+  .production-queue-pagination { align-items: stretch; }
+  .production-queue-pagination-controls { flex-wrap: wrap; }
+}
+
+@media (max-width: 560px) {
+  .production-queue-page-container { padding: 20px 12px; }
+}

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
 import { usePagination } from '../../../core/hooks/usePagination';
+import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useTecnicas } from '../tecnicas/application/useTecnicas';
 import { ServiceFormModal } from '../tecnicas/presentation/ServiceFormModal';
 import { ServiceDetailsModal } from '../tecnicas/presentation/ServiceDetailsModal';
@@ -133,32 +134,13 @@ const ServicesPage = () => {
                       </span>
                     </td>
                     <td className={styles.actionsCell}>
-
-                      <button
-                        onClick={() => handleOpenDetails(service)}
-                        className={`${styles.actionBtn} ${styles.actionBtnView}`}
-                      >
-                        Ver
-                      </button>
-
-                      <span className={styles.actionDivider} />
-
-                      <button
-                        onClick={() => handleOpenEdit(service)}
-                        className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
-                      >
-                        Editar
-                      </button>
-
-                      <span className={styles.actionDivider} />
-
-                      <button
-                        onClick={() => onEliminarClick(service.id, service.nombre)}
-                        className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
-                      >
-                        Eliminar
-                      </button>
-
+                      <TableActions
+                        primaryAction={{ label: 'Ver', onClick: () => handleOpenDetails(service), variant: 'accent' }}
+                        actions={[
+                          { label: 'Editar', onClick: () => handleOpenEdit(service), variant: 'warning' },
+                          { label: 'Eliminar', onClick: () => onEliminarClick(service.id, service.nombre), variant: 'danger' },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
