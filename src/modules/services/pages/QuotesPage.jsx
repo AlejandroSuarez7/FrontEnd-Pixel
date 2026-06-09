@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
 import { usePagination } from '../../../core/hooks/usePagination';
+import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useQuotes } from '../cotizaciones/application/useQuotes';
 import { QuoteFormModal } from '../cotizaciones/presentation/QuoteFormModal';
 import { QuoteDetailsModal } from '../cotizaciones/presentation/QuoteDetailsModal';
@@ -196,67 +197,19 @@ const QuotesPage = () => {
                     </td>
 
                     <td className={styles.actionsCell}>
-
-                      {/* Cotizar (Staff) / Editar solicitud (Cliente sin precios aún) */}
-                      {canBePricedOrEdited(quote) && (
-                        <>
-                          <button
-                            onClick={() => handleOpenEditOrPrice(quote)}
-                            className={`${styles.actionBtn} ${isStaff ? styles.actionBtnPrice : styles.actionBtnEdit}`}
-                          >
-                            {isStaff && Number(quote.total) === 0 ? 'Cotizar' : 'Editar'}
-                          </button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-
-                      {/* Aprobar — solo Cliente cuando ya tiene precios */}
-                      {canBeApproved(quote) && (
-                        <>
-                          <button
-                            onClick={() => onApproveClick(quote.idCotizacion)}
-                            className={`${styles.actionBtn} ${styles.actionBtnApprove}`}
-                          >
-                            Aprobar
-                          </button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-
-                      {/* Anular — solo mientras esté PENDIENTE */}
-                      {canBeCancelled(quote) && (
-                        <>
-                          <button
-                            onClick={() => onCancelClick(quote.idCotizacion)}
-                            className={`${styles.actionBtn} ${styles.actionBtnCancel}`}
-                          >
-                            Anular
-                          </button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-
-                      {/* Eliminar permanente — solo Staff */}
-                      {isStaff && !cotizacionAprobada(quote) && (
-                        <>
-                          <button
-                            onClick={() => onEliminarClick(quote.idCotizacion)}
-                            className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
-                          >
-                            Eliminar
-                          </button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-
-                      {/* Ver detalles — siempre visible */}
-                      <button
-                        onClick={() => { setSelectedQuoteForDetails(quote); setIsDetailsOpen(true); }}
-                        className={`${styles.actionBtn} ${styles.actionBtnView}`}
-                      >
-                        Ver
-                      </button>
-
+                      <TableActions
+                        primaryAction={{ label: 'Ver', onClick: () => { setSelectedQuoteForDetails(quote); setIsDetailsOpen(true); }, variant: 'accent' }}
+                        actions={[
+                          canBeApproved(quote) && { label: 'Aprobar', onClick: () => onApproveClick(quote.idCotizacion), variant: 'success' },
+                          canBeCancelled(quote) && { label: 'Anular', onClick: () => onCancelClick(quote.idCotizacion), variant: 'danger' },
+                          canBePricedOrEdited(quote) && {
+                            label: isStaff && Number(quote.total) === 0 ? 'Cotizar' : 'Editar',
+                            onClick: () => handleOpenEditOrPrice(quote),
+                            variant: isStaff ? 'info' : 'warning',
+                          },
+                          isStaff && !cotizacionAprobada(quote) && { label: 'Eliminar', onClick: () => onEliminarClick(quote.idCotizacion), variant: 'danger' },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

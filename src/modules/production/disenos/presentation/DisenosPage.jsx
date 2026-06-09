@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
 import { usePagination } from '../../../../core/hooks/usePagination';
+import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useDisenos } from '../application/useDisenos';
 import { DisenoModal } from './DisenoModal';
 import { DisenoViewModal } from './DisenoViewModal';
@@ -234,30 +235,14 @@ export const DisenosPage = () => {
                     </td>
                     <td className={styles.tableCell}>{formatDate(diseno.fechaEnvio || diseno.fechaCreacion)}</td>
                     <td className={styles.actionsCell}>
-                      {canApprove(diseno) && (
-                        <>
-                          <button onClick={() => onApproveClick(diseno)} className={`${styles.actionBtn} ${styles.actionBtnProcess}`}>Aprobar</button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-                      {(isStaff || isDisenador) && diseno.estado !== 'APROBADO' && (
-                        <>
-                          <button onClick={() => handleOpenEdit(diseno)} className={`${styles.actionBtn} ${styles.actionBtnEdit}`}>Editar</button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-                      {isStaff && diseno.estado !== 'APROBADO' && (
-                        <>
-                          <button onClick={() => onDeleteClick(diseno)} className={`${styles.actionBtn} ${styles.actionBtnCancel}`}>Eliminar</button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-                      <button
-                        onClick={() => { setSelectedDiseno(diseno); setIsViewOpen(true); }}
-                        className={`${styles.actionBtn} ${styles.actionBtnView}`}
-                      >
-                        Ver
-                      </button>
+                      <TableActions
+                        primaryAction={{ label: 'Ver', onClick: () => { setSelectedDiseno(diseno); setIsViewOpen(true); }, variant: 'accent' }}
+                        actions={[
+                          canApprove(diseno) && { label: 'Aprobar', onClick: () => onApproveClick(diseno), variant: 'success' },
+                          (isStaff || isDisenador) && diseno.estado !== 'APROBADO' && { label: 'Editar', onClick: () => handleOpenEdit(diseno), variant: 'warning' },
+                          isStaff && diseno.estado !== 'APROBADO' && { label: 'Eliminar', onClick: () => onDeleteClick(diseno), variant: 'danger' },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
 import { usePagination } from '../../../../core/hooks/usePagination';
+import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAbonos } from '../application/useAbonos';
 import { AbonoModal } from './AbonoModal';
 import { AbonoViewModal } from './AbonoViewModal';
@@ -248,24 +249,15 @@ export const AbonosPage = () => {
                     </td>
                     <td className={styles.tableCell}>{formatDate(abono.fechaCreacion)}</td>
                     <td className={styles.actionsCell}>
-                      {isStaff && abono.estado === 'PENDIENTE' && (
-                        <>
-                          <button onClick={() => onConfirmClick(abono)} className={`${styles.actionBtn} ${styles.actionBtnProcess}`}>Confirmar</button>
-                          <span className={styles.actionDivider} />
-                          <button onClick={() => handleOpenEdit(abono)} className={`${styles.actionBtn} ${styles.actionBtnEdit}`}>Editar</button>
-                          <span className={styles.actionDivider} />
-                          <button onClick={() => onRejectClick(abono)} className={`${styles.actionBtn} ${styles.actionBtnCancel}`}>Rechazar</button>
-                          <span className={styles.actionDivider} />
-                          <button onClick={() => onDeleteClick(abono)} className={`${styles.actionBtn} ${styles.actionBtnCancel}`}>Eliminar</button>
-                          <span className={styles.actionDivider} />
-                        </>
-                      )}
-                      <button
-                        onClick={() => { setSelectedAbono(abono); setIsViewOpen(true); }}
-                        className={`${styles.actionBtn} ${styles.actionBtnView}`}
-                      >
-                        Ver
-                      </button>
+                      <TableActions
+                        primaryAction={{ label: 'Ver', onClick: () => { setSelectedAbono(abono); setIsViewOpen(true); }, variant: 'accent' }}
+                          actions={[
+                            isStaff && abono.estado === 'PENDIENTE' && { label: 'Confirmar', onClick: () => onConfirmClick(abono), variant: 'success' },
+                            isStaff && abono.estado === 'PENDIENTE' && { label: 'Rechazar', onClick: () => onRejectClick(abono), variant: 'danger' },
+                            isStaff && abono.estado === 'PENDIENTE' && { label: 'Editar', onClick: () => handleOpenEdit(abono), variant: 'warning' },
+                            isStaff && abono.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => onDeleteClick(abono), variant: 'danger' },
+                          ]}
+                        />
                     </td>
                   </tr>
                 ))}

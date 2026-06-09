@@ -1,23 +1,15 @@
-// routes/SIDEBAR_CONFIG.js
-// Define exactamente qué ve cada rol en el sidebar.
-// Cualquier ruta que no esté aquí para un rol será bloqueada por ProtectedRoute.
 import { PATHS } from './paths';
 
 export const SIDEBAR_BY_ROLE = {
-
-  // ── ADMIN: acceso completo ──────────────────────────────────────────────
   Admin: [
+    { label: 'Inicio', icon: 'home', to: PATHS.HOME },
+    { label: 'Dashboard', icon: 'dashboard', to: PATHS.DASHBOARD },
     {
-      label: 'Dashboard',
-      icon: 'dashboard',
-      to: PATHS.DASHBOARD,
-    },
-    {
-      label: 'Configuración',
+      label: 'Configuracion',
       icon: 'settings',
       key: 'config',
       items: [
-        { label: 'Gestión de Roles', to: PATHS.ROLES },
+        { label: 'Gestion de Roles', to: PATHS.ROLES },
       ],
     },
     {
@@ -25,7 +17,7 @@ export const SIDEBAR_BY_ROLE = {
       icon: 'groups',
       key: 'users',
       items: [
-        { label: 'Gestión de Usuarios', to: PATHS.USERS },
+        { label: 'Gestion de Usuarios', to: PATHS.USERS },
       ],
     },
     {
@@ -33,10 +25,8 @@ export const SIDEBAR_BY_ROLE = {
       icon: 'shopping_cart',
       key: 'purchases',
       items: [
-        { label: 'Gestión de Compras',    to: PATHS.PURCHASES },
-        { label: 'Gestión de Proveedores', to: PATHS.PURCHASES_PROVIDERS },
-        { label: 'Gestión de Insumos',    to: PATHS.PURCHASES_SUPPLIES },
-        { label: 'Categoría Insumos',     to: PATHS.PURCHASES_CATEGORIES },
+        { label: 'Compras', to: PATHS.PURCHASES },
+        { label: 'Proveedores', to: PATHS.PURCHASES_PROVIDERS },
       ],
     },
     {
@@ -44,11 +34,9 @@ export const SIDEBAR_BY_ROLE = {
       icon: 'sell',
       key: 'sales',
       items: [
-        { label: 'Gestión de Productos',    to: PATHS.SALES_PRODUCTS },
-        { label: 'Categoría de Productos',  to: PATHS.SALES_CATEGORIES },
-        { label: 'Gestión de Abonos',       to: PATHS.SALES_PAYMENTS },
-        { label: 'Gestión de Devoluciones', to: PATHS.SALES_RETURNS },
-        { label: 'Gestión de Pedidos',      to: PATHS.ORDERS },
+        { label: 'Gestion de Ventas', to: PATHS.SALES },
+        { label: 'Gestion de Abonos', to: PATHS.SALES_PAYMENTS },
+        { label: 'Gestion de Pedidos', to: PATHS.ORDERS },
       ],
     },
     {
@@ -56,38 +44,31 @@ export const SIDEBAR_BY_ROLE = {
       icon: 'build',
       key: 'services',
       items: [
-        { label: 'Gestión de Servicios',     to: PATHS.SERVICES },
-        { label: 'Gestión de Cotizaciones',  to: PATHS.SERVICES_QUOTES },
+        { label: 'Gestion de Servicios', to: PATHS.SERVICES },
+        { label: 'Gestion de Cotizaciones', to: PATHS.SERVICES_QUOTES },
       ],
     },
     {
-      label: 'Producción',
+      label: 'Produccion',
       icon: 'engineering',
       key: 'production',
       items: [
-        { label: 'Cola de Producción',          to: PATHS.PRODUCTION },
-        { label: 'Gestión de Diseños',          to: PATHS.PRODUCTION_DESIGNS },
-        { label: 'Entrega de Productos',        to: PATHS.PRODUCTION_DELIVERY },
+        { label: 'Cola de Produccion', to: PATHS.PRODUCTION },
+        { label: 'Gestion de Disenos', to: PATHS.PRODUCTION_DESIGNS },
       ],
     },
   ],
 
-  // ── SECRETARIA: igual que Admin pero sin Configuración ni Usuarios ──────
   Secretaria: [
-    {
-      label: 'Dashboard',
-      icon: 'dashboard',
-      to: PATHS.DASHBOARD,
-    },
+    { label: 'Inicio', icon: 'home', to: PATHS.HOME },
+    { label: 'Dashboard', icon: 'dashboard', to: PATHS.DASHBOARD },
     {
       label: 'Compras',
       icon: 'shopping_cart',
       key: 'purchases',
       items: [
-        { label: 'Gestión de Compras',    to: PATHS.PURCHASES },
-        { label: 'Gestión de Proveedores', to: PATHS.PURCHASES_PROVIDERS },
-        { label: 'Gestión de Insumos',    to: PATHS.PURCHASES_SUPPLIES },
-        { label: 'Categoría Insumos',     to: PATHS.PURCHASES_CATEGORIES },
+        { label: 'Compras', to: PATHS.PURCHASES },
+        { label: 'Proveedores', to: PATHS.PURCHASES_PROVIDERS },
       ],
     },
     {
@@ -95,11 +76,9 @@ export const SIDEBAR_BY_ROLE = {
       icon: 'sell',
       key: 'sales',
       items: [
-        { label: 'Gestión de Productos',    to: PATHS.SALES_PRODUCTS },
-        { label: 'Categoría de Productos',  to: PATHS.SALES_CATEGORIES },
-        { label: 'Gestión de Abonos',       to: PATHS.SALES_PAYMENTS },
-        { label: 'Gestión de Devoluciones', to: PATHS.SALES_RETURNS },
-        { label: 'Gestión de Pedidos',      to: PATHS.ORDERS },
+        { label: 'Gestion de Ventas', to: PATHS.SALES },
+        { label: 'Gestion de Abonos', to: PATHS.SALES_PAYMENTS },
+        { label: 'Gestion de Pedidos', to: PATHS.ORDERS },
       ],
     },
     {
@@ -107,29 +86,25 @@ export const SIDEBAR_BY_ROLE = {
       icon: 'build',
       key: 'services',
       items: [
-        { label: 'Gestión de Servicios',    to: PATHS.SERVICES },
-        { label: 'Gestión de Cotizaciones', to: PATHS.SERVICES_QUOTES },
+        { label: 'Gestion de Servicios', to: PATHS.SERVICES },
+        { label: 'Gestion de Cotizaciones', to: PATHS.SERVICES_QUOTES },
       ],
     },
     {
-      label: 'Producción',
+      label: 'Produccion',
       icon: 'engineering',
       key: 'production',
       items: [
-        { label: 'Cola de Producción',   to: PATHS.PRODUCTION },
-        { label: 'Gestión de Diseños',   to: PATHS.PRODUCTION_DESIGNS },
-        { label: 'Entrega de Productos', to: PATHS.PRODUCTION_DELIVERY },
+        { label: 'Cola de Produccion', to: PATHS.PRODUCTION },
+        { label: 'Gestion de Disenos', to: PATHS.PRODUCTION_DESIGNS },
       ],
     },
   ],
 
-  // ── CLIENTE: solo cotizaciones y pedidos propios ─────────────────────────
   Cliente: [
-    {
-      label: 'Dashboard',
-      icon: 'dashboard',
-      to: PATHS.DASHBOARD,
-    },
+    { label: 'Inicio', icon: 'home', to: PATHS.HOME },
+    { label: 'Dashboard', icon: 'dashboard', to: PATHS.DASHBOARD },
+    { label: 'Mi Perfil', icon: 'account_circle', to: PATHS.PROFILE },
     {
       label: 'Servicios',
       icon: 'build',
@@ -145,48 +120,67 @@ export const SIDEBAR_BY_ROLE = {
       items: [
         { label: 'Estado de mis pedidos', to: PATHS.ORDERS },
         { label: 'Mis Abonos', to: PATHS.SALES_PAYMENTS },
-        { label: 'Mis Diseños', to: PATHS.PRODUCTION_DESIGNS },
+        { label: 'Mis Disenos', to: PATHS.PRODUCTION_DESIGNS },
+      ],
+    },
+  ],
+
+  Disenador: [
+    { label: 'Inicio', icon: 'home', to: PATHS.HOME },
+    { label: 'Dashboard', icon: 'dashboard', to: PATHS.DASHBOARD },
+    { label: 'Compras', icon: 'shopping_cart', to: PATHS.PURCHASES },
+    {
+      label: 'Produccion',
+      icon: 'engineering',
+      key: 'production',
+      items: [
+        { label: 'Gestion de Disenos', to: PATHS.PRODUCTION_DESIGNS },
+        { label: 'Cola de Produccion', to: PATHS.PRODUCTION },
       ],
     },
   ],
 
   Diseñador: [
+    { label: 'Dashboard', icon: 'dashboard', to: PATHS.DASHBOARD },
+    { label: 'Compras', icon: 'shopping_cart', to: PATHS.PURCHASES },
     {
-      label: 'Dashboard',
-      icon: 'dashboard',
-      to: PATHS.DASHBOARD,
-    },
-    {
-      label: 'Producción',
+      label: 'Produccion',
       icon: 'engineering',
       key: 'production',
       items: [
-        { label: 'Gestión de Diseños', to: PATHS.PRODUCTION_DESIGNS },
-        { label: 'Cola de Producción', to: PATHS.PRODUCTION },
+        { label: 'Gestion de Disenos', to: PATHS.PRODUCTION_DESIGNS },
+        { label: 'Cola de Produccion', to: PATHS.PRODUCTION },
       ],
     },
   ],
 };
 
-// Todas las rutas permitidas por rol — usadas por ProtectedRoute para bloquear acceso directo por URL
 export const ALLOWED_PATHS_BY_ROLE = {
-  Admin: null, // null = acceso total, no se restringe
+  Admin: null,
   Secretaria: [
     PATHS.DASHBOARD,
-    PATHS.PURCHASES, PATHS.PURCHASES_PROVIDERS, PATHS.PURCHASES_SUPPLIES, PATHS.PURCHASES_CATEGORIES,
-    PATHS.SALES_PRODUCTS, PATHS.SALES_CATEGORIES, PATHS.SALES_PAYMENTS, PATHS.SALES_RETURNS, PATHS.ORDERS,
+    PATHS.PURCHASES, PATHS.PURCHASES_PROVIDERS,
+    PATHS.SALES, PATHS.SALES_PAYMENTS, PATHS.ORDERS,
     PATHS.SERVICES, PATHS.SERVICES_QUOTES,
-    PATHS.PRODUCTION, PATHS.PRODUCTION_DESIGNS, PATHS.PRODUCTION_DELIVERY,
+    PATHS.PRODUCTION, PATHS.PRODUCTION_DESIGNS,
   ],
   Cliente: [
     PATHS.DASHBOARD,
+    PATHS.PROFILE,
     PATHS.SERVICES_QUOTES,
     PATHS.ORDERS,
     PATHS.SALES_PAYMENTS,
     PATHS.PRODUCTION_DESIGNS,
   ],
+  Disenador: [
+    PATHS.DASHBOARD,
+    PATHS.PURCHASES,
+    PATHS.PRODUCTION,
+    PATHS.PRODUCTION_DESIGNS,
+  ],
   Diseñador: [
     PATHS.DASHBOARD,
+    PATHS.PURCHASES,
     PATHS.PRODUCTION,
     PATHS.PRODUCTION_DESIGNS,
   ],

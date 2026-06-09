@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
 import { usePagination } from '../../../core/hooks/usePagination';
+import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useRoles } from '../roles/application/useRoles';
 import { RoleFormModal } from '../roles/presentation/RoleFormModal';
 import styles from '../roles/presentation/roles.module.css';
@@ -120,27 +121,12 @@ const RolesPage = () => {
                       </span>
                     </td>
                     <td className={styles.actionsCell}>
-
-                      <button
-                        onClick={() => handleOpenEdit(role)}
-                        className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
-                      >
-                        Editar
-                      </button>
-
-                      <span className={styles.actionDivider} />
-
-                      {role.nombre !== 'Admin' && (
-                        <>
-                          <button
-                            onClick={() => onHardDeleteClick(role.id, role.nombre)}
-                            className={`${styles.actionBtn} ${styles.actionBtnDelete}`}
-                          >
-                            Eliminar
-                          </button>
-                        </>
-                      )}
-
+                      <TableActions
+                        actions={[
+                          { label: 'Editar', onClick: () => handleOpenEdit(role), variant: 'warning' },
+                          role.nombre !== 'Admin' && { label: 'Eliminar', onClick: () => onHardDeleteClick(role.id, role.nombre), variant: 'danger' },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

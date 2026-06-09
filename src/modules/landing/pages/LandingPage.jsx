@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import './LandingPage.css';
 import { motion } from 'motion/react';
+import { useAuth } from '../../../store/AuthContext';
 import {
   Upload,
   Palette,
@@ -21,6 +23,24 @@ import {
 } from "react-icons/fa";
 
 const LandingPage = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const isLoggedIn = Boolean(user);
+  const userName = user?.nombre || 'Usuario';
+  const avatarLetter = userName.charAt(0).toUpperCase();
+
+  const handleGoDashboard = () => {
+    setProfileOpen(false);
+    navigate('/dashboard');
+  };
+
+  const handleLogout = () => {
+    setProfileOpen(false);
+    logout();
+    navigate('/');
+  };
+
   return (
     <div>
       <header className="landing-header">
@@ -42,17 +62,44 @@ const LandingPage = () => {
 
             {/* Acciones (Login + Botón móvil) */}
             <div className="actions">
+              {!isLoggedIn ? (
               <Link to="/login" className="btn-login">
                 <span className="btn-login-text">
                 Iniciar Sesión
                 </span>
               </Link>
+              ) : (
+                <>
+              {/*
 
               <button className="hamburger-btn" aria-label="Abrir menú">
-                <svg xmlns="http://www.w3.org/2000/svg" className="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
+              */}
+                <div className="landing-profile-wrapper">
+                  <button
+                    type="button"
+                    className="landing-profile-button"
+                    onClick={() => setProfileOpen(prev => !prev)}
+                    aria-expanded={profileOpen}
+                  >
+                    <span className="landing-profile-avatar">{avatarLetter}</span>
+                    <span className="landing-profile-label">Perfil</span>
+                  </button>
+
+                  {profileOpen && (
+                    <div className="landing-profile-menu">
+                      <p className="landing-profile-name">{userName}</p>
+                      <button type="button" onClick={handleGoDashboard} className="landing-profile-menu-btn">
+                        Ir al Dashboard
+                      </button>
+                      <button type="button" onClick={handleLogout} className="landing-profile-menu-btn danger">
+                        Cerrar sesion
+                      </button>
+                    </div>
+                  )}
+                </div>
+                </>
+              )}
+
             </div>
 
           </div>
@@ -1528,7 +1575,15 @@ const LandingPage = () => {
         </nav>
 
         <div className="mobile-user-section">
-          <Link className="mobile-login-btn" to="/login">Iniciar Sesión</Link>
+          {!isLoggedIn ? (
+            <Link className="mobile-login-btn" to="/login">Iniciar Sesión</Link>
+          ) : (
+            <>
+              <p className="mobile-profile-name">{userName}</p>
+              <button type="button" className="mobile-login-btn" onClick={handleGoDashboard}>Ir al Dashboard</button>
+              <button type="button" className="mobile-login-btn mobile-logout-btn" onClick={handleLogout}>Cerrar sesion</button>
+            </>
+          )}
         </div>
       </aside>
     </div>
