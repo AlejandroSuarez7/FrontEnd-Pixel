@@ -6,6 +6,20 @@ export const pedidoDTO = {
   fromApi(apiData) {
     if (!apiData) return null;
     const fechaCreacion = apiData.fechaCreacion ?? apiData.fecha_creacion ?? apiData.createdAt ?? apiData.created_at;
+    const fechaEntregaEstimada = apiData.fechaEntregaEstimada
+      ?? apiData.fecha_entrega_estimada
+      ?? apiData.fechaEstimadaEntrega
+      ?? apiData.fecha_estimada_entrega
+      ?? apiData.fechaEntrega
+      ?? apiData.fecha_entrega;
+    const fechaFinalizado = apiData.fechaFinalizado
+      ?? apiData.fecha_finalizado
+      ?? apiData.finalizadoAt
+      ?? apiData.finalizado_at;
+    const fechaEntregado = apiData.fechaEntregado
+      ?? apiData.fecha_entregado
+      ?? apiData.entregadoAt
+      ?? apiData.entregado_at;
 
     const detalles = Array.isArray(apiData.detalles)
       ? apiData.detalles.map(d => createDetallePedido({
@@ -31,9 +45,9 @@ export const pedidoDTO = {
       totalPagado:          apiData.totalPagado,
       saldoPendiente:       apiData.saldoPendiente,
       fechaCreacion,
-      fechaEntregaEstimada: apiData.fechaEntregaEstimada,
-      fechaFinalizado:      apiData.fechaFinalizado,
-      fechaEntregado:       apiData.fechaEntregado,
+      fechaEntregaEstimada,
+      fechaFinalizado,
+      fechaEntregado,
       observaciones:        apiData.observaciones,
       cliente:              apiData.cliente,
       cotizacion:           apiData.cotizacion,

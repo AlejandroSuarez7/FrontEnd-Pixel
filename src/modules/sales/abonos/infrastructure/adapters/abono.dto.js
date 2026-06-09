@@ -12,11 +12,20 @@ export const abonoDTO = {
       referencia: apiData.referencia,
       comprobanteUrl: apiData.comprobanteUrl,
       estado: apiData.estado,
-      fechaCreacion: apiData.fechaCreacion ?? apiData.fecha_creacion,
+      fechaCreacion: apiData.fechaCreacion
+        ?? apiData.fecha_creacion
+        ?? apiData.createdAt
+        ?? apiData.created_at,
       confirmadoPorId: apiData.confirmadoPorId,
-      fechaConfirmacion: apiData.fechaConfirmacion,
+      fechaConfirmacion: apiData.fechaConfirmacion
+        ?? apiData.fecha_confirmacion
+        ?? apiData.confirmedAt
+        ?? apiData.confirmed_at,
       rechazadoPorId: apiData.rechazadoPorId,
-      fechaRechazo: apiData.fechaRechazo,
+      fechaRechazo: apiData.fechaRechazo
+        ?? apiData.fecha_rechazo
+        ?? apiData.rejectedAt
+        ?? apiData.rejected_at,
       motivoRechazo: apiData.motivoRechazo,
       pedido: apiData.pedido ?? null,
       confirmadoPor: apiData.confirmadoPor ?? null,
