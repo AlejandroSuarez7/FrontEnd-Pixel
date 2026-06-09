@@ -30,7 +30,10 @@ export const quotesDTO = {
       costosAdicionales: apiData.costosAdicionales ?? 0,
       total:             apiData.total ?? 0,
       observaciones:     apiData.observaciones ?? '',
-      fechaCreacion:     apiData.fechaCreacion,
+      fechaCreacion:     apiData.fechaCreacion
+        ?? apiData.fecha_creacion
+        ?? apiData.createdAt
+        ?? apiData.created_at,
       cliente:           apiData.cliente ?? null,
       creadoPor:         apiData.creadoPor ?? null,
       detalles,
