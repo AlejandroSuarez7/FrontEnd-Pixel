@@ -4,6 +4,7 @@ import { productionQueueRepository } from '../infrastructure/productionQueue.rep
 export const useProductionQueue = () => {
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   const fetchQueue = useCallback(async () => {
     setLoading(true);
@@ -22,9 +23,21 @@ export const useProductionQueue = () => {
     fetchQueue();
   }, [fetchQueue]);
 
+  const saveOrder = async (orderedPedidos) => {
+    setSavingOrder(true);
+    try {
+      await productionQueueRepository.saveOrder(orderedPedidos);
+      await fetchQueue();
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
   return {
     loading,
     pedidos,
     refetch: fetchQueue,
+    saveOrder,
+    savingOrder,
   };
 };
