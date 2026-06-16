@@ -6,6 +6,10 @@ export const pedidoDTO = {
   fromApi(apiData) {
     if (!apiData) return null;
     const fechaCreacion = apiData.fechaCreacion ?? apiData.fecha_creacion ?? apiData.createdAt ?? apiData.created_at;
+    const fechaActualizacion = apiData.fechaActualizacion
+      ?? apiData.fecha_actualizacion
+      ?? apiData.updatedAt
+      ?? apiData.updated_at;
     const fechaEntregaEstimada = apiData.fechaEntregaEstimada
       ?? apiData.fecha_entrega_estimada
       ?? apiData.fechaEstimadaEntrega
@@ -45,6 +49,7 @@ export const pedidoDTO = {
       totalPagado:          apiData.totalPagado,
       saldoPendiente:       apiData.saldoPendiente,
       fechaCreacion,
+      fechaActualizacion,
       fechaEntregaEstimada,
       fechaFinalizado,
       fechaEntregado,

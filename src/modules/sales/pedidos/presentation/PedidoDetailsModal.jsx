@@ -17,6 +17,7 @@ const ESTADO_PAGO_CLASS = {
 };
 
 const ISO_DATE_IN_BRACKETS = /\[(\d{4}-\d{2}-\d{2}T[^\]]+)\]/g;
+const QUEUE_ORDER_MARKER_GLOBAL = /\n?\[\[PIXEL_QUEUE_ORDER:\d+\]\]/g;
 
 const getFirstObservationDate = (observaciones) => {
   const match = observaciones?.match(ISO_DATE_IN_BRACKETS);
@@ -24,8 +25,9 @@ const getFirstObservationDate = (observaciones) => {
 };
 
 const formatObservaciones = (observaciones) => {
-  if (!observaciones) return 'Sin observaciones registradas';
-  return observaciones.replace(ISO_DATE_IN_BRACKETS, (_, date) => formatDate(date));
+  const cleanObservaciones = (observaciones || '').replace(QUEUE_ORDER_MARKER_GLOBAL, '').trim();
+  if (!cleanObservaciones) return 'Sin observaciones registradas';
+  return cleanObservaciones.replace(ISO_DATE_IN_BRACKETS, (_, date) => formatDate(date));
 };
 
 export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
