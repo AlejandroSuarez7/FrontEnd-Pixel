@@ -1,6 +1,7 @@
 // presentation/UserFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../../core/services/apiService';
+import { notifications } from '../../../core/utils/notifications';
 import styles from './users.module.css';
 
 export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
@@ -80,7 +81,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
       // que ya maneja internamente si es create o update
       await onSubmit(payload);
     } catch (error) {
-      alert(error.message || 'Error al procesar el usuario.');
+      notifications.error(error.message || 'Error al procesar el usuario.');
     }
   };
 

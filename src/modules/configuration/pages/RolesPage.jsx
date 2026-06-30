@@ -1,29 +1,43 @@
 // presentation/pages/RolesPage.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
-import { usePagination } from '../../../core/hooks/usePagination';
+import { notifications } from '../../../core/utils/notifications';
+import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../store/AuthContext';
 import { useRoles } from '../roles/application/useRoles';
+import { RolePermissionsModal } from '../roles/presentation/RolePermissionsModal';
 import { RoleFormModal } from '../roles/presentation/RoleFormModal';
 import styles from '../roles/presentation/roles.module.css';
 
 const RolesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { roles, loading, handleCreate, handleUpdate, handleHardDelete } = useRoles({ search: searchTerm });
+  const [currentPage, setCurrentPage] = useState(1);
+  const confirm = useConfirm();
+  const {
+    roles,
+    paginationMeta,
+    loading,
+    handleCreate,
+    handleUpdate,
+    handleHardDelete,
+  } = useRoles({
+    page: currentPage,
+    limit: DEFAULT_PAGE_SIZE,
+    search: searchTerm,
+    sortBy: 'nombre',
+    order: 'asc',
+  });
+  const { hasPermission } = useAuth();
 
   const [isModalOpen, setIsModalOpen]   = useState(false);
+  const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
 
-  const totalRoles    = roles.length;
+  const totalRoles    = paginationMeta.total;
   const activeRoles   = roles.filter(r => r.estado === true).length;
   const inactiveRoles = roles.filter(r => r.estado === false).length;
-  const {
-    currentPage,
-    pageSize,
-    paginatedItems: paginatedRoles,
-    setCurrentPage,
-    totalPages,
-  } = usePagination(roles);
 
   const handleOpenCreate = () => {
     setSelectedRole(null);
@@ -35,11 +49,26 @@ const RolesPage = () => {
     setIsModalOpen(true);
   };
 
-  const onHardDeleteClick = (id, nombre) => {
-    if (window.confirm(`¿Eliminar permanentemente el rol "${nombre}"? Esta acción no se puede deshacer.`)) {
-      handleHardDelete(id).catch(err =>
-        alert(err.message || 'No se pudo eliminar el rol.')
-      );
+  const handleOpenPermissions = (role) => {
+    setSelectedRole(role);
+    setIsPermissionsOpen(true);
+  };
+
+  const onHardDeleteClick = async (id, nombre) => {
+    const accepted = await confirm({
+      title: 'Eliminar rol',
+      message: `Eliminar permanentemente el rol "${nombre}"? Esta accion no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleHardDelete(id);
+      notifications.success('Rol eliminado correctamente.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo eliminar el rol.');
     }
   };
 
@@ -55,9 +84,11 @@ const RolesPage = () => {
             Administra los niveles de acceso y permisos del personal en el sistema.
           </p>
         </div>
-        <button onClick={handleOpenCreate} className={styles.primaryButton}>
-          Nuevo rol
-        </button>
+        {hasPermission('roles.crear') && (
+          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+            Nuevo rol
+          </button>
+        )}
       </div>
 
       {/* KPIs */}
@@ -82,7 +113,10 @@ const RolesPage = () => {
           type="text"
           placeholder="Buscar rol por nombre..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={e => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className={styles.searchInput}
         />
       </div>
@@ -106,7 +140,7 @@ const RolesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedRoles.map((role) => (
+                {roles.map((role) => (
                   <tr key={role.id} className={styles.tableBodyRow}>
                     <td className={styles.tableCellId}>#{role.id}</td>
                     <td className={styles.tableCellName}>{role.nombre}</td>
@@ -123,8 +157,9 @@ const RolesPage = () => {
                     <td className={styles.actionsCell}>
                       <TableActions
                         actions={[
-                          { label: 'Editar', onClick: () => handleOpenEdit(role), variant: 'warning' },
-                          role.nombre !== 'Admin' && { label: 'Eliminar', onClick: () => onHardDeleteClick(role.id, role.nombre), variant: 'danger' },
+                          hasPermission('permisos.ver') && { label: 'Permisos', onClick: () => handleOpenPermissions(role), variant: 'info' },
+                          hasPermission('roles.editar') && { label: 'Editar', onClick: () => handleOpenEdit(role), variant: 'warning' },
+                          hasPermission('roles.eliminar') && role.nombre !== 'Admin' && { label: 'Eliminar', onClick: () => onHardDeleteClick(role.id, role.nombre), variant: 'danger' },
                         ]}
                       />
                     </td>
@@ -137,10 +172,12 @@ const RolesPage = () => {
         <Pagination
           classNames={styles}
           currentPage={currentPage}
+          hasNextPage={paginationMeta.hasNextPage}
+          hasPrevPage={paginationMeta.hasPrevPage}
           onPageChange={setCurrentPage}
-          pageSize={pageSize}
-          totalItems={roles.length}
-          totalPages={totalPages}
+          pageSize={paginationMeta.limit}
+          totalItems={paginationMeta.total}
+          totalPages={paginationMeta.totalPages}
         />
       </div>
 
@@ -150,6 +187,14 @@ const RolesPage = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={selectedRole ? handleUpdate : handleCreate}
         role={selectedRole}
+      />
+
+      <RolePermissionsModal
+        isOpen={isPermissionsOpen}
+        onClose={() => setIsPermissionsOpen(false)}
+        role={selectedRole}
+        canAssignPermissions={hasPermission('permisos.asignar')}
+        canSyncPermissions={hasPermission('permisos.asignar')}
       />
     </div>
   );

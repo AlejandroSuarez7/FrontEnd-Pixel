@@ -1,21 +1,25 @@
 // cotizaciones/application/useQuotes.js
 import { useState, useEffect, useCallback } from 'react';
+import { createPaginationMeta } from '../../../../core/utils/serverPagination';
 import { QuoteApiRepository } from '../infrastructure/quote.repository';
 
 const quoteRepository = new QuoteApiRepository();
 
 export const useQuotes = (filters = {}) => {
   const [quotes, setQuotes]   = useState([]);
+  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
   const [loading, setLoading] = useState(false);
 
   const fetchQuotes = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await quoteRepository.list(filters);
-      setQuotes(data);
+      const response = await quoteRepository.list(filters);
+      setQuotes(response.items);
+      setPaginationMeta(response.meta);
     } catch (error) {
       console.error('Error en useQuotes al listar:', error);
       setQuotes([]);
+      setPaginationMeta(createPaginationMeta());
     } finally {
       setLoading(false);
     }
@@ -97,6 +101,7 @@ export const useQuotes = (filters = {}) => {
 
   return {
     quotes,
+    paginationMeta,
     loading,
     refetch:         fetchQuotes,
     handleCreate,

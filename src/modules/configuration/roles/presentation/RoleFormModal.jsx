@@ -1,5 +1,6 @@
 // presentation/presentation/RoleFormModal.jsx
 import React, { useState, useEffect } from 'react';
+import { notifications } from '../../../../core/utils/notifications';
 import styles from './roles.module.css';
 
 export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
@@ -34,7 +35,7 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
       }
       onClose();
     } catch (error) {
-      alert(error.message || 'Error al procesar el rol.');
+      notifications.error(error.message || 'Error al procesar el rol.');
     }
   };
 

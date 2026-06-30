@@ -1,5 +1,6 @@
 // pedidos/presentation/PedidoEditModal.jsx
 import React, { useState, useEffect } from 'react';
+import { notifications } from '../../../../core/utils/notifications';
 import styles from './pedidos.module.css';
 
 export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido, isStaff }) => {
@@ -29,7 +30,7 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido, isStaff }) 
       await onSubmit(pedido.idPedido, payload);
       onClose();
     } catch (err) {
-      alert(err.message || 'Error al actualizar el pedido.');
+      notifications.error(err.message || 'Error al actualizar el pedido.');
     }
   };
 

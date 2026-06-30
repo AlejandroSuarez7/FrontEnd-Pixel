@@ -1,5 +1,6 @@
 // infrastructure/roles.repository.js
 import { apiClient } from '../../../../core/services/apiService.js';
+import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
 import { rolesDTO } from './adapters/rolesDTO.js';
 
 const ENDPOINT = 'api/roles';
@@ -8,20 +9,16 @@ export class RolesApiRepository {
 
   async list(filters = {}) {
     try {
-      let url = ENDPOINT;
-      const params = {};
-
-      if (filters.search) {
-        url = `${ENDPOINT}/buscar`;
-        params.nombre = filters.search;
-      }
-
-      const { data } = await apiClient.get(url, { params });
-      const items = data.data || [];
-      return rolesDTO.fromApiList(items);
+      const params = buildPaginationParams({
+        sortBy: 'nombre',
+        order: 'asc',
+        ...filters,
+      });
+      const { data } = await apiClient.get(ENDPOINT, { params });
+      return normalizePaginatedResponse(data, rolesDTO.fromApiList.bind(rolesDTO));
     } catch (error) {
       console.error("Error al listar los roles desde el servidor", error);
-      return [];
+      return normalizePaginatedResponse({}, rolesDTO.fromApiList.bind(rolesDTO));
     }
   }
 

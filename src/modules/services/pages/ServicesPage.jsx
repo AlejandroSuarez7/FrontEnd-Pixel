@@ -1,8 +1,11 @@
 // presentation/pages/ServicesPage.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
-import { usePagination } from '../../../core/hooks/usePagination';
+import { notifications } from '../../../core/utils/notifications';
+import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../store/AuthContext';
 import { useTecnicas } from '../tecnicas/application/useTecnicas';
 import { ServiceFormModal } from '../tecnicas/presentation/ServiceFormModal';
 import { ServiceDetailsModal } from '../tecnicas/presentation/ServiceDetailsModal';
@@ -10,28 +13,31 @@ import styles from '../tecnicas/presentation/services.module.css';
 
 const ServicesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const confirm = useConfirm();
+  const { hasPermission } = useAuth();
   const {
     tecnicas,
     loading,
     handleCreate,
     handleUpdate,
     handleHardDelete,
-  } = useTecnicas({ search: searchTerm });
+    paginationMeta,
+  } = useTecnicas({
+    page: currentPage,
+    limit: DEFAULT_PAGE_SIZE,
+    search: searchTerm,
+    sortBy: 'nombre',
+    order: 'asc',
+  });
 
   const [isFormOpen, setIsFormOpen]           = useState(false);
   const [isDetailsOpen, setIsDetailsOpen]     = useState(false);
   const [selectedService, setSelectedService] = useState(null);
 
-  const totalServices    = tecnicas.length;
+  const totalServices    = paginationMeta.total;
   const activeServices   = tecnicas.filter(s => s.estado === true).length;
   const inactiveServices = tecnicas.filter(s => s.estado === false).length;
-  const {
-    currentPage,
-    pageSize,
-    paginatedItems: paginatedTecnicas,
-    setCurrentPage,
-    totalPages,
-  } = usePagination(tecnicas);
 
   const handleOpenCreate = () => {
     setSelectedService(null);
@@ -48,11 +54,21 @@ const ServicesPage = () => {
     setIsDetailsOpen(true);
   };
 
-  const onEliminarClick = (id, nombre) => {
-    if (window.confirm(
-      `¿Eliminar permanentemente el servicio "${nombre}"?\n\nEsta acción no se puede deshacer.`
-    )) {
-      handleHardDelete(id).catch(err => alert(err.message));
+  const onEliminarClick = async (id, nombre) => {
+    const accepted = await confirm({
+      title: 'Eliminar servicio',
+      message: `Eliminar permanentemente el servicio "${nombre}"? Esta accion no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleHardDelete(id);
+      notifications.success('Servicio eliminado correctamente.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo eliminar el servicio.');
     }
   };
 
@@ -68,9 +84,11 @@ const ServicesPage = () => {
             Administra los tipos de técnicas, estampados y procesos de producción.
           </p>
         </div>
-        <button onClick={handleOpenCreate} className={styles.primaryButton}>
-          Nuevo servicio
-        </button>
+        {hasPermission('tecnicas.crear') && (
+          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+            Nuevo servicio
+          </button>
+        )}
       </div>
 
       {/* KPIs */}
@@ -95,7 +113,10 @@ const ServicesPage = () => {
           type="text"
           placeholder="Buscar servicio por nombre o descripción..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={e => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className={styles.searchInput}
         />
       </div>
@@ -119,7 +140,7 @@ const ServicesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedTecnicas.map((service) => (
+                {tecnicas.map((service) => (
                   <tr key={service.id} className={styles.tableBodyRow}>
                     <td className={styles.tableCellId}>#{service.id}</td>
                     <td className={styles.tableCellBold}>{service.nombre}</td>
@@ -137,8 +158,8 @@ const ServicesPage = () => {
                       <TableActions
                         primaryAction={{ label: 'Ver', onClick: () => handleOpenDetails(service), variant: 'accent' }}
                         actions={[
-                          { label: 'Editar', onClick: () => handleOpenEdit(service), variant: 'warning' },
-                          { label: 'Eliminar', onClick: () => onEliminarClick(service.id, service.nombre), variant: 'danger' },
+                          hasPermission('tecnicas.editar') && { label: 'Editar', onClick: () => handleOpenEdit(service), variant: 'warning' },
+                          hasPermission('tecnicas.eliminar') && { label: 'Eliminar', onClick: () => onEliminarClick(service.id, service.nombre), variant: 'danger' },
                         ]}
                       />
                     </td>
@@ -151,10 +172,12 @@ const ServicesPage = () => {
         <Pagination
           classNames={styles}
           currentPage={currentPage}
+          hasNextPage={paginationMeta.hasNextPage}
+          hasPrevPage={paginationMeta.hasPrevPage}
           onPageChange={setCurrentPage}
-          pageSize={pageSize}
-          totalItems={tecnicas.length}
-          totalPages={totalPages}
+          pageSize={paginationMeta.limit}
+          totalItems={paginationMeta.total}
+          totalPages={paginationMeta.totalPages}
         />
       </div>
 

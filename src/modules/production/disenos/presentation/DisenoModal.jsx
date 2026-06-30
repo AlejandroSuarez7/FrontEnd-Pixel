@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../../../core/services/apiService';
+import { notifications } from '../../../../core/utils/notifications';
 import './DisenosPage.css';
 
 const styles = {
@@ -117,7 +118,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
         observaciones,
       });
     } catch (error) {
-      alert(error.message || 'No se pudo procesar el diseno.');
+      notifications.error(error.message || 'No se pudo procesar el diseno.');
     }
   };
 

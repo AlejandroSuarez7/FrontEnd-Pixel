@@ -1,72 +1,54 @@
-// tecnicas/application/useTecnicas.js
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPaginationMeta } from '../../../../core/utils/serverPagination';
 import { tecnicasRepository } from '../infrastructure/tecnicas.repository';
 
 export const useTecnicas = (filters = {}) => {
   const [tecnicas, setTecnicas] = useState([]);
-  const [loading, setLoading]   = useState(false);
+  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
+  const [loading, setLoading] = useState(false);
 
   const fetchTecnicas = async () => {
     setLoading(true);
     try {
-      const data = await tecnicasRepository.list(filters);
-      setTecnicas(data);
+      const response = await tecnicasRepository.list(filters);
+      setTecnicas(response.items);
+      setPaginationMeta(response.meta);
     } catch (error) {
-      console.error('Error en el hook al cargar las técnicas:', error);
+      console.error('Error en el hook al cargar las tecnicas:', error);
       setTecnicas([]);
+      setPaginationMeta(createPaginationMeta());
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreate = async (tecnicaData) => {
-    try {
-      await tecnicasRepository.create(tecnicaData);
-      await fetchTecnicas();
-    } catch (error) {
-      console.error('Error en el hook al crear la técnica:', error);
-      throw error;
-    }
+    await tecnicasRepository.create(tecnicaData);
+    await fetchTecnicas();
   };
 
   const handleUpdate = async (id, updatedData) => {
-    try {
-      await tecnicasRepository.update(id, updatedData);
-      await fetchTecnicas();
-    } catch (error) {
-      console.error(`Error en el hook al actualizar la técnica #${id}:`, error);
-      throw error;
-    }
+    await tecnicasRepository.update(id, updatedData);
+    await fetchTecnicas();
   };
 
-  // Desactivación lógica: DELETE /:id
   const handleDelete = async (id) => {
-    try {
-      await tecnicasRepository.delete(id);
-      await fetchTecnicas();
-    } catch (error) {
-      console.error(`Error en el hook al desactivar la técnica #${id}:`, error);
-      throw error;
-    }
+    await tecnicasRepository.delete(id);
+    await fetchTecnicas();
   };
 
-  // Eliminación permanente: DELETE /:id/eliminar
   const handleHardDelete = async (id) => {
-    try {
-      await tecnicasRepository.hardDelete(id);
-      await fetchTecnicas();
-    } catch (error) {
-      console.error(`Error en el hook al eliminar la técnica #${id}:`, error);
-      throw error;
-    }
+    await tecnicasRepository.hardDelete(id);
+    await fetchTecnicas();
   };
 
   useEffect(() => {
     fetchTecnicas();
-  }, [filters.search]);
+  }, [filters.search, filters.page, filters.limit, filters.sortBy, filters.order]);
 
   return {
     tecnicas,
+    paginationMeta,
     loading,
     handleCreate,
     handleUpdate,

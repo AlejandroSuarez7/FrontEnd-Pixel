@@ -1,23 +1,22 @@
 // shared/layouts/DashboardLayout/Sidebar.jsx
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { SIDEBAR_BY_ROLE } from '../../../routes/SIDEBAR_CONFIG';
+import { filterSidebarByPermissions } from '../../../routes/SIDEBAR_CONFIG';
 import { useAuth } from '../../../store/AuthContext';
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, permissions, logout } = useAuth();
   const [openMenu, setOpenMenu] = useState(null);
   const [collapsed, setCollapsed] = useState(() => (
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
   ));
 
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
-  const userName = session?.nombre || 'Usuario';
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
+  const userName = user?.nombre || user?.correo || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
-  const menu = SIDEBAR_BY_ROLE[userRole] ?? SIDEBAR_BY_ROLE['Cliente'];
+  const menu = filterSidebarByPermissions(permissions);
 
   const activeSection = menu.find((section) =>
     section.items?.some((item) => location.pathname.startsWith(item.to)) ||

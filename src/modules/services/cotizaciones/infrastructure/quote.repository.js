@@ -1,5 +1,6 @@
 // infrastructure/quote.repository.js
 import { apiClient } from '../../../../core/services/apiService.js';
+import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
 import { quotesDTO } from './adapters/cotizacionDTO.js';
 
 const ENDPOINT = 'api/cotizaciones';
@@ -7,19 +8,16 @@ const ENDPOINT = 'api/cotizaciones';
 export class QuoteApiRepository {
   async list(filters = {}) {
     try {
-      let url = ENDPOINT;
-      const params = {};
-
-      if (filters.search) {
-        url = `${ENDPOINT}/buscar`;
-        params.termino = filters.search;
-      }
-
-      const { data } = await apiClient.get(url, { params });
-      return quotesDTO.fromApiList(data.data || []);
+      const params = buildPaginationParams({
+        sortBy: 'idCotizacion',
+        order: 'desc',
+        ...filters,
+      });
+      const { data } = await apiClient.get(ENDPOINT, { params });
+      return normalizePaginatedResponse(data, quotesDTO.fromApiList.bind(quotesDTO));
     } catch (error) {
       console.error("Error al listar cotizaciones:", error);
-      return [];
+      return normalizePaginatedResponse({}, quotesDTO.fromApiList.bind(quotesDTO));
     }
   }
 

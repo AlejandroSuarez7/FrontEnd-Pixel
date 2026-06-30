@@ -1,5 +1,6 @@
 // infrastructure/pedido.repository.js
 import { apiClient } from '../../../../core/services/apiService.js';
+import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
 import { pedidoDTO } from './adapters/pedidoDTO.js';
 
 const ENDPOINT = 'api/pedidos';
@@ -8,19 +9,16 @@ export class PedidoApiRepository {
 
   async list(filters = {}) {
     try {
-      let url = ENDPOINT;
-      const params = {};
-
-      if (filters.search) {
-        url = `${ENDPOINT}/buscar`;
-        params.termino = filters.search;
-      }
-
-      const { data } = await apiClient.get(url, { params });
-      return pedidoDTO.fromApiList(data.data || []);
+      const params = buildPaginationParams({
+        sortBy: 'idPedido',
+        order: 'desc',
+        ...filters,
+      });
+      const { data } = await apiClient.get(ENDPOINT, { params });
+      return normalizePaginatedResponse(data, pedidoDTO.fromApiList.bind(pedidoDTO));
     } catch (error) {
       console.error('Error al listar pedidos:', error);
-      return [];
+      return normalizePaginatedResponse({}, pedidoDTO.fromApiList.bind(pedidoDTO));
     }
   }
 

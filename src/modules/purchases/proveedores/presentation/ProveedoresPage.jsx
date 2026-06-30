@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
-import { usePagination } from '../../../../core/hooks/usePagination';
+import { notifications } from '../../../../core/utils/notifications';
+import { DEFAULT_PAGE_SIZE } from '../../../../core/utils/serverPagination';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../../store/AuthContext';
 import { useProveedores } from '../application/useProveedores';
 import { ProveedorModal } from './ProveedorModal';
 import { ProveedorViewModal } from './ProveedorViewModal';
@@ -51,11 +54,14 @@ const styles = {
 };
 
 export const ProveedoresPage = () => {
+  const { hasPermission } = useAuth();
+  const confirm = useConfirm();
   const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
   const userRole = session?.rol?.nombre || 'Cliente';
   const isAdmin = userRole === 'Admin';
 
   const [filters, setFilters] = useState({ search: '', estado: '' });
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedProveedor, setSelectedProveedor] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -67,18 +73,18 @@ export const ProveedoresPage = () => {
     handleUpdate,
     handleDeactivate,
     handleHardDelete,
-  } = useProveedores(filters);
+    paginationMeta,
+  } = useProveedores({
+    ...filters,
+    page: currentPage,
+    limit: DEFAULT_PAGE_SIZE,
+    sortBy: 'nombre',
+    order: 'asc',
+  });
 
-  const total = proveedores.length;
+  const total = paginationMeta.total;
   const activos = proveedores.filter(item => item.estado === true).length;
   const inactivos = proveedores.filter(item => item.estado === false).length;
-  const {
-    currentPage,
-    pageSize,
-    paginatedItems,
-    setCurrentPage,
-    totalPages,
-  } = usePagination(proveedores);
 
   const handleOpenCreate = () => {
     setSelectedProveedor(null);
@@ -93,22 +99,48 @@ export const ProveedoresPage = () => {
   const handleSubmit = async (payload) => {
     if (selectedProveedor) {
       await handleUpdate(selectedProveedor.idProveedor, payload);
+      notifications.success('Proveedor actualizado correctamente.');
     } else {
       await handleCreate(payload);
+      notifications.success('Proveedor creado correctamente.');
     }
     setIsModalOpen(false);
     setSelectedProveedor(null);
   };
 
-  const onDeactivateClick = (proveedor) => {
-    if (window.confirm(`Desactivar proveedor "${proveedor.nombre}"?`)) {
-      handleDeactivate(proveedor.idProveedor).catch(error => alert(error.message));
+  const onDeactivateClick = async (proveedor) => {
+    const accepted = await confirm({
+      title: 'Desactivar proveedor',
+      message: `Desactivar proveedor "${proveedor.nombre}"?`,
+      confirmText: 'Desactivar',
+      variant: 'warning',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleDeactivate(proveedor.idProveedor);
+      notifications.success('Proveedor desactivado correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo desactivar el proveedor.');
     }
   };
 
-  const onHardDeleteClick = (proveedor) => {
-    if (window.confirm(`Eliminar fisicamente proveedor "${proveedor.nombre}"? Esta accion no se puede deshacer.`)) {
-      handleHardDelete(proveedor.idProveedor).catch(error => alert(error.message));
+  const onHardDeleteClick = async (proveedor) => {
+    const accepted = await confirm({
+      title: 'Eliminar proveedor',
+      message: `Eliminar fisicamente proveedor "${proveedor.nombre}"? Esta accion no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleHardDelete(proveedor.idProveedor);
+      notifications.success('Proveedor eliminado correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo eliminar el proveedor.');
     }
   };
 
@@ -122,9 +154,11 @@ export const ProveedoresPage = () => {
             Administra proveedores disponibles para compras internas.
           </p>
         </div>
-        <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
-          Nuevo proveedor
-        </button>
+        {hasPermission('proveedores.crear') && (
+          <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
+            Nuevo proveedor
+          </button>
+        )}
       </div>
 
       <div className={styles.kpiGrid}>
@@ -138,12 +172,18 @@ export const ProveedoresPage = () => {
           type="text"
           placeholder="Buscar proveedor por nombre..."
           value={filters.search}
-          onChange={event => setFilters(prev => ({ ...prev, search: event.target.value }))}
+          onChange={event => {
+            setFilters(prev => ({ ...prev, search: event.target.value }));
+            setCurrentPage(1);
+          }}
           className={styles.searchInput}
         />
         <select
           value={filters.estado}
-          onChange={event => setFilters(prev => ({ ...prev, estado: event.target.value }))}
+          onChange={event => {
+            setFilters(prev => ({ ...prev, estado: event.target.value }));
+            setCurrentPage(1);
+          }}
           className={styles.inputField}
         >
           <option value="">Todos los estados</option>
@@ -172,7 +212,7 @@ export const ProveedoresPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedItems.map(proveedor => (
+                  {proveedores.map(proveedor => (
                     <tr key={proveedor.idProveedor} className={styles.tableBodyRow}>
                       <td className={styles.tableCellId}>#{proveedor.idProveedor}</td>
                       <td className={styles.tableCell}>{proveedor.nombre}</td>
@@ -187,9 +227,9 @@ export const ProveedoresPage = () => {
                         <TableActions
                           primaryAction={{ label: 'Ver', onClick: () => { setSelectedProveedor(proveedor); setIsViewOpen(true); }, variant: 'accent' }}
                           actions={[
-                            proveedor.estado && { label: 'Desactivar', onClick: () => onDeactivateClick(proveedor), variant: 'danger' },
-                            { label: 'Editar', onClick: () => handleOpenEdit(proveedor), variant: 'warning' },
-                            isAdmin && { label: 'Eliminar', onClick: () => onHardDeleteClick(proveedor), variant: 'danger' },
+                            hasPermission('proveedores.desactivar') && proveedor.estado && { label: 'Desactivar', onClick: () => onDeactivateClick(proveedor), variant: 'danger' },
+                            hasPermission('proveedores.editar') && { label: 'Editar', onClick: () => handleOpenEdit(proveedor), variant: 'warning' },
+                            hasPermission('proveedores.eliminar') && isAdmin && { label: 'Eliminar', onClick: () => onHardDeleteClick(proveedor), variant: 'danger' },
                           ]}
                         />
                       </td>
@@ -201,10 +241,12 @@ export const ProveedoresPage = () => {
             <Pagination
               classNames={styles}
               currentPage={currentPage}
+              hasNextPage={paginationMeta.hasNextPage}
+              hasPrevPage={paginationMeta.hasPrevPage}
               onPageChange={setCurrentPage}
-              pageSize={pageSize}
-              totalItems={proveedores.length}
-              totalPages={totalPages}
+              pageSize={paginationMeta.limit}
+              totalItems={paginationMeta.total}
+              totalPages={paginationMeta.totalPages}
             />
           </>
         )}

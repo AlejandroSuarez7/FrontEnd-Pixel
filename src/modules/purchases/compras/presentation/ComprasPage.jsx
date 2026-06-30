@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
+import { notifications } from '../../../../core/utils/notifications';
 import { usePagination } from '../../../../core/hooks/usePagination';
 import { formatDate } from '../../../../core/utils/fechaFormato';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../../store/AuthContext';
 import { useCompras } from '../application/useCompras';
 import { CompraModal } from './CompraModal';
 import { CompraViewModal } from './CompraViewModal';
@@ -65,6 +68,8 @@ const ESTADO_CLASS = {
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 
 export const ComprasPage = () => {
+  const { hasPermission } = useAuth();
+  const confirm = useConfirm();
   const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
   const userRole = session?.rol?.nombre || 'Cliente';
   const isStaff = userRole === 'Admin' || userRole === 'Secretaria';
@@ -135,21 +140,60 @@ export const ComprasPage = () => {
     setSelectedCompra(null);
   };
 
-  const onConfirmClick = (compra) => {
-    if (window.confirm(`Confirmar compra #${compra.idCompra}?`)) {
-      handleConfirm(compra.idCompra).then(result => alert(result.message || 'Compra confirmada.')).catch(error => alert(error.message));
+  const onConfirmClick = async (compra) => {
+    const accepted = await confirm({
+      title: 'Confirmar compra',
+      message: `Confirmar compra #${compra.idCompra}?`,
+      confirmText: 'Confirmar',
+      variant: 'success',
+    });
+
+    if (!accepted) return;
+
+    try {
+      const result = await handleConfirm(compra.idCompra);
+      notifications.success(result.message || 'Compra confirmada correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo confirmar la compra.');
     }
   };
 
-  const onCancelClick = (compra) => {
-    const observaciones = window.prompt('Motivo de anulacion:');
-    if (!observaciones) return;
-    handleCancel(compra.idCompra, observaciones).catch(error => alert(error.message));
+  const onCancelClick = async (compra) => {
+    const result = await confirm({
+      title: 'Anular compra',
+      message: `Indica el motivo para anular la compra #${compra.idCompra}.`,
+      confirmText: 'Anular',
+      variant: 'danger',
+      input: true,
+      inputPlaceholder: 'Motivo de anulacion',
+      requiredInput: true,
+    });
+
+    if (!result.confirmed) return;
+
+    try {
+      await handleCancel(compra.idCompra, result.value);
+      notifications.success('Compra anulada correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo anular la compra.');
+    }
   };
 
-  const onDeleteClick = (compra) => {
-    if (window.confirm(`Eliminar compra pendiente #${compra.idCompra}?`)) {
-      handleDelete(compra.idCompra).catch(error => alert(error.message));
+  const onDeleteClick = async (compra) => {
+    const accepted = await confirm({
+      title: 'Eliminar compra',
+      message: `Eliminar compra pendiente #${compra.idCompra}?`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleDelete(compra.idCompra);
+      notifications.success('Compra eliminada correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo eliminar la compra.');
     }
   };
 
@@ -163,14 +207,14 @@ export const ComprasPage = () => {
             {isDesigner ? 'Consulta el estado operativo de compras asociadas a pedidos.' : 'Control interno de compras de insumos por pedido.'}
           </p>
         </div>
-        {isStaff && (
+        {isStaff && hasPermission('compras.crear') && (
           <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
             Nueva compra
           </button>
         )}
       </div>
 
-      {isStaff && (
+      {isStaff && hasPermission('compras.resumen') && (
         <div className={styles.kpiGrid}>
           <div className={styles.kpiCard}><span className={styles.kpiLabel}>Cantidad</span><span className={styles.kpiValue}>{resumen.cantidadCompras || filteredCompras.length}</span></div>
           <div className={`${styles.kpiCard} ${styles.kpiCardSuccess}`}><span className={styles.kpiLabel}>Total compras</span><span className={`${styles.kpiValue} ${styles.kpiValueSuccess}`}>{fmt(resumen.totalCompras)}</span></div>
@@ -238,10 +282,10 @@ export const ComprasPage = () => {
                         <TableActions
                           primaryAction={{ label: 'Ver', onClick: () => { setSelectedCompra(compra); setIsViewOpen(true); }, variant: 'accent' }}
                           actions={[
-                            isStaff && compra.estado === 'PENDIENTE' && { label: 'Confirmar', onClick: () => onConfirmClick(compra), variant: 'success' },
-                            isStaff && compra.estado === 'PENDIENTE' && { label: 'Anular', onClick: () => onCancelClick(compra), variant: 'danger' },
-                            isStaff && compra.estado === 'PENDIENTE' && { label: 'Editar', onClick: () => handleOpenEdit(compra), variant: 'warning' },
-                            isStaff && compra.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => onDeleteClick(compra), variant: 'danger' },
+                            hasPermission('compras.confirmar') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Confirmar', onClick: () => onConfirmClick(compra), variant: 'success' },
+                            hasPermission('compras.anular') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Anular', onClick: () => onCancelClick(compra), variant: 'danger' },
+                            hasPermission('compras.editar') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Editar', onClick: () => handleOpenEdit(compra), variant: 'warning' },
+                            hasPermission('compras.eliminar') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => onDeleteClick(compra), variant: 'danger' },
                           ]}
                         />
                       </td>

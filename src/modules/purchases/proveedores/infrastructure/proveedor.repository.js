@@ -1,27 +1,22 @@
 import { apiClient } from '../../../../core/services/apiService.js';
+import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
 import { proveedorDTO } from './adapters/proveedor.dto.js';
 
 const ENDPOINT = 'api/proveedores';
 
-const getItems = (data) => data.data || data.proveedores || data || [];
-
 export class ProveedorApiRepository {
   async list(filters = {}) {
     try {
-      if (filters.search) {
-        const { data } = await apiClient.get(`${ENDPOINT}/buscar`, {
-          params: { termino: filters.search },
-        });
-        return proveedorDTO.fromApiList(getItems(data));
-      }
-
-      const params = {};
-      if (filters.estado !== '') params.estado = filters.estado;
+      const params = buildPaginationParams({
+        sortBy: 'nombre',
+        order: 'asc',
+        ...filters,
+      });
       const { data } = await apiClient.get(ENDPOINT, { params });
-      return proveedorDTO.fromApiList(getItems(data));
+      return normalizePaginatedResponse(data, proveedorDTO.fromApiList.bind(proveedorDTO));
     } catch (error) {
       console.error('Error al listar proveedores:', error);
-      return [];
+      return normalizePaginatedResponse({}, proveedorDTO.fromApiList.bind(proveedorDTO));
     }
   }
 

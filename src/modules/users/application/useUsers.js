@@ -1,21 +1,25 @@
 // application/useUsers.js
 import { useState, useEffect, useCallback } from 'react';
+import { createPaginationMeta } from '../../../core/utils/serverPagination';
 import { UserApiRepository } from '../infrastructure/user.repository';
 
 const userRepository = new UserApiRepository();
 
 export const useUsers = (filters = {}) => {
   const [users, setUsers]   = useState([]);
+  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
   const [loading, setLoading] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await userRepository.list(filters);
-      setUsers(data);
+      const response = await userRepository.list(filters);
+      setUsers(response.items);
+      setPaginationMeta(response.meta);
     } catch (error) {
       console.error('Error en useUsers hook:', error);
       setUsers([]);
+      setPaginationMeta(createPaginationMeta());
     } finally {
       setLoading(false);
     }
@@ -71,6 +75,7 @@ export const useUsers = (filters = {}) => {
 
   return {
     users,
+    paginationMeta,
     loading,
     handleCreate,
     handleUpdate,

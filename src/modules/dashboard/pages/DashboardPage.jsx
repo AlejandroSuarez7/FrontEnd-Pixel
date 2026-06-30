@@ -290,10 +290,11 @@ const TrackingPanel = ({ tracking }) => (
 
 const QuickActions = () => {
   const navigate = useNavigate();
+  const { hasAnyPermission } = useAuth();
   const actions = [
-    { label: 'Crear cotizacion', icon: FileText, onClick: () => navigate(PATHS.SERVICES_QUOTES) },
+    hasAnyPermission(['cotizaciones.crear_cliente', 'cotizaciones.crear_presencial']) && { label: 'Crear cotizacion', icon: FileText, onClick: () => navigate(PATHS.SERVICES_QUOTES) },
     { label: 'Actualizar perfil', icon: UserRound, onClick: () => navigate(PATHS.PROFILE) },
-  ];
+  ].filter(Boolean);
 
   return (
     <section className="dashboard-panel">

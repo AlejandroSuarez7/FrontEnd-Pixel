@@ -1,6 +1,7 @@
 // cotizaciones/presentation/QuoteFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../../../core/services/apiService.js';
+import { notifications } from '../../../../core/utils/notifications';
 import styles from './quotes.module.css';
 
 export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) => {
@@ -90,7 +91,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
       };
       await onSubmit(payload);
     } catch (err) {
-      alert(err.message || 'Ocurrió un error al procesar el formulario.');
+      notifications.error(err.message || 'Ocurrio un error al procesar el formulario.');
     }
   };
 

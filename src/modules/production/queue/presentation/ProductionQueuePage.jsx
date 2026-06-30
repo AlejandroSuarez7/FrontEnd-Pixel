@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
 import { usePagination } from '../../../../core/hooks/usePagination';
 import { formatDate } from '../../../../core/utils/fechaFormato';
+import { notifications } from '../../../../core/utils/notifications';
+import { useAuth } from '../../../../store/AuthContext';
 import { useProductionQueue } from '../application/useProductionQueue';
 import './ProductionQueuePage.css';
 
@@ -71,8 +73,9 @@ const mergeQueueOrder = (currentOrder, incoming) => {
 };
 
 export const ProductionQueuePage = () => {
+  const { hasPermission } = useAuth();
   const userRole = getRoleName();
-  const canEditPosition = canReorderQueue(userRole);
+  const canEditPosition = canReorderQueue(userRole) && hasPermission('disenos.produccion');
   const { pedidos, loading, saveOrder, savingOrder } = useProductionQueue();
   const [orderedPedidos, setOrderedPedidos] = useState([]);
   const [draftPedidos, setDraftPedidos] = useState([]);
@@ -122,8 +125,9 @@ export const ProductionQueuePage = () => {
       setDragOverIndex(null);
       setIsEditingOrder(false);
       setCurrentPage(1);
+      notifications.success('Orden de produccion guardado correctamente.');
     } catch (error) {
-      alert(error.message || 'No se pudo guardar la posicion de la cola.');
+      notifications.error(error.message || 'No se pudo guardar la posicion de la cola.');
     }
   };
 
