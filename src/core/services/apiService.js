@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { notifications } from '../utils/notifications';
 
 const BASE_URL = 'http://localhost:3000/';
 
@@ -41,7 +42,21 @@ apiClient.interceptors.response.use(
       window.location.href = '/login';
     }
 
+    if (status === 403) {
+      console.warn('[API] Acceso denegado por permisos insuficientes.');
+      notifications.error(message || 'No tienes permisos para realizar esta accion.');
+    }
+
     // Lanza un error legible para los repositorios
-    return Promise.reject(new Error(message));
+    const apiError = new Error(
+      status === 403
+        ? message || 'No tienes permisos para realizar esta accion.'
+        : message
+    );
+    apiError.status = status;
+    apiError.payload = error.response?.data;
+    apiError.response = error.response;
+    apiError.isForbidden = status === 403;
+    return Promise.reject(apiError);
   }
 );

@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
+import { createPaginationMeta } from '../../../../core/utils/serverPagination';
 import { proveedorRepository } from '../infrastructure/proveedor.repository';
 
 export const useProveedores = (filters = {}) => {
   const [proveedores, setProveedores] = useState([]);
+  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
   const [loading, setLoading] = useState(false);
 
   const fetchProveedores = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await proveedorRepository.list(filters);
-      setProveedores(data);
+      const response = await proveedorRepository.list(filters);
+      setProveedores(response.items);
+      setPaginationMeta(response.meta);
     } catch (error) {
       console.error('Error en useProveedores al listar:', error);
       setProveedores([]);
+      setPaginationMeta(createPaginationMeta());
     } finally {
       setLoading(false);
     }
@@ -44,6 +48,7 @@ export const useProveedores = (filters = {}) => {
 
   return {
     proveedores,
+    paginationMeta,
     loading,
     refetch: fetchProveedores,
     handleCreate,

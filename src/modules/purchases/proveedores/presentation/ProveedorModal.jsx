@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { notifications } from '../../../../core/utils/notifications';
 import './ProveedoresPage.css';
 
 const styles = {
@@ -50,14 +51,14 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
     event.preventDefault();
 
     if (!nombre.trim()) {
-      alert('El nombre del proveedor es obligatorio.');
+      notifications.warning('El nombre del proveedor es obligatorio.');
       return;
     }
 
     try {
       await onSubmit({ nombre, telefono, correo, direccion, estado });
     } catch (error) {
-      alert(error.message || 'No se pudo procesar el proveedor.');
+      notifications.error(error.message || 'No se pudo procesar el proveedor.');
     }
   };
 

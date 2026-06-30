@@ -1,26 +1,33 @@
 export const Pagination = ({
   classNames,
   currentPage,
+  hasNextPage,
+  hasPrevPage,
   onPageChange,
   pageSize,
   totalItems,
   totalPages,
 }) => {
-  if (totalItems <= pageSize) return null;
+  if (!totalItems || totalItems <= pageSize) return null;
 
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const firstPage = Math.max(1, currentPage - 2);
+  const lastPage = Math.min(totalPages, firstPage + 4);
+  const pages = Array.from(
+    { length: Math.max(lastPage - firstPage + 1, 0) },
+    (_, index) => firstPage + index
+  );
 
   return (
     <div className={classNames.pagination}>
       <span className={classNames.paginationInfo}>
-        {totalItems} registros
+        {totalItems} registros - Pagina {currentPage} de {totalPages}
       </span>
       <div className={classNames.paginationControls}>
         <button
           type="button"
           className={classNames.paginationButton}
           onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
+          disabled={hasPrevPage === false || currentPage === 1}
         >
           Anterior
         </button>
@@ -38,7 +45,7 @@ export const Pagination = ({
           type="button"
           className={classNames.paginationButton}
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          disabled={hasNextPage === false || currentPage === totalPages}
         >
           Siguiente
         </button>

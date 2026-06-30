@@ -1,19 +1,25 @@
 // presentation/pages/QuotesPage.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
-import { usePagination } from '../../../core/hooks/usePagination';
+import { notifications } from '../../../core/utils/notifications';
+import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../store/AuthContext';
 import { useQuotes } from '../cotizaciones/application/useQuotes';
 import { QuoteFormModal } from '../cotizaciones/presentation/QuoteFormModal';
 import { QuoteDetailsModal } from '../cotizaciones/presentation/QuoteDetailsModal';
 import styles from '../cotizaciones/presentation/quotes.module.css';
 
 const QuotesPage = () => {
+  const { hasPermission } = useAuth();
+  const confirm = useConfirm();
   const session  = JSON.parse(localStorage.getItem('pixel_user') || '{}');
   const userRole = session?.rol?.nombre || 'Cliente';
   const isStaff  = userRole === 'Admin' || userRole === 'Secretaria';
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const {
     quotes,
@@ -23,21 +29,20 @@ const QuotesPage = () => {
     handleApprove,
     handleCancel,
     handleHardDelete,
-  } = useQuotes({ search: searchTerm });
+    paginationMeta,
+  } = useQuotes({
+    page: currentPage,
+    limit: DEFAULT_PAGE_SIZE,
+    search: searchTerm,
+    sortBy: 'idCotizacion',
+    order: 'desc',
+  });
 
   const [isModalOpen, setIsModalOpen]     = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
 
   const [isDetailsOpen, setIsDetailsOpen]                     = useState(false);
   const [selectedQuoteForDetails, setSelectedQuoteForDetails] = useState(null);
-  const {
-    currentPage,
-    pageSize,
-    paginatedItems: paginatedQuotes,
-    setCurrentPage,
-    totalPages,
-  } = usePagination(quotes);
-
   const handleOpenCreate = () => {
     setSelectedQuote(null);
     setIsModalOpen(true);
@@ -47,6 +52,10 @@ const QuotesPage = () => {
     setSelectedQuote(quote);
     setIsModalOpen(true);
   };
+
+  const canCreateQuote = isStaff
+    ? hasPermission('cotizaciones.crear_presencial')
+    : hasPermission('cotizaciones.crear_cliente');
 
   const handleSubmitForm = async (payload) => {
     if (selectedQuote) {
@@ -79,41 +88,73 @@ const QuotesPage = () => {
   // El cliente solo puede editar si todavía no tiene precios (total === 0).
   const canBePricedOrEdited = (quote) => {
     if (quote.estado !== 'PENDIENTE') return false;
-    if (isStaff) return true;
-    return Number(quote.total) === 0;
+    if (isStaff) return hasPermission('cotizaciones.cotizar') || hasPermission('cotizaciones.editar');
+    return Number(quote.total) === 0 && hasPermission('cotizaciones.editar_cliente');
   };
 
   // Solo el cliente puede aprobar, y solo cuando ya tiene precios asignados (total > 0).
   const canBeApproved = (quote) => {
-    return quote.estado === 'PENDIENTE' && Number(quote.total) > 0;
+    return quote.estado === 'PENDIENTE' && Number(quote.total) > 0 && hasPermission('cotizaciones.aprobar');
   };
 
   // Solo se puede anular si está PENDIENTE.
-  const canBeCancelled = (quote) => quote.estado === 'PENDIENTE';
+  const canBeCancelled = (quote) => quote.estado === 'PENDIENTE' && hasPermission('cotizaciones.anular');
 
   const cotizacionAprobada = (quote) => quote.estado === 'APROBADA';
 
 
   // Solo Staff puede eliminar permanentemente una cotización
-  const onApproveClick = (idCotizacion) => {
-    if (window.confirm(
-      '¿Estás seguro de que deseas APROBAR esta cotización?\n\nEsta acción generará un pedido de producción y no se puede deshacer.'
-    )) {
-      handleApprove(idCotizacion).catch(err => alert(err.message));
+  const onApproveClick = async (idCotizacion) => {
+    const accepted = await confirm({
+      title: 'Aprobar cotizacion',
+      message: 'Aprobar esta cotizacion? Se generara un pedido de produccion automaticamente.',
+      confirmText: 'Aprobar',
+      variant: 'success',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleApprove(idCotizacion);
+      notifications.success('Cotizacion aprobada y pedido creado correctamente.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo aprobar la cotizacion.');
     }
   };
 
-  const onCancelClick = (idCotizacion) => {
-    if (window.confirm('¿Estás seguro de que deseas ANULAR esta cotización?')) {
-      handleCancel(idCotizacion).catch(err => alert(err.message));
+  const onCancelClick = async (idCotizacion) => {
+    const accepted = await confirm({
+      title: 'Anular cotizacion',
+      message: 'Anular esta cotizacion?',
+      confirmText: 'Anular',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleCancel(idCotizacion);
+      notifications.success('Cotizacion anulada correctamente.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo anular la cotizacion.');
     }
   };
 
-  const onEliminarClick = (idCotizacion) => {
-    if (window.confirm(
-      '¿Estás seguro de que deseas ELIMINAR permanentemente esta cotización?\n\nEsta acción no se puede deshacer.'
-    )) {
-      handleHardDelete(idCotizacion).catch(err => alert(err.message));
+  const onEliminarClick = async (idCotizacion) => {
+    const accepted = await confirm({
+      title: 'Eliminar cotizacion',
+      message: 'Eliminar permanentemente esta cotizacion? Esta accion no se puede deshacer.',
+      confirmText: 'Eliminar',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleHardDelete(idCotizacion);
+      notifications.success('Cotizacion eliminada correctamente.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo eliminar la cotizacion.');
     }
   };
 
@@ -131,9 +172,11 @@ const QuotesPage = () => {
               : 'Solicita nuevas cotizaciones y revisa el estado de tus pedidos.'}
           </p>
         </div>
-        <button onClick={handleOpenCreate} className={styles.primaryButton}>
-          {isStaff ? 'Nueva cotización presencial' : 'Solicitar cotización'}
-        </button>
+        {canCreateQuote && (
+          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+            {isStaff ? 'Nueva cotización presencial' : 'Solicitar cotización'}
+          </button>
+        )}
       </div>
 
       {/* BUSCADOR */}
@@ -142,7 +185,10 @@ const QuotesPage = () => {
           type="text"
           placeholder="Buscar por cliente, descripción..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={e => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className={styles.searchInput}
         />
       </div>
@@ -167,7 +213,7 @@ const QuotesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedQuotes.map((quote) => (
+                {quotes.map((quote) => (
                   <tr key={quote.idCotizacion} className={styles.tableBodyRow}>
 
                     <td className={styles.tableCellId}>#{quote.idCotizacion}</td>
@@ -207,7 +253,7 @@ const QuotesPage = () => {
                             onClick: () => handleOpenEditOrPrice(quote),
                             variant: isStaff ? 'info' : 'warning',
                           },
-                          isStaff && !cotizacionAprobada(quote) && { label: 'Eliminar', onClick: () => onEliminarClick(quote.idCotizacion), variant: 'danger' },
+                          hasPermission('cotizaciones.eliminar') && isStaff && !cotizacionAprobada(quote) && { label: 'Eliminar', onClick: () => onEliminarClick(quote.idCotizacion), variant: 'danger' },
                         ]}
                       />
                     </td>
@@ -220,10 +266,12 @@ const QuotesPage = () => {
         <Pagination
           classNames={styles}
           currentPage={currentPage}
+          hasNextPage={paginationMeta.hasNextPage}
+          hasPrevPage={paginationMeta.hasPrevPage}
           onPageChange={setCurrentPage}
-          pageSize={pageSize}
-          totalItems={quotes.length}
-          totalPages={totalPages}
+          pageSize={paginationMeta.limit}
+          totalItems={paginationMeta.total}
+          totalPages={paginationMeta.totalPages}
         />
       </div>
 

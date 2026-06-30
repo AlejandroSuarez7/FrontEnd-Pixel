@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
+import { notifications } from '../../../../core/utils/notifications';
 import { usePagination } from '../../../../core/hooks/usePagination';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../../store/AuthContext';
 import { useAbonos } from '../application/useAbonos';
 import { AbonoModal } from './AbonoModal';
 import { AbonoViewModal } from './AbonoViewModal';
@@ -64,6 +67,8 @@ const ESTADO_CLASS = {
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 
 export const AbonosPage = () => {
+  const { hasPermission } = useAuth();
+  const confirm = useConfirm();
   const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
   const userRole = session?.rol?.nombre || 'Cliente';
   const isStaff = userRole === 'Admin' || userRole === 'Secretaria';
@@ -143,23 +148,60 @@ export const AbonosPage = () => {
     setSelectedAbono(null);
   };
 
-  const onConfirmClick = (abono) => {
-    if (window.confirm(`Confirmar abono #${abono.idAbono} por ${fmt(abono.monto)}?`)) {
-      handleConfirm(abono.idAbono, { referencia: abono.referencia })
-        .then(result => alert(result.message || 'Abono confirmado correctamente.'))
-        .catch(error => alert(error.message));
+  const onConfirmClick = async (abono) => {
+    const accepted = await confirm({
+      title: 'Confirmar abono',
+      message: `Confirmar abono #${abono.idAbono} por ${fmt(abono.monto)}?`,
+      confirmText: 'Confirmar',
+      variant: 'success',
+    });
+
+    if (!accepted) return;
+
+    try {
+      const result = await handleConfirm(abono.idAbono, { referencia: abono.referencia });
+      notifications.success(result.message || 'Abono confirmado correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo confirmar el abono.');
     }
   };
 
-  const onRejectClick = (abono) => {
-    const motivo = window.prompt('Motivo de rechazo del abono:');
-    if (!motivo) return;
-    handleReject(abono.idAbono, motivo).catch(error => alert(error.message));
+  const onRejectClick = async (abono) => {
+    const result = await confirm({
+      title: 'Rechazar abono',
+      message: `Indica el motivo para rechazar el abono #${abono.idAbono}.`,
+      confirmText: 'Rechazar',
+      variant: 'danger',
+      input: true,
+      inputPlaceholder: 'Motivo de rechazo',
+      requiredInput: true,
+    });
+
+    if (!result.confirmed) return;
+
+    try {
+      await handleReject(abono.idAbono, result.value);
+      notifications.success('Abono rechazado correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo rechazar el abono.');
+    }
   };
 
-  const onDeleteClick = (abono) => {
-    if (window.confirm(`Eliminar abono pendiente #${abono.idAbono}?`)) {
-      handleDelete(abono.idAbono).catch(error => alert(error.message));
+  const onDeleteClick = async (abono) => {
+    const accepted = await confirm({
+      title: 'Eliminar abono',
+      message: `Eliminar abono pendiente #${abono.idAbono}?`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleDelete(abono.idAbono);
+      notifications.success('Abono eliminado correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo eliminar el abono.');
     }
   };
 
@@ -173,9 +215,11 @@ export const AbonosPage = () => {
             Registra, revisa y confirma los pagos asociados a pedidos.
           </p>
         </div>
-        <button onClick={handleOpenCreate} className={styles.primaryButton}>
-          Nuevo abono
-        </button>
+        {hasPermission('abonos.crear') && (
+          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+            Nuevo abono
+          </button>
+        )}
       </div>
 
       <div className={styles.kpiGrid}>
@@ -252,10 +296,10 @@ export const AbonosPage = () => {
                       <TableActions
                         primaryAction={{ label: 'Ver', onClick: () => { setSelectedAbono(abono); setIsViewOpen(true); }, variant: 'accent' }}
                           actions={[
-                            isStaff && abono.estado === 'PENDIENTE' && { label: 'Confirmar', onClick: () => onConfirmClick(abono), variant: 'success' },
-                            isStaff && abono.estado === 'PENDIENTE' && { label: 'Rechazar', onClick: () => onRejectClick(abono), variant: 'danger' },
-                            isStaff && abono.estado === 'PENDIENTE' && { label: 'Editar', onClick: () => handleOpenEdit(abono), variant: 'warning' },
-                            isStaff && abono.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => onDeleteClick(abono), variant: 'danger' },
+                            hasPermission('abonos.confirmar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Confirmar', onClick: () => onConfirmClick(abono), variant: 'success' },
+                            hasPermission('abonos.rechazar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Rechazar', onClick: () => onRejectClick(abono), variant: 'danger' },
+                            hasPermission('abonos.editar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Editar', onClick: () => handleOpenEdit(abono), variant: 'warning' },
+                            hasPermission('abonos.eliminar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => onDeleteClick(abono), variant: 'danger' },
                           ]}
                         />
                     </td>

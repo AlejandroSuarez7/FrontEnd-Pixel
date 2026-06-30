@@ -1,19 +1,23 @@
 // pedidos/application/usePedidos.js
 import { useState, useEffect, useCallback } from 'react';
+import { createPaginationMeta } from '../../../../core/utils/serverPagination';
 import { pedidoRepository } from '../infrastructure/pedido.repository';
 
 export const usePedidos = (filters = {}) => {
   const [pedidos, setPedidos] = useState([]);
+  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
   const [loading, setLoading] = useState(false);
 
   const fetchPedidos = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await pedidoRepository.list(filters);
-      setPedidos(data);
+      const response = await pedidoRepository.list(filters);
+      setPedidos(response.items);
+      setPaginationMeta(response.meta);
     } catch (error) {
       console.error('Error en usePedidos al listar:', error);
       setPedidos([]);
+      setPaginationMeta(createPaginationMeta());
     } finally {
       setLoading(false);
     }
@@ -77,6 +81,7 @@ export const usePedidos = (filters = {}) => {
 
   return {
     pedidos,
+    paginationMeta,
     loading,
     refetch:            fetchPedidos,
     handleCreate,

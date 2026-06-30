@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { notifications } from '../../../../core/utils/notifications';
 import './ComprasPage.css';
 
 const styles = {
@@ -109,12 +110,12 @@ export const CompraModal = ({
     const detallesValidos = detalles.filter(det => det.descripcionInsumo.trim());
 
     if (!detallesValidos.length) {
-      alert('La compra debe tener minimo un detalle.');
+      notifications.warning('La compra debe tener minimo un detalle.');
       return;
     }
 
     if (detallesValidos.some(det => Number(det.cantidad) <= 0 || Number(det.costoUnitario) <= 0)) {
-      alert('Cantidad y costo unitario deben ser mayores a 0.');
+      notifications.warning('Cantidad y costo unitario deben ser mayores a 0.');
       return;
     }
 
@@ -127,7 +128,7 @@ export const CompraModal = ({
         detalles: detallesValidos,
       });
     } catch (error) {
-      alert(error.message || 'No se pudo procesar la compra.');
+      notifications.error(error.message || 'No se pudo procesar la compra.');
     }
   };
 

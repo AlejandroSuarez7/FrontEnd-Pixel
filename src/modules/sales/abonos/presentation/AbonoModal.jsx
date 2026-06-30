@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react';
+import { notifications } from '../../../../core/utils/notifications';
 import './AbonosPage.css';
 
 const styles = {
@@ -166,12 +167,12 @@ export const AbonoModal = ({
     event.preventDefault();
 
     if (superaSaldo) {
-      alert('El abono no puede superar el saldo pendiente del pedido.');
+      notifications.warning('El abono no puede superar el saldo pendiente del pedido.');
       return;
     }
 
     if ((confirmar || isEditing) && incumplePrimerAbono) {
-      alert('El primer abono confirmado debe ser minimo del 50% del total del pedido o el pago completo.');
+      notifications.warning('El primer abono confirmado debe ser minimo del 50% del total del pedido o el pago completo.');
       return;
     }
 
@@ -187,7 +188,7 @@ export const AbonoModal = ({
     try {
       await onSubmit(payload);
     } catch (error) {
-      alert(error.message || 'No se pudo procesar el abono.');
+      notifications.error(error.message || 'No se pudo procesar el abono.');
     }
   };
 

@@ -1,8 +1,11 @@
 // pedidos/presentation/PedidosPage.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
-import { usePagination } from '../../../core/hooks/usePagination';
+import { notifications } from '../../../core/utils/notifications';
+import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../store/AuthContext';
 import { usePedidos } from '../pedidos/application/usePedidos';
 import { PedidoDetailsModal } from '../pedidos/presentation/PedidoDetailsModal';
 import { PedidoEditModal } from '../pedidos/presentation/PedidoEditModal';
@@ -22,11 +25,14 @@ const ESTADO_PAGO_CLASS = {
 };
 
 const PedidosPage = () => {
+  const { hasPermission } = useAuth();
+  const confirm = useConfirm();
   const session  = JSON.parse(localStorage.getItem('pixel_user') || '{}');
   const userRole = session?.rol?.nombre || 'Cliente';
   const isStaff  = userRole === 'Admin' || userRole === 'Secretaria';
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const {
     pedidos,
@@ -35,40 +41,76 @@ const PedidosPage = () => {
     handleMarcarEnProceso,
     handleFinalizar,
     handleAnular,
-  } = usePedidos({ search: searchTerm });
+    paginationMeta,
+  } = usePedidos({
+    page: currentPage,
+    limit: DEFAULT_PAGE_SIZE,
+    search: searchTerm,
+    sortBy: 'idPedido',
+    order: 'desc',
+  });
 
   const [isDetailsOpen, setIsDetailsOpen]   = useState(false);
   const [isEditOpen, setIsEditOpen]         = useState(false);
   const [selectedPedido, setSelectedPedido] = useState(null);
 
   // KPIs
-  const total      = pedidos.length;
+  const total      = paginationMeta.total;
   const pendientes = pedidos.filter(p => p.estadoPedido === 'PENDIENTE').length;
   const enProceso  = pedidos.filter(p => p.estadoPedido === 'EN_PROCESO').length;
   const finalizados = pedidos.filter(p => p.estadoPedido === 'FINALIZADO').length;
-  const {
-    currentPage,
-    pageSize,
-    paginatedItems: paginatedPedidos,
-    setCurrentPage,
-    totalPages,
-  } = usePagination(pedidos);
 
-  const onEnProcesoClick = (id) => {
-    if (window.confirm('¿Marcar este pedido como EN PROCESO?')) {
-      handleMarcarEnProceso(id).catch(err => alert(err.message));
+  const onEnProcesoClick = async (id) => {
+    const accepted = await confirm({
+      title: 'Pasar a proceso',
+      message: 'Marcar este pedido como EN PROCESO?',
+      confirmText: 'Pasar a proceso',
+      variant: 'warning',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleMarcarEnProceso(id);
+      notifications.success('Pedido marcado en proceso.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo marcar el pedido en proceso.');
     }
   };
 
-  const onFinalizarClick = (id) => {
-    if (window.confirm('¿Finalizar este pedido? Esta acción indica que la producción está completa.')) {
-      handleFinalizar(id).catch(err => alert(err.message));
+  const onFinalizarClick = async (id) => {
+    const accepted = await confirm({
+      title: 'Finalizar pedido',
+      message: 'Finalizar este pedido? Esta accion indica que la produccion esta completa.',
+      confirmText: 'Finalizar',
+      variant: 'success',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleFinalizar(id);
+      notifications.success('Pedido finalizado correctamente.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo finalizar el pedido.');
     }
   };
 
-  const onAnularClick = (id) => {
-    if (window.confirm('¿Estás seguro de que deseas ANULAR este pedido?\n\nEsta acción no se puede deshacer.')) {
-      handleAnular(id).catch(err => alert(err.message));
+  const onAnularClick = async (id) => {
+    const accepted = await confirm({
+      title: 'Anular pedido',
+      message: 'Anular este pedido? Esta accion no se puede deshacer.',
+      confirmText: 'Anular',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleAnular(id);
+      notifications.success('Pedido anulado correctamente.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo anular el pedido.');
     }
   };
 
@@ -118,7 +160,10 @@ const PedidosPage = () => {
           type="text"
           placeholder="Buscar pedido por cliente o descripción..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={e => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className={styles.searchInput}
         />
       </div>
@@ -145,7 +190,7 @@ const PedidosPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedPedidos.map((pedido) => (
+                {pedidos.map((pedido) => (
                   <tr key={pedido.idPedido} className={styles.tableBodyRow}>
 
                     <td className={styles.tableCellId}>#{pedido.idPedido}</td>
@@ -192,10 +237,10 @@ const PedidosPage = () => {
                       <TableActions
                         primaryAction={{ label: 'Ver', onClick: () => { setSelectedPedido(pedido); setIsDetailsOpen(true); }, variant: 'accent' }}
                         actions={[
-                          isStaff && pedido.estadoPedido === 'PENDIENTE' && { label: 'En proceso', onClick: () => onEnProcesoClick(pedido.idPedido), variant: 'info' },
-                          isStaff && pedido.estadoPedido === 'EN_PROCESO' && { label: 'Finalizar', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },
-                          isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },
-                          pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && {
+                          hasPermission('pedidos.pasar_proceso') && isStaff && pedido.estadoPedido === 'PENDIENTE' && { label: 'En proceso', onClick: () => onEnProcesoClick(pedido.idPedido), variant: 'info' },
+                          hasPermission('pedidos.finalizar') && isStaff && pedido.estadoPedido === 'EN_PROCESO' && { label: 'Finalizar', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },
+                          hasPermission('pedidos.anular') && isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },
+                          hasPermission('pedidos.editar') && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && {
                             label: 'Editar',
                             onClick: () => { setSelectedPedido(pedido); setIsEditOpen(true); },
                             variant: 'warning',
@@ -212,10 +257,12 @@ const PedidosPage = () => {
         <Pagination
           classNames={styles}
           currentPage={currentPage}
+          hasNextPage={paginationMeta.hasNextPage}
+          hasPrevPage={paginationMeta.hasPrevPage}
           onPageChange={setCurrentPage}
-          pageSize={pageSize}
-          totalItems={pedidos.length}
-          totalPages={totalPages}
+          pageSize={paginationMeta.limit}
+          totalItems={paginationMeta.total}
+          totalPages={paginationMeta.totalPages}
         />
       </div>
 

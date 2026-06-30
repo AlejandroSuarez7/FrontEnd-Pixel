@@ -1,5 +1,6 @@
 // presentation/presentation/ServiceFormModal.jsx
 import React, { useState, useEffect } from 'react';
+import { notifications } from '../../../../core/utils/notifications';
 import styles from './services.module.css';
 
 export const ServiceFormModal = ({ isOpen, onClose, onSubmit, service }) => {
@@ -33,7 +34,7 @@ export const ServiceFormModal = ({ isOpen, onClose, onSubmit, service }) => {
       }
       onClose();
     } catch (error) {
-      alert(error.message || 'Error al procesar la solicitud.');
+      notifications.error(error.message || 'Error al procesar la solicitud.');
     }
   };
 

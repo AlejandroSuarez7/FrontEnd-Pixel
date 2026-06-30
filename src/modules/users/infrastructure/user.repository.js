@@ -1,5 +1,6 @@
 // infrastructure/users/user.repository.js
 import { apiClient } from '../../../core/services/apiService.js';
+import { buildPaginationParams, normalizePaginatedResponse } from '../../../core/utils/serverPagination.js';
 import { userDTO } from './adapters/userDTO.js';
 
 const ENDPOINT = 'api/usuarios';
@@ -8,23 +9,16 @@ export class UserApiRepository {
 
   async list(filters = {}) {
     try {
-      let url = ENDPOINT;
-      const params = {};
-
-      if (filters.search) {
-        url = `${ENDPOINT}/buscar`;
-        params.termino = filters.search;
-      }
-
-      if (filters.idRol) {
-        params.idRol = filters.idRol;
-      }
-
-      const { data } = await apiClient.get(url, { params });
-      return userDTO.fromApiList(data.data || []);
+      const params = buildPaginationParams({
+        sortBy: 'nombre',
+        order: 'asc',
+        ...filters,
+      });
+      const { data } = await apiClient.get(ENDPOINT, { params });
+      return normalizePaginatedResponse(data, userDTO.fromApiList.bind(userDTO));
     } catch (error) {
       console.error('Error al listar usuarios:', error);
-      return [];
+      return normalizePaginatedResponse({}, userDTO.fromApiList.bind(userDTO));
     }
   }
 

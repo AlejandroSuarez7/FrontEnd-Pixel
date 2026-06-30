@@ -1,19 +1,23 @@
 // presentation/hooks/useRoles.js
 import { useState, useEffect } from 'react';
+import { createPaginationMeta } from '../../../../core/utils/serverPagination';
 import { rolesRepository } from '../infrastructure/roles.repository';
 
 export const useRoles = (filters = {}) => {
   const [roles, setRoles] = useState([]);
+  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
   const [loading, setLoading] = useState(false);
 
   const fetchRoles = async () => {
     setLoading(true);
     try {
-      const data = await rolesRepository.list(filters);
-      setRoles(data);
+      const response = await rolesRepository.list(filters);
+      setRoles(response.items);
+      setPaginationMeta(response.meta);
     } catch (error) {
       console.error("Error en useRoles al cargar data:", error);
       setRoles([]);
+      setPaginationMeta(createPaginationMeta());
     } finally {
       setLoading(false);
     }
@@ -21,8 +25,9 @@ export const useRoles = (filters = {}) => {
 
   const handleCreate = async (roleData) => {
     try {
-      await rolesRepository.create(roleData);
+      const createdRole = await rolesRepository.create(roleData);
       await fetchRoles();
+      return createdRole;
     } catch (error) {
       console.error("Error en useRoles al crear:", error);
       throw error;
@@ -31,8 +36,9 @@ export const useRoles = (filters = {}) => {
 
   const handleUpdate = async (id, updatedData) => {
     try {
-      await rolesRepository.update(id, updatedData);
+      const updatedRole = await rolesRepository.update(id, updatedData);
       await fetchRoles();
+      return updatedRole;
     } catch (error) {
       console.error(`Error en useRoles al actualizar #${id}:`, error);
       throw error;
@@ -63,10 +69,11 @@ export const useRoles = (filters = {}) => {
 
   useEffect(() => {
     fetchRoles();
-  }, [filters.search]);
+  }, [filters.search, filters.page, filters.limit, filters.sortBy, filters.order]);
 
   return {
     roles,
+    paginationMeta,
     loading,
     handleCreate,
     handleUpdate,

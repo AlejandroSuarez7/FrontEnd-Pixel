@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
+import { notifications } from '../../../../core/utils/notifications';
 import { usePagination } from '../../../../core/hooks/usePagination';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../../store/AuthContext';
 import { useDisenos } from '../application/useDisenos';
 import { DisenoModal } from './DisenoModal';
 import { DisenoViewModal } from './DisenoViewModal';
@@ -62,6 +65,8 @@ const ESTADO_CLASS = {
 };
 
 export const DisenosPage = () => {
+  const { hasPermission } = useAuth();
+  const confirm = useConfirm();
   const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
   const userRole = session?.rol?.nombre || 'Cliente';
   const userId = Number(session?.idUsuario || session?.id || 0);
@@ -136,21 +141,45 @@ export const DisenosPage = () => {
 
   const canApprove = (diseno) => {
     const ownerId = Number(diseno.pedido?.cliente?.idUsuario || 0);
-    return diseno.estado === 'ENVIADO' && (isStaff || ownerId === userId);
+    return diseno.estado === 'ENVIADO' && hasPermission('disenos.aprobar') && (isStaff || ownerId === userId);
   };
 
-  const onApproveClick = (diseno) => {
-    const observaciones = window.prompt('Observaciones de aprobacion (opcional):') || '';
-    if (window.confirm(`Aprobar diseno #${diseno.idDiseno}?`)) {
-      handleApprove(diseno.idDiseno, { observaciones })
-        .then(result => alert(result.message || 'Diseno aprobado correctamente.'))
-        .catch(error => alert(error.message));
+  const onApproveClick = async (diseno) => {
+    const result = await confirm({
+      title: 'Aprobar diseno',
+      message: `Aprobar diseno #${diseno.idDiseno}?`,
+      confirmText: 'Aprobar',
+      variant: 'success',
+      input: true,
+      inputPlaceholder: 'Observaciones opcionales',
+      requiredInput: false,
+    });
+
+    if (!result.confirmed) return;
+
+    try {
+      const response = await handleApprove(diseno.idDiseno, { observaciones: result.value });
+      notifications.success(response.message || 'Diseno aprobado correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo aprobar el diseno.');
     }
   };
 
-  const onDeleteClick = (diseno) => {
-    if (window.confirm(`Eliminar diseno #${diseno.idDiseno}?`)) {
-      handleDelete(diseno.idDiseno).catch(error => alert(error.message));
+  const onDeleteClick = async (diseno) => {
+    const accepted = await confirm({
+      title: 'Eliminar diseno',
+      message: `Eliminar diseno #${diseno.idDiseno}?`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleDelete(diseno.idDiseno);
+      notifications.success('Diseno eliminado correctamente.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo eliminar el diseno.');
     }
   };
 
@@ -164,7 +193,7 @@ export const DisenosPage = () => {
             Administra archivos, envio y aprobacion de disenos asociados a pedidos.
           </p>
         </div>
-        {!userRole || userRole !== 'Cliente' ? (
+        {hasPermission('disenos.crear') && (!userRole || userRole !== 'Cliente') ? (
           <button onClick={handleOpenCreate} className={styles.primaryButton}>
             Nuevo diseno
           </button>
@@ -239,8 +268,8 @@ export const DisenosPage = () => {
                         primaryAction={{ label: 'Ver', onClick: () => { setSelectedDiseno(diseno); setIsViewOpen(true); }, variant: 'accent' }}
                         actions={[
                           canApprove(diseno) && { label: 'Aprobar', onClick: () => onApproveClick(diseno), variant: 'success' },
-                          (isStaff || isDisenador) && diseno.estado !== 'APROBADO' && { label: 'Editar', onClick: () => handleOpenEdit(diseno), variant: 'warning' },
-                          isStaff && diseno.estado !== 'APROBADO' && { label: 'Eliminar', onClick: () => onDeleteClick(diseno), variant: 'danger' },
+                          hasPermission('disenos.editar') && (isStaff || isDisenador) && diseno.estado !== 'APROBADO' && { label: 'Editar', onClick: () => handleOpenEdit(diseno), variant: 'warning' },
+                          hasPermission('disenos.eliminar') && isStaff && diseno.estado !== 'APROBADO' && { label: 'Eliminar', onClick: () => onDeleteClick(diseno), variant: 'danger' },
                         ]}
                       />
                     </td>
