@@ -596,3 +596,27 @@
   .btnPrimary,
   .btnSecondary { width: 100%; }
 }
+
+.passwordRules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: #fafbfc;
+}
+
+.passwordRule {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.passwordRuleOk {
+  color: var(--color-success);
+}
+
+.passwordRuleError {
+  color: var(--color-danger);
+}

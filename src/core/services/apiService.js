@@ -38,8 +38,13 @@ apiClient.interceptors.response.use(
 
     if (status === 401) {
       // Token expirado o inválido — aquí puedes redirigir al login
-      console.warn('[API] No autorizado. Redirigir al login.');
-      window.location.href = '/login';
+      const authPaths = ['/login', '/register'];
+      const isAuthPage = authPaths.includes(window.location.pathname);
+
+      console.warn('[API] No autorizado.');
+      if (!isAuthPage) {
+        window.location.href = '/login';
+      }
     }
 
     if (status === 403) {

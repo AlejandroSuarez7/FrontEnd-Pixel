@@ -2,6 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../../core/services/apiService';
 import { notifications } from '../../../core/utils/notifications';
+import {
+  getPasswordRulesStatus,
+  getUserValidationError,
+  onlyDigits,
+} from '../../../core/utils/userValidation';
 import styles from './users.module.css';
 
 export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
@@ -18,6 +23,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
   const [loadingRoles, setLoadingRoles] = useState(false);
 
   const isEditing = !!user;
+  const passwordRulesStatus = getPasswordRulesStatus(contrasena);
 
   // Carga roles dinámicamente desde la API
   useEffect(() => {
@@ -62,6 +68,21 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const validationError = getUserValidationError({
+        nombre,
+        documento,
+        correo,
+        telefono,
+        idRol,
+        contrasena,
+        isEditing,
+      });
+
+      if (validationError) {
+        notifications.warning(validationError);
+        return;
+      }
+
       const payload = {
         nombre:    nombre.trim(),
         documento: documento.trim() || null,
@@ -81,7 +102,9 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
       // que ya maneja internamente si es create o update
       await onSubmit(payload);
     } catch (error) {
-      notifications.error(error.message || 'Error al procesar el usuario.');
+      if (!error.silent) {
+        notifications.error(error.message || 'Error al procesar el usuario.');
+      }
     }
   };
 
@@ -129,9 +152,10 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
               <input
                 type="text"
                 value={documento}
-                onChange={e => setDocumento(e.target.value)}
+                onChange={e => setDocumento(onlyDigits(e.target.value))}
                 className={styles.inputField}
                 placeholder="Ej: 1234567890"
+                maxLength={10}
               />
             </div>
           </div>
@@ -143,9 +167,10 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
               <input
                 type="text"
                 value={telefono}
-                onChange={e => setTelefono(e.target.value)}
+                onChange={e => setTelefono(onlyDigits(e.target.value))}
                 className={styles.inputField}
                 placeholder="Ej: 3001234567"
+                maxLength={10}
               />
             </div>
             <div className={styles.inputGroup}>
@@ -210,6 +235,19 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
               </div>
             )}
           </div>
+
+          {contrasena.length > 0 && (
+            <div className={styles.passwordRules}>
+              {passwordRulesStatus.map((rule) => (
+                <span
+                  key={rule.id}
+                  className={`${styles.passwordRule} ${rule.passed ? styles.passwordRuleOk : styles.passwordRuleError}`}
+                >
+                  {rule.passed ? 'OK' : 'X'} {rule.label}
+                </span>
+              ))}
+            </div>
+          )}
 
           <div className={styles.modalFooter}>
             <button type="button" onClick={onClose} className={styles.btnSecondary}>

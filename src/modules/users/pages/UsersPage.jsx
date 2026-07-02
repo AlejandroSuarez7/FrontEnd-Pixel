@@ -23,6 +23,7 @@ export const UsersPage = () => {
     handleCreate,
     handleUpdate,
     handleHardDelete,
+    findDuplicateFields,
     paginationMeta,
   } = useUsers({
     ...filters,
@@ -47,6 +48,20 @@ export const UsersPage = () => {
   };
 
   const handleSubmitForm = async (payload) => {
+    const duplicatedFields = await findDuplicateFields(payload, selectedUser?.id);
+    if (duplicatedFields.length > 0) {
+      const fieldNames = {
+        correo: 'correo',
+        documento: 'documento',
+        telefono: 'telefono',
+      };
+      const message = `Ya existe otro usuario con el mismo ${duplicatedFields.map(field => fieldNames[field]).join(', ')}.`;
+      notifications.error(message);
+      const duplicateError = new Error(message);
+      duplicateError.silent = true;
+      throw duplicateError;
+    }
+
     if (selectedUser) {
       await handleUpdate(selectedUser.id, payload);
       notifications.success('Usuario actualizado correctamente.');
