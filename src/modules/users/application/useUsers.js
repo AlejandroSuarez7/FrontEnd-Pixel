@@ -73,6 +73,9 @@ export const useUsers = (filters = {}) => {
     }
   };
 
+  const findDuplicateFields = (userData, excludeId = null) =>
+    userRepository.findDuplicateFields(userData, excludeId);
+
   return {
     users,
     paginationMeta,
@@ -81,6 +84,7 @@ export const useUsers = (filters = {}) => {
     handleUpdate,
     handleToggleStatus,
     handleHardDelete,
+    findDuplicateFields,
     refreshUsers: fetchUsers,
   };
 };

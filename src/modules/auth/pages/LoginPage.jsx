@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
+import { notifications } from '../../../core/utils/notifications';
 import { motion } from 'motion/react';
 const LoginPage = () => {
   const [correo, setCorreo]       = useState('');
@@ -20,7 +21,9 @@ const LoginPage = () => {
       await login(correo, contrasena);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Credenciales incorrectas');
+      const message = err.message || 'Credenciales incorrectas';
+      setError(message);
+      notifications.error(message);
     } finally {
       setLoading(false);
     }

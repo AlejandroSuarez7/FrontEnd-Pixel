@@ -22,6 +22,37 @@ export class UserApiRepository {
     }
   }
 
+  async findDuplicateFields({ correo, documento, telefono }, excludeId = null) {
+    const entries = [
+      ['correo', correo?.trim().toLowerCase()],
+      ['documento', documento?.trim()],
+      ['telefono', telefono?.trim()],
+    ].filter(([, value]) => Boolean(value));
+
+    const duplicatedFields = [];
+
+    await Promise.all(entries.map(async ([field, value]) => {
+      const params = buildPaginationParams({
+        page: 1,
+        limit: 10,
+        search: value,
+        sortBy: 'nombre',
+        order: 'asc',
+      });
+      const { data } = await apiClient.get(ENDPOINT, { params });
+      const users = userDTO.fromApiList(data.data || []);
+      const duplicate = users.find((user) => {
+        const currentValue = String(user[field] || '').trim().toLowerCase();
+        const searchedValue = String(value).trim().toLowerCase();
+        return currentValue === searchedValue && Number(user.id) !== Number(excludeId);
+      });
+
+      if (duplicate) duplicatedFields.push(field);
+    }));
+
+    return duplicatedFields;
+  }
+
   // Crea un nuevo usuario: POST /api/usuarios
   async create(userData) {
     try {
