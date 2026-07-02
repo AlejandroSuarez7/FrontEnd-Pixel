@@ -28,7 +28,15 @@ const LoginPage = () => {
 
   return (
     <div className="login-container">
-    <motion.div
+      <button
+        type="button"
+        className="btn-explore-back"
+        onClick={() => navigate('/')}
+      >
+        Seguir explorando
+      </button>
+
+      <motion.div
         className="auth-split"
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -70,7 +78,6 @@ const LoginPage = () => {
                 {loading ? 'Ingresando...' : 'Iniciar Sesión'}
               </button>
 
-              <button type="button" className="btn-secondary" onClick={() => navigate('/')}>Seguir explorando</button>
             </form>
 
             <p className="register-link">

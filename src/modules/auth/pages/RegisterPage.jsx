@@ -78,6 +78,14 @@ const RegisterPage = () => {
 
   return (
     <div className="register-container">
+      <button
+        type="button"
+        className="btn-explore-back"
+        onClick={() => navigate('/')}
+      >
+        Seguir explorando
+      </button>
+
       <motion.div
         className="auth-split"
         initial={{ opacity: 0, y: 40 }}
@@ -207,9 +215,6 @@ const RegisterPage = () => {
                 {loading ? 'Registrando...' : 'Registrarse'}
               </button>
 
-              <button type="button" className="btn-secondary" onClick={() => navigate('/')}>
-                Seguir explorando
-              </button>
             </form>
 
             <p className="login-link">

@@ -1,13 +1,45 @@
 .login-container,
 .register-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: 24px;
+  padding: 88px 24px 24px;
   background-image: radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 24%),
     radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.08), transparent 18%),
     linear-gradient(135deg, rgba(88, 28, 135, 0.85), rgba(131, 24, 67, 0.78), rgba(30, 64, 175, 0.82));
+}
+
+.btn-explore-back {
+  position: absolute;
+  top: 28px;
+  left: 36px;
+  z-index: 2;
+  width: auto;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-explore-back:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.68);
+}
+
+.btn-explore-back:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 3px;
 }
 
 .auth-split {
@@ -234,6 +266,18 @@
 }
 
 @media (max-width: 900px) {
+  .login-container,
+  .register-container {
+    padding: 82px 16px 20px;
+  }
+
+  .btn-explore-back {
+    top: 22px;
+    left: 20px;
+    padding: 9px 14px;
+    font-size: 12px;
+  }
+
   .auth-split {
     flex-direction: column;
     min-height: auto;
