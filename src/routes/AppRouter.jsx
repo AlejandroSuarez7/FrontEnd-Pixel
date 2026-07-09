@@ -7,6 +7,7 @@ import DashboardLayout from '../shared/layouts/DashboardLayout/DashboardLayout';
 import LandingPage from '../modules/landing/pages/LandingPage';
 import LoginPage from '../modules/auth/pages/LoginPage';
 import RegisterPage from '../modules/auth/pages/RegisterPage';
+import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
 import DashboardPage from '../modules/dashboard/pages/DashboardPage';
 import RolesPage from '../modules/configuration/pages/RolesPage';
 import { UsersPage } from '../modules/users/pages/UsersPage.jsx';
@@ -28,6 +29,8 @@ import DesignsPage from '../modules/production/pages/DesignsPage';
 import DeliveryPage from '../modules/production/pages/DeliveryPage';
 import ServicesPage from '../modules/services/pages/ServicesPage';
 import QuotesPage from '../modules/services/pages/QuotesPage';
+import { ProductsPage } from '../modules/products/pages/ProductsPage';
+import { ProductCategoriesPage } from '../modules/products/pages/ProductCategoriesPage';
 import SettingsPage from '../modules/settings/pages/SettingsPage';
 
 const AppRouter = () => {
@@ -38,6 +41,7 @@ const AppRouter = () => {
         <Route path={PATHS.HOME} element={<LandingPage />} />
         <Route path={PATHS.LOGIN} element={<LoginPage />} />
         <Route path={PATHS.REGISTER} element={<RegisterPage />} />
+        <Route path={PATHS.RESET_PASSWORD} element={<ResetPasswordPage />} />
 
         {/* Protected Routes */}
         <Route
@@ -70,6 +74,8 @@ const AppRouter = () => {
           <Route path={PATHS.PRODUCTION_DELIVERY} element={<DeliveryPage />} />
           <Route path={PATHS.SERVICES} element={<ServicesPage />} />
           <Route path={PATHS.SERVICES_QUOTES} element={<QuotesPage />} />
+          <Route path={PATHS.SERVICES_PRODUCTS} element={<ProductsPage />} />
+          <Route path={PATHS.SERVICES_PRODUCT_CATEGORIES} element={<ProductCategoriesPage />} />
           <Route path={PATHS.SETTINGS} element={<SettingsPage />} />
         </Route>
       </Routes>

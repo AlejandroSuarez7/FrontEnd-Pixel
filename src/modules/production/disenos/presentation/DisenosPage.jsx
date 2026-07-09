@@ -64,6 +64,8 @@ const ESTADO_CLASS = {
   APROBADO: styles.estadoPagoCompleto,
 };
 
+const getClienteContacto = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
+
 export const DisenosPage = () => {
   const { hasPermission } = useAuth();
   const confirm = useConfirm();
@@ -96,11 +98,13 @@ export const DisenosPage = () => {
     if (!term) return disenos;
     return disenos.filter((diseno) => {
       const cliente = diseno.pedido?.cliente?.nombre || '';
+      const contacto = getClienteContacto(diseno.pedido?.cliente);
       const disenador = diseno.disenador?.nombre || '';
       return (
         String(diseno.idDiseno).includes(term) ||
         String(diseno.idPedido).includes(term) ||
         cliente.toLowerCase().includes(term) ||
+        contacto.toLowerCase().includes(term) ||
         disenador.toLowerCase().includes(term) ||
         diseno.descripcion.toLowerCase().includes(term)
       );
@@ -244,6 +248,7 @@ export const DisenosPage = () => {
                   <th className={styles.tableHeader}>ID</th>
                   <th className={styles.tableHeader}>Pedido</th>
                   <th className={styles.tableHeader}>Cliente</th>
+                  <th className={styles.tableHeader}>Producto / descripcion</th>
                   <th className={styles.tableHeader}>Disenador</th>
                   <th className={styles.tableHeader}>Estado</th>
                   <th className={styles.tableHeader}>Envio</th>
@@ -255,7 +260,11 @@ export const DisenosPage = () => {
                   <tr key={diseno.idDiseno} className={styles.tableBodyRow}>
                     <td className={styles.tableCellId}>#{diseno.idDiseno}</td>
                     <td className={styles.tableCell}>#{diseno.idPedido}</td>
-                    <td className={styles.tableCell}>{diseno.pedido?.cliente?.nombre || 'N/A'}</td>
+                    <td className={styles.tableCell}>
+                      <strong>{diseno.pedido?.cliente?.nombre || 'N/A'}</strong>
+                      <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>{getClienteContacto(diseno.pedido?.cliente)}</span>
+                    </td>
+                    <td className={styles.tableCell}>{diseno.descripcion || diseno.pedido?.detalles?.[0]?.descripcion || 'Sin descripcion'}</td>
                     <td className={styles.tableCell}>{diseno.disenador?.nombre || 'Sin asignar'}</td>
                     <td className={styles.tableCell}>
                       <span className={`${styles.statusBadge} ${ESTADO_CLASS[diseno.estado] || ''}`}>

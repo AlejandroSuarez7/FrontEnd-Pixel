@@ -12,6 +12,8 @@ export const quotesDTO = {
       idTecnica:           det.idTecnica,
       descripcion:         det.descripcion,
       cantidad:            det.cantidad,
+      precioBase:          det.precioBase ?? null,
+      descuentoPorcentaje: det.descuentoPorcentaje ?? 0,
       precioUnitario:      det.precioUnitario ?? null,
       costoDiseno:         det.costoDiseno ?? 0,
       subtotal:            det.subtotal ?? null,
@@ -50,6 +52,13 @@ export const quotesDTO = {
 
     return {
       idCliente:    domainData.idCliente ? Number(domainData.idCliente) : undefined,
+      ...(domainData.cliente && {
+        cliente: {
+          nombre: domainData.cliente.nombre?.trim() || '',
+          correo: domainData.cliente.correo?.trim()?.toLowerCase() || null,
+          telefono: domainData.cliente.telefono?.trim() || null,
+        },
+      }),
       observaciones: domainData.observaciones?.trim() || null,
       ...(domainData.costosAdicionales !== undefined && {
         costosAdicionales: Number(domainData.costosAdicionales),

@@ -1,8 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './LandingPage.css';
 import { motion } from 'motion/react';
 import { useAuth } from '../../../store/AuthContext';
+import { notifications } from '../../../core/utils/notifications';
+import { publicQuoteRepository } from '../infrastructure/publicQuote.repository';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import {
   Upload,
   Palette,
@@ -24,11 +27,178 @@ import {
 
 const LandingPage = () => {
   const { user, logout } = useAuth();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [publicProducts, setPublicProducts] = useState([]);
+  const [publicCategories, setPublicCategories] = useState([]);
+  const [publicTechniques, setPublicTechniques] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productsError, setProductsError] = useState('');
+  const [calculatingQuote, setCalculatingQuote] = useState(false);
+  const [sendingQuote, setSendingQuote] = useState(false);
+  const [publicQuoteForm, setPublicQuoteForm] = useState({
+    nombre: '',
+    correo: '',
+    telefono: '',
+    idCategoriaProducto: '',
+    idProducto: '',
+    idTecnica: '',
+    cantidad: 1,
+    detalleProducto: '',
+    observaciones: '',
+  });
+  const [publicQuoteCalculation, setPublicQuoteCalculation] = useState(null);
   const isLoggedIn = Boolean(user);
   const userName = user?.nombre || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.all([
+      publicQuoteRepository.listCategories(),
+      publicQuoteRepository.listTechniques(),
+    ])
+      .then(([categories, techniques]) => {
+        if (!isMounted) return;
+        setPublicCategories(categories);
+        setPublicTechniques(techniques);
+        setProductsError('');
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        const message = error.message || 'No se pudieron cargar los productos.';
+        setProductsError(message);
+        notifications.error(message);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingProducts(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setLoadingProducts(true);
+    publicQuoteRepository.listProductsByCategory(publicQuoteForm.idCategoriaProducto)
+      .then((products) => {
+        setPublicProducts(products);
+        if (!products.some(product => Number(product.idProducto) === Number(publicQuoteForm.idProducto))) {
+          setPublicQuoteForm(prev => ({ ...prev, idProducto: '' }));
+          setPublicQuoteCalculation(null);
+        }
+        setProductsError('');
+      })
+      .catch((error) => {
+        const message = error.message || 'No se pudieron cargar los productos.';
+        setProductsError(message);
+        notifications.error(message);
+      })
+      .finally(() => setLoadingProducts(false));
+  }, [publicQuoteForm.idCategoriaProducto]);
+
+  useEffect(() => {
+    if (!publicQuoteForm.idProducto || Number(publicQuoteForm.cantidad) <= 0) {
+      setPublicQuoteCalculation(null);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setCalculatingQuote(true);
+      publicQuoteRepository.calculate([{
+        idProducto: Number(publicQuoteForm.idProducto),
+        cantidad: Number(publicQuoteForm.cantidad),
+      }])
+        .then(setPublicQuoteCalculation)
+        .catch((error) => {
+          setPublicQuoteCalculation(null);
+          notifications.error(error.message || 'No se pudo calcular la cotizacion.');
+        })
+        .finally(() => setCalculatingQuote(false));
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [publicQuoteForm.idProducto, publicQuoteForm.cantidad]);
+
+  const updatePublicQuoteField = (field, value) => {
+    setPublicQuoteForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const resetPublicQuoteForm = () => {
+    setPublicQuoteForm({
+      nombre: '',
+      correo: '',
+      telefono: '',
+      idCategoriaProducto: '',
+      idProducto: '',
+      idTecnica: '',
+      cantidad: 1,
+      detalleProducto: '',
+      observaciones: '',
+    });
+    setPublicQuoteCalculation(null);
+  };
+
+  const validatePublicQuote = () => {
+    const telefonoLimpio = publicQuoteForm.telefono.trim();
+
+    if (!publicQuoteForm.nombre.trim()) return 'El nombre completo es obligatorio.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicQuoteForm.correo.trim())) return 'Ingresa un email valido con @.';
+    if (!/^\d{10}$/.test(telefonoLimpio)) return 'El telefono debe tener exactamente 10 digitos numericos.';
+
+    if (!publicQuoteForm.idProducto || Number(publicQuoteForm.cantidad) <= 0) {
+      return 'Selecciona un producto y una cantidad mayor a 0.';
+    }
+    if (!publicQuoteForm.idTecnica) return 'Selecciona la tecnica de estampacion.';
+    return null;
+  };
+
+  const handlePublicQuoteSubmit = async (event) => {
+    event.preventDefault();
+
+    const validationError = validatePublicQuote();
+    if (validationError) {
+      notifications.warning(validationError);
+      return;
+    }
+
+    setSendingQuote(true);
+    try {
+      const accepted = await confirm({
+        title: 'Enviar solicitud',
+        message: 'Tu solicitud sera enviada al equipo de PIXEL. Tambien enviaremos una copia a tu correo como constancia de cotizacion. Por ese mismo correo te notificaremos si la cotizacion avanza a pedido.',
+        confirmText: 'Enviar solicitud',
+        cancelText: 'Cancelar',
+        variant: 'success',
+      });
+
+      if (!accepted) return;
+
+      await publicQuoteRepository.create({
+        cliente: {
+          nombre: publicQuoteForm.nombre.trim(),
+          correo: publicQuoteForm.correo.trim().toLowerCase(),
+          telefono: publicQuoteForm.telefono.trim(),
+        },
+        items: [{
+          idProducto: Number(publicQuoteForm.idProducto),
+          idTecnica: Number(publicQuoteForm.idTecnica),
+          cantidad: Number(publicQuoteForm.cantidad),
+          observaciones: publicQuoteForm.detalleProducto.trim() || null,
+        }],
+        observaciones: publicQuoteForm.observaciones.trim() || null,
+      });
+      notifications.success('Solicitud enviada. Revisa tu correo como constancia.');
+      resetPublicQuoteForm();
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo enviar la solicitud.');
+    } finally {
+      setSendingQuote(false);
+    }
+  };
 
   const handleGoDashboard = () => {
     setProfileOpen(false);
@@ -1303,19 +1473,22 @@ const LandingPage = () => {
           Solicita tu cotización
         </h3>
 
-        <form className="contact-form">
+        <form className="contact-form" onSubmit={handlePublicQuoteSubmit}>
 
+          <div className="quote-contact-grid">
           {/* Nombre */}
-          <div className="contact-field">
+          <div className="contact-field quote-name-field">
 
             <label className="contact-field-label">
-              Nombre
+              Nombre completo
             </label>
 
             <input
               type="text"
-              placeholder="Tu nombre"
+              placeholder="Nombre completo"
               className="contact-input"
+              value={publicQuoteForm.nombre}
+              onChange={(event) => updatePublicQuoteField('nombre', event.target.value)}
             />
 
           </div>
@@ -1331,6 +1504,8 @@ const LandingPage = () => {
               type="email"
               placeholder="tu@email.com"
               className="contact-input"
+              value={publicQuoteForm.correo}
+              onChange={(event) => updatePublicQuoteField('correo', event.target.value)}
             />
 
           </div>
@@ -1344,10 +1519,108 @@ const LandingPage = () => {
 
             <input
               type="tel"
-              placeholder="+57 300 000 0000"
+              placeholder="3000000000"
               className="contact-input"
+              inputMode="numeric"
+              maxLength={10}
+              value={publicQuoteForm.telefono}
+              onChange={(event) => updatePublicQuoteField('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))}
             />
 
+          </div>
+
+          </div>
+
+          <div className="quote-products-panel">
+            <label className="contact-field-label">Datos de la cotizacion</label>
+            <div className="quote-select-grid">
+            {publicCategories.length > 0 && (
+              <select
+                className="contact-input quote-category-select"
+                value={publicQuoteForm.idCategoriaProducto}
+                onChange={(event) => updatePublicQuoteField('idCategoriaProducto', event.target.value)}
+              >
+                <option value="">Todas las categorias</option>
+                {publicCategories.map(category => (
+                  <option key={category.idCategoriaProducto} value={category.idCategoriaProducto}>
+                    {category.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+            <select
+              className="contact-input quote-technique-select"
+              value={publicQuoteForm.idTecnica}
+              onChange={(event) => updatePublicQuoteField('idTecnica', event.target.value)}
+              required
+              disabled={publicTechniques.length === 0}
+            >
+              <option value="">
+                {publicTechniques.length === 0 ? 'Sin tecnicas disponibles' : 'Tecnica de estampacion'}
+              </option>
+              {publicTechniques.map(technique => (
+                <option key={technique.idTecnica} value={technique.idTecnica}>
+                  {technique.nombre}
+                </option>
+              ))}
+            </select>
+            </div>
+
+            {loadingProducts ? (
+              <p className="quote-helper-text">Cargando productos...</p>
+            ) : productsError ? (
+              <p className="quote-error-text">{productsError}</p>
+            ) : publicProducts.length === 0 ? (
+              <p className="quote-helper-text">No hay productos activos para cotizar por ahora.</p>
+            ) : (
+              <div className="quote-product-row">
+                <select
+                  className="contact-input quote-product-select"
+                  value={publicQuoteForm.idProducto}
+                  onChange={(event) => updatePublicQuoteField('idProducto', event.target.value)}
+                  required
+                >
+                  <option value="">Selecciona un producto</option>
+                  {publicProducts.map(product => (
+                    <option key={product.idProducto} value={product.idProducto}>
+                      {product.categoriaProducto?.nombre ? `${product.categoriaProducto.nombre} - ${product.nombre}` : product.nombre}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min="1"
+                  className="contact-input quote-quantity-input"
+                  value={publicQuoteForm.cantidad}
+                  onChange={(event) => updatePublicQuoteField('cantidad', event.target.value)}
+                  placeholder="Cantidad"
+                  required
+                />
+                <input
+                  type="text"
+                  className="contact-input quote-item-note"
+                  value={publicQuoteForm.detalleProducto}
+                  onChange={(event) => updatePublicQuoteField('detalleProducto', event.target.value)}
+                  placeholder="Color, talla o ubicacion del estampado"
+                />
+                {publicQuoteCalculation?.items?.[0] && (
+                  <div className="quote-line-summary">
+                    <span className="quote-price-before">
+                      Antes: ${Number(publicQuoteCalculation.items[0].precioBase || 0).toLocaleString('es-CO')}
+                    </span>
+                    <span className="quote-discount-chip">
+                      -{Number(publicQuoteCalculation.items[0].descuentoPorcentaje || 0)}%
+                    </span>
+                    <span>
+                      Ahora: ${Number(publicQuoteCalculation.items[0].precioUnitario || 0).toLocaleString('es-CO')} c/u
+                    </span>
+                    <strong>
+                      Total: ${Number(publicQuoteCalculation.items[0].subtotal || 0).toLocaleString('es-CO')}
+                    </strong>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Proyecto */}
@@ -1358,18 +1631,35 @@ const LandingPage = () => {
             </label>
 
             <textarea
-              placeholder="Describe tu idea, cantidad de prendas, tipo de estampado preferido..."
+              placeholder="Describe tu idea, referencias, colores, tallas o fecha deseada..."
               className="contact-textarea"
+              value={publicQuoteForm.observaciones}
+              onChange={(event) => updatePublicQuoteField('observaciones', event.target.value)}
             ></textarea>
 
+          </div>
+
+          <div className="quote-total-card">
+            <div>
+              <span className="quote-total-label">Total estimado</span>
+              <strong className="quote-total-value">
+                ${Number(publicQuoteCalculation?.total || 0).toLocaleString('es-CO')}
+              </strong>
+            </div>
+            <span className="quote-helper-text">
+              {calculatingQuote
+                ? 'Calculando con precios reales...'
+                : 'El valor final sera confirmado por nuestro equipo.'}
+            </span>
           </div>
 
           {/* Button */}
           <button
             type="submit"
             className="contact-submit-btn"
+            disabled={sendingQuote || loadingProducts || publicProducts.length === 0}
           >
-            Enviar solicitud
+            {sendingQuote ? 'Enviando...' : 'Enviar solicitud'}
           </button>
 
         </form>

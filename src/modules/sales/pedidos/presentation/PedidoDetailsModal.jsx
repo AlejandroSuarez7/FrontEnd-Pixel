@@ -1,5 +1,4 @@
 // pedidos/presentation/PedidoDetailsModal.jsx
-import React from 'react';
 import { formatDate } from '../../../../core/utils/fechaFormato';
 import styles from './pedidos.module.css';
 
@@ -19,11 +18,6 @@ const ESTADO_PAGO_CLASS = {
 const ISO_DATE_IN_BRACKETS = /\[(\d{4}-\d{2}-\d{2}T[^\]]+)\]/g;
 const QUEUE_ORDER_MARKER_GLOBAL = /\n?\[\[PIXEL_QUEUE_ORDER:\d+\]\]/g;
 
-const getFirstObservationDate = (observaciones) => {
-  const match = observaciones?.match(ISO_DATE_IN_BRACKETS);
-  return match?.[0]?.replace('[', '').replace(']', '') || null;
-};
-
 const formatObservaciones = (observaciones) => {
   const cleanObservaciones = (observaciones || '').replace(QUEUE_ORDER_MARKER_GLOBAL, '').trim();
   if (!cleanObservaciones) return 'Sin observaciones registradas';
@@ -34,9 +28,7 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
   if (!isOpen || !pedido) return null;
 
   const fmt = (val) => `$${Number(val || 0).toLocaleString('es-CO')}`;
-
-  const fechaCreacion = pedido.fechaCreacion || getFirstObservationDate(pedido.observaciones);
-
+  const clienteContacto = [pedido.cliente?.correo, pedido.cliente?.telefono].filter(Boolean).join(' | ');
 
   return (
     <div className={styles.overlay}>
@@ -48,6 +40,7 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
             <p className={styles.modalSubtitle}>
               Cliente: {pedido.cliente?.nombre || 'N/A'} · Cotización #{pedido.idCotizacion}
             </p>
+            {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span className={`${styles.statusBadge} ${ESTADO_PEDIDO_CLASS[pedido.estadoPedido] || ''}`}>
@@ -72,7 +65,7 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
           <div className={styles.readOnlyGrid}>
             <div className={styles.readOnlyItem}>
               Fecha de creación
-              <strong>{pedido.fechaCreacion}</strong>
+              <strong>{pedido.fechaCreacion ? formatDate(pedido.fechaCreacion) : '--'}</strong>
             </div>
             <div className={styles.readOnlyItem}>
               Entrega estimada

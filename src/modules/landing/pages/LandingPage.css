@@ -1772,7 +1772,7 @@
 .contact-section {
   position: relative;
   overflow: hidden;
-  padding: 100px 20px;
+  padding: 58px 20px 52px;
   background: linear-gradient(
     135deg,
     #9333ea 0%,
@@ -1825,8 +1825,8 @@
 
 .contact-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
+  gap: 44px;
   align-items: center;
 }
 
@@ -1899,16 +1899,17 @@
 
 .contact-form-card {
   background: white;
-  border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  padding: 22px 28px;
+  box-shadow: 0 24px 58px rgba(17, 24, 39, 0.18);
+  max-width: 560px;
 }
 
 .contact-form-title {
-  font-size: 36px;
+  font-size: 26px;
   font-weight: 700;
   color: #111827;
-  margin-bottom: 30px;
+  margin-bottom: 14px;
 }
 
 /* ========================================
@@ -1918,7 +1919,17 @@
 .contact-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
+}
+
+.quote-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.quote-name-field {
+  grid-column: 1 / -1;
 }
 
 .contact-field {
@@ -1927,10 +1938,10 @@
 }
 
 .contact-field-label {
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   color: #374151;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* ========================================
@@ -1941,11 +1952,21 @@
 .contact-textarea {
   width: 100%;
   border: 2px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 14px 16px;
-  font-size: 15px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.25;
+  color: #111827;
+  background-color: #fff;
   outline: none;
   transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.contact-input::placeholder,
+.contact-textarea::placeholder {
+  color: #6b7280;
+  opacity: 1;
 }
 
 .contact-input:focus,
@@ -1956,7 +1977,7 @@
 
 .contact-textarea {
   resize: none;
-  min-height: 140px;
+  min-height: 78px;
 }
 
 /* ========================================
@@ -1966,8 +1987,8 @@
 .contact-submit-btn {
   width: 100%;
   border: none;
-  border-radius: 16px;
-  padding: 18px;
+  border-radius: 14px;
+  padding: 13px;
   background: #9333ea;
   color: white;
   font-size: 16px;
@@ -1979,6 +2000,138 @@
 .contact-submit-btn:hover {
   background: #7e22ce;
   transform: translateY(-2px);
+}
+
+@media (max-width: 640px) {
+  .quote-total-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quote-contact-grid,
+  .quote-product-row,
+  .quote-select-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contact-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quote-products-panel,
+.quote-product-row,
+.quote-select-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 10px;
+  align-items: start;
+}
+
+.quote-products-panel {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.quote-select-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quote-select-grid > select:only-child {
+  grid-column: 1 / -1;
+}
+
+.quote-category-select,
+.quote-product-select,
+.quote-technique-select {
+  width: 100%;
+  min-width: 0;
+  color: #111827;
+  appearance: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quote-category-select {
+  grid-column: auto;
+}
+
+.quote-product-select:invalid,
+.quote-technique-select:invalid {
+  color: #6b7280;
+}
+
+.quote-quantity-input {
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+}
+
+.quote-item-note {
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+
+.quote-technique-select {
+  grid-column: auto;
+}
+
+.quote-line-summary {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.quote-price-before {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.quote-discount-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 800;
+}
+
+.quote-total-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #e9d5ff;
+  border-radius: 14px;
+  padding: 11px 14px;
+  background: #faf5ff;
+}
+
+.quote-total-label,
+.quote-helper-text,
+.quote-error-text {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.quote-total-value {
+  display: block;
+  color: #581c87;
+  font-size: 21px;
+  margin-top: 2px;
+}
+
+.quote-error-text {
+  color: #b91c1c;
 }
 
 /* ========================================
@@ -2012,11 +2165,11 @@
   }
 
   .contact-form-card {
-    padding: 30px 24px;
+    padding: 22px 18px;
   }
 
   .contact-form-title {
-    font-size: 28px;
+    font-size: 24px;
   }
 
 }

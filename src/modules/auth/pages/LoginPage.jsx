@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
 import { notifications } from '../../../core/utils/notifications';
+import { authService } from '../services/authService';
 import { motion } from 'motion/react';
 const LoginPage = () => {
   const [correo, setCorreo]       = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const { login }  = useAuth();
   const navigate   = useNavigate();
@@ -26,6 +30,22 @@ const LoginPage = () => {
       notifications.error(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+
+    try {
+      await authService.forgotPassword(forgotEmail);
+      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena.');
+      setForgotOpen(false);
+      setForgotEmail('');
+    } catch {
+      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena.');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -75,6 +95,16 @@ const LoginPage = () => {
                   onChange={(e) => setContrasena(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  className="forgot-password-link"
+                  onClick={() => {
+                    setForgotEmail(correo);
+                    setForgotOpen(true);
+                  }}
+                >
+                  Olvide mi contrasena
+                </button>
               </div>
 
               <button type="submit" className="btn-primary" disabled={loading}>
@@ -97,6 +127,35 @@ const LoginPage = () => {
           </div>
         </div>
       </motion.div>
+
+      {forgotOpen && (
+        <div className="auth-modal-overlay">
+          <div className="auth-modal-card">
+            <h3>Recuperar contrasena</h3>
+            <p>Escribe tu correo y te enviaremos instrucciones si existe una cuenta asociada.</p>
+            <form onSubmit={handleForgotPassword}>
+              <div className="form-group">
+                <label htmlFor="forgotEmail">Correo electronico</label>
+                <input
+                  type="email"
+                  id="forgotEmail"
+                  value={forgotEmail}
+                  onChange={(event) => setForgotEmail(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="auth-modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setForgotOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" disabled={forgotLoading}>
+                  {forgotLoading ? 'Enviando...' : 'Enviar instrucciones'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
