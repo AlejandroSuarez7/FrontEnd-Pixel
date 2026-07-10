@@ -4,6 +4,14 @@ import styles from '../../users/presentation/users.module.css';
 
 const emptyRange = { cantidadMin: 1, descuentoPorcentaje: 0, estado: true };
 
+const parseDecimal = (value) => Number(String(value).replace(',', '.'));
+
+const normalizeRanges = (rangos) => rangos.map(rango => ({
+  ...rango,
+  cantidadMin: Number(rango.cantidadMin),
+  descuentoPorcentaje: parseDecimal(rango.descuentoPorcentaje),
+}));
+
 export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product, canManagePrices, categories = [] }) => {
   const [form, setForm] = useState({
     nombre: '',
@@ -54,8 +62,9 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
     if (canManagePrices) {
       const invalidRange = rangos.find(rango =>
         Number(rango.cantidadMin) <= 0 ||
-        Number(rango.descuentoPorcentaje) < 0 ||
-        Number(rango.descuentoPorcentaje) > 100
+        Number.isNaN(parseDecimal(rango.descuentoPorcentaje)) ||
+        parseDecimal(rango.descuentoPorcentaje) < 0 ||
+        parseDecimal(rango.descuentoPorcentaje) > 100
       );
       if (invalidRange) return 'Los rangos deben tener cantidad positiva y descuento entre 0 y 100.';
     }
@@ -78,7 +87,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
     });
 
     if (isEditing && canManagePrices) {
-      await onSaveRanges(product.idProducto, rangos);
+      await onSaveRanges(product.idProducto, normalizeRanges(rangos));
     }
   };
 
@@ -135,15 +144,26 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
           </div>
 
           {isEditing && canManagePrices && (
-            <div className={styles.inputGroup}>
-              <div className={styles.headerWrapper} style={{ marginBottom: 0 }}>
-                <label className={styles.inputLabel}>Rangos de descuento</label>
+            <div className={styles.rangeSection}>
+              <div className={styles.rangeTitleRow}>
+                <div>
+                  <label className={styles.inputLabel}>Rangos de descuento</label>
+                  <p className={styles.rangeHelp}>Define desde que cantidad aplica cada descuento. Ej: 12 unidades = 7,14%.</p>
+                </div>
                 <button type="button" className={styles.btnSecondary} onClick={addRange}>Agregar rango</button>
               </div>
+
+              <div className={styles.rangeHeader}>
+                <span>Cantidad minima</span>
+                <span>Descuento %</span>
+                <span>Estado</span>
+                <span>Accion</span>
+              </div>
+
               {rangos.map((rango, index) => (
-                <div className={styles.formRow} key={`rango-${index}`}>
-                  <input type="number" min="1" className={styles.inputField} value={rango.cantidadMin} onChange={event => updateRange(index, 'cantidadMin', event.target.value)} placeholder="Cantidad minima" />
-                  <input type="number" min="0" max="100" className={styles.inputField} value={rango.descuentoPorcentaje} onChange={event => updateRange(index, 'descuentoPorcentaje', event.target.value)} placeholder="Descuento %" />
+                <div className={styles.rangeRow} key={`rango-${index}`}>
+                  <input type="number" min="1" step="1" className={styles.inputField} value={rango.cantidadMin} onChange={event => updateRange(index, 'cantidadMin', event.target.value)} placeholder="Ej: 12" />
+                  <input type="text" inputMode="decimal" className={styles.inputField} value={rango.descuentoPorcentaje} onChange={event => updateRange(index, 'descuentoPorcentaje', event.target.value)} placeholder="Ej: 7,14" />
                   <select className={styles.selectField} value={String(rango.estado)} onChange={event => updateRange(index, 'estado', event.target.value === 'true')}>
                     <option value="true">Activo</option>
                     <option value="false">Inactivo</option>
