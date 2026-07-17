@@ -12,10 +12,11 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
 import { PATHS } from '../../../routes/paths';
+import { isClientUser } from '../../../core/utils/permissions';
 import { useDashboardData } from '../application/useDashboardData';
 import './DashboardPage.css';
 
@@ -27,10 +28,15 @@ const kpiIcons = {
 };
 
 const trackingIcons = {
-  'Diseno aprobado': PencilRuler,
-  Produccion: Factory,
-  'Control de calidad': ShieldCheck,
-  Entrega: Truck,
+  'Cotizacion aceptada': FileText,
+  'Pendiente de primer abono': Clock3,
+  'Primer abono confirmado': BadgeDollarSign,
+  'Diseno en proceso': PencilRuler,
+  'Diseno pendiente de aprobacion': ShieldCheck,
+  'En produccion': Factory,
+  'Pendiente de segundo abono / saldo final': Clock3,
+  'Pedido finalizado': ShieldCheck,
+  'Listo para reclamar / entregar': Truck,
 };
 
 const statusClassMap = {
@@ -47,10 +53,6 @@ const statusClassMap = {
   ANULADO: 'statusCancelled',
   POR_APROBAR: 'statusProduction',
 };
-
-const getRoleName = (user) => user?.rol?.nombre || user?.nombreRol || user?.role || 'Cliente';
-
-const formatRole = (roleName) => roleName?.toLowerCase?.() || 'cliente';
 
 const readableStatus = (status) => {
   const labels = {
@@ -266,25 +268,69 @@ const QuoteFlowPanel = ({ data, quotes }) => (
   </section>
 );
 
-const TrackingPanel = ({ tracking }) => (
+const trackingStatusText = {
+  completed: 'Completado',
+  current: 'En este paso',
+  pending: 'Pendiente',
+};
+
+const ActiveOrdersPanel = ({ orders, selectedOrderId, onSelectOrder }) => (
+  <section className="dashboard-panel dashboard-active-orders-panel">
+    <SectionHeader eyebrow="Pedidos" title="Pedidos activos" />
+    {orders.length === 0 ? (
+      <div className="dashboard-empty-state">
+        <strong>No tienes pedidos activos</strong>
+        <p>Cuando una cotizacion avance a pedido, podras consultar aqui su progreso.</p>
+      </div>
+    ) : (
+      <div className="dashboard-order-selector">
+        {orders.map((order) => (
+          <button
+            type="button"
+            key={order.id}
+            className={selectedOrderId === order.id ? 'dashboard-order-card active' : 'dashboard-order-card'}
+            onClick={() => onSelectOrder(order.id)}
+          >
+            <span>
+              <strong>{order.number}</strong>
+              <small>{order.date}</small>
+            </span>
+            <span className={`dashboard-status-badge ${statusClassMap[order.status] || 'statusPending'}`}>
+              {readableStatus(order.status)}
+            </span>
+          </button>
+        ))}
+      </div>
+    )}
+  </section>
+);
+
+const TrackingPanel = ({ order }) => (
   <section className="dashboard-panel dashboard-tracking-panel">
-    <SectionHeader eyebrow="Seguimiento" title="Progreso del pedido actual" />
-    <div className="dashboard-tracking">
-      {tracking.map((step, index) => {
+    <SectionHeader eyebrow="Seguimiento" title={order ? `Progreso de ${order.number}` : 'Progreso del pedido'} />
+    {!order ? (
+      <div className="dashboard-empty-state">
+        <strong>Selecciona un pedido</strong>
+        <p>No hay un pedido activo para mostrar seguimiento.</p>
+      </div>
+    ) : (
+      <div className="dashboard-tracking">
+        {order.tracking.map((step) => {
         const Icon = trackingIcons[step.label] || Clock3;
         return (
-          <article className={step.completed ? 'tracking-step completed' : 'tracking-step'} key={step.label}>
+          <article className={`tracking-step ${step.state}`} key={step.label}>
             <span className="tracking-marker">
               <Icon size={20} />
             </span>
             <div>
               <strong>{step.label}</strong>
-              <small>{step.completed ? 'Completado' : index === 2 ? 'En revision' : 'Pendiente'}</small>
+              <small>{trackingStatusText[step.state] || 'Pendiente'}</small>
             </div>
           </article>
         );
       })}
-    </div>
+      </div>
+    )}
   </section>
 );
 
@@ -365,40 +411,52 @@ const AdminDashboard = ({ userName, data }) => (
   </div>
 );
 
-const ClientDashboard = ({ userName, data }) => (
-  <div className="dashboard-page dashboard-page-client">
-    <header className="dashboard-hero">
-      <div>
-        <span className="dashboard-eyebrow"><Sparkles size={16} /> Panel cliente</span>
-        <h1>Mis pedidos</h1>
-        <p>Hola, {userName}. Consulta el estado de tus estampados y gestiona tus proximas acciones.</p>
-      </div>
-      <div className="dashboard-hero-card">
-        <Truck size={24} />
-        <strong>Seguimiento activo</strong>
-        <span>{data.tracking.activeOrder}</span>
-      </div>
-    </header>
+const ClientDashboard = ({ userName, data }) => {
+  const activeOrders = data.activeOrders || [];
+  const [selectedOrderId, setSelectedOrderId] = useState(activeOrders[0]?.id || '');
+  const selectedOrder = activeOrders.find((order) => order.id === selectedOrderId) || activeOrders[0] || null;
+  const activeOrderLabel = selectedOrder ? selectedOrder.number : 'Sin pedido activo';
 
-    <section className="dashboard-kpi-grid client-kpis">
-      {data.kpis.map((item) => <KpiCard item={item} key={item.label} />)}
-    </section>
+  return (
+    <div className="dashboard-page dashboard-page-client">
+      <header className="dashboard-hero">
+        <div>
+          <span className="dashboard-eyebrow"><Sparkles size={16} /> Panel cliente</span>
+          <h1>Mis pedidos</h1>
+          <p>Hola, {userName}. Consulta el estado de tus estampados y gestiona tus proximas acciones.</p>
+        </div>
+        <div className="dashboard-hero-card">
+          <Truck size={24} />
+          <strong>Seguimiento activo</strong>
+          <span>{activeOrderLabel}</span>
+        </div>
+      </header>
 
-    <div className="dashboard-grid dashboard-client-grid">
-      <TrackingPanel tracking={data.tracking.steps} />
-      <QuickActions />
+      <section className="dashboard-kpi-grid client-kpis">
+        {data.kpis.map((item) => <KpiCard item={item} key={item.label} />)}
+      </section>
+
+      <div className="dashboard-grid dashboard-client-grid">
+        <ActiveOrdersPanel
+          orders={activeOrders}
+          selectedOrderId={selectedOrder?.id || ''}
+          onSelectOrder={setSelectedOrderId}
+        />
+        <QuickActions />
+      </div>
+
+      <TrackingPanel order={selectedOrder} />
+
+      <OrdersTable title="Historial" orders={data.history} showCustomer={false} />
     </div>
-
-    <OrdersTable title="Historial" orders={data.history} showCustomer={false} />
-  </div>
-);
+  );
+};
 
 const DashboardPage = () => {
-  const { user } = useAuth();
-  const { data, loading, error } = useDashboardData(user);
-  const roleName = useMemo(() => formatRole(getRoleName(user)), [user]);
+  const { user, permissions } = useAuth();
+  const { data, loading, error } = useDashboardData(user, permissions);
   const userName = user?.nombre || user?.name || user?.correo || user?.email || 'Usuario';
-  const isClient = roleName.includes('cliente');
+  const isClient = isClientUser(user, permissions);
 
   if (loading) return <LoadingDashboard />;
   if (error || !data) return <ErrorDashboard message={error || 'Respuesta vacia desde la API.'} />;

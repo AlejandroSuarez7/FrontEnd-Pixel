@@ -1,4 +1,5 @@
 import { apiClient } from '../../../core/services/apiService';
+import { isClientUser } from '../../../core/utils/permissions';
 
 const currentYear = new Date().getFullYear();
 
@@ -24,14 +25,6 @@ const formatShortDate = (value) => {
     year: 'numeric',
   }).format(date);
 };
-
-const normalizeText = (value = '') =>
-  String(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-
-const isClientRole = (user) => normalizeText(user?.nombreRol || user?.rol?.nombre || user?.role).includes('cliente');
 
 const buildRevenue = (ingresos = {}) => ({
   daily: {
@@ -80,20 +73,92 @@ const buildPendingQuotesList = (cotizaciones = []) =>
     status: quote.estado || 'PENDIENTE',
   }));
 
-const buildClientTracking = (pedidoActivo) => {
-  const state = pedidoActivo?.estadoPedido || '';
+const normalizeStatus = (value = '') => String(value || '').toUpperCase();
 
-  return {
-    activeOrder: pedidoActivo ? `Pedido PX-${pedidoActivo.idPedido}` : 'Sin pedido activo',
-    steps: [
-      { label: 'Diseño aprobado', completed: Boolean(pedidoActivo) },
-      { label: 'Producción', completed: state === 'EN_PROCESO' || state === 'FINALIZADO' },
-      { label: 'Control de calidad', completed: state === 'FINALIZADO' },
-      { label: 'Entrega', completed: state === 'FINALIZADO' && pedidoActivo?.estadoPago === 'COMPLETO' },
-    ],
-  };
+const getOrderDesign = (pedido = {}) => pedido.diseno || pedido.disenos?.[0] || null;
+
+const hasConfirmedPayment = (pedido = {}) => {
+  const estadoPago = normalizeStatus(pedido.estadoPago);
+  const abonos = Array.isArray(pedido.abonos) ? pedido.abonos : [];
+
+  return ['ABONADO', 'PARCIAL', 'COMPLETO', 'PAGADO'].includes(estadoPago) ||
+    abonos.some((abono) => normalizeStatus(abono.estado).includes('CONFIRM'));
 };
 
+const hasFinalPaymentPending = (pedido = {}) => {
+  const estadoPago = normalizeStatus(pedido.estadoPago);
+  const saldo = Number(pedido.saldoPendiente ?? pedido.saldo ?? 0);
+
+  return estadoPago === 'PARCIAL' || saldo > 0;
+};
+
+const isOrderFinalized = (pedido = {}) => ['FINALIZADO', 'TERMINADO'].includes(normalizeStatus(pedido.estadoPedido));
+
+const buildClientTrackingSteps = (pedido = {}) => {
+  const estadoPedido = normalizeStatus(pedido.estadoPedido);
+  const diseno = getOrderDesign(pedido);
+  const estadoDiseno = normalizeStatus(diseno?.estado || pedido.estadoDiseno);
+  const firstPaymentConfirmed = hasConfirmedPayment(pedido);
+  const inProduction = ['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION', 'FINALIZADO', 'TERMINADO'].includes(estadoPedido);
+  const finalized = isOrderFinalized(pedido);
+  const finalPaymentPending = hasFinalPaymentPending(pedido);
+  const readyToDeliver = finalized && !finalPaymentPending;
+  const delivered = ['ENTREGADO', 'RECLAMADO'].includes(estadoPedido);
+  const designWaitingApproval = ['PENDIENTE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(estadoDiseno);
+  const designApproved = ['APROBADO', 'APROBADA', 'PRODUCCION'].includes(estadoDiseno) || inProduction || finalized;
+
+  const steps = [
+    { label: 'Cotizacion aceptada', completed: Boolean(pedido.idPedido) },
+    { label: 'Pendiente de primer abono', completed: firstPaymentConfirmed, current: !firstPaymentConfirmed },
+    { label: 'Primer abono confirmado', completed: firstPaymentConfirmed },
+    {
+      label: 'Diseno en proceso',
+      completed: designWaitingApproval || designApproved || inProduction || finalized,
+      current: firstPaymentConfirmed && !designWaitingApproval && !designApproved && !inProduction && !finalized,
+    },
+    {
+      label: 'Diseno pendiente de aprobacion',
+      completed: designApproved || inProduction || finalized,
+      current: designWaitingApproval && !designApproved,
+    },
+    { label: 'En produccion', completed: finalized, current: inProduction && !finalized },
+    { label: 'Pendiente de segundo abono / saldo final', completed: readyToDeliver, current: finalized && finalPaymentPending },
+    { label: 'Pedido finalizado', completed: readyToDeliver, current: finalized && !readyToDeliver },
+    { label: 'Listo para reclamar / entregar', completed: delivered, current: readyToDeliver && !delivered },
+  ];
+
+  const currentIndex = steps.findIndex((step) => step.current);
+  const fallbackCurrentIndex = currentIndex === -1 ? steps.findIndex((step) => !step.completed) : currentIndex;
+
+  return steps.map((step, index) => ({
+    label: step.label,
+    state: step.completed
+      ? 'completed'
+      : index === fallbackCurrentIndex
+        ? 'current'
+        : 'pending',
+  }));
+};
+
+const buildClientActiveOrder = (pedido = {}) => ({
+  id: String(pedido.idPedido),
+  number: `PX-${pedido.idPedido}`,
+  date: formatShortDate(pedido.fechaCreacion),
+  status: pedido.estadoPedido || 'PENDIENTE',
+  total: toNumber(pedido.total),
+  balance: toNumber(pedido.saldoPendiente ?? pedido.saldo),
+  tracking: buildClientTrackingSteps(pedido),
+});
+
+const buildClientActiveOrders = (payload = {}) => {
+  const activeOrders = payload.pedidosActivos || payload.pedidosEnProceso || payload.activeOrders;
+
+  if (Array.isArray(activeOrders)) {
+    return activeOrders.map(buildClientActiveOrder).filter((order) => order.id !== 'undefined');
+  }
+
+  return payload.pedidoActivo?.idPedido ? [buildClientActiveOrder(payload.pedidoActivo)] : [];
+};
 const adaptAdminDashboard = (payload) => {
   const kpis = payload.kpis || {};
   const cotizacionesPendientes = payload.cotizacionesPendientes || [];
@@ -130,6 +195,7 @@ const adaptAdminDashboard = (payload) => {
 
 const adaptClientDashboard = (payload) => {
   const kpis = payload.kpis || {};
+  const activeOrders = buildClientActiveOrders(payload);
 
   return {
     kpis: [
@@ -155,16 +221,16 @@ const adaptClientDashboard = (payload) => {
         tone: 'green',
       },
     ],
-    tracking: buildClientTracking(payload.pedidoActivo),
+    activeOrders,
     history: buildLatestOrders(payload.historialPedidos).map(({ number, date, status }) => ({ number, date, status })),
     quotes: payload.cotizacionesPendientes || [],
   };
 };
 
 export const dashboardRepository = {
-  async getDashboardData(user) {
-    const isClient = isClientRole(user);
-    const endpoint = isClient ? 'api/dashboard/cliente' : 'api/dashboard/admin';
+  async getDashboardData(user, permissions = []) {
+    const isClient = isClientUser(user, permissions.length > 0 ? permissions : user?.codigos);
+    const endpoint = isClient ? 'api/cliente/dashboard' : 'api/dashboard/admin';
     const params = isClient ? { limite: 5 } : { anio: currentYear, ultimos: 5 };
 
     const { data } = await apiClient.get(endpoint, { params });

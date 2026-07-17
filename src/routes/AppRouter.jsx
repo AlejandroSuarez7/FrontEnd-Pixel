@@ -8,6 +8,7 @@ import LandingPage from '../modules/landing/pages/LandingPage';
 import LoginPage from '../modules/auth/pages/LoginPage';
 import RegisterPage from '../modules/auth/pages/RegisterPage';
 import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
+import CreateClientPasswordPage from '../modules/auth/pages/CreateClientPasswordPage';
 import DashboardPage from '../modules/dashboard/pages/DashboardPage';
 import RolesPage from '../modules/configuration/pages/RolesPage';
 import { UsersPage } from '../modules/users/pages/UsersPage.jsx';
@@ -42,6 +43,7 @@ const AppRouter = () => {
         <Route path={PATHS.LOGIN} element={<LoginPage />} />
         <Route path={PATHS.REGISTER} element={<RegisterPage />} />
         <Route path={PATHS.RESET_PASSWORD} element={<ResetPasswordPage />} />
+        <Route path={PATHS.CREATE_CLIENT_PASSWORD} element={<CreateClientPasswordPage />} />
 
         {/* Protected Routes */}
         <Route

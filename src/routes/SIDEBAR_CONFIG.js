@@ -1,4 +1,4 @@
-import { hasAnyPermission } from '../core/utils/permissions';
+import { hasAnyPermission, isClientUser } from '../core/utils/permissions';
 import { PATHS } from './paths';
 
 export const ROUTE_PERMISSIONS = {
@@ -91,8 +91,12 @@ export const SIDEBAR_ITEMS = [
   { label: 'Mi Perfil', icon: 'account_circle', to: PATHS.PROFILE },
 ];
 
-export const canAccessPath = (permissions, pathname) => {
+export const canAccessPath = (permissions, pathname, user = null) => {
   if (pathname === PATHS.HOME || pathname === PATHS.PROFILE) return true;
+
+  if (isClientUser(user, permissions)) {
+    return pathname === PATHS.DASHBOARD;
+  }
 
   const matchedPath = Object.keys(ROUTE_PERMISSIONS)
     .sort((a, b) => b.length - a.length)
@@ -102,7 +106,9 @@ export const canAccessPath = (permissions, pathname) => {
   return hasAnyPermission(permissions, ROUTE_PERMISSIONS[matchedPath]);
 };
 
-export const getDefaultProtectedPath = (permissions) => {
+export const getDefaultProtectedPath = (permissions, user = null) => {
+  if (isClientUser(user, permissions)) return PATHS.DASHBOARD;
+
   const preferredPaths = [
     PATHS.DASHBOARD,
     PATHS.ROLES,
@@ -122,11 +128,19 @@ export const getDefaultProtectedPath = (permissions) => {
     PATHS.PROFILE,
   ];
 
-  return preferredPaths.find((path) => canAccessPath(permissions, path)) || null;
+  return preferredPaths.find((path) => canAccessPath(permissions, path, user)) || null;
 };
 
-export const filterSidebarByPermissions = (permissions) => (
-  SIDEBAR_ITEMS
+export const filterSidebarByPermissions = (permissions, user = null) => {
+  if (isClientUser(user, permissions)) {
+    return [
+      { label: 'Mis pedidos', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
+      { label: 'Crear cotizacion', icon: 'add_circle', to: PATHS.HOME },
+      { label: 'Mi Perfil', icon: 'account_circle', to: PATHS.PROFILE },
+    ];
+  }
+
+  return SIDEBAR_ITEMS
     .map((section) => {
       if (section.items) {
         const items = section.items.filter((item) => hasAnyPermission(permissions, item.permissions));
@@ -135,8 +149,8 @@ export const filterSidebarByPermissions = (permissions) => (
 
       return hasAnyPermission(permissions, section.permissions) ? section : null;
     })
-    .filter(Boolean)
-);
+    .filter(Boolean);
+};
 
 export const SIDEBAR_BY_ROLE = {};
 export const ALLOWED_PATHS_BY_ROLE = {};

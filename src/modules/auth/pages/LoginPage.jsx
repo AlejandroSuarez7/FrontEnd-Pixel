@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
+import { getDefaultProtectedPath } from '../../../routes/SIDEBAR_CONFIG';
 import { notifications } from '../../../core/utils/notifications';
+import { isClientUser } from '../../../core/utils/permissions';
 import { authService } from '../services/authService';
 import { motion } from 'motion/react';
 const LoginPage = () => {
@@ -22,8 +24,11 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login(correo, contrasena);
-      navigate('/dashboard');
+      const loggedInUser = await login(correo, contrasena);
+      const nextPath = isClientUser(loggedInUser, loggedInUser.codigos)
+        ? '/dashboard'
+        : getDefaultProtectedPath(loggedInUser.codigos, loggedInUser) || '/dashboard';
+      navigate(nextPath);
     } catch (err) {
       const message = err.message || 'Credenciales incorrectas';
       setError(message);

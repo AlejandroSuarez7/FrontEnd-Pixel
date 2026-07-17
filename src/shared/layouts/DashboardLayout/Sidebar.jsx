@@ -16,7 +16,7 @@ const Sidebar = () => {
   const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const userName = user?.nombre || user?.correo || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
-  const menu = filterSidebarByPermissions(permissions);
+  const menu = filterSidebarByPermissions(permissions, user);
 
   const activeSection = menu.find((section) =>
     section.items?.some((item) => location.pathname.startsWith(item.to)) ||

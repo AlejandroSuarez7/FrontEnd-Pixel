@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }) => {
     const loggedInUser = await authService.login(email, password);
     setUser(loggedInUser);
     setPermissions(normalizePermissionCodes(loggedInUser.codigos));
+    return loggedInUser;
   };
 
   const register = async (userData) => {

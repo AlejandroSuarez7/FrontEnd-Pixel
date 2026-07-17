@@ -53,6 +53,11 @@ export const authService = {
     return data;
   },
 
+  async createClientPassword(token, password) {
+    const { data } = await apiClient.post('/api/auth/cliente/crear-password', { token, password });
+    return data;
+  },
+
   logout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);

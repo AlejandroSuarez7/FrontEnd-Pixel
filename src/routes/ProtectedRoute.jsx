@@ -13,11 +13,11 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (canAccessPath(permissions, location.pathname)) {
+  if (canAccessPath(permissions, location.pathname, user)) {
     return children;
   }
 
-  const fallbackPath = getDefaultProtectedPath(permissions);
+  const fallbackPath = getDefaultProtectedPath(permissions, user);
   if (fallbackPath && fallbackPath !== location.pathname) {
     return <Navigate to={fallbackPath} replace />;
   }

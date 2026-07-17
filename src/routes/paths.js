@@ -3,6 +3,7 @@ export const PATHS = {
   LOGIN: '/login',
   REGISTER: '/register',
   RESET_PASSWORD: '/reset-password/:token',
+  CREATE_CLIENT_PASSWORD: '/crear-password-cliente/:token',
 
   DASHBOARD: '/dashboard',
   PROFILE: '/dashboard/profile',

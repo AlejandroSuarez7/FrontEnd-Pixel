@@ -10,10 +10,11 @@ const getStoredUser = () => {
   }
 };
 
-export const useDashboardData = (user) => {
+export const useDashboardData = (user, permissions = []) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const permissionsKey = permissions.join('|');
 
   useEffect(() => {
     let isMounted = true;
@@ -31,7 +32,8 @@ export const useDashboardData = (user) => {
           return;
         }
 
-        const dashboardData = await dashboardRepository.getDashboardData(sessionUser);
+        const dashboardPermissions = permissionsKey ? permissionsKey.split('|') : [];
+        const dashboardData = await dashboardRepository.getDashboardData(sessionUser, dashboardPermissions);
         if (isMounted) setData(dashboardData);
       } catch (requestError) {
         console.error('Error al cargar datos del dashboard:', requestError);
@@ -49,7 +51,7 @@ export const useDashboardData = (user) => {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user, permissionsKey]);
 
   return { data, loading, error };
 };

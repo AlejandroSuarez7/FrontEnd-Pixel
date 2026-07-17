@@ -191,7 +191,7 @@ const LandingPage = () => {
         }],
         observaciones: publicQuoteForm.observaciones.trim() || null,
       });
-      notifications.success('Solicitud enviada. Revisa tu correo como constancia.');
+      notifications.success('Solicitud enviada. Revisa tu correo: alli recibiras la constancia y el acceso para consultar el estado de tu pedido.');
       resetPublicQuoteForm();
     } catch (error) {
       notifications.error(error.message || 'No se pudo enviar la solicitud.');
