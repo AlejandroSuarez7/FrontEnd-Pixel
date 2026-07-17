@@ -1,9 +1,9 @@
 // cotizaciones/presentation/QuoteDetailsModal.jsx
-import React from 'react';
 import styles from './quotes.module.css';
 
 export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
   if (!isOpen || !quote) return null;
+  const clienteContacto = [quote.cliente?.correo, quote.cliente?.telefono].filter(Boolean).join(' | ');
 
   const getStatusClass = (estado) => {
     switch (estado) {
@@ -26,6 +26,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
             <p className={styles.modalSubtitle}>
               Cliente: {quote.cliente?.nombre || 'N/A'} · Tipo: {quote.tipoCotizacion}
             </p>
+            {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <span className={`${styles.statusBadge} ${getStatusClass(quote.estado)}`}>
@@ -60,6 +61,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
                 <tr className={styles.tableHeadRow}>
                   <th className={styles.tableHeader}>Descripción</th>
                   <th className={styles.tableHeader}>Cantidad</th>
+                  <th className={styles.tableHeader}>Descuento</th>
                   <th className={styles.tableHeader}>Precio unitario</th>
                   <th className={styles.tableHeader}>Costo diseño</th>
                   <th className={styles.tableHeader}>Subtotal</th>
@@ -68,7 +70,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
               <tbody>
                 {!quote.detalles || quote.detalles.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className={styles.loadingText}>
+                    <td colSpan="6" className={styles.loadingText}>
                       Esta cotización no tiene ítems registrados.
                     </td>
                   </tr>
@@ -89,6 +91,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
                           )}
                         </td>
                         <td className={styles.tableCell}>{det.cantidad || 0}</td>
+                        <td className={styles.tableCell}>{Number(det.descuentoPorcentaje || 0)}%</td>
                         <td className={styles.tableCell}>
                           {precioUnitario > 0 ? `$${precioUnitario.toLocaleString('es-CO')}` : '—'}
                         </td>

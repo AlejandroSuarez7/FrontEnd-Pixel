@@ -35,6 +35,8 @@ export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
 
   if (!isOpen || !diseno) return null;
   const archivoUrl = diseno.archivoUrl?.trim();
+  const clienteContacto = [diseno.pedido?.cliente?.correo, diseno.pedido?.cliente?.telefono].filter(Boolean).join(' | ');
+  const producto = diseno.pedido?.detalles?.[0]?.descripcion;
 
   return (
     <div className={styles.overlay}>
@@ -45,6 +47,7 @@ export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
             <p className={styles.modalSubtitle}>
               Pedido #{diseno.idPedido} | Cliente: {diseno.pedido?.cliente?.nombre || 'N/A'}
             </p>
+            {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>
           <button onClick={onClose} className={styles.modalCloseBtn}>x</button>
         </div>
@@ -64,6 +67,11 @@ export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
           <div className={styles.detailsInfoBox}>
             <strong>Descripcion:</strong> {diseno.descripcion || 'Sin descripcion'}
           </div>
+          {producto && (
+            <div className={styles.detailsInfoBox}>
+              <strong>Producto:</strong> {producto}
+            </div>
+          )}
 
           <div className={styles.detailsInfoBox}>
             <strong>Observaciones:</strong> {diseno.observaciones || 'Sin observaciones'}

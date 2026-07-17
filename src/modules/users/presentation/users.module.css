@@ -620,3 +620,61 @@
 .passwordRuleError {
   color: var(--color-danger);
 }
+
+.rangeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: #fafbfc;
+}
+
+.rangeTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rangeHelp {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.rangeHeader,
+.rangeRow {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(110px, 1fr) minmax(110px, 0.9fr) minmax(90px, 0.7fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.rangeHeader {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+  padding: 0 2px;
+}
+
+@media (max-width: 560px) {
+  .rangeTitleRow,
+  .rangeHeader,
+  .rangeRow {
+    grid-template-columns: 1fr;
+  }
+
+  .rangeTitleRow {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .rangeHeader {
+    display: none;
+  }
+}

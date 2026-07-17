@@ -65,6 +65,7 @@ const ESTADO_CLASS = {
 };
 
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
+const getClienteContacto = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
 
 export const AbonosPage = () => {
   const { hasPermission } = useAuth();
@@ -106,11 +107,13 @@ export const AbonosPage = () => {
     if (!term) return abonosPorPedido;
     return abonosPorPedido.filter((abono) => {
       const cliente = abono.pedido?.cliente?.nombre || '';
+      const contacto = getClienteContacto(abono.pedido?.cliente);
       const referencia = abono.referencia || '';
       return (
         String(abono.idAbono).includes(term) ||
         String(abono.idPedido).includes(term) ||
         cliente.toLowerCase().includes(term) ||
+        contacto.toLowerCase().includes(term) ||
         referencia.toLowerCase().includes(term)
       );
     });
@@ -160,7 +163,7 @@ export const AbonosPage = () => {
 
     try {
       const result = await handleConfirm(abono.idAbono, { referencia: abono.referencia });
-      notifications.success(result.message || 'Abono confirmado correctamente.');
+      notifications.success('Abono confirmado. El cliente fue notificado por correo.');
     } catch (error) {
       notifications.error(error.message || 'No se pudo confirmar el abono.');
     }
@@ -271,6 +274,8 @@ export const AbonosPage = () => {
                   <th className={styles.tableHeader}>ID</th>
                   <th className={styles.tableHeader}>Pedido</th>
                   <th className={styles.tableHeader}>Cliente</th>
+                  <th className={styles.tableHeader}>Total pedido</th>
+                  <th className={styles.tableHeader}>Saldo</th>
                   <th className={styles.tableHeader}>Monto</th>
                   <th className={styles.tableHeader}>Metodo</th>
                   <th className={styles.tableHeader}>Estado</th>
@@ -283,7 +288,12 @@ export const AbonosPage = () => {
                   <tr key={abono.idAbono} className={styles.tableBodyRow}>
                     <td className={styles.tableCellId}>#{abono.idAbono}</td>
                     <td className={styles.tableCell}>#{abono.idPedido}</td>
-                    <td className={styles.tableCell}>{abono.pedido?.cliente?.nombre || 'N/A'}</td>
+                    <td className={styles.tableCell}>
+                      <strong>{abono.pedido?.cliente?.nombre || 'N/A'}</strong>
+                      <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>{getClienteContacto(abono.pedido?.cliente)}</span>
+                    </td>
+                    <td className={styles.tableCell}>{fmt(abono.pedido?.total)}</td>
+                    <td className={styles.tableCell}>{fmt(abono.pedido?.saldoPendiente)}</td>
                     <td className={styles.tableCell}><strong>{fmt(abono.monto)}</strong></td>
                     <td className={styles.tableCell}>{abono.metodoPago}</td>
                     <td className={styles.tableCell}>

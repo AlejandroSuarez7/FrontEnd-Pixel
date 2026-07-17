@@ -2,6 +2,7 @@ export const PATHS = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
+  RESET_PASSWORD: '/reset-password/:token',
 
   DASHBOARD: '/dashboard',
   PROFILE: '/dashboard/profile',
@@ -26,6 +27,8 @@ export const PATHS = {
 
   SERVICES: '/dashboard/services',
   SERVICES_QUOTES: '/dashboard/services/quotes',
+  SERVICES_PRODUCTS: '/dashboard/services/products',
+  SERVICES_PRODUCT_CATEGORIES: '/dashboard/services/product-categories',
 
   PRODUCTION: '/dashboard/production',
   PRODUCTION_DESIGNS: '/dashboard/production/designs',

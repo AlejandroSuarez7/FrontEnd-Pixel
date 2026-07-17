@@ -90,7 +90,7 @@ const PedidosPage = () => {
 
     try {
       await handleFinalizar(id);
-      notifications.success('Pedido finalizado correctamente.');
+      notifications.success('Pedido finalizado. El cliente fue notificado para reclamar.');
     } catch (err) {
       notifications.error(err.message || 'No se pudo finalizar el pedido.');
     }
@@ -117,6 +117,8 @@ const PedidosPage = () => {
   const fmtFecha = (val) => val
     ? new Date(val).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
     : '—';
+
+  const getContactText = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
 
   return (
     <div className={styles.pageContainer}>
@@ -197,7 +199,7 @@ const PedidosPage = () => {
 
                     <td className={styles.tableCell}>
                       <span className={styles.clientName}>{pedido.cliente?.nombre || 'N/A'}</span>
-                      <span className={styles.clientEmail}>{pedido.cliente?.correo || ''}</span>
+                      <span className={styles.clientEmail}>{getContactText(pedido.cliente)}</span>
                     </td>
 
                     <td className={styles.tableCell}>

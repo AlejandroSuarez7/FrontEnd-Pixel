@@ -1,6 +1,6 @@
 import { pedidoRepository } from '../../../sales/pedidos/infrastructure/pedido.repository';
 
-const ISO_DATE_IN_BRACKETS = /\[(\d{4}-\d{2}-\d{2}T[^\]]+)\]\s*([^\[]*)/g;
+const ISO_DATE_IN_BRACKETS = /\[(\d{4}-\d{2}-\d{2}T[^\]]+)]\s*([^[\]]*)/g;
 const QUEUE_ORDER_MARKER = /\n?\[\[PIXEL_QUEUE_ORDER:(\d+)\]\]/;
 const QUEUE_ORDER_MARKER_GLOBAL = /\n?\[\[PIXEL_QUEUE_ORDER:\d+\]\]/g;
 
@@ -44,7 +44,27 @@ const withQueueOrderMarker = (observaciones, position) => {
 
 export class ProductionQueueRepository {
   async list() {
-    const pedidos = await pedidoRepository.list();
+    const firstPage = await pedidoRepository.list({
+      page: 1,
+      limit: 10,
+      search: 'EN_PROCESO',
+      sortBy: 'fechaCreacion',
+      order: 'asc',
+    });
+    const pedidos = [...(firstPage.items || [])];
+    const totalPages = Number(firstPage.meta?.totalPages || 1);
+
+    for (let page = 2; page <= totalPages; page += 1) {
+      const response = await pedidoRepository.list({
+        page,
+        limit: 10,
+        search: 'EN_PROCESO',
+        sortBy: 'fechaCreacion',
+        order: 'asc',
+      });
+      pedidos.push(...(response.items || []));
+    }
+
     return pedidos
       .filter(pedido => pedido.estadoPedido === 'EN_PROCESO')
       .map(pedido => ({

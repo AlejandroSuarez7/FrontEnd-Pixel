@@ -1,5 +1,5 @@
 // pedidos/presentation/PedidoEditModal.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { notifications } from '../../../../core/utils/notifications';
 import styles from './pedidos.module.css';
 

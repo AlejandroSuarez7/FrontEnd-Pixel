@@ -1,5 +1,4 @@
 // presentation/presentation/ServiceDetailsModal.jsx
-import React from 'react';
 import styles from './services.module.css';
 
 export const ServiceDetailsModal = ({ isOpen, onClose, service }) => {

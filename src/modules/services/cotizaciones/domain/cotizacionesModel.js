@@ -37,6 +37,8 @@ export const createQuoteDetail = ({
   idTecnica,
   descripcion,
   cantidad = 1,
+  precioBase = null,
+  descuentoPorcentaje = 0,
   precioUnitario = null, // Puede ser null inicialmente en el backend
   costoDiseno = 0,
   subtotal = null,
@@ -50,6 +52,8 @@ export const createQuoteDetail = ({
     idTecnica,
     descripcion,
     cantidad: parseInt(cantidad, 10),
+    precioBase: precioBase !== null ? Number(precioBase) : null,
+    descuentoPorcentaje: Number(descuentoPorcentaje || 0),
     precioUnitario: precioUnitario !== null ? Number(precioUnitario) : null,
     costoDiseno: Number(costoDiseno || 0),
     subtotal: subtotal !== null ? Number(subtotal) : null,

@@ -102,6 +102,9 @@ const QuotesPage = () => {
 
   const cotizacionAprobada = (quote) => quote.estado === 'APROBADA';
 
+  const getContactText = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
+  const getProductsText = (quote) => quote.detalles?.map(det => `${det.descripcion} x${det.cantidad}`).join(', ') || 'Sin productos';
+
 
   // Solo Staff puede eliminar permanentemente una cotización
   const onApproveClick = async (idCotizacion) => {
@@ -116,7 +119,7 @@ const QuotesPage = () => {
 
     try {
       await handleApprove(idCotizacion);
-      notifications.success('Cotizacion aprobada y pedido creado correctamente.');
+      notifications.success('Pedido creado correctamente. El cliente fue notificado por correo.');
     } catch (err) {
       notifications.error(err.message || 'No se pudo aprobar la cotizacion.');
     }
@@ -206,6 +209,7 @@ const QuotesPage = () => {
                 <tr className={styles.tableHeadRow}>
                   <th className={styles.tableHeader}>ID</th>
                   <th className={styles.tableHeader}>Cliente</th>
+                  <th className={styles.tableHeader}>Productos</th>
                   <th className={styles.tableHeader}>Tipo</th>
                   <th className={styles.tableHeader}>Estado</th>
                   <th className={styles.tableHeader}>Total</th>
@@ -220,7 +224,11 @@ const QuotesPage = () => {
 
                     <td className={styles.tableCell}>
                       <span className={styles.clientName}>{quote.cliente?.nombre || 'N/A'}</span>
-                      <span className={styles.clientEmail}>{quote.cliente?.correo || ''}</span>
+                      <span className={styles.clientEmail}>{getContactText(quote.cliente)}</span>
+                    </td>
+
+                    <td className={styles.tableCell}>
+                      <span className={styles.clientEmail}>{getProductsText(quote)}</span>
                     </td>
 
                     <td className={styles.tableCell}>
