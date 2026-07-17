@@ -4,6 +4,7 @@ import { useAuth } from '../../../store/AuthContext';
 import { notifications } from '../../../core/utils/notifications';
 import { authService } from '../services/authService';
 import { motion } from 'motion/react';
+import { FaArrowLeft } from 'react-icons/fa';
 const LoginPage = () => {
   const [correo, setCorreo]       = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -51,13 +52,15 @@ const LoginPage = () => {
 
   return (
     <div className="login-container">
-      <button
-        type="button"
-        className="btn-explore-back"
-        onClick={() => navigate('/')}
-      >
-        Seguir explorando
-      </button>
+    <button
+  type="button"
+  className="btn-explore-back"
+  onClick={() => navigate('/')}
+  aria-label="Volver atrás"
+  title="Volver"
+>
+  <FaArrowLeft />
+</button>
 
       <motion.div
         className="auth-split"
