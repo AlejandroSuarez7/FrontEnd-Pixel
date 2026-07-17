@@ -446,6 +446,10 @@
 
 .inputField::placeholder { color: var(--color-text-muted); }
 
+textarea.inputField {
+  resize: none;
+}
+
 .selectField {
   width: 100%;
   padding: 9px 12px;

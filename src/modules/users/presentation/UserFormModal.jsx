@@ -9,6 +9,8 @@ import {
 } from '../../../core/utils/userValidation';
 import styles from './users.module.css';
 
+const isInternalUserRole = (rol) => rol?.nombre?.trim().toLowerCase() !== 'cliente';
+
 export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
   const [nombre, setNombre]         = useState('');
   const [documento, setDocumento]   = useState('');
@@ -30,11 +32,10 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
     if (isOpen) {
       setLoadingRoles(true);
       apiClient.get('api/roles')
-        .then(({ data }) => setRoles(data.data || []))
+        .then(({ data }) => setRoles((data.data || []).filter(isInternalUserRole)))
         .catch(() => setRoles([
           { idRol: 1, nombre: 'Admin' },
           { idRol: 2, nombre: 'Secretaria' },
-          { idRol: 3, nombre: 'Cliente' },
         ]))
         .finally(() => setLoadingRoles(false));
     }

@@ -146,7 +146,6 @@ export const UsersPage = () => {
           <option value="">Todos los roles</option>
           <option value="1">Administrador</option>
           <option value="2">Secretaria</option>
-          <option value="3">Cliente</option>
         </select>
       </div>
 

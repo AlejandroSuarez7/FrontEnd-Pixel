@@ -80,14 +80,18 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
       return;
     }
 
-    await onSubmit({
+    const savedProduct = await onSubmit({
       ...form,
       precioBase: Number(form.precioBase),
       estado: Boolean(form.estado),
     });
 
-    if (isEditing && canManagePrices) {
-      await onSaveRanges(product.idProducto, normalizeRanges(rangos));
+    const idProducto = product?.idProducto || savedProduct?.idProducto;
+
+    if (canManagePrices && idProducto) {
+      await onSaveRanges(idProducto, normalizeRanges(rangos));
+    } else {
+      onClose();
     }
   };
 
@@ -143,7 +147,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
             <textarea className={styles.inputField} value={form.descripcion} onChange={event => updateField('descripcion', event.target.value)} rows={3} />
           </div>
 
-          {isEditing && canManagePrices && (
+          {canManagePrices && (
             <div className={styles.rangeSection}>
               <div className={styles.rangeTitleRow}>
                 <div>

@@ -58,19 +58,21 @@ export const ProductsPage = () => {
 
   const handleSubmit = async (payload) => {
     if (selectedProduct) {
-      await updateProduct(selectedProduct.idProducto, payload);
+      const product = await updateProduct(selectedProduct.idProducto, payload);
       notifications.success('Producto actualizado correctamente.');
+      return product;
     } else {
-      await createProduct(payload);
+      const product = await createProduct(payload);
       notifications.success('Producto creado correctamente.');
+      return product;
     }
-    setIsModalOpen(false);
-    setSelectedProduct(null);
   };
 
   const handleSaveRanges = async (idProducto, rangos) => {
     await saveRanges(idProducto, rangos);
     notifications.success('Rangos de descuento actualizados.');
+    setIsModalOpen(false);
+    setSelectedProduct(null);
   };
 
   const handleDeactivate = async (product) => {

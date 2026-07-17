@@ -27,13 +27,15 @@ export const useProducts = (filters = {}) => {
   }, [fetchProducts]);
 
   const createProduct = async (payload) => {
-    await productRepository.create(payload);
+    const product = await productRepository.create(payload);
     await fetchProducts();
+    return product;
   };
 
   const updateProduct = async (idProducto, payload) => {
-    await productRepository.update(idProducto, payload);
+    const product = await productRepository.update(idProducto, payload);
     await fetchProducts();
+    return product;
   };
 
   const deactivateProduct = async (idProducto) => {
