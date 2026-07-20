@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import './TableActions.css';
 
 export const TableActions = ({ actions = [], align = 'right', label = 'Acciones', primaryAction = null }) => {
@@ -7,6 +8,7 @@ export const TableActions = ({ actions = [], align = 'right', label = 'Acciones'
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, minWidth: 150 });
   const menuRef = useRef(null);
   const triggerRef = useRef(null);
+  const { isLocked, runLocked } = useAsyncLock();
   const visibleActions = actions.filter(Boolean);
 
   useEffect(() => {
@@ -63,8 +65,14 @@ export const TableActions = ({ actions = [], align = 'right', label = 'Acciones'
   if (visibleActions.length === 0 && !primaryAction) return null;
 
   const handleActionClick = (action) => {
+    if (isLocked || action.disabled) return;
     setIsOpen(false);
-    action.onClick?.();
+    runLocked(() => action.onClick?.());
+  };
+
+  const handlePrimaryClick = () => {
+    if (isLocked || primaryAction?.disabled) return;
+    runLocked(() => primaryAction.onClick?.());
   };
 
   return (
@@ -73,10 +81,10 @@ export const TableActions = ({ actions = [], align = 'right', label = 'Acciones'
         <button
           type="button"
           className={`table-actions-primary ${primaryAction.variant ? `table-actions-primary-${primaryAction.variant}` : ''}`}
-          onClick={() => primaryAction.onClick?.()}
-          disabled={primaryAction.disabled}
+          onClick={handlePrimaryClick}
+          disabled={primaryAction.disabled || isLocked}
         >
-          {primaryAction.label}
+          {isLocked ? (primaryAction.loadingLabel || 'Procesando...') : primaryAction.label}
         </button>
       )}
       {visibleActions.length > 0 && (
@@ -86,6 +94,7 @@ export const TableActions = ({ actions = [], align = 'right', label = 'Acciones'
           ref={triggerRef}
           aria-label={label}
           aria-expanded={isOpen}
+          disabled={isLocked}
           onClick={() => setIsOpen(prev => !prev)}
         >
           &#8942;
@@ -107,9 +116,9 @@ export const TableActions = ({ actions = [], align = 'right', label = 'Acciones'
             key={action.label}
             className={`table-actions-item ${action.variant ? `table-actions-item-${action.variant}` : ''}`}
             onClick={() => handleActionClick(action)}
-            disabled={action.disabled}
+            disabled={action.disabled || isLocked}
           >
-            {action.label}
+            {isLocked ? (action.loadingLabel || 'Procesando...') : action.label}
           </button>
           ))}
         </div>,

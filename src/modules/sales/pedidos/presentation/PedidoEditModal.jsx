@@ -1,11 +1,13 @@
 // pedidos/presentation/PedidoEditModal.jsx
 import { useState, useEffect } from 'react';
+import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import styles from './pedidos.module.css';
 
 export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido, isStaff }) => {
   const [observaciones, setObservaciones]             = useState('');
   const [fechaEntregaEstimada, setFechaEntregaEstimada] = useState('');
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   useEffect(() => {
     if (pedido) {
@@ -22,6 +24,7 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido, isStaff }) 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    await runLocked(async () => {
     try {
       const payload = {
         observaciones: observaciones.trim() || null,
@@ -32,6 +35,7 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido, isStaff }) 
     } catch (err) {
       notifications.error(err.message || 'Error al actualizar el pedido.');
     }
+    });
   };
 
   return (
@@ -40,7 +44,7 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido, isStaff }) 
 
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>Editar pedido #{pedido.idPedido}</h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>✕</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>X</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -71,11 +75,11 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido, isStaff }) 
           </div>
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary}>
-              Guardar cambios
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
 

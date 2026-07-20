@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import { getPasswordRulesStatus, getPasswordValidationError } from '../../../core/utils/userValidation';
 import { authService } from '../services/authService';
@@ -11,10 +12,12 @@ const ResetPasswordPage = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
   const rules = getPasswordRulesStatus(password);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
 
     const passwordError = getPasswordValidationError(password);
     if (passwordError) {
@@ -37,6 +40,7 @@ const ResetPasswordPage = () => {
     } finally {
       setLoading(false);
     }
+    });
   };
 
   return (
@@ -86,8 +90,8 @@ const ResetPasswordPage = () => {
                 </div>
               )}
 
-              <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? 'Actualizando...' : 'Actualizar contrasena'}
+              <button type="submit" className="btn-primary" disabled={loading || isSubmitting}>
+                {loading || isSubmitting ? 'Actualizando...' : 'Actualizar contrasena'}
               </button>
             </form>
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import styles from '../../users/presentation/users.module.css';
 
@@ -8,6 +9,7 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
     descripcion: '',
     estado: true,
   });
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
   const isEditing = Boolean(category);
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
 
     if (form.nombre.trim().length < 2) {
       notifications.warning('El nombre de la categoria debe tener al menos 2 caracteres.');
@@ -39,6 +42,7 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
     } catch (error) {
       notifications.error(error.message || 'No se pudo guardar la categoria.');
     }
+    });
   };
 
   return (
@@ -83,8 +87,10 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
           </div>
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>Cancelar</button>
-            <button type="submit" className={styles.btnPrimary}>{isEditing ? 'Guardar cambios' : 'Crear categoria'}</button>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>Cancelar</button>
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear categoria'}
+            </button>
           </div>
         </form>
       </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import './ComprasPage.css';
 
@@ -42,6 +43,7 @@ export const CompraModal = ({
   const [pedidos, setPedidos] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(compra);
 
@@ -107,6 +109,7 @@ export const CompraModal = ({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
     const detallesValidos = detalles.filter(det => det.descripcionInsumo.trim());
 
     if (!detallesValidos.length) {
@@ -130,6 +133,7 @@ export const CompraModal = ({
     } catch (error) {
       notifications.error(error.message || 'No se pudo procesar la compra.');
     }
+    });
   };
 
   return (
@@ -137,14 +141,14 @@ export const CompraModal = ({
       <div className={`${styles.modalContainer} ${styles.modalLg}`}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>{isEditing ? `Editar compra #${compra.idCompra}` : 'Registrar compra'}</h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Pedido *</label>
-              <select value={idPedido} onChange={event => setIdPedido(event.target.value)} className={styles.inputField} disabled={isEditing || loadingOptions} required>
+              <select value={idPedido} onChange={event => setIdPedido(event.target.value)} className={styles.inputField} disabled={isSubmitting || isEditing || loadingOptions} required>
                 <option value="">{loadingOptions ? 'Cargando pedidos...' : 'Selecciona un pedido'}</option>
                 {isEditing && idPedido ? <option value={idPedido}>Pedido #{idPedido}</option> : null}
                 {pedidos.map(pedido => (
@@ -156,7 +160,7 @@ export const CompraModal = ({
             </div>
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Proveedor *</label>
-              <select value={idProveedor} onChange={event => setIdProveedor(event.target.value)} className={styles.inputField} disabled={loadingOptions} required>
+              <select value={idProveedor} onChange={event => setIdProveedor(event.target.value)} className={styles.inputField} disabled={isSubmitting || loadingOptions} required>
                 <option value="">{loadingOptions ? 'Cargando proveedores...' : 'Selecciona un proveedor'}</option>
                 {proveedores.map(proveedor => (
                   <option key={proveedor.idProveedor} value={proveedor.idProveedor}>
@@ -191,12 +195,12 @@ export const CompraModal = ({
                 <input type="number" min="1" value={detalle.costoUnitario} onChange={event => updateDetalle(index, 'costoUnitario', event.target.value)} className={styles.inputField} placeholder="Ej: 45000" required />
               </div>
               {detalles.length > 1 && (
-                <button type="button" onClick={() => removeDetalle(index)} className={`${styles.actionBtn} ${styles.actionBtnCancel}`}>Quitar</button>
+                <button type="button" onClick={() => removeDetalle(index)} className={`${styles.actionBtn} ${styles.actionBtnCancel}`} disabled={isSubmitting}>Quitar</button>
               )}
             </div>
           ))}
 
-          <button type="button" onClick={addDetalle} className={`${styles.actionBtn} ${styles.actionBtnView}`}>
+          <button type="button" onClick={addDetalle} className={`${styles.actionBtn} ${styles.actionBtnView}`} disabled={isSubmitting}>
             Agregar insumo
           </button>
 
@@ -208,8 +212,10 @@ export const CompraModal = ({
           )}
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>Cancelar</button>
-            <button type="submit" className={styles.btnPrimary}>{isEditing ? 'Guardar cambios' : 'Registrar'}</button>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>Cancelar</button>
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting || loadingOptions}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Registrar'}
+            </button>
           </div>
         </form>
       </div>

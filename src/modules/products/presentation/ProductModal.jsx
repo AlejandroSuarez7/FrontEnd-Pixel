@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import styles from '../../users/presentation/users.module.css';
 
@@ -21,6 +22,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
     estado: true,
   });
   const [rangos, setRangos] = useState([emptyRange]);
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
   const isEditing = Boolean(product);
 
   useEffect(() => {
@@ -73,6 +75,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
 
     const validationError = validate();
     if (validationError) {
@@ -93,6 +96,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
     } else {
       onClose();
     }
+    });
   };
 
   return (
@@ -154,7 +158,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
                   <label className={styles.inputLabel}>Rangos de descuento</label>
                   <p className={styles.rangeHelp}>Define desde que cantidad aplica cada descuento. Ej: 12 unidades = 7,14%.</p>
                 </div>
-                <button type="button" className={styles.btnSecondary} onClick={addRange}>Agregar rango</button>
+                <button type="button" className={styles.btnSecondary} onClick={addRange} disabled={isSubmitting}>Agregar rango</button>
               </div>
 
               <div className={styles.rangeHeader}>
@@ -172,15 +176,17 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, onSaveRanges, product,
                     <option value="true">Activo</option>
                     <option value="false">Inactivo</option>
                   </select>
-                  <button type="button" className={styles.btnSecondary} onClick={() => removeRange(index)} disabled={rangos.length === 1}>Quitar</button>
+                  <button type="button" className={styles.btnSecondary} onClick={() => removeRange(index)} disabled={isSubmitting || rangos.length === 1}>Quitar</button>
                 </div>
               ))}
             </div>
           )}
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>Cancelar</button>
-            <button type="submit" className={styles.btnPrimary}>{isEditing ? 'Guardar cambios' : 'Crear producto'}</button>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>Cancelar</button>
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear producto'}
+            </button>
           </div>
         </form>
       </div>

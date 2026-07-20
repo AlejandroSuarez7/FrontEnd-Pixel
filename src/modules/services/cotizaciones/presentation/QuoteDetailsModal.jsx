@@ -1,138 +1,210 @@
 // cotizaciones/presentation/QuoteDetailsModal.jsx
+import {
+  formatMoneyCOP,
+  formatPercentage,
+  getQuoteDiscountTotal,
+  getQuoteSubtotalBruto,
+  getQuoteSubtotalWithDiscount,
+  getQuoteTotal,
+} from '../../../../core/utils/formatters';
 import styles from './quotes.module.css';
+
+const formatMoney = (value) => {
+  const numberValue = Number(value || 0);
+  return numberValue > 0 ? formatMoneyCOP(numberValue) : 'Por cotizar';
+};
+
+const formatOptionalMoney = (value) => {
+  const numberValue = Number(value || 0);
+  return numberValue > 0 ? formatMoneyCOP(numberValue) : 'No aplica';
+};
+
+const getQuoteStatusLabel = (quote) => {
+  if (quote.estado === 'PENDIENTE' && Number(quote.total || 0) > 0) return 'POR APROBAR';
+  return quote.estado || 'PENDIENTE';
+};
+
+const getQuoteTypeLabel = (type) => {
+  const normalized = String(type || '').toUpperCase();
+  if (normalized.includes('PUBLIC')) return 'Publica';
+  if (normalized.includes('PRESENC')) return 'Presencial';
+  return type || 'Cotizacion';
+};
 
 export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
   if (!isOpen || !quote) return null;
-  const clienteContacto = [quote.cliente?.correo, quote.cliente?.telefono].filter(Boolean).join(' | ');
+
+  const detail = quote.detalles?.[0] || null;
+  const statusLabel = getQuoteStatusLabel(quote);
+  const clienteContacto = [quote.cliente?.correo, quote.cliente?.telefono].filter(Boolean);
+  const productName = detail?.producto?.nombre || detail?.descripcion || 'Producto no especificado';
+  const quantity = Number(detail?.cantidad || 0);
+  const unitPrice = Number(detail?.precioUnitario || 0);
+  const discount = detail?.descuentoPorcentaje ?? null;
+  const designCost = Number(detail?.costoDiseno || 0);
+  const itemSubtotalBruto = getQuoteSubtotalBruto(detail || {});
+  const itemDiscountTotal = getQuoteDiscountTotal(detail || {});
+  const itemSubtotalWithDiscount = getQuoteSubtotalWithDiscount(detail || {});
+  const subtotalBruto = getQuoteSubtotalBruto(quote) || itemSubtotalBruto;
+  const discountTotal = getQuoteDiscountTotal(quote) || itemDiscountTotal;
+  const subtotalWithDiscount = getQuoteSubtotalWithDiscount(quote) || itemSubtotalWithDiscount;
+  const additionalCosts = Number(quote.costosAdicionales || 0);
+  const total = getQuoteTotal(quote);
+  const clientObservations = quote.observaciones || detail?.observaciones || '';
+  const internalObservations = quote.observacionesInternas || quote.notasInternas || quote.observacionesAdmin || '';
 
   const getStatusClass = (estado) => {
     switch (estado) {
-      case 'APROBADA':  return styles.statusAprobada;
-      case 'COTIZADA':  return styles.statusCotizada;
-      case 'ANULADA':   return styles.statusAnulada;
+      case 'APROBADA': return styles.statusAprobada;
+      case 'COTIZADA': return styles.statusCotizada;
+      case 'ANULADA': return styles.statusAnulada;
       case 'RECHAZADA': return styles.statusRechazada;
+      case 'POR APROBAR': return styles.statusCotizada;
       case 'PENDIENTE':
-      default:          return styles.statusPendiente;
+      default: return styles.statusPendiente;
     }
   };
 
   return (
     <div className={styles.overlay}>
-      <div className={`${styles.modalContainer} ${styles.modalLg}`}>
-
-        <div className={styles.modalHeader}>
+      <div className={`${styles.modalContainer} ${styles.quoteDetailsModal}`}>
+        <div className={styles.quoteDetailsHeader}>
           <div>
-            <h3 className={styles.modalTitle}>Cotización #{quote.idCotizacion}</h3>
-            <p className={styles.modalSubtitle}>
-              Cliente: {quote.cliente?.nombre || 'N/A'} · Tipo: {quote.tipoCotizacion}
-            </p>
-            {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
+            <span className={styles.breadcrumb}>Cotizacion</span>
+            <h3 className={styles.modalTitle}>Cotizacion #{quote.idCotizacion}</h3>
+            <div className={styles.quoteHeaderMeta}>
+              <span className={styles.typeBadge}>{getQuoteTypeLabel(quote.tipoCotizacion)}</span>
+              <span className={`${styles.statusBadge} ${getStatusClass(statusLabel)}`}>
+                {statusLabel}
+              </span>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <span className={`${styles.statusBadge} ${getStatusClass(quote.estado)}`}>
-              {quote.estado}
-            </span>
-            <button onClick={onClose} className={styles.modalCloseBtn}>✕</button>
-          </div>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
         </div>
 
-        <div className={styles.form}>
+        <div className={styles.quoteDetailsBody}>
+          <section className={styles.quoteDetailsSummary}>
+            <div className={styles.quoteDetailsSummaryItem}>
+              <span>Cliente</span>
+              <strong>{quote.cliente?.nombre || 'Cliente no registrado'}</strong>
+              <small>{clienteContacto.join(' | ') || 'Sin contacto registrado'}</small>
+            </div>
+            <div className={styles.quoteDetailsSummaryItem}>
+              <span>Producto cotizado</span>
+              <strong>{productName}</strong>
+              <small>{detail?.tecnica?.nombre ? `Tecnica: ${detail.tecnica.nombre}` : 'Tecnica no registrada'}</small>
+            </div>
+            <div className={styles.quoteDetailsSummaryItem}>
+              <span>Cantidad</span>
+              <strong>{quantity > 0 ? quantity.toLocaleString('es-CO') : 'Sin cantidad'}</strong>
+              <small>Un producto por cotizacion</small>
+            </div>
+            <div className={styles.quoteDetailsSummaryItem}>
+              <span>Total</span>
+              <strong>{formatMoney(total)}</strong>
+              <small>{statusLabel}</small>
+            </div>
+          </section>
 
-          {/* Observaciones */}
-          <div className={styles.detailsInfoBox}>
-            <strong>Observaciones generales:</strong>{' '}
-            {quote.observaciones || 'Ninguna registrada'}
-          </div>
+          <section className={styles.quoteDetailsSection}>
+            <div className={styles.quoteDetailsSectionHeader}>
+              <span>Producto / servicio incluido</span>
+              <strong>{productName}</strong>
+            </div>
 
-          {/* Creado por */}
+            <div className={styles.quoteProductDetailCard}>
+              <div className={styles.quoteProductMain}>
+                <span>Detalle solicitado</span>
+                <p>{detail?.observaciones || detail?.descripcion || 'Sin detalle adicional'}</p>
+              </div>
+
+              <div className={styles.quoteProductStats}>
+                <div>
+                  <span>Cantidad</span>
+                  <strong>{quantity > 0 ? quantity.toLocaleString('es-CO') : '0'}</strong>
+                </div>
+                <div>
+                  <span>Precio unitario</span>
+                  <strong>{unitPrice > 0 ? formatMoneyCOP(unitPrice) : 'Por cotizar'}</strong>
+                </div>
+                <div>
+                  <span>Descuento aplicado</span>
+                  <strong>{formatPercentage(discount)}</strong>
+                </div>
+                <div>
+                  <span>Costo de diseno</span>
+                  <strong>{formatOptionalMoney(designCost)}</strong>
+                </div>
+                <div>
+                  <span>Subtotal bruto</span>
+                  <strong>{formatMoney(itemSubtotalBruto)}</strong>
+                </div>
+                <div>
+                  <span>Valor descontado</span>
+                  <strong>{itemDiscountTotal > 0 ? `-${formatMoneyCOP(itemDiscountTotal)}` : 'Sin descuento'}</strong>
+                </div>
+                <div>
+                  <span>Subtotal con descuento</span>
+                  <strong>{formatMoney(itemSubtotalWithDiscount)}</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.observationsGrid}>
+            <div className={styles.readOnlyNote}>
+              <span>Observaciones del cliente</span>
+              <p>{clientObservations || 'Sin observaciones'}</p>
+            </div>
+            <div className={styles.readOnlyNote}>
+              <span>Observaciones internas</span>
+              <p>{internalObservations || 'Sin observaciones'}</p>
+            </div>
+          </section>
+
           {quote.creadoPor?.nombre && (
             <p className={styles.detailsCreatedBy}>
               Gestionada por: <strong>{quote.creadoPor.nombre}</strong>
-              {quote.creadoPor.rol?.nombre ? ` · ${quote.creadoPor.rol.nombre}` : ''}
+              {quote.creadoPor.rol?.nombre ? ` - ${quote.creadoPor.rol.nombre}` : ''}
             </p>
           )}
 
-          {/* Tabla de ítems */}
-          <p className={styles.detailsSectionTitle}>Prendas / Servicios incluidos</p>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table className={styles.table}>
-              <thead>
-                <tr className={styles.tableHeadRow}>
-                  <th className={styles.tableHeader}>Descripción</th>
-                  <th className={styles.tableHeader}>Cantidad</th>
-                  <th className={styles.tableHeader}>Descuento</th>
-                  <th className={styles.tableHeader}>Precio unitario</th>
-                  <th className={styles.tableHeader}>Costo diseño</th>
-                  <th className={styles.tableHeader}>Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {!quote.detalles || quote.detalles.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className={styles.loadingText}>
-                      Esta cotización no tiene ítems registrados.
-                    </td>
-                  </tr>
-                ) : (
-                  quote.detalles.map((det) => {
-                    const precioUnitario = Number(det.precioUnitario || 0);
-                    const costoDiseno    = Number(det.costoDiseno || 0);
-                    const subtotal       = Number(det.subtotal || 0);
-
-                    return (
-                      <tr key={det.idDetalleCotizacion} className={styles.tableBodyRow}>
-                        <td className={styles.tableCell}>
-                          <span style={{ fontWeight: '500' }}>{det.descripcion}</span>
-                          {det.observaciones && (
-                            <small style={{ display: 'block', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                              {det.observaciones}
-                            </small>
-                          )}
-                        </td>
-                        <td className={styles.tableCell}>{det.cantidad || 0}</td>
-                        <td className={styles.tableCell}>{Number(det.descuentoPorcentaje || 0)}%</td>
-                        <td className={styles.tableCell}>
-                          {precioUnitario > 0 ? `$${precioUnitario.toLocaleString('es-CO')}` : '—'}
-                        </td>
-                        <td className={styles.tableCell}>
-                          {costoDiseno > 0 ? `$${costoDiseno.toLocaleString('es-CO')}` : '—'}
-                        </td>
-                        <td className={styles.tableCell}>
-                          <strong>{subtotal > 0 ? `$${subtotal.toLocaleString('es-CO')}` : '—'}</strong>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Totales */}
-          <div className={styles.totalBlock}>
-            <div className={styles.totalBlockRow}>
-              <span>Subtotal general</span>
-              <span>${Number(quote.subtotal || 0).toLocaleString('es-CO')}</span>
+          <section className={styles.quoteTotalsPanel}>
+            <div className={styles.quoteTotalsRows}>
+              <div>
+                <span>Subtotal bruto</span>
+                <strong>{formatMoney(subtotalBruto)}</strong>
+              </div>
+              <div>
+                <span>Descuento aplicado</span>
+                <strong>{formatPercentage(discount, '0%')}</strong>
+              </div>
+              <div>
+                <span>Valor descontado</span>
+                <strong>{discountTotal > 0 ? `-${formatMoneyCOP(discountTotal)}` : 'Sin descuento'}</strong>
+              </div>
+              <div>
+                <span>Subtotal con descuento</span>
+                <strong>{formatMoney(subtotalWithDiscount)}</strong>
+              </div>
+              <div>
+                <span>Costos adicionales</span>
+                <strong>{additionalCosts > 0 ? formatMoneyCOP(additionalCosts) : 'No aplica'}</strong>
+              </div>
             </div>
-            <div className={styles.totalBlockRow}>
-              <span>Costos adicionales</span>
-              <span>${Number(quote.costosAdicionales || 0).toLocaleString('es-CO')}</span>
-            </div>
-            <div className={styles.grandTotal}>
-              <span>Total</span>
-              <span>${Number(quote.total || 0).toLocaleString('es-CO')}</span>
-            </div>
-          </div>
 
+            <div className={styles.quoteGrandTotalCard}>
+              <span>Total final</span>
+              <strong>{formatMoney(total)}</strong>
+            </div>
+          </section>
         </div>
 
         <div className={styles.modalFooter}>
-          <button onClick={onClose} className={styles.btnPrimary}>
+          <button type="button" onClick={onClose} className={styles.btnPrimary}>
             Cerrar ventana
           </button>
         </div>
-
       </div>
     </div>
   );

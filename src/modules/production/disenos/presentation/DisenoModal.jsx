@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../../../core/services/apiService';
+import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import './DisenosPage.css';
 
@@ -37,6 +38,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
   const [loadingDisenadores, setLoadingDisenadores] = useState(false);
   const [pedidosError, setPedidosError] = useState('');
   const [previewError, setPreviewError] = useState(false);
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(diseno);
 
@@ -109,6 +111,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
     try {
       await onSubmit({
         idPedido,
@@ -120,6 +123,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
     } catch (error) {
       notifications.error(error.message || 'No se pudo procesar el diseno.');
     }
+    });
   };
 
   return (
@@ -129,7 +133,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
           <h3 className={styles.modalTitle}>
             {isEditing ? `Editar diseno #${diseno.idDiseno}` : 'Registrar diseno'}
           </h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -139,7 +143,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
               value={idPedido}
               onChange={event => setIdPedido(event.target.value)}
               className={styles.inputField}
-              disabled={isEditing || loadingPedidos}
+              disabled={isSubmitting || isEditing || loadingPedidos}
               required
             >
               <option value="">
@@ -170,7 +174,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
                 value={idDisenador}
                 onChange={event => setIdDisenador(event.target.value)}
                 className={styles.inputField}
-                disabled={loadingDisenadores}
+                disabled={isSubmitting || loadingDisenadores}
               >
                 <option value="">
                   {loadingDisenadores ? 'Cargando disenadores...' : 'Sin asignar'}
@@ -248,11 +252,11 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
           </div>
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary}>
-              {isEditing ? 'Guardar cambios' : 'Registrar'}
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting || loadingPedidos || loadingDisenadores}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Registrar'}
             </button>
           </div>
         </form>

@@ -1,5 +1,12 @@
 // pedidos/presentation/PedidoDetailsModal.jsx
 import { formatDate } from '../../../../core/utils/fechaFormato';
+import {
+  formatMoneyCOP,
+  formatPercentage,
+  getQuoteDiscountTotal,
+  getQuoteSubtotalBruto,
+  getQuoteSubtotalWithDiscount,
+} from '../../../../core/utils/formatters';
 import styles from './pedidos.module.css';
 
 const ESTADO_PEDIDO_CLASS = {
@@ -27,7 +34,7 @@ const formatObservaciones = (observaciones) => {
 export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
   if (!isOpen || !pedido) return null;
 
-  const fmt = (val) => `$${Number(val || 0).toLocaleString('es-CO')}`;
+  const fmt = (val) => formatMoneyCOP(val ?? 0);
   const clienteContacto = [pedido.cliente?.correo, pedido.cliente?.telefono].filter(Boolean).join(' | ');
 
   return (
@@ -88,33 +95,50 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
                   <th className={styles.tableHeader}>Técnica</th>
                   <th className={styles.tableHeader}>Cantidad</th>
                   <th className={styles.tableHeader}>Precio unit.</th>
-                  <th className={styles.tableHeader}>Subtotal</th>
+                  <th className={styles.tableHeader}>Descuento</th>
+                  <th className={styles.tableHeader}>Subtotal bruto</th>
+                  <th className={styles.tableHeader}>Subtotal final</th>
                 </tr>
               </thead>
               <tbody>
                 {!pedido.detalles || pedido.detalles.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className={styles.loadingText}>
+                    <td colSpan="7" className={styles.loadingText}>
                       Este pedido no tiene ítems registrados.
                     </td>
                   </tr>
                 ) : (
-                  pedido.detalles.map((det) => (
-                    <tr key={det.idDetallePedido} className={styles.tableBodyRow}>
-                      <td className={styles.tableCell}>
-                        <span style={{ fontWeight: 500 }}>{det.descripcion}</span>
-                        {det.observaciones && (
-                          <small style={{ display: 'block', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                            {det.observaciones}
-                          </small>
-                        )}
-                      </td>
-                      <td className={styles.tableCell}>{det.tecnica?.nombre || `#${det.idTecnica}`}</td>
-                      <td className={styles.tableCell}>{det.cantidad}</td>
-                      <td className={styles.tableCell}>{fmt(det.precioUnitario)}</td>
-                      <td className={styles.tableCell}><strong>{fmt(det.subtotal)}</strong></td>
-                    </tr>
-                  ))
+                  pedido.detalles.map((det) => {
+                    const subtotalBruto = getQuoteSubtotalBruto(det);
+                    const subtotalFinal = getQuoteSubtotalWithDiscount(det);
+                    const descuentoTotal = getQuoteDiscountTotal(det);
+
+                    return (
+                      <tr key={det.idDetallePedido} className={styles.tableBodyRow}>
+                        <td className={styles.tableCell}>
+                          <span style={{ fontWeight: 500 }}>{det.descripcion}</span>
+                          {det.observaciones && (
+                            <small style={{ display: 'block', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                              {det.observaciones}
+                            </small>
+                          )}
+                        </td>
+                        <td className={styles.tableCell}>{det.tecnica?.nombre || `#${det.idTecnica}`}</td>
+                        <td className={styles.tableCell}>{det.cantidad}</td>
+                        <td className={styles.tableCell}>{fmt(det.precioUnitario)}</td>
+                        <td className={styles.tableCell}>
+                          {formatPercentage(det.descuentoPorcentaje, '0%')}
+                          {descuentoTotal > 0 && (
+                            <small style={{ display: 'block', color: 'var(--color-danger)', marginTop: '2px' }}>
+                              -{fmt(descuentoTotal)}
+                            </small>
+                          )}
+                        </td>
+                        <td className={styles.tableCell}>{fmt(subtotalBruto)}</td>
+                        <td className={styles.tableCell}><strong>{fmt(subtotalFinal)}</strong></td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

@@ -12,8 +12,22 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Area,
+  Bar,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { useAuth } from '../../../store/AuthContext';
 import { PATHS } from '../../../routes/paths';
 import { isClientUser } from '../../../core/utils/permissions';
@@ -127,77 +141,186 @@ const SectionHeader = ({ eyebrow, title }) => (
   </div>
 );
 
+const formatCopCompact = (value = 0) => {
+  const amount = Number(value || 0);
+
+  if (Math.abs(amount) >= 1000000) {
+    return `$${(amount / 1000000).toLocaleString('es-CO', {
+      maximumFractionDigits: 1,
+    })}M`;
+  }
+
+  if (Math.abs(amount) >= 1000) {
+    return `$${Math.round(amount / 1000).toLocaleString('es-CO')}k`;
+  }
+
+  return `$${amount.toLocaleString('es-CO')}`;
+};
+
+const formatCopFull = (value = 0) =>
+  `$${Number(value || 0).toLocaleString('es-CO')}`;
+
+const hasChartData = (data = [], keys = []) =>
+  data.some((item) => keys.some((key) => Number(item[key] || 0) > 0));
+
+const ChartEmptyState = () => (
+  <div className="dashboard-chart-empty">
+    <strong>No hay datos suficientes para mostrar esta grafica.</strong>
+    <span>Cuando existan registros confirmados, la visualizacion aparecera aqui.</span>
+  </div>
+);
+
+const DashboardChartTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="dashboard-chart-tooltip">
+      <strong>{label}</strong>
+      {payload.map((item) => (
+        <span key={item.dataKey} style={{ color: item.color }}>
+          {item.name}: {item.dataKey === 'revenue' ? formatCopFull(item.value) : Number(item.value || 0).toLocaleString('es-CO')}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const MonthlyRevenueChart = ({ data }) => {
-  const maxValue = Math.max(1, ...data.map((item) => Math.max(item.revenue, item.orders)));
-  const topValue = Math.ceil(maxValue / 10) * 10 || 10;
-  const axisSteps = [topValue, Math.round(topValue * 0.75), Math.round(topValue * 0.5), Math.round(topValue * 0.25), 0];
+  const hasData = hasChartData(data, ['revenue', 'orders']);
 
   return (
     <section className="dashboard-panel dashboard-chart-panel">
-      <SectionHeader eyebrow="Ventas" title="Ingresos/ventas por mes" />
-      <div className="dashboard-chart-layout">
-        <div className="dashboard-y-axis" aria-hidden="true">
-          {axisSteps.map((step) => <span key={step}>{step}M</span>)}
+      <SectionHeader eyebrow="Ventas" title="Ingresos y ventas por mes" />
+      {!hasData ? (
+        <ChartEmptyState />
+      ) : (
+        <div className="dashboard-recharts-wrap" aria-label="Ingresos y ventas por mes">
+          <ResponsiveContainer width="100%" height={292}>
+            <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id="dashboardRevenueGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6c5ce7" stopOpacity={0.28} />
+                  <stop offset="95%" stopColor="#6c5ce7" stopOpacity={0.03} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#edf1f7" vertical={false} />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#8f9bb3', fontSize: 12, fontWeight: 600 }}
+              />
+              <YAxis
+                yAxisId="revenue"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#8f9bb3', fontSize: 11, fontWeight: 600 }}
+                tickFormatter={formatCopCompact}
+                width={58}
+              />
+              <YAxis
+                yAxisId="orders"
+                orientation="right"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#8f9bb3', fontSize: 11, fontWeight: 600 }}
+                allowDecimals={false}
+                width={34}
+              />
+              <Tooltip content={<DashboardChartTooltip />} cursor={{ fill: 'rgba(108, 92, 231, 0.06)' }} />
+              <Legend
+                verticalAlign="bottom"
+                iconType="circle"
+                wrapperStyle={{ paddingTop: 14, color: '#8f9bb3', fontSize: 12, fontWeight: 600 }}
+              />
+              <Area
+                yAxisId="revenue"
+                type="monotone"
+                dataKey="revenue"
+                name="Ingresos"
+                stroke="#6c5ce7"
+                strokeWidth={3}
+                fill="url(#dashboardRevenueGradient)"
+                activeDot={{ r: 5, strokeWidth: 2 }}
+              />
+              <Bar
+                yAxisId="orders"
+                dataKey="orders"
+                name="Ventas"
+                fill="#0984e3"
+                radius={[8, 8, 2, 2]}
+                maxBarSize={34}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
         </div>
-        <div className="dashboard-bars" aria-label="Ingresos y ventas por mes">
-          {data.map((item) => (
-            <div className="dashboard-bar-group" key={item.month}>
-              <div className="dashboard-bar-track">
-                <span
-                  className="dashboard-bar-orders"
-                  style={{ height: `${(item.orders / topValue) * 100}%` }}
-                  title={`${item.orders} ventas`}
-                />
-                <span
-                  className="dashboard-bar-revenue"
-                  style={{ height: `${(item.revenue / topValue) * 100}%` }}
-                  title={`$ ${item.revenue}M COP`}
-                />
-              </div>
-              <strong>{item.month}</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="dashboard-legend">
-        <span><i className="legend-sales" />Cantidad de ventas</span>
-        <span><i className="legend-income" />Ingresos en millones COP</span>
-      </div>
+      )}
     </section>
   );
 };
 
 const StatusDistribution = ({ data }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  const conicStops = total > 0
-    ? data
-        .reduce((acc, item) => {
-          const start = acc.current;
-          const end = start + (item.value / total) * 100;
-          acc.parts.push(`${item.color} ${start}% ${end}%`);
-          acc.current = end;
-          return acc;
-        }, { current: 0, parts: [] })
-        .parts.join(', ')
-    : '#eef2f5 0% 100%';
+  const chartData = data.filter((item) => Number(item.value || 0) > 0);
 
   return (
-    <section className="dashboard-panel">
+    <section className="dashboard-panel dashboard-status-panel">
       <SectionHeader eyebrow="Estados" title="Distribucion de pedidos" />
-      <div className="dashboard-donut-wrap">
-        <div className="dashboard-donut" style={{ background: `conic-gradient(${conicStops})` }}>
-          <span>{total}</span>
-          <small>pedidos</small>
-        </div>
-        <div className="dashboard-status-list">
-          {data.map((item) => (
-            <div key={item.label}>
-              <span><i style={{ backgroundColor: item.color }} />{item.label}</span>
-              <strong>{item.value}</strong>
+      {total === 0 ? (
+        <ChartEmptyState />
+      ) : (
+        <div className="dashboard-donut-wrap">
+          <div className="dashboard-pie-wrap">
+            <ResponsiveContainer width="100%" height={210}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  nameKey="label"
+                  innerRadius={62}
+                  outerRadius={88}
+                  paddingAngle={3}
+                  stroke="#ffffff"
+                  strokeWidth={3}
+                >
+                  {chartData.map((item) => (
+                    <Cell key={item.label} fill={item.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  allowEscapeViewBox={{ x: true, y: true }}
+                  position={{ x: 158, y: 66 }}
+                  wrapperStyle={{ zIndex: 20, pointerEvents: 'none' }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const item = payload[0];
+                    return (
+                      <div className="dashboard-chart-tooltip">
+                        <strong>{item.name}</strong>
+                        <span style={{ color: item.payload.color }}>
+                          {Number(item.value || 0).toLocaleString('es-CO')} pedidos
+                        </span>
+                      </div>
+                    );
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="dashboard-pie-center" aria-hidden="true">
+              <strong>{total}</strong>
+              <span>pedidos</span>
             </div>
-          ))}
+          </div>
+          <div className="dashboard-status-list">
+            {data.map((item) => (
+              <div key={item.label}>
+                <span><i style={{ backgroundColor: item.color }} />{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 };
@@ -416,6 +539,17 @@ const ClientDashboard = ({ userName, data }) => {
   const [selectedOrderId, setSelectedOrderId] = useState(activeOrders[0]?.id || '');
   const selectedOrder = activeOrders.find((order) => order.id === selectedOrderId) || activeOrders[0] || null;
   const activeOrderLabel = selectedOrder ? selectedOrder.number : 'Sin pedido activo';
+
+  useEffect(() => {
+    if (activeOrders.length === 0) {
+      setSelectedOrderId('');
+      return;
+    }
+
+    if (!activeOrders.some((order) => order.id === selectedOrderId)) {
+      setSelectedOrderId(activeOrders[0].id);
+    }
+  }, [activeOrders, selectedOrderId]);
 
   return (
     <div className="dashboard-page dashboard-page-client">

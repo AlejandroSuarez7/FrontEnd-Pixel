@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
+import { notifications } from '../../../core/utils/notifications';
 import { useAuth } from '../../../store/AuthContext';
 import { UserApiRepository } from '../infrastructure/user.repository';
 import styles from '../presentation/users.module.css';
@@ -18,6 +20,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   useEffect(() => {
     setForm({
@@ -34,47 +37,54 @@ const ProfilePage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setMessage('');
-    setError('');
+    await runLocked(async () => {
+      setMessage('');
+      setError('');
 
-    const idUsuario = getSessionUserId(user);
-    if (!idUsuario) {
-      setError('No se pudo identificar tu usuario.');
-      return;
-    }
+      const idUsuario = getSessionUserId(user);
+      if (!idUsuario) {
+        const errorMessage = 'No se pudo identificar tu usuario.';
+        setError(errorMessage);
+        notifications.error(errorMessage);
+        return;
+      }
 
-    const payload = {
-      nombre: form.nombre.trim(),
-      correo: form.correo.trim().toLowerCase(),
-      telefono: form.telefono.trim() || null,
-      idRol: user?.rol?.idRol || user?.idRol || 3,
-      estado: user?.estado ?? true,
-    };
+      const payload = {
+        nombre: form.nombre.trim(),
+        correo: form.correo.trim().toLowerCase(),
+        telefono: form.telefono.trim() || null,
+        idRol: user?.rol?.idRol || user?.idRol || 3,
+        estado: user?.estado ?? true,
+      };
 
-    if (form.contrasena.trim()) {
-      payload.contrasena = form.contrasena;
-    }
+      if (form.contrasena.trim()) {
+        payload.contrasena = form.contrasena;
+      }
 
-    setLoading(true);
-    try {
-      const updatedUser = await userRepository.update(idUsuario, payload);
-      updateSession({
-        ...user,
-        idUsuario,
-        nombre: updatedUser.nombre,
-        correo: updatedUser.correo,
-        telefono: updatedUser.telefono,
-        documento: updatedUser.documento,
-        direccion: updatedUser.direccion,
-        estado: updatedUser.estado,
-      });
-      setForm(prev => ({ ...prev, contrasena: '' }));
-      setMessage('Perfil actualizado correctamente.');
-    } catch (err) {
-      setError(err.message || 'No se pudo actualizar el perfil.');
-    } finally {
-      setLoading(false);
-    }
+      setLoading(true);
+      try {
+        const updatedUser = await userRepository.update(idUsuario, payload);
+        updateSession({
+          ...user,
+          idUsuario,
+          nombre: updatedUser.nombre,
+          correo: updatedUser.correo,
+          telefono: updatedUser.telefono,
+          documento: updatedUser.documento,
+          direccion: updatedUser.direccion,
+          estado: updatedUser.estado,
+        });
+        setForm(prev => ({ ...prev, contrasena: '' }));
+        setMessage('Perfil actualizado correctamente.');
+        notifications.success('Perfil actualizado correctamente.');
+      } catch (err) {
+        const errorMessage = err.message || 'No se pudo actualizar el perfil.';
+        setError(errorMessage);
+        notifications.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    });
   };
 
   return (
@@ -140,8 +150,8 @@ const ProfilePage = () => {
           </div>
 
           <div className={styles.modalFooter}>
-            <button type="submit" className={styles.btnPrimary} disabled={loading}>
-              {loading ? 'Guardando...' : 'Guardar cambios'}
+            <button type="submit" className={styles.btnPrimary} disabled={loading || isSubmitting}>
+              {loading || isSubmitting ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
         </form>

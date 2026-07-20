@@ -18,10 +18,22 @@ const Sidebar = () => {
   const avatarLetter = userName.charAt(0).toUpperCase();
   const menu = filterSidebarByPermissions(permissions, user);
 
-  const activeSection = menu.find((section) =>
-    section.items?.some((item) => location.pathname.startsWith(item.to)) ||
-    section.to === location.pathname
+  const matchesPath = (path) => (
+    location.pathname === path || location.pathname.startsWith(`${path}/`)
   );
+
+  const activeMatch = menu
+    .flatMap((section) => {
+      if (section.items) {
+        return section.items.map((item) => ({ section, path: item.to }));
+      }
+
+      return section.to ? [{ section, path: section.to }] : [];
+    })
+    .filter((item) => matchesPath(item.path))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+
+  const activeSection = activeMatch?.section;
 
   useEffect(() => {
     const handleResize = () => {
@@ -52,6 +64,11 @@ const Sidebar = () => {
     navigate('/');
   };
 
+  const handleGoHome = () => {
+    navigate('/');
+    closeMobileSidebar();
+  };
+
   return (
     <>
       <button
@@ -74,7 +91,9 @@ const Sidebar = () => {
       <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
         <div>
           <div className="sidebar-header">
-            <h2 className="sidebar-title">{collapsed ? 'P' : 'PIXEL'}</h2>
+            <button type="button" className="sidebar-title" onClick={handleGoHome}>
+              {collapsed ? 'P' : 'PIXEL'}
+            </button>
             <button
               type="button"
               className="sidebar-toggle"

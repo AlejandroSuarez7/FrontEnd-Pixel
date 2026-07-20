@@ -48,7 +48,7 @@ const buildMonthlySales = (ventasPorMes = []) =>
   ventasPorMes.map((item) => ({
     month: item.mes,
     orders: toNumber(item.cantidadPedidos),
-    revenue: Math.round(toNumber(item.total) / 1000000),
+    revenue: toNumber(item.total),
   }));
 
 const buildOrderStatus = (distribucion = {}) => [
@@ -150,14 +150,33 @@ const buildClientActiveOrder = (pedido = {}) => ({
   tracking: buildClientTrackingSteps(pedido),
 });
 
+const shouldShowOrderInTracking = (pedido = {}) => {
+  const status = normalizeStatus(pedido.estadoPedido);
+  return !['ANULADO', 'CANCELADO', 'CANCELADA', 'ENTREGADO', 'RECLAMADO'].includes(status);
+};
+
+const addUniqueOrders = (target, pedidos = []) => {
+  if (!Array.isArray(pedidos)) return;
+
+  pedidos.forEach((pedido) => {
+    if (!pedido?.idPedido || !shouldShowOrderInTracking(pedido)) return;
+    if (target.some((item) => Number(item.idPedido) === Number(pedido.idPedido))) return;
+    target.push(pedido);
+  });
+};
+
 const buildClientActiveOrders = (payload = {}) => {
-  const activeOrders = payload.pedidosActivos || payload.pedidosEnProceso || payload.activeOrders;
+  const pedidos = [];
 
-  if (Array.isArray(activeOrders)) {
-    return activeOrders.map(buildClientActiveOrder).filter((order) => order.id !== 'undefined');
-  }
+  addUniqueOrders(pedidos, payload.pedidoActivo?.idPedido ? [payload.pedidoActivo] : []);
+  addUniqueOrders(pedidos, payload.pedidosActivos);
+  addUniqueOrders(pedidos, payload.pedidosEnProceso);
+  addUniqueOrders(pedidos, payload.activeOrders);
+  addUniqueOrders(pedidos, payload.pedidosPendientes);
+  addUniqueOrders(pedidos, payload.pedidos);
+  addUniqueOrders(pedidos, payload.historialPedidos);
 
-  return payload.pedidoActivo?.idPedido ? [buildClientActiveOrder(payload.pedidoActivo)] : [];
+  return pedidos.map(buildClientActiveOrder).filter((order) => order.id !== 'undefined');
 };
 const adaptAdminDashboard = (payload) => {
   const kpis = payload.kpis || {};

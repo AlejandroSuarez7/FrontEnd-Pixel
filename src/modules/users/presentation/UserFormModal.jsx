@@ -1,6 +1,7 @@
 // presentation/UserFormModal.jsx
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../../core/services/apiService';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import {
   getPasswordRulesStatus,
@@ -23,6 +24,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
 
   const [roles, setRoles]               = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = !!user;
   const passwordRulesStatus = getPasswordRulesStatus(contrasena);
@@ -68,6 +70,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    await runLocked(async () => {
     try {
       const validationError = getUserValidationError({
         nombre,
@@ -107,6 +110,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
         notifications.error(error.message || 'Error al procesar el usuario.');
       }
     }
+    });
   };
 
   return (
@@ -117,7 +121,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
           <h3 className={styles.modalTitle}>
             {isEditing ? `Editar usuario · ${user.nombre}` : 'Registrar nuevo usuario'}
           </h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>✕</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>X</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -251,11 +255,11 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
           )}
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary}>
-              {isEditing ? 'Guardar cambios' : 'Crear usuario'}
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear usuario'}
             </button>
           </div>
 

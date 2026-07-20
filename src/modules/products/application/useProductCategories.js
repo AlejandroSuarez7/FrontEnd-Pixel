@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPaginationMeta } from '../../../core/utils/serverPagination';
 import { categoryRepository } from '../infrastructure/category.repository';
 
 export const useProductCategories = (filters = {}) => {
+  const { page, limit, search, sortBy, order } = filters;
+  const listFilters = useMemo(() => ({
+    page,
+    limit,
+    search,
+    sortBy,
+    order,
+  }), [page, limit, search, sortBy, order]);
   const [categories, setCategories] = useState([]);
   const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
   const [loading, setLoading] = useState(false);
@@ -10,7 +18,7 @@ export const useProductCategories = (filters = {}) => {
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await categoryRepository.list(filters);
+      const response = await categoryRepository.list(listFilters);
       setCategories(response.items);
       setPaginationMeta(response.meta);
     } catch (error) {
@@ -20,7 +28,7 @@ export const useProductCategories = (filters = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [JSON.stringify(filters)]);
+  }, [listFilters]);
 
   useEffect(() => {
     fetchCategories();

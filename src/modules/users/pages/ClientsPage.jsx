@@ -25,7 +25,7 @@ const formatDate = (value) => {
     : date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-const ClientDetailModal = ({ client, onClose }) => {
+const ClientDetailModal = ({ client, loading, onClose }) => {
   if (!client) return null;
 
   return (
@@ -39,6 +39,9 @@ const ClientDetailModal = ({ client, onClose }) => {
           <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
         </div>
 
+        {loading ? (
+          <p className={styles.loadingText}>Cargando detalle del cliente...</p>
+        ) : (
         <div className={styles.form}>
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
@@ -71,6 +74,7 @@ const ClientDetailModal = ({ client, onClose }) => {
             </div>
           </div>
         </div>
+        )}
 
         <div className={styles.modalFooter}>
           <button type="button" onClick={onClose} className={styles.btnSecondary}>
@@ -120,6 +124,7 @@ const ClientsPage = () => {
   }, [currentPage, search]);
 
   const handleView = async (client) => {
+    setSelectedClient(client);
     setLoadingDetail(true);
     try {
       const detail = await clientRepository.getById(client.idCliente);
@@ -253,7 +258,7 @@ const ClientsPage = () => {
                       <td className={styles.tableCellSecondary}>{formatDate(client.fechaCreacion)}</td>
                       <td className={styles.actionsCell}>
                         <TableActions
-                          primaryAction={{ label: loadingDetail ? 'Cargando...' : 'Ver', onClick: () => handleView(client), variant: 'accent', disabled: loadingDetail }}
+                          primaryAction={{ label: 'Ver', onClick: () => { void handleView(client); }, variant: 'accent' }}
                           actions={[
                             hasPermission('clientes.desactivar') && client.estado && { label: 'Eliminar', onClick: () => handleDeactivate(client), variant: 'danger' },
                             hasPermission('clientes.eliminar') && { label: 'Eliminar definitivo', onClick: () => handleDelete(client), variant: 'danger' },
@@ -282,6 +287,7 @@ const ClientsPage = () => {
 
       <ClientDetailModal
         client={selectedClient}
+        loading={loadingDetail}
         onClose={() => setSelectedClient(null)}
       />
     </div>

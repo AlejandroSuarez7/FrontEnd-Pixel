@@ -1,8 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPaginationMeta } from '../../../core/utils/serverPagination';
 import { productRepository } from '../infrastructure/product.repository';
 
 export const useProducts = (filters = {}) => {
+  const { page, limit, search, sortBy, order, idCategoriaProducto } = filters;
+  const listFilters = useMemo(() => ({
+    page,
+    limit,
+    search,
+    sortBy,
+    order,
+    idCategoriaProducto,
+  }), [page, limit, search, sortBy, order, idCategoriaProducto]);
   const [products, setProducts] = useState([]);
   const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
   const [loading, setLoading] = useState(false);
@@ -10,7 +19,7 @@ export const useProducts = (filters = {}) => {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await productRepository.list(filters);
+      const response = await productRepository.list(listFilters);
       setProducts(response.items);
       setPaginationMeta(response.meta);
     } catch (error) {
@@ -20,7 +29,7 @@ export const useProducts = (filters = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [JSON.stringify(filters)]);
+  }, [listFilters]);
 
   useEffect(() => {
     fetchProducts();

@@ -1,5 +1,6 @@
 // presentation/presentation/RoleFormModal.jsx
 import { useState, useEffect } from 'react';
+import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import styles from './roles.module.css';
 
@@ -7,6 +8,7 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
   const [nombre, setNombre]           = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [estado, setEstado]           = useState(true);
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditMode = !!role;
   const isCoreRole = isEditMode && (role.nombre === 'Admin' || role.nombre === 'Cliente');
@@ -27,6 +29,7 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    await runLocked(async () => {
     try {
       if (isEditMode) {
         await onSubmit(role.id, { nombre, descripcion, estado });
@@ -37,6 +40,7 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
     } catch (error) {
       notifications.error(error.message || 'Error al procesar el rol.');
     }
+    });
   };
 
   return (
@@ -47,7 +51,7 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
           <h3 className={styles.modalTitle}>
             {isEditMode ? `Modificar rol: ${role.nombre}` : 'Registrar nuevo rol'}
           </h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>✕</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>X</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -62,7 +66,7 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
               placeholder="Ej: Administrador, Operario, Supervisor"
               required
               maxLength={50}
-              disabled={isCoreRole}
+              disabled={isSubmitting || isCoreRole}
             />
           </div>
 
@@ -84,7 +88,7 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
                 type="button"
                 role="switch"
                 aria-checked={estado}
-                disabled={role.nombre === 'Admin'}
+                disabled={isSubmitting || role.nombre === 'Admin'}
                 onClick={() => setEstado(prev => !prev)}
                 className={`${styles.switchTrack} ${estado ? styles.switchTrackOn : styles.switchTrackOff} ${role.nombre === 'Admin' ? styles.switchDisabled : ''}`}
               >
@@ -97,11 +101,11 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
           )}
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary}>
-              {isEditMode ? 'Actualizar' : 'Guardar'}
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
 

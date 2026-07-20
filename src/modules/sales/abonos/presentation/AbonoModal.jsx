@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react';
+import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import './AbonosPage.css';
 
@@ -48,6 +49,7 @@ export const AbonoModal = ({
   const [loadingPedido, setLoadingPedido] = useState(false);
   const [pedidoError, setPedidoError] = useState('');
   const [pedidosError, setPedidosError] = useState('');
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(abono);
   const metodosPagoDisponibles = isStaff ? METODOS_PAGO_STAFF : METODOS_PAGO_CLIENTE;
@@ -165,6 +167,7 @@ export const AbonoModal = ({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
 
     if (superaSaldo) {
       notifications.warning('El abono no puede superar el saldo pendiente del pedido.');
@@ -190,6 +193,7 @@ export const AbonoModal = ({
     } catch (error) {
       notifications.error(error.message || 'No se pudo procesar el abono.');
     }
+    });
   };
 
   return (
@@ -199,7 +203,7 @@ export const AbonoModal = ({
           <h3 className={styles.modalTitle}>
             {isEditing ? `Editar abono #${abono.idAbono}` : 'Registrar abono'}
           </h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -210,7 +214,7 @@ export const AbonoModal = ({
                 value={idPedido}
                 onChange={event => setIdPedido(event.target.value)}
                 className={styles.inputField}
-                disabled={isEditing || loadingPedidos}
+                disabled={isSubmitting || isEditing || loadingPedidos}
                 required
               >
                 <option value="">
@@ -317,11 +321,11 @@ export const AbonoModal = ({
           )}
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary}>
-              {isEditing ? 'Guardar cambios' : 'Registrar'}
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting || loadingPedido || loadingPedidos}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Registrar'}
             </button>
           </div>
         </form>

@@ -1,11 +1,19 @@
 // application/useUsers.js
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPaginationMeta } from '../../../core/utils/serverPagination';
 import { UserApiRepository } from '../infrastructure/user.repository';
 
 const userRepository = new UserApiRepository();
 
 export const useUsers = (filters = {}) => {
+  const { page, limit, search, sortBy, order } = filters;
+  const listFilters = useMemo(() => ({
+    page,
+    limit,
+    search,
+    sortBy,
+    order,
+  }), [page, limit, search, sortBy, order]);
   const [users, setUsers]   = useState([]);
   const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
   const [loading, setLoading] = useState(false);
@@ -13,7 +21,7 @@ export const useUsers = (filters = {}) => {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await userRepository.list(filters);
+      const response = await userRepository.list(listFilters);
       setUsers(response.items);
       setPaginationMeta(response.meta);
     } catch (error) {
@@ -23,7 +31,7 @@ export const useUsers = (filters = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [JSON.stringify(filters)]);
+  }, [listFilters]);
 
   useEffect(() => {
     fetchUsers();

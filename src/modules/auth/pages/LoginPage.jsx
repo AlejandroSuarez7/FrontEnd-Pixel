@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
 import { getDefaultProtectedPath } from '../../../routes/SIDEBAR_CONFIG';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import { isClientUser } from '../../../core/utils/permissions';
 import { authService } from '../services/authService';
@@ -14,12 +15,15 @@ const LoginPage = () => {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
+  const { isLocked: isLoginLocked, runLocked: runLoginLocked } = useAsyncLock();
+  const { isLocked: isForgotLocked, runLocked: runForgotLocked } = useAsyncLock();
 
   const { login }  = useAuth();
   const navigate   = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    await runLoginLocked(async () => {
     setError('');
     setLoading(true);
 
@@ -36,10 +40,12 @@ const LoginPage = () => {
     } finally {
       setLoading(false);
     }
+    });
   };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
+    await runForgotLocked(async () => {
     setForgotLoading(true);
 
     try {
@@ -52,6 +58,7 @@ const LoginPage = () => {
     } finally {
       setForgotLoading(false);
     }
+    });
   };
 
   return (
@@ -112,8 +119,8 @@ const LoginPage = () => {
                 </button>
               </div>
 
-              <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+              <button type="submit" className="btn-primary" disabled={loading || isLoginLocked}>
+                {loading || isLoginLocked ? 'Ingresando...' : 'Iniciar Sesión'}
               </button>
 
             </form>
@@ -150,11 +157,11 @@ const LoginPage = () => {
                 />
               </div>
               <div className="auth-modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setForgotOpen(false)}>
+                <button type="button" className="btn-secondary" onClick={() => setForgotOpen(false)} disabled={forgotLoading || isForgotLocked}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" disabled={forgotLoading}>
-                  {forgotLoading ? 'Enviando...' : 'Enviar instrucciones'}
+                <button type="submit" className="btn-primary" disabled={forgotLoading || isForgotLocked}>
+                  {forgotLoading || isForgotLocked ? 'Enviando...' : 'Enviar instrucciones'}
                 </button>
               </div>
             </form>

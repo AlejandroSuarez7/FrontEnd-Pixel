@@ -3,6 +3,14 @@ import { useEffect, useState } from 'react';
 import './LandingPage.css';
 import { motion } from 'motion/react';
 import { useAuth } from '../../../store/AuthContext';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
+import {
+  formatMoneyCOP,
+  formatPercentage,
+  getQuoteDiscountTotal,
+  getQuoteSubtotalBruto,
+  getQuoteSubtotalWithDiscount,
+} from '../../../core/utils/formatters';
 import { notifications } from '../../../core/utils/notifications';
 import { publicQuoteRepository } from '../infrastructure/publicQuote.repository';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -49,9 +57,14 @@ const LandingPage = () => {
     observaciones: '',
   });
   const [publicQuoteCalculation, setPublicQuoteCalculation] = useState(null);
+  const { isLocked: isQuoteSubmitting, runLocked: runQuoteLocked } = useAsyncLock();
   const isLoggedIn = Boolean(user);
   const userName = user?.nombre || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
+  const publicQuoteItem = publicQuoteCalculation?.items?.[0] || null;
+  const publicQuoteSubtotalBruto = getQuoteSubtotalBruto(publicQuoteItem || {});
+  const publicQuoteDiscountTotal = getQuoteDiscountTotal(publicQuoteItem || {});
+  const publicQuoteSubtotalWithDiscount = getQuoteSubtotalWithDiscount(publicQuoteItem || {});
 
   useEffect(() => {
     let isMounted = true;
@@ -158,6 +171,7 @@ const LandingPage = () => {
 
   const handlePublicQuoteSubmit = async (event) => {
     event.preventDefault();
+    await runQuoteLocked(async () => {
 
     const validationError = validatePublicQuote();
     if (validationError) {
@@ -198,6 +212,7 @@ const LandingPage = () => {
     } finally {
       setSendingQuote(false);
     }
+    });
   };
 
   const handleGoDashboard = () => {
@@ -1603,19 +1618,27 @@ const LandingPage = () => {
                   onChange={(event) => updatePublicQuoteField('detalleProducto', event.target.value)}
                   placeholder="Color, talla o ubicacion del estampado"
                 />
-                {publicQuoteCalculation?.items?.[0] && (
+                {publicQuoteItem && (
                   <div className="quote-line-summary">
                     <span className="quote-price-before">
-                      Antes: ${Number(publicQuoteCalculation.items[0].precioBase || 0).toLocaleString('es-CO')}
+                      Unitario base: {formatMoneyCOP(publicQuoteItem.precioBase)}
                     </span>
                     <span className="quote-discount-chip">
-                      -{Number(publicQuoteCalculation.items[0].descuentoPorcentaje || 0)}%
+                      -{formatPercentage(publicQuoteItem.descuentoPorcentaje, '0%')}
                     </span>
                     <span>
-                      Ahora: ${Number(publicQuoteCalculation.items[0].precioUnitario || 0).toLocaleString('es-CO')} c/u
+                      Unitario final: {formatMoneyCOP(publicQuoteItem.precioUnitario)} c/u
                     </span>
+                    <span>
+                      Subtotal: {formatMoneyCOP(publicQuoteSubtotalBruto)}
+                    </span>
+                    {publicQuoteDiscountTotal > 0 && (
+                      <span>
+                        Descuento: -{formatMoneyCOP(publicQuoteDiscountTotal)}
+                      </span>
+                    )}
                     <strong>
-                      Total: ${Number(publicQuoteCalculation.items[0].subtotal || 0).toLocaleString('es-CO')}
+                      Con descuento: {formatMoneyCOP(publicQuoteSubtotalWithDiscount)}
                     </strong>
                   </div>
                 )}
@@ -1643,7 +1666,7 @@ const LandingPage = () => {
             <div>
               <span className="quote-total-label">Total estimado</span>
               <strong className="quote-total-value">
-                ${Number(publicQuoteCalculation?.total || 0).toLocaleString('es-CO')}
+                {formatMoneyCOP(publicQuoteCalculation?.total ?? 0)}
               </strong>
             </div>
             <span className="quote-helper-text">
@@ -1657,9 +1680,9 @@ const LandingPage = () => {
           <button
             type="submit"
             className="contact-submit-btn"
-            disabled={sendingQuote || loadingProducts || publicProducts.length === 0}
+            disabled={sendingQuote || isQuoteSubmitting || loadingProducts || publicProducts.length === 0}
           >
-            {sendingQuote ? 'Enviando...' : 'Enviar solicitud'}
+            {sendingQuote || isQuoteSubmitting ? 'Enviando...' : 'Enviar solicitud'}
           </button>
 
         </form>

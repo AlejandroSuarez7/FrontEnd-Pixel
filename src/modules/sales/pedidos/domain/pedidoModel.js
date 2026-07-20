@@ -47,7 +47,13 @@ export const createDetallePedido = ({
   descripcion,
   cantidad       = 1,
   precioUnitario = 0,
+  precioBase     = null,
+  descuentoPorcentaje = null,
+  descuentoTotal = null,
   subtotal       = 0,
+  subtotalBruto  = null,
+  subtotalConDescuento = null,
+  subtotalFinal  = null,
   observaciones  = null,
   tecnica        = null,
 }) => ({
@@ -56,8 +62,16 @@ export const createDetallePedido = ({
   idTecnica,
   descripcion,
   cantidad:       Number(cantidad),
+  precioBase:     precioBase !== null && precioBase !== undefined ? Number(precioBase) : null,
+  descuentoPorcentaje: descuentoPorcentaje !== null && descuentoPorcentaje !== undefined && descuentoPorcentaje !== ''
+    ? Number(String(descuentoPorcentaje).replace(',', '.'))
+    : null,
+  descuentoTotal: descuentoTotal !== null && descuentoTotal !== undefined ? Number(descuentoTotal) : null,
   precioUnitario: Number(precioUnitario),
   subtotal:       Number(subtotal),
+  subtotalBruto:  subtotalBruto !== null && subtotalBruto !== undefined ? Number(subtotalBruto) : null,
+  subtotalConDescuento: subtotalConDescuento !== null && subtotalConDescuento !== undefined ? Number(subtotalConDescuento) : null,
+  subtotalFinal: subtotalFinal !== null && subtotalFinal !== undefined ? Number(subtotalFinal) : null,
   observaciones,
   tecnica,
 });

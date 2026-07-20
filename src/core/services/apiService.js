@@ -6,6 +6,7 @@ const BASE_URL = 'http://localhost:3000/';
 // Instancia de Axios compartida por todos los módulos
 export const apiClient = axios.create({
   baseURL: BASE_URL,
+  timeout: 5000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,7 +35,15 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    const message = error.response?.data?.message || error.message;
+    const isTimeout = error.code === 'ECONNABORTED';
+    const timeoutMessage = 'La solicitud tardó demasiado. Intenta nuevamente.';
+    const message = isTimeout
+      ? timeoutMessage
+      : error.response?.data?.message || error.message;
+
+    if (isTimeout) {
+      notifications.error(timeoutMessage);
+    }
 
     if (status === 401) {
       // Token expirado o inválido — aquí puedes redirigir al login
@@ -62,6 +71,7 @@ apiClient.interceptors.response.use(
     apiError.payload = error.response?.data;
     apiError.response = error.response;
     apiError.isForbidden = status === 403;
+    apiError.isTimeout = isTimeout;
     return Promise.reject(apiError);
   }
 );
