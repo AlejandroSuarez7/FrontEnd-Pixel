@@ -14,6 +14,7 @@ const ESTADO_PEDIDO_CLASS = {
   EN_PROCESO:  styles.estadoPedidoEnProceso,
   PENDIENTE_SALDO_FINAL: styles.estadoPedidoPendienteSaldo,
   FINALIZADO:  styles.estadoPedidoFinalizado,
+  ENTREGADO:   styles.estadoPedidoEntregado,
   ANULADO:     styles.estadoPedidoAnulado,
 };
 
@@ -53,7 +54,11 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span className={`${styles.statusBadge} ${ESTADO_PEDIDO_CLASS[pedido.estadoPedido] || ''}`}>
-              {pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' ? 'Pendiente saldo final' : pedido.estadoPedido}
+              {pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL'
+                ? 'Pendiente saldo final'
+                : pedido.estadoPedido === 'ENTREGADO'
+                  ? 'Entregado'
+                  : pedido.estadoPedido}
             </span>
             <span className={`${styles.statusBadge} ${ESTADO_PAGO_CLASS[pedido.estadoPago] || ''}`}>
               {pedido.estadoPago}
@@ -77,6 +82,13 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
             </div>
           )}
 
+          {pedido.estadoPedido === 'ENTREGADO' && (
+            <div className={styles.detailsInfoBox}>
+              <strong>Producto entregado:</strong>{' '}
+              El cliente ya reclamo o recibio este pedido.
+            </div>
+          )}
+
           {/* Fechas */}
           <div className={styles.readOnlyGrid}>
             <div className={styles.readOnlyItem}>
@@ -90,6 +102,10 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
             <div className={styles.readOnlyItem}>
               Fecha finalizado
               <strong>{pedido.fechaFinalizado ? pedido.fechaFinalizado : "--"}</strong>
+            </div>
+            <div className={styles.readOnlyItem}>
+              Fecha entregado
+              <strong>{pedido.fechaEntregado ? pedido.fechaEntregado : "--"}</strong>
             </div>
           </div>
 

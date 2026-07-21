@@ -89,6 +89,16 @@ export const usePedidos = (filters = {}) => {
     }
   };
 
+  const handleConfirmarEntrega = async (id) => {
+    try {
+      await pedidoRepository.confirmarEntrega(id);
+      await fetchPedidos();
+    } catch (error) {
+      console.error(`Error al confirmar entrega pedido #${id}:`, error);
+      throw error;
+    }
+  };
+
   return {
     pedidos,
     paginationMeta,
@@ -100,5 +110,6 @@ export const usePedidos = (filters = {}) => {
     handlePendienteSaldo,
     handleFinalizar,
     handleAnular,
+    handleConfirmarEntrega,
   };
 };

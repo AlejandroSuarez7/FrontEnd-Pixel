@@ -55,6 +55,7 @@ const buildOrderStatus = (distribucion = {}) => [
   { label: 'Pendiente', value: toNumber(distribucion.PENDIENTE), color: '#e17b00' },
   { label: 'En producción', value: toNumber(distribucion.EN_PROCESO), color: '#0984e3' },
   { label: 'Terminado', value: toNumber(distribucion.FINALIZADO), color: '#6c5ce7' },
+  { label: 'Entregado', value: toNumber(distribucion.ENTREGADO), color: '#00b894' },
 ];
 
 const buildLatestOrders = (pedidos = []) =>
@@ -92,7 +93,7 @@ const hasFinalPaymentPending = (pedido = {}) => {
   return estadoPago !== 'COMPLETO' || saldo > 0;
 };
 
-const isOrderFinalized = (pedido = {}) => ['FINALIZADO', 'TERMINADO'].includes(normalizeStatus(pedido.estadoPedido));
+const isOrderFinalized = (pedido = {}) => ['FINALIZADO', 'TERMINADO', 'ENTREGADO'].includes(normalizeStatus(pedido.estadoPedido));
 
 const buildClientTrackingSteps = (pedido = {}) => {
   const estadoPedido = normalizeStatus(pedido.estadoPedido);
@@ -100,11 +101,11 @@ const buildClientTrackingSteps = (pedido = {}) => {
   const estadoDiseno = normalizeStatus(diseno?.estado || pedido.estadoDiseno);
   const firstPaymentConfirmed = hasConfirmedPayment(pedido);
   const pendingFinalBalance = estadoPedido === 'PENDIENTE_SALDO_FINAL';
-  const inProduction = ['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION', 'PENDIENTE_SALDO_FINAL', 'FINALIZADO', 'TERMINADO'].includes(estadoPedido);
+  const inProduction = ['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION', 'PENDIENTE_SALDO_FINAL', 'FINALIZADO', 'TERMINADO', 'ENTREGADO'].includes(estadoPedido);
   const finalized = isOrderFinalized(pedido);
   const finalPaymentPending = hasFinalPaymentPending(pedido);
-  const readyToDeliver = finalized && !finalPaymentPending;
   const delivered = ['ENTREGADO', 'RECLAMADO'].includes(estadoPedido);
+  const readyToDeliver = (estadoPedido === 'FINALIZADO' || estadoPedido === 'TERMINADO' || delivered) && !finalPaymentPending;
   const designWaitingApproval = ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(estadoDiseno);
   const designRejected = ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(estadoDiseno);
   const designApproved = ['APROBADO', 'APROBADA', 'PRODUCCION'].includes(estadoDiseno) || inProduction || finalized;
@@ -135,8 +136,8 @@ const buildClientTrackingSteps = (pedido = {}) => {
     },
     { label: 'En produccion', completed: pendingFinalBalance || finalized, current: inProduction && !pendingFinalBalance && !finalized },
     { label: 'Pendiente de saldo final', completed: readyToDeliver, current: pendingFinalBalance || (finalized && finalPaymentPending) },
-    { label: 'Pedido finalizado', completed: readyToDeliver, current: finalized && !readyToDeliver },
-    { label: 'Listo para reclamar / entregar', completed: delivered, current: readyToDeliver && !delivered },
+    { label: 'Pedido listo para reclamar / entregar', completed: delivered, current: readyToDeliver && !delivered },
+    { label: 'Producto entregado', completed: delivered },
   ];
 
   const visibleSteps = steps.filter((step) => step.visible !== false);
@@ -164,12 +165,14 @@ const buildClientActiveOrder = (pedido = {}) => ({
   total: toNumber(pedido.total),
   balance: toNumber(pedido.saldoPendiente ?? pedido.saldo),
   isPendingFinalBalance: normalizeStatus(pedido.estadoPedido) === 'PENDIENTE_SALDO_FINAL',
+  isReadyToDeliver: ['FINALIZADO', 'TERMINADO'].includes(normalizeStatus(pedido.estadoPedido)) &&
+    Number(pedido.saldoPendiente ?? pedido.saldo ?? 0) <= 0,
   tracking: buildClientTrackingSteps(pedido),
 });
 
 const shouldShowOrderInTracking = (pedido = {}) => {
   const status = normalizeStatus(pedido.estadoPedido);
-  return !['ANULADO', 'CANCELADO', 'CANCELADA', 'ENTREGADO', 'RECLAMADO'].includes(status);
+  return !['ANULADO', 'CANCELADO', 'CANCELADA'].includes(status);
 };
 
 const addUniqueOrders = (target, pedidos = []) => {

@@ -230,6 +230,7 @@
 .estadoPedidoEnProceso  { background-color: var(--color-info-bg);    color: var(--color-info); }
 .estadoPedidoPendienteSaldo { background-color: var(--color-warning-bg); color: var(--color-warning); }
 .estadoPedidoFinalizado { background-color: var(--color-success-bg); color: var(--color-success); }
+.estadoPedidoEntregado { background-color: var(--color-success-bg); color: var(--color-success); }
 .estadoPedidoAnulado    { background-color: var(--color-danger-bg);  color: var(--color-danger); }
 
 .estadoPagoPendiente     { background-color: var(--color-danger-bg);  color: var(--color-danger); }

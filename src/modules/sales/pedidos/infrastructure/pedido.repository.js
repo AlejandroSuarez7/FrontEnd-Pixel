@@ -73,6 +73,15 @@ export class PedidoApiRepository {
     }
   }
 
+  async confirmarEntrega(id) {
+    try {
+      const { data } = await apiClient.patch(`${ENDPOINT}/${id}/confirmar-entrega`);
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo confirmar la entrega');
+    }
+  }
+
   // Anula el pedido: PATCH /api/pedidos/:id/anular
   async anular(id) {
     try {

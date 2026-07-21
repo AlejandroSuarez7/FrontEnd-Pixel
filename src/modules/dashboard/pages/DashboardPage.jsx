@@ -52,8 +52,8 @@ const trackingIcons = {
   'Correcciones solicitadas': PencilRuler,
   'En produccion': Factory,
   'Pendiente de saldo final': Clock3,
-  'Pedido finalizado': ShieldCheck,
-  'Listo para reclamar / entregar': Truck,
+  'Pedido listo para reclamar / entregar': Truck,
+  'Producto entregado': ShieldCheck,
 };
 
 const statusClassMap = {
@@ -68,6 +68,7 @@ const statusClassMap = {
   EN_PROCESO: 'statusProduction',
   PENDIENTE_SALDO_FINAL: 'statusPending',
   FINALIZADO: 'statusDone',
+  ENTREGADO: 'statusDelivered',
   ANULADO: 'statusCancelled',
   POR_APROBAR: 'statusProduction',
 };
@@ -78,6 +79,7 @@ const readableStatus = (status) => {
     EN_PROCESO: 'En produccion',
     PENDIENTE_SALDO_FINAL: 'Pendiente saldo final',
     FINALIZADO: 'Terminado',
+    ENTREGADO: 'Entregado',
     ANULADO: 'Anulado',
     POR_APROBAR: 'Por aprobar',
   };
@@ -449,6 +451,12 @@ const TrackingPanel = ({ order }) => (
           <span>Falta confirmar el saldo final para coordinar la entrega.</span>
           <small>Saldo pendiente: {formatCopFull(order.balance)}</small>
           <p>Un asesor se comunicara contigo para coordinar el segundo abono y la entrega.</p>
+        </div>
+      )}
+      {order.isReadyToDeliver && (
+        <div className="dashboard-final-balance-alert dashboard-ready-alert">
+          <strong>Tu pedido esta listo.</strong>
+          <span>Coordina la entrega o reclamacion con PIXEL.</span>
         </div>
       )}
       <div className="dashboard-tracking dashboard-tracking-timeline">

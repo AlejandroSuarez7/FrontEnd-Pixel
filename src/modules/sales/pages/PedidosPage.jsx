@@ -16,6 +16,7 @@ const ESTADO_PEDIDO_CLASS = {
   EN_PROCESO:  styles.estadoPedidoEnProceso,
   PENDIENTE_SALDO_FINAL: styles.estadoPedidoPendienteSaldo,
   FINALIZADO:  styles.estadoPedidoFinalizado,
+  ENTREGADO:   styles.estadoPedidoEntregado,
   ANULADO:     styles.estadoPedidoAnulado,
 };
 
@@ -43,6 +44,7 @@ const PedidosPage = () => {
     handlePendienteSaldo,
     handleFinalizar,
     handleAnular,
+    handleConfirmarEntrega,
     paginationMeta,
   } = usePedidos({
     page: currentPage,
@@ -62,6 +64,10 @@ const PedidosPage = () => {
   const enProceso  = pedidos.filter(p => p.estadoPedido === 'EN_PROCESO').length;
   const saldoFinal = pedidos.filter(p => p.estadoPedido === 'PENDIENTE_SALDO_FINAL').length;
   const finalizados = pedidos.filter(p => p.estadoPedido === 'FINALIZADO').length;
+  const canConfirmDelivery = (pedido) => (
+    pedido.estadoPedido === 'FINALIZADO' &&
+    (pedido.estadoPago === 'COMPLETO' || Number(pedido.saldoPendiente || 0) <= 0)
+  );
   const canFinalizePedido = (pedido) => (
     pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' &&
     pedido.estadoPago === 'COMPLETO' &&
@@ -137,6 +143,24 @@ const PedidosPage = () => {
       notifications.success('Pedido anulado correctamente.');
     } catch (err) {
       notifications.error(err.message || 'No se pudo anular el pedido.');
+    }
+  };
+
+  const onConfirmarEntregaClick = async (id) => {
+    const accepted = await confirm({
+      title: 'Confirmar entrega del producto',
+      message: 'Confirmas que el cliente ya reclamo o recibio este pedido? Esta accion cerrara definitivamente el proceso.',
+      confirmText: 'Confirmar entrega',
+      variant: 'success',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handleConfirmarEntrega(id);
+      notifications.success('Entrega confirmada correctamente. El cliente sera notificado por correo.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo confirmar la entrega.');
     }
   };
 
@@ -235,7 +259,11 @@ const PedidosPage = () => {
 
                     <td className={styles.tableCell}>
                       <span className={`${styles.statusBadge} ${ESTADO_PEDIDO_CLASS[pedido.estadoPedido] || ''}`}>
-                        {pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' ? 'Pendiente saldo final' : pedido.estadoPedido.replace('_', ' ')}
+                        {pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL'
+                          ? 'Pendiente saldo final'
+                          : pedido.estadoPedido === 'ENTREGADO'
+                            ? 'Entregado'
+                            : pedido.estadoPedido.replace('_', ' ')}
                       </span>
                     </td>
 
@@ -273,8 +301,9 @@ const PedidosPage = () => {
                           hasPermission('pedidos.pasar_proceso') && isStaff && pedido.estadoPedido === 'PENDIENTE' && { label: 'En proceso', onClick: () => onEnProcesoClick(pedido.idPedido), variant: 'info' },
                           hasPermission('pedidos.finalizar') && isStaff && pedido.estadoPedido === 'EN_PROCESO' && { label: 'Solicitar saldo final', onClick: () => onPendienteSaldoClick(pedido.idPedido), variant: 'warning' },
                           hasPermission('pedidos.finalizar') && isStaff && canFinalizePedido(pedido) && { label: 'Finalizar pedido', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },
-                          hasPermission('pedidos.anular') && isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },
-                          hasPermission('pedidos.editar') && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && {
+                          hasPermission('pedidos.finalizar') && isStaff && canConfirmDelivery(pedido) && { label: 'Confirmar entrega', onClick: () => onConfirmarEntregaClick(pedido.idPedido), variant: 'success' },
+                          hasPermission('pedidos.anular') && isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ENTREGADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },
+                          hasPermission('pedidos.editar') && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ENTREGADO' && pedido.estadoPedido !== 'ANULADO' && {
                             label: 'Editar',
                             onClick: () => { setSelectedPedido(pedido); setIsEditOpen(true); },
                             variant: 'warning',

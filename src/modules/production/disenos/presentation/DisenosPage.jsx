@@ -160,6 +160,9 @@ export const DisenosPage = () => {
       await handleUpdate(selectedDiseno.idDiseno, payload);
     } else {
       await handleCreate(payload);
+      if (payload.estado === 'APROBADO') {
+        notifications.success('Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo.');
+      }
     }
     setIsModalOpen(false);
     setSelectedDiseno(null);
@@ -199,7 +202,7 @@ export const DisenosPage = () => {
 
     try {
       const response = await handleApprove(diseno.idDiseno, { observaciones: result.value });
-      notifications.success(response.message || 'Diseno aprobado correctamente.');
+      notifications.success(response.message || 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo.');
     } catch (error) {
       notifications.error(error.message || 'No se pudo aprobar el diseno.');
     }
@@ -231,7 +234,7 @@ export const DisenosPage = () => {
       notifications.success(response.message || (
         responseModal.mode === 'reject'
           ? 'Rechazo del cliente registrado correctamente.'
-          : 'Aprobacion del cliente registrada correctamente.'
+          : 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo.'
       ));
       closeClientResponseModal();
     } catch (error) {

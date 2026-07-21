@@ -668,6 +668,15 @@
   font-weight: 800;
 }
 
+.dashboard-ready-alert {
+  border-color: #bdeee4;
+  background: var(--color-success-bg);
+}
+
+.dashboard-ready-alert strong {
+  color: var(--color-success);
+}
+
 .dashboard-tracking-timeline {
   position: relative;
   display: grid;

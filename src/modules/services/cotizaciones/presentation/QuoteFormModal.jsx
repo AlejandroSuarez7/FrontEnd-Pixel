@@ -235,8 +235,12 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
           notifications.warning('El nombre del cliente es obligatorio.');
           return;
         }
-        if (!cliente.correo.trim() && !cliente.telefono.trim()) {
-          notifications.warning('Ingresa correo o telefono del cliente.');
+        if (!cliente.telefono.trim()) {
+          notifications.warning('El telefono del cliente es obligatorio para cotizaciones presenciales.');
+          return;
+        }
+        if (!/^\d{10}$/.test(cliente.telefono.trim())) {
+          notifications.warning('El telefono debe tener exactamente 10 numeros.');
           return;
         }
         if (cliente.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo.trim())) {
@@ -339,6 +343,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
                   placeholder="3000000000"
                   inputMode="numeric"
                   maxLength={10}
+                  required
                 />
               </div>
             </div>

@@ -39,7 +39,7 @@ describe('dashboardRepository', () => {
     });
   });
 
-  it('builds multiple selectable client orders from available dashboard payload fields', async () => {
+  it('builds selectable client orders including delivered orders from available dashboard payload fields', async () => {
     apiClient.get.mockResolvedValueOnce({
       data: {
         data: {
@@ -75,7 +75,7 @@ describe('dashboardRepository', () => {
       ['dashboard.cliente', 'pedidos.cliente.ver']
     );
 
-    expect(result.client.activeOrders.map((order) => order.number)).toEqual(['PX-22', 'PX-21']);
+    expect(result.client.activeOrders.map((order) => order.number)).toEqual(['PX-22', 'PX-21', 'PX-20']);
   });
 
   it('maps dashboard request failures to rejected errors', async () => {
