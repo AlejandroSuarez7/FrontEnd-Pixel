@@ -113,7 +113,7 @@ export const ClientDisenosPage = () => {
       setPendingActionId(diseno.idDiseno);
       try {
         const response = await disenoRepository.approveClientDesign(diseno.idDiseno);
-        notifications.success(response.message || 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo.');
+        notifications.success(response.message || 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
         await fetchDisenos();
         return true;
       } catch (error) {

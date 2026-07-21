@@ -50,11 +50,11 @@ const LoginPage = () => {
 
     try {
       await authService.forgotPassword(forgotEmail);
-      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena.');
+      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena. Si no lo encuentras, revisa SPAM o correo no deseado.');
       setForgotOpen(false);
       setForgotEmail('');
     } catch {
-      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena.');
+      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena. Si no lo encuentras, revisa SPAM o correo no deseado.');
     } finally {
       setForgotLoading(false);
     }

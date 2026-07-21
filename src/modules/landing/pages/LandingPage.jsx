@@ -185,7 +185,7 @@ const LandingPage = () => {
     try {
       const accepted = await confirm({
         title: 'Enviar solicitud',
-        message: 'Tu solicitud sera enviada al equipo de PIXEL. Tambien enviaremos una copia a tu correo como constancia de cotizacion. Por ese mismo correo te notificaremos si la cotizacion avanza a pedido.',
+        message: 'Tu solicitud sera enviada al equipo de PIXEL. Tambien enviaremos una copia a tu correo como constancia de cotizacion. Si no la encuentras, revisa SPAM o correo no deseado.',
         confirmText: 'Enviar solicitud',
         cancelText: 'Cancelar',
         variant: 'success',
@@ -207,7 +207,7 @@ const LandingPage = () => {
         }],
         observaciones: publicQuoteForm.observaciones.trim() || null,
       });
-      notifications.success('Solicitud enviada. Revisa tu correo: alli recibiras la constancia y el acceso para consultar el estado de tu pedido.');
+      notifications.success('Solicitud enviada correctamente. Revisa tu correo para ver la constancia. Si no lo encuentras, revisa la carpeta de SPAM o correo no deseado.');
       resetPublicQuoteForm();
     } catch (error) {
       notifications.error(error.message || 'No se pudo enviar la solicitud.');

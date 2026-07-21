@@ -95,7 +95,7 @@ const PedidosPage = () => {
   const onPendienteSaldoClick = async (id) => {
     const accepted = await confirm({
       title: 'Solicitar saldo final',
-      message: 'El cliente sera notificado por correo de que el pedido termino produccion, pero falta pagar el saldo final para coordinar la entrega.',
+      message: 'El cliente sera notificado por correo de que el pedido termino produccion, pero falta pagar el saldo final para coordinar la entrega. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.',
       confirmText: 'Confirmar',
       variant: 'warning',
     });
@@ -104,7 +104,7 @@ const PedidosPage = () => {
 
     try {
       await handlePendienteSaldo(id);
-      notifications.success('Saldo final solicitado. El cliente fue notificado por correo.');
+      notifications.success('Saldo final solicitado. El cliente fue notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
     } catch (err) {
       notifications.error(err.message || 'No se pudo solicitar el saldo final.');
     }
@@ -161,7 +161,7 @@ const PedidosPage = () => {
 
     try {
       await handleConfirmarEntrega(id);
-      notifications.success('Entrega confirmada correctamente. El cliente sera notificado por correo.');
+      notifications.success('Entrega confirmada correctamente. El cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
     } catch (err) {
       notifications.error(err.message || 'No se pudo confirmar la entrega.');
     }

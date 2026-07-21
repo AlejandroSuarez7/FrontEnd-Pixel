@@ -76,7 +76,6 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
       ?? null;
   const calculationSource = calculationItem || detail;
   const discountAmount = getQuoteDiscountTotal(calculationSource);
-  const designCost = Number(detail.costoDiseno || 0);
   const additionalCosts = Number(costosAdicionales || 0);
   const subtotalBruto = getQuoteSubtotalBruto(calculationSource) || ((unitBase || appliedUnitPrice) * quantity);
   const subtotalWithDiscount = getQuoteSubtotalWithDiscount(calculationSource);

@@ -78,13 +78,6 @@ const LABEL_OVERRIDES = {
   'perfil.editar': 'Editar perfil',
 };
 
-const pluralToSingular = (value = '') => {
-  const text = value.toLowerCase();
-  if (text.endsWith('es')) return text.slice(0, -2);
-  if (text.endsWith('s')) return text.slice(0, -1);
-  return text;
-};
-
 const capitalizeWords = (value = '') =>
   value
     .replace(/_/g, ' ')

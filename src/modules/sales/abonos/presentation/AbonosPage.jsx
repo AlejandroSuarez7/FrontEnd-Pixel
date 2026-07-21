@@ -164,7 +164,7 @@ export const AbonosPage = () => {
 
     try {
       const result = await handleConfirm(abono.idAbono, { referencia: abono.referencia });
-      notifications.success('Abono confirmado. El cliente fue notificado por correo.');
+      notifications.success('Abono confirmado. El cliente fue notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
     } catch (error) {
       notifications.error(error.message || 'No se pudo confirmar el abono.');
     }

@@ -62,6 +62,9 @@ const QuotesPage = () => {
       await handleUpdate(selectedQuote.idCotizacion, payload, isStaff);
     } else {
       await handleCreate(payload, isStaff);
+      if (isStaff) {
+        notifications.success('Cotizacion creada correctamente. El cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
+      }
     }
     setIsModalOpen(false);
   };
@@ -119,7 +122,7 @@ const QuotesPage = () => {
 
     try {
       await handleApprove(idCotizacion);
-      notifications.success('Pedido creado correctamente. El cliente fue notificado por correo.');
+      notifications.success('Pedido creado correctamente. El cliente fue notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
     } catch (err) {
       notifications.error(err.message || 'No se pudo aprobar la cotizacion.');
     }

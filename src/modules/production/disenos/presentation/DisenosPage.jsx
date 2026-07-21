@@ -163,7 +163,7 @@ export const DisenosPage = () => {
       if (payload.estado === 'APROBADO') {
         notifications.success('Diseno registrado como aprobado. El cliente sera notificado si corresponde.');
       } else {
-        notifications.success('Diseno enviado para revision. El cliente sera notificado por correo.');
+        notifications.success('Diseno enviado para revision. El cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
       }
     }
     setIsModalOpen(false);
@@ -204,7 +204,7 @@ export const DisenosPage = () => {
 
     try {
       const response = await handleApprove(diseno.idDiseno, { observaciones: result.value });
-      notifications.success(response.message || 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo.');
+      notifications.success(response.message || 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
     } catch (error) {
       notifications.error(error.message || 'No se pudo aprobar el diseno.');
     }
@@ -236,7 +236,7 @@ export const DisenosPage = () => {
       notifications.success(response.message || (
         responseModal.mode === 'reject'
           ? 'Rechazo del cliente registrado correctamente.'
-          : 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo.'
+          : 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.'
       ));
       closeClientResponseModal();
     } catch (error) {
