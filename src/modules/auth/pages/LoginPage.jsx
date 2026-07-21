@@ -125,7 +125,7 @@ const LoginPage = () => {
 
             </form>
 
-            <p className="register-link">
+            <p className="register-link" hidden>
               ¿No tienes cuenta? <a href="/register">Registrarse</a>
             </p>
           </div>

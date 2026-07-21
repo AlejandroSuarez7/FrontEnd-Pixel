@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import './LandingPage.css';
 import { motion } from 'motion/react';
 import { useAuth } from '../../../store/AuthContext';
+import { isClientUser } from '../../../core/utils/permissions';
 import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import {
   formatMoneyCOP,
@@ -34,7 +35,7 @@ import {
 } from "react-icons/fa";
 
 const LandingPage = () => {
-  const { user, logout } = useAuth();
+  const { user, permissions, logout } = useAuth();
   const confirm = useConfirm();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -59,6 +60,7 @@ const LandingPage = () => {
   const [publicQuoteCalculation, setPublicQuoteCalculation] = useState(null);
   const { isLocked: isQuoteSubmitting, runLocked: runQuoteLocked } = useAsyncLock();
   const isLoggedIn = Boolean(user);
+  const isClient = isClientUser(user, permissions);
   const userName = user?.nombre || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
   const publicQuoteItem = publicQuoteCalculation?.items?.[0] || null;
@@ -226,6 +228,13 @@ const LandingPage = () => {
     navigate('/');
   };
 
+  const scrollToSection = (sectionId) => {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
   return (
     <div>
       <header className="landing-header">
@@ -242,7 +251,7 @@ const LandingPage = () => {
               <a className="landing-nav-link" href="#servicios">Servicios</a>
               <a className="landing-nav-link" href="#comparativo">Comparativo</a>
               <a className="landing-nav-link" href="#productos">Productos</a>
-              <a className="landing-nav-link" href="#contacto">Contacto</a>
+              <a className="landing-nav-link" href="#contacto">Cotizar</a>
             </nav>
 
             {/* Acciones (Login + Botón móvil) */}
@@ -274,7 +283,7 @@ const LandingPage = () => {
                     <div className="landing-profile-menu">
                       <p className="landing-profile-name">{userName}</p>
                       <button type="button" onClick={handleGoDashboard} className="landing-profile-menu-btn">
-                        Ir al Dashboard
+                        {isClient ? 'Mis pedidos' : 'Ir al Dashboard'}
                       </button>
                       <button type="button" onClick={handleLogout} className="landing-profile-menu-btn danger">
                         Cerrar sesion
@@ -329,11 +338,19 @@ const LandingPage = () => {
           {/* Buttons */}
           <div className="hero-buttons">
 
-            <button className="hero-btn-primary">
+            <button
+              type="button"
+              className="hero-btn-primary"
+              onClick={() => scrollToSection('servicios')}
+            >
               Explorar Servicios
             </button>
 
-            <button className="hero-btn-secondary">
+            <button
+              type="button"
+              className="hero-btn-secondary"
+              onClick={() => scrollToSection('contacto')}
+            >
               Solicitar Cotización
             </button>
 
@@ -1884,7 +1901,7 @@ const LandingPage = () => {
           <a className="mobile-nav-link" href="#servicios">Servicios</a>
           <a className="mobile-nav-link" href="#comparativo">Comparativo</a>
           <a className="mobile-nav-link" href="#productos">Productos</a>
-          <a className="mobile-nav-link" href="#contacto">Contacto</a>
+          <a className="mobile-nav-link" href="#contacto">Cotizar</a>
         </nav>
 
         <div className="mobile-user-section">
@@ -1893,7 +1910,7 @@ const LandingPage = () => {
           ) : (
             <>
               <p className="mobile-profile-name">{userName}</p>
-              <button type="button" className="mobile-login-btn" onClick={handleGoDashboard}>Ir al Dashboard</button>
+              <button type="button" className="mobile-login-btn" onClick={handleGoDashboard}>{isClient ? 'Mis pedidos' : 'Ir al Dashboard'}</button>
               <button type="button" className="mobile-login-btn mobile-logout-btn" onClick={handleLogout}>Cerrar sesion</button>
             </>
           )}

@@ -547,3 +547,52 @@
     padding: 72px 12px 12px;
   }
 }
+
+/* Marca visible y estable tanto en sidebar de escritorio como en el panel movil. */
+.sidebar-title,
+.sidebar.collapsed .sidebar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  margin: 0;
+  padding: 5px 8px;
+  border: 1px solid #eadfff;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.sidebar-title:hover {
+  border-color: #cbb4fa;
+  background: #fcfaff;
+  filter: none;
+}
+
+.sidebar-brand-word {
+  color: #9333ea;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  line-height: 1;
+}
+
+.sidebar.collapsed .sidebar-title {
+  display: none;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .sidebar-brand-word {
+    background: linear-gradient(90deg, #9333ea 0%, #ec4899 52%, #2563eb 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-title,
+  .sidebar.collapsed .sidebar-title {
+    display: inline-flex;
+  }
+}

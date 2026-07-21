@@ -677,6 +677,16 @@
   color: var(--color-success);
 }
 
+.dashboard-estimated-delivery {
+  margin-bottom: 14px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.dashboard-estimated-delivery strong {
+  color: var(--color-text-primary);
+}
+
 .dashboard-tracking-timeline {
   position: relative;
   display: grid;

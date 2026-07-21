@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
 import { formatDate } from '../../../../core/utils/fechaFormato';
+import {
+  formatMoneyCOP,
+  getQuoteDiscountTotal,
+  getQuoteSubtotalBruto,
+  getQuoteTotal,
+} from '../../../../core/utils/formatters';
 import './DisenosPage.css';
 
 const styles = {
@@ -10,31 +16,40 @@ const styles = {
   modalTitle: 'disenos-modal-title',
   modalSubtitle: 'disenos-modal-subtitle',
   modalCloseBtn: 'disenos-modal-close-btn',
-  form: 'disenos-form',
-  readOnlyGrid: 'disenos-read-only-grid',
-  readOnlyItem: 'disenos-read-only-item',
-  detailsInfoBox: 'disenos-details-info-box',
   imagePreview: 'disenos-image-preview',
   imagePreviewMedia: 'disenos-image-preview-media',
   imagePreviewLink: 'disenos-image-preview-link',
-  totalBlock: 'disenos-total-block',
-  totalBlockRow: 'disenos-total-block-row',
-  grandTotal: 'disenos-grand-total',
-  modalFooter: 'disenos-modal-footer',
   btnPrimary: 'disenos-btn-primary',
+  btnSecondary: 'disenos-btn-secondary',
 };
 
-const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 const normalizeStatus = (value = '') => String(value || '').toUpperCase();
 const formatDesignOrigin = (origen = '') => {
   const value = normalizeStatus(origen);
-  if (value === 'CLIENTE') return 'Enviado por cliente';
-  if (value === 'ADMIN') return 'Admin';
-  if (value === 'OTRO') return 'Otro';
+  if (value === 'CLIENTE') return 'Diseno enviado por el cliente';
+  if (value === 'OTRO') return 'Otro origen';
   return 'Equipo PIXEL / Disenador';
 };
 
-export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
+const formatStatus = (status = '') => ({
+  PENDIENTE: 'Pendiente',
+  ENVIADO: 'Enviado para revision',
+  PENDIENTE_APROBACION: 'Pendiente de aprobacion',
+  APROBADO: 'Aprobado',
+  RECHAZADO: 'Cambios solicitados',
+}[normalizeStatus(status)] || status || 'Sin estado');
+
+const safeDate = (value) => value ? formatDate(value) : 'No registrada';
+const isWaitingResponse = (status) => ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR'].includes(normalizeStatus(status));
+
+export const DisenoViewModal = ({
+  isOpen,
+  onClose,
+  diseno,
+  onApprove,
+  onReject,
+  pendingAction = false,
+}) => {
   const [previewError, setPreviewError] = useState(false);
 
   useEffect(() => {
@@ -42,126 +57,125 @@ export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
   }, [diseno?.idDiseno, diseno?.archivoUrl, isOpen]);
 
   if (!isOpen || !diseno) return null;
+
   const archivoUrl = diseno.archivoUrl?.trim();
-  const clienteContacto = [diseno.pedido?.cliente?.correo, diseno.pedido?.cliente?.telefono].filter(Boolean).join(' | ');
-  const clienteNombre = diseno.pedido?.cliente?.nombre || 'Cliente no especificado';
-  const producto = diseno.pedido?.detalles?.[0]?.descripcion;
+  const estado = normalizeStatus(diseno.estado);
   const enviadoPorCliente = normalizeStatus(diseno.origenDiseno) === 'CLIENTE';
+  const clienteNombre = diseno.pedido?.cliente?.nombre || 'Cliente no especificado';
+  const clienteContacto = [diseno.pedido?.cliente?.correo, diseno.pedido?.cliente?.telefono].filter(Boolean).join(' | ');
+  const producto = diseno.pedido?.detalles?.[0]?.descripcion || diseno.descripcion || 'Producto no especificado';
+  const resumenCotizacion = diseno.pedido?.cotizacion || diseno.cotizacion || diseno.pedido || {};
+  const subtotal = getQuoteSubtotalBruto(resumenCotizacion);
+  const descuentoTotal = getQuoteDiscountTotal(resumenCotizacion);
+  const costosAdicionales = Number(resumenCotizacion.costosAdicionales ?? 0);
+  const total = getQuoteTotal({ ...resumenCotizacion, total: resumenCotizacion.total ?? diseno.pedido?.total });
+  const puedeResponder = isWaitingResponse(estado) && (onApprove || onReject);
 
   return (
     <div className={styles.overlay}>
-      <div className={`${styles.modalContainer} ${styles.modalLg}`}>
+      <div className={`${styles.modalContainer} ${styles.modalLg} disenos-view-modal`}>
         <div className={styles.modalHeader}>
           <div>
-            <h3 className={styles.modalTitle}>Diseno #{diseno.idDiseno}</h3>
-            <p className={styles.modalSubtitle}>
-              Pedido #{diseno.idPedido} | Cliente: {clienteNombre}
-            </p>
+            <div className="disenos-view-heading-row">
+              <h3 className={styles.modalTitle}>Diseno #{diseno.idDiseno}</h3>
+              <span className={`disenos-view-status disenos-view-status-${estado.toLowerCase()}`}>{formatStatus(estado)}</span>
+            </div>
+            <p className={styles.modalSubtitle}>Pedido #{diseno.idPedido} | {clienteNombre}</p>
             {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>
-          <button onClick={onClose} className={styles.modalCloseBtn}>x</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} aria-label="Cerrar detalle">x</button>
         </div>
 
-        <div className={styles.form}>
-          <div className={styles.readOnlyGrid}>
-            <div className={styles.readOnlyItem}>Estado<strong>{diseno.estado}</strong></div>
-            <div className={styles.readOnlyItem}>Creado<strong>{formatDate(diseno.fechaCreacion)}</strong></div>
-            <div className={styles.readOnlyItem}>Enviado<strong>{formatDate(diseno.fechaEnvio)}</strong></div>
-            <div className={styles.readOnlyItem}>Recibido<strong>{formatDate(diseno.fechaRecepcion)}</strong></div>
-            <div className={styles.readOnlyItem}>Aprobado<strong>{formatDate(diseno.fechaAprobacion)}</strong></div>
-            <div className={styles.readOnlyItem}>Respuesta cliente<strong>{formatDate(diseno.fechaRespuestaCliente)}</strong></div>
-          </div>
+        <div className="disenos-view-content">
+          <section className="disenos-view-summary" aria-label="Resumen del diseno">
+            <div><span>Estado</span><strong>{formatStatus(estado)}</strong></div>
+            <div><span>Enviado</span><strong>{safeDate(diseno.fechaEnvio)}</strong></div>
+            <div><span>Respuesta</span><strong>{safeDate(diseno.fechaRespuestaCliente)}</strong></div>
+            <div><span>Origen</span><strong>{enviadoPorCliente ? 'Cliente' : 'Equipo PIXEL'}</strong></div>
+          </section>
 
-          <div className={styles.detailsInfoBox}>
-            <strong>Origen del diseno:</strong> {formatDesignOrigin(diseno.origenDiseno)}
-          </div>
-
-          <div className={styles.detailsInfoBox}>
-            <strong>Medio de recepcion:</strong> {diseno.medioRecepcion || 'No aplica'}
-          </div>
-
-          <div className={styles.detailsInfoBox}>
-            <strong>Recibido por:</strong> {diseno.recibidoPor?.nombre || (diseno.recibidoPorId ? `Usuario #${diseno.recibidoPorId}` : 'No especificado')}
-          </div>
-
-          <div className={styles.detailsInfoBox}>
-            <strong>Disenador:</strong> {enviadoPorCliente ? 'No aplica' : diseno.disenador?.nombre || 'Sin asignar'}
-          </div>
-
-          <div className={styles.detailsInfoBox}>
-            <strong>Descripcion:</strong> {diseno.descripcion || (enviadoPorCliente ? 'Diseno enviado por el cliente' : 'Sin descripcion')}
-          </div>
-          {producto && (
-            <div className={styles.detailsInfoBox}>
-              <strong>Producto:</strong> {producto}
-            </div>
-          )}
-
-          <div className={styles.detailsInfoBox}>
-            <strong>Observaciones:</strong> {diseno.observaciones || 'Sin observaciones'}
-          </div>
-
-          <div className={styles.detailsInfoBox}>
-            <strong>Observaciones del cliente:</strong> {diseno.observacionesCliente || 'Sin observaciones del cliente'}
-          </div>
-
-          {(diseno.medioRespuestaCliente || diseno.medioRespuesta || diseno.medioAprobacion || diseno.respuestaRegistradaPor) && (
-            <div className={styles.detailsInfoBox}>
-              <strong>Respuesta registrada:</strong>{' '}
-              {[diseno.medioRespuestaCliente || diseno.medioRespuesta || diseno.medioAprobacion, diseno.respuestaRegistradaPor?.nombre]
-                .filter(Boolean)
-                .join(' | ') || 'Sin informacion adicional'}
-            </div>
-          )}
-
-          <div className={styles.detailsInfoBox}>
-            <strong>Archivo:</strong>{' '}
-            {archivoUrl ? (
-              <a href={archivoUrl} target="_blank" rel="noreferrer">
-                Abrir archivo
-              </a>
-            ) : 'Sin archivo enviado'}
-          </div>
-
-          {archivoUrl && (
-            <div className={styles.imagePreview}>
-              {!previewError ? (
-                <img
-                  src={archivoUrl}
-                  alt="Vista previa del diseno"
-                  className={styles.imagePreviewMedia}
-                  onError={() => setPreviewError(true)}
-                />
-              ) : (
-                <div className={styles.detailsInfoBox}>
-                  No se pudo previsualizar la imagen. Puedes abrir el archivo desde el enlace.
+          <section className="disenos-view-design-grid">
+            <div className="disenos-view-preview-column">
+              <span className="disenos-view-section-label">Diseno enviado</span>
+              {archivoUrl ? (
+                <div className={styles.imagePreview}>
+                  {!previewError ? (
+                    <img
+                      src={archivoUrl}
+                      alt={`Vista previa del diseno ${diseno.idDiseno}`}
+                      className={styles.imagePreviewMedia}
+                      onError={() => setPreviewError(true)}
+                    />
+                  ) : (
+                    <div className="disenos-view-file-empty">No fue posible previsualizar este archivo.</div>
+                  )}
+                  <a href={archivoUrl} target="_blank" rel="noreferrer" className={styles.imagePreviewLink}>Abrir diseno</a>
                 </div>
+              ) : (
+                <div className="disenos-view-file-empty">Archivo no disponible.</div>
               )}
-              <a href={archivoUrl} target="_blank" rel="noreferrer" className={styles.imagePreviewLink}>
-                Abrir archivo
-              </a>
             </div>
-          )}
 
-          <div className={styles.totalBlock}>
-            <div className={styles.totalBlockRow}>
-              <span>Total pedido</span>
-              <span>{fmt(diseno.pedido?.total)}</span>
+            <div className="disenos-view-info-column">
+              <div className="disenos-view-info-block">
+                <span className="disenos-view-section-label">Producto</span>
+                <strong>{producto}</strong>
+                {diseno.descripcion && diseno.descripcion !== producto && <p>{diseno.descripcion}</p>}
+              </div>
+              <div className="disenos-view-info-block">
+                <span className="disenos-view-section-label">Origen del diseno</span>
+                <strong>{formatDesignOrigin(diseno.origenDiseno)}</strong>
+                <p>Medio: {diseno.medioRecepcion || 'No aplica'}</p>
+              </div>
+              <div className="disenos-view-info-block">
+                <span className="disenos-view-section-label">Responsable</span>
+                <strong>{enviadoPorCliente ? 'Diseno enviado por el cliente' : diseno.disenador?.nombre || 'Sin asignar'}</strong>
+                {!enviadoPorCliente && diseno.recibidoPor?.nombre && <p>Recibido por: {diseno.recibidoPor.nombre}</p>}
+              </div>
             </div>
-            <div className={styles.totalBlockRow}>
-              <span>Estado pago</span>
-              <span>{diseno.pedido?.estadoPago || 'N/A'}</span>
+          </section>
+
+          <section className="disenos-view-observations">
+            <div>
+              <span className="disenos-view-section-label">Observaciones del equipo</span>
+              <p>{diseno.observaciones || 'Sin observaciones'}</p>
             </div>
-            <div className={styles.grandTotal}>
-              <span>Estado pedido</span>
-              <span>{diseno.pedido?.estadoPedido || 'N/A'}</span>
+            <div>
+              <span className="disenos-view-section-label">Observaciones del cliente</span>
+              <p>{diseno.observacionesCliente || 'Sin observaciones'}</p>
             </div>
-          </div>
+            {(diseno.respuestaRegistradaPor?.nombre || diseno.medioRespuestaCliente || diseno.medioRespuesta || diseno.medioAprobacion) && (
+              <div>
+                <span className="disenos-view-section-label">Respuesta registrada por</span>
+                <p>{[diseno.respuestaRegistradaPor?.nombre, diseno.medioRespuestaCliente || diseno.medioRespuesta || diseno.medioAprobacion].filter(Boolean).join(' | ')}</p>
+              </div>
+            )}
+          </section>
+
+          <section className="disenos-view-price-summary" aria-label="Resumen de la cotizacion">
+            <span>Subtotal: <strong>{formatMoneyCOP(subtotal)}</strong></span>
+            <span>Descuento: <strong>{descuentoTotal > 0 ? `-${formatMoneyCOP(descuentoTotal)}` : 'Sin descuento'}</strong></span>
+            <span>Adicionales: <strong>{formatMoneyCOP(costosAdicionales)}</strong></span>
+            <span className="disenos-view-total">Total: <strong>{formatMoneyCOP(total)}</strong></span>
+          </section>
+
+          {estado === 'APROBADO' && <p className="disenos-view-state-message success">Este diseno ya fue aprobado.</p>}
+          {estado === 'RECHAZADO' && <p className="disenos-view-state-message warning">Se solicitaron correcciones. Revisa las observaciones del cliente.</p>}
         </div>
 
-        <div className={styles.modalFooter}>
-          <button onClick={onClose} className={styles.btnPrimary}>
-            Cerrar ventana
+        <div className="disenos-modal-footer disenos-view-footer">
+          {puedeResponder && onReject && (
+            <button type="button" className={styles.btnSecondary} onClick={onReject} disabled={pendingAction}>
+              {pendingAction ? 'Procesando...' : 'Solicitar cambios'}
+            </button>
+          )}
+          {puedeResponder && onApprove && (
+            <button type="button" className={styles.btnPrimary} onClick={onApprove} disabled={pendingAction}>
+              {pendingAction ? 'Procesando...' : 'Aprobar diseno'}
+            </button>
+          )}
+          <button type="button" onClick={onClose} className={puedeResponder ? styles.btnSecondary : styles.btnPrimary} disabled={pendingAction}>
+            Cerrar
           </button>
         </div>
       </div>

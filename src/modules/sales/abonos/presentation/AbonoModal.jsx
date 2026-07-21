@@ -18,6 +18,8 @@ const styles = {
   inputField: 'abonos-input-field',
   loadingText: 'abonos-loading-text',
   detailsInfoBox: 'abonos-details-info-box',
+  paymentSummary: 'abonos-payment-summary',
+  paymentSummaryItem: 'abonos-payment-summary-item',
   modalFooter: 'abonos-modal-footer',
   btnSecondary: 'abonos-btn-secondary',
   btnPrimary: 'abonos-btn-primary',
@@ -144,15 +146,17 @@ export const AbonoModal = ({
   }, [idPedido, isOpen, getPedido, getAbonosByPedido]);
 
   const resumenPago = useMemo(() => {
-    const total = Number(pedido?.total || 0);
-    const confirmado = abonosPedido
+    const total = Number(pedido?.totalPedido ?? pedido?.total ?? 0);
+    const confirmedFromAbonos = abonosPedido
       .filter(item => item.estado === 'CONFIRMADO')
       .reduce((sum, item) => sum + Number(item.monto || 0), 0);
-    const saldo = Math.max(total - confirmado, 0);
+    const confirmado = Number(pedido?.totalConfirmado ?? pedido?.totalPagado ?? confirmedFromAbonos);
+    const saldo = Number(pedido?.saldoPendiente ?? Math.max(total - confirmado, 0));
     const primerAbonoConfirmado = confirmado > 0;
-    const minimo = total * 0.5;
+    const minimo = Number(pedido?.montoMinimoPrimerAbono ?? total * 0.5);
+    const estadoPago = pedido?.estadoPago || (saldo <= 0 ? 'COMPLETO' : confirmado > 0 ? 'PARCIAL' : 'PENDIENTE');
 
-    return { total, confirmado, saldo, primerAbonoConfirmado, minimo };
+    return { total, confirmado, saldo, primerAbonoConfirmado, minimo, estadoPago };
   }, [pedido, abonosPedido]);
 
   const montoNumber = Number(monto || 0);
@@ -293,13 +297,12 @@ export const AbonoModal = ({
           )}
           {pedidoError && <p className={styles.detailsInfoBox}>{pedidoError}</p>}
           {pedido && (
-            <div className={styles.detailsInfoBox}>
-              Total: <strong>${resumenPago.total.toLocaleString('es-CO')}</strong>
-              {' '} | Confirmado: <strong>${resumenPago.confirmado.toLocaleString('es-CO')}</strong>
-              {' '} | Saldo: <strong>${resumenPago.saldo.toLocaleString('es-CO')}</strong>
-              {!resumenPago.primerAbonoConfirmado && (
-                <> | Minimo primer abono: <strong>${resumenPago.minimo.toLocaleString('es-CO')}</strong></>
-              )}
+            <div className={styles.paymentSummary}>
+              <div className={styles.paymentSummaryItem}><span>Total del pedido</span><strong>${resumenPago.total.toLocaleString('es-CO')}</strong></div>
+              <div className={styles.paymentSummaryItem}><span>Confirmado</span><strong>${resumenPago.confirmado.toLocaleString('es-CO')}</strong></div>
+              <div className={styles.paymentSummaryItem}><span>Saldo pendiente</span><strong>${resumenPago.saldo.toLocaleString('es-CO')}</strong></div>
+              <div className={styles.paymentSummaryItem}><span>Minimo primer abono</span><strong>${resumenPago.minimo.toLocaleString('es-CO')}</strong></div>
+              <div className={styles.paymentSummaryItem}><span>Estado de pago</span><strong>{resumenPago.estadoPago}</strong></div>
             </div>
           )}
 

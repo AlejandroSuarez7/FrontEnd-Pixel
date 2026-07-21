@@ -107,14 +107,15 @@ export const ClientDisenosPage = () => {
       variant: 'success',
     });
 
-    if (!accepted) return;
+    if (!accepted) return false;
 
-    await runLocked(async () => {
+    return runLocked(async () => {
       setPendingActionId(diseno.idDiseno);
       try {
         const response = await disenoRepository.approveClientDesign(diseno.idDiseno);
         notifications.success(response.message || 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo.');
         await fetchDisenos();
+        return true;
       } catch (error) {
         notifications.error(error.message || 'No se pudo aprobar el diseno.');
       } finally {
@@ -135,9 +136,9 @@ export const ClientDisenosPage = () => {
       requiredInput: true,
     });
 
-    if (!result.confirmed) return;
+    if (!result.confirmed) return false;
 
-    await runLocked(async () => {
+    return runLocked(async () => {
       setPendingActionId(diseno.idDiseno);
       try {
         const response = await disenoRepository.rejectClientDesign(diseno.idDiseno, {
@@ -145,6 +146,7 @@ export const ClientDisenosPage = () => {
         });
         notifications.success(response.message || 'Solicitud de cambios enviada correctamente.');
         await fetchDisenos();
+        return true;
       } catch (error) {
         notifications.error(error.message || 'No se pudo rechazar el diseno.');
       } finally {
@@ -185,7 +187,20 @@ export const ClientDisenosPage = () => {
               const producto = diseno.pedido?.detalles?.[0]?.descripcion || diseno.descripcion || 'Producto no especificado';
 
               return (
-                <article key={diseno.idDiseno} className={styles.clientCard}>
+                <article
+                  key={diseno.idDiseno}
+                  className={styles.clientCard}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openDetail(diseno)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      openDetail(diseno);
+                    }
+                  }}
+                  aria-label={`Ver detalle del diseno ${diseno.idDiseno}`}
+                >
                   <div className={styles.clientCardHeader}>
                     <div>
                       <strong>Diseno #{diseno.idDiseno}</strong>
@@ -212,16 +227,13 @@ export const ClientDisenosPage = () => {
                   )}
 
                   <div className={styles.clientActions}>
-                    <button type="button" className={styles.btnSecondary} onClick={() => openDetail(diseno)} disabled={isPending}>
-                      Ver detalle
-                    </button>
                     {canRespond && canReject && (
-                      <button type="button" className={styles.btnSecondary} onClick={() => handleReject(diseno)} disabled={isPending}>
+                      <button type="button" className={styles.btnSecondary} onClick={(event) => { event.stopPropagation(); handleReject(diseno); }} disabled={isPending}>
                         {pendingActionId === diseno.idDiseno ? 'Enviando...' : 'Solicitar cambios'}
                       </button>
                     )}
                     {canRespond && canApprove && (
-                      <button type="button" className={styles.btnPrimary} onClick={() => handleApprove(diseno)} disabled={isPending}>
+                      <button type="button" className={styles.btnPrimary} onClick={(event) => { event.stopPropagation(); handleApprove(diseno); }} disabled={isPending}>
                         {pendingActionId === diseno.idDiseno ? 'Aprobando...' : 'Aprobar'}
                       </button>
                     )}
@@ -237,6 +249,21 @@ export const ClientDisenosPage = () => {
         isOpen={isViewOpen}
         onClose={() => { setIsViewOpen(false); setSelectedDiseno(null); }}
         diseno={selectedDiseno}
+        pendingAction={Boolean(pendingActionId) || isLocked}
+        onApprove={canApprove ? async () => {
+          const completed = await handleApprove(selectedDiseno);
+          if (completed) {
+            setIsViewOpen(false);
+            setSelectedDiseno(null);
+          }
+        } : undefined}
+        onReject={canReject ? async () => {
+          const completed = await handleReject(selectedDiseno);
+          if (completed) {
+            setIsViewOpen(false);
+            setSelectedDiseno(null);
+          }
+        } : undefined}
       />
     </div>
   );

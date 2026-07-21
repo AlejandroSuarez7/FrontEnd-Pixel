@@ -161,7 +161,9 @@ export const DisenosPage = () => {
     } else {
       await handleCreate(payload);
       if (payload.estado === 'APROBADO') {
-        notifications.success('Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo.');
+        notifications.success('Diseno registrado como aprobado. El cliente sera notificado si corresponde.');
+      } else {
+        notifications.success('Diseno enviado para revision. El cliente sera notificado por correo.');
       }
     }
     setIsModalOpen(false);

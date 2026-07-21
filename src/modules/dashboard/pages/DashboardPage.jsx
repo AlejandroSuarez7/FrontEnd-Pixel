@@ -54,6 +54,7 @@ const trackingIcons = {
   'Pendiente de saldo final': Clock3,
   'Pedido listo para reclamar / entregar': Truck,
   'Producto entregado': ShieldCheck,
+  'Pedido anulado': Clock3,
 };
 
 const statusClassMap = {
@@ -424,6 +425,10 @@ const ActiveOrdersPanel = ({ orders, selectedOrderId, onSelectOrder }) => (
             <span>
               <strong>{order.number}</strong>
               <small>{order.date}</small>
+              <small>{order.estimatedDelivery
+                ? `Entrega estimada: ${new Date(order.estimatedDelivery).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}`
+                : 'Entrega estimada: Por definir'}
+              </small>
             </span>
             <span className={`dashboard-status-badge ${statusClassMap[order.status] || 'statusPending'}`}>
               {readableStatus(order.status)}
@@ -457,6 +462,11 @@ const TrackingPanel = ({ order }) => (
         <div className="dashboard-final-balance-alert dashboard-ready-alert">
           <strong>Tu pedido esta listo.</strong>
           <span>Coordina la entrega o reclamacion con PIXEL.</span>
+        </div>
+      )}
+      {order.estimatedDelivery && (
+        <div className="dashboard-estimated-delivery">
+          Entrega estimada: <strong>{new Date(order.estimatedDelivery).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
         </div>
       )}
       <div className="dashboard-tracking dashboard-tracking-timeline">

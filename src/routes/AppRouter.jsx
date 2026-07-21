@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Routes, Route } from 'react-router-dom';
 import { PATHS } from './paths';
 import ProtectedRoute from './ProtectedRoute';
 import DashboardLayout from '../shared/layouts/DashboardLayout/DashboardLayout';
@@ -6,7 +6,6 @@ import DashboardLayout from '../shared/layouts/DashboardLayout/DashboardLayout';
 // Pages
 import LandingPage from '../modules/landing/pages/LandingPage';
 import LoginPage from '../modules/auth/pages/LoginPage';
-import RegisterPage from '../modules/auth/pages/RegisterPage';
 import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
 import CreateClientPasswordPage from '../modules/auth/pages/CreateClientPasswordPage';
 import DashboardPage from '../modules/dashboard/pages/DashboardPage';
@@ -42,7 +41,7 @@ const AppRouter = () => {
         {/* Public Routes */}
         <Route path={PATHS.HOME} element={<LandingPage />} />
         <Route path={PATHS.LOGIN} element={<LoginPage />} />
-        <Route path={PATHS.REGISTER} element={<RegisterPage />} />
+        <Route path={PATHS.REGISTER} element={<Navigate to={PATHS.LOGIN} replace />} />
         <Route path={PATHS.RESET_PASSWORD} element={<ResetPasswordPage />} />
         <Route path={PATHS.CREATE_CLIENT_PASSWORD} element={<CreateClientPasswordPage />} />
 

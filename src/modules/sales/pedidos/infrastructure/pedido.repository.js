@@ -54,6 +54,17 @@ export class PedidoApiRepository {
     }
   }
 
+  async updateEstimatedDelivery(id, fechaEntregaEstimada) {
+    try {
+      const { data } = await apiClient.patch(`${ENDPOINT}/${id}/fecha-entrega-estimada`, {
+        fechaEntregaEstimada,
+      });
+      return pedidoDTO.fromApi(data.data);
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'No se pudo actualizar la fecha estimada de entrega');
+    }
+  }
+
   // Finaliza el pedido: PATCH /api/pedidos/:id/finalizar
   async finalizar(id) {
     try {
@@ -83,9 +94,11 @@ export class PedidoApiRepository {
   }
 
   // Anula el pedido: PATCH /api/pedidos/:id/anular
-  async anular(id) {
+  async anular(id, motivoAnulacion) {
     try {
-      const { data } = await apiClient.patch(`${ENDPOINT}/${id}/anular`);
+      const { data } = await apiClient.patch(`${ENDPOINT}/${id}/anular`, {
+        ...(motivoAnulacion?.trim() && { motivoAnulacion: motivoAnulacion.trim() }),
+      });
       return data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'No se pudo anular el pedido');

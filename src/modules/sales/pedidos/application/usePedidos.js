@@ -69,6 +69,16 @@ export const usePedidos = (filters = {}) => {
     }
   };
 
+  const handleUpdateEstimatedDelivery = async (id, fechaEntregaEstimada) => {
+    try {
+      await pedidoRepository.updateEstimatedDelivery(id, fechaEntregaEstimada);
+      await fetchPedidos();
+    } catch (error) {
+      console.error(`Error al actualizar entrega estimada del pedido #${id}:`, error);
+      throw error;
+    }
+  };
+
   const handlePendienteSaldo = async (id) => {
     try {
       await pedidoRepository.marcarPendienteSaldo(id);
@@ -79,9 +89,9 @@ export const usePedidos = (filters = {}) => {
     }
   };
 
-  const handleAnular = async (id) => {
+  const handleAnular = async (id, motivoAnulacion) => {
     try {
-      await pedidoRepository.anular(id);
+      await pedidoRepository.anular(id, motivoAnulacion);
       await fetchPedidos();
     } catch (error) {
       console.error(`Error al anular pedido #${id}:`, error);
@@ -106,6 +116,7 @@ export const usePedidos = (filters = {}) => {
     refetch:            fetchPedidos,
     handleCreate,
     handleUpdate,
+    handleUpdateEstimatedDelivery,
     handleMarcarEnProceso,
     handlePendienteSaldo,
     handleFinalizar,

@@ -494,6 +494,278 @@
   padding-top: 8px;
 }
 
+/* Order detail modal */
+.orderDetailsModal {
+  max-width: 880px;
+  padding: 24px 28px;
+}
+
+.orderDetailsHeader {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+}
+
+.orderDetailsHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.orderSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.orderSummaryCard {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+}
+
+.orderSummaryCard span,
+.orderItemEyebrow,
+.orderMoneyRow span,
+.orderNoteBox span {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.orderSummaryCard strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.orderSummaryCard small {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+.orderSummaryCardWarning {
+  border-color: #ffd99a;
+  background: #fffaf0;
+}
+
+.orderSummaryCardSuccess {
+  border-color: #b8f2e4;
+  background: #f0fffb;
+}
+
+.orderNoticeWarning {
+  border-color: #ffd99a;
+  background: #fffaf0;
+}
+
+.orderNoticeSuccess {
+  border-color: #b8f2e4;
+  background: #f0fffb;
+}
+
+.orderNoticeDanger {
+  border-color: #ffc9c9;
+  background: #fff7f7;
+}
+
+.orderDatesGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 12px 14px;
+}
+
+.orderContentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 14px;
+  align-items: start;
+}
+
+.orderSection,
+.orderTotalsPanel,
+.orderNoteBox {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+.orderSection {
+  padding: 14px;
+}
+
+.orderItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.orderItemCard {
+  padding: 14px;
+  border: 1px solid #eef2f8;
+  border-radius: var(--radius-md);
+  background: #fbfcff;
+}
+
+.orderItemHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.orderItemHeader h4 {
+  margin: 4px 0 0;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.orderItemQuantity {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.orderItemNote {
+  margin: 0 0 12px;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.orderItemMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.orderItemMetrics div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+.orderItemMetrics span {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.orderItemMetrics strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.orderItemMetrics small {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-danger);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.orderTotalsPanel {
+  padding: 14px;
+  background: #fbfcff;
+}
+
+.orderMoneyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.orderMoneyRow strong {
+  color: var(--color-text-primary);
+  font-size: 13px;
+  text-align: right;
+}
+
+.orderMoneyTotal {
+  margin: 8px -6px 0;
+  padding: 14px 6px;
+  border-bottom: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+}
+
+.orderMoneyTotal span,
+.orderMoneyTotal strong {
+  color: #fff;
+}
+
+.orderMoneyTotal strong {
+  font-size: 18px;
+}
+
+.orderMoneyBalance {
+  border-bottom: 0;
+}
+
+.orderMoneyBalance strong {
+  color: var(--color-accent);
+  font-size: 16px;
+}
+
+.orderNotesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.orderNoteBox {
+  padding: 14px;
+  background: #fafbfc;
+}
+
+.orderNoteBox p {
+  margin: 6px 0 0;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.orderEmptyState {
+  padding: 28px 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* ── Buttons ── */
 .btnPrimary {
   padding: 10px 20px;
@@ -592,6 +864,17 @@
   }
   .formRow,
   .readOnlyGrid { grid-template-columns: 1fr; }
+  .orderSummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .orderDatesGrid,
+  .orderContentGrid,
+  .orderNotesGrid {
+    grid-template-columns: 1fr;
+  }
+  .orderItemMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 560px) {
@@ -599,6 +882,19 @@
   .kpiGrid { grid-template-columns: 1fr; }
   .modalSm,
   .modalLg { padding: 20px; }
+  .orderDetailsModal {
+    padding: 18px;
+  }
+  .orderDetailsHeader,
+  .orderDetailsHeaderActions,
+  .orderItemHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .orderSummaryGrid,
+  .orderItemMetrics {
+    grid-template-columns: 1fr;
+  }
   .modalFooter,
   .pagination {
     align-items: stretch;

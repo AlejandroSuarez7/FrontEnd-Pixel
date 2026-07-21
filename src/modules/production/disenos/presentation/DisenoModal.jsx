@@ -9,6 +9,7 @@ const styles = {
   overlay: 'disenos-overlay',
   modalContainer: 'disenos-modal-container',
   modalSm: 'disenos-modal-sm',
+  modalCompact: 'disenos-modal-compact',
   modalHeader: 'disenos-modal-header',
   modalTitle: 'disenos-modal-title',
   modalCloseBtn: 'disenos-modal-close-btn',
@@ -145,7 +146,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
 
   return (
     <div className={styles.overlay}>
-      <div className={`${styles.modalContainer} ${styles.modalSm}`}>
+      <div className={`${styles.modalContainer} ${styles.modalSm} ${styles.modalCompact}`}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>
             {isEditing ? `Editar diseno #${diseno.idDiseno}` : 'Registrar diseno'}
@@ -341,7 +342,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
           )}
 
           <div className={styles.detailsInfoBox}>
-            El backend validara que el pedido tenga abono inicial confirmado antes de crear el diseno.
+            Se verificara que el pedido ya tenga el primer abono.
           </div>
 
           <div className={styles.modalFooter}>

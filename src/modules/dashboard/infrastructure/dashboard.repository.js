@@ -97,6 +97,13 @@ const isOrderFinalized = (pedido = {}) => ['FINALIZADO', 'TERMINADO', 'ENTREGADO
 
 const buildClientTrackingSteps = (pedido = {}) => {
   const estadoPedido = normalizeStatus(pedido.estadoPedido);
+  if (['ANULADO', 'CANCELADO', 'CANCELADA'].includes(estadoPedido)) {
+    return [{
+      label: 'Pedido anulado',
+      state: 'current',
+      detail: 'Este pedido fue anulado y conserva su historial para consulta.',
+    }];
+  }
   const diseno = getOrderDesign(pedido);
   const estadoDiseno = normalizeStatus(diseno?.estado || pedido.estadoDiseno);
   const firstPaymentConfirmed = hasConfirmedPayment(pedido);
@@ -164,6 +171,7 @@ const buildClientActiveOrder = (pedido = {}) => ({
   status: pedido.estadoPedido || 'PENDIENTE',
   total: toNumber(pedido.total),
   balance: toNumber(pedido.saldoPendiente ?? pedido.saldo),
+  estimatedDelivery: pedido.fechaEntregaEstimada ?? pedido.fecha_estimada_entrega ?? null,
   isPendingFinalBalance: normalizeStatus(pedido.estadoPedido) === 'PENDIENTE_SALDO_FINAL',
   isReadyToDeliver: ['FINALIZADO', 'TERMINADO'].includes(normalizeStatus(pedido.estadoPedido)) &&
     Number(pedido.saldoPendiente ?? pedido.saldo ?? 0) <= 0,
@@ -171,8 +179,7 @@ const buildClientActiveOrder = (pedido = {}) => ({
 });
 
 const shouldShowOrderInTracking = (pedido = {}) => {
-  const status = normalizeStatus(pedido.estadoPedido);
-  return !['ANULADO', 'CANCELADO', 'CANCELADA'].includes(status);
+  return Boolean(pedido?.idPedido);
 };
 
 const addUniqueOrders = (target, pedidos = []) => {

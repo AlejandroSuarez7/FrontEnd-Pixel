@@ -92,7 +92,7 @@ const Sidebar = () => {
         <div>
           <div className="sidebar-header">
             <button type="button" className="sidebar-title" onClick={handleGoHome}>
-              {collapsed ? 'P' : 'PIXEL'}
+              <span className="sidebar-brand-word">PIXEL</span>
             </button>
             <button
               type="button"

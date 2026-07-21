@@ -39,7 +39,7 @@ const PedidosPage = () => {
   const {
     pedidos,
     loading,
-    handleUpdate,
+    handleUpdateEstimatedDelivery,
     handleMarcarEnProceso,
     handlePendienteSaldo,
     handleFinalizar,
@@ -129,17 +129,20 @@ const PedidosPage = () => {
   };
 
   const onAnularClick = async (id) => {
-    const accepted = await confirm({
+    const result = await confirm({
       title: 'Anular pedido',
-      message: 'Anular este pedido? Esta accion no se puede deshacer.',
+      message: 'Estas seguro de anular este pedido? Esta accion conservara el historial, abonos y disenos asociados.',
       confirmText: 'Anular',
       variant: 'danger',
+      input: true,
+      inputLabel: 'Motivo de anulacion (opcional)',
+      inputPlaceholder: 'Ej: El cliente cancelo la solicitud.',
     });
 
-    if (!accepted) return;
+    if (!result.confirmed) return;
 
     try {
-      await handleAnular(id);
+      await handleAnular(id, result.value);
       notifications.success('Pedido anulado correctamente.');
     } catch (err) {
       notifications.error(err.message || 'No se pudo anular el pedido.');
@@ -263,6 +266,8 @@ const PedidosPage = () => {
                           ? 'Pendiente saldo final'
                           : pedido.estadoPedido === 'ENTREGADO'
                             ? 'Entregado'
+                            : pedido.estadoPedido === 'ANULADO'
+                              ? 'Anulado'
                             : pedido.estadoPedido.replace('_', ' ')}
                       </span>
                     </td>
@@ -304,7 +309,7 @@ const PedidosPage = () => {
                           hasPermission('pedidos.finalizar') && isStaff && canConfirmDelivery(pedido) && { label: 'Confirmar entrega', onClick: () => onConfirmarEntregaClick(pedido.idPedido), variant: 'success' },
                           hasPermission('pedidos.anular') && isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ENTREGADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },
                           hasPermission('pedidos.editar') && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ENTREGADO' && pedido.estadoPedido !== 'ANULADO' && {
-                            label: 'Editar',
+                            label: 'Asignar fecha estimada',
                             onClick: () => { setSelectedPedido(pedido); setIsEditOpen(true); },
                             variant: 'warning',
                           },
@@ -339,9 +344,8 @@ const PedidosPage = () => {
       <PedidoEditModal
         isOpen={isEditOpen}
         onClose={() => { setIsEditOpen(false); setSelectedPedido(null); }}
-        onSubmit={handleUpdate}
+        onSubmit={handleUpdateEstimatedDelivery}
         pedido={selectedPedido}
-        isStaff={isStaff}
       />
     </div>
   );

@@ -1,6 +1,15 @@
 
 /* Landing Page - estilos personalizados (responsive) */
 
+#inicio,
+#como-funciona,
+#servicios,
+#comparativo,
+#productos,
+#contacto {
+  scroll-margin-top: 84px;
+}
+
 .landing-header {
 	position: fixed;
 	top: 0;
