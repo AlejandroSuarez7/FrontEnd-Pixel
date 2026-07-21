@@ -6,6 +6,7 @@ export const PATHS = {
   CREATE_CLIENT_PASSWORD: '/crear-password-cliente/:token',
 
   DASHBOARD: '/dashboard',
+  CLIENT_DESIGNS: '/dashboard/cliente/disenos',
   PROFILE: '/dashboard/profile',
 
   ROLES: '/dashboard/roles',

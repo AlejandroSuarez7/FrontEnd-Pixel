@@ -65,6 +65,7 @@ const ESTADO_CLASS = {
 };
 
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
+const getClienteNombre = (cliente) => cliente?.nombre || 'Cliente no especificado';
 const getClienteContacto = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
 
 export const AbonosPage = () => {
@@ -289,7 +290,7 @@ export const AbonosPage = () => {
                     <td className={styles.tableCellId}>#{abono.idAbono}</td>
                     <td className={styles.tableCell}>#{abono.idPedido}</td>
                     <td className={styles.tableCell}>
-                      <strong>{abono.pedido?.cliente?.nombre || 'N/A'}</strong>
+                      <strong>{getClienteNombre(abono.pedido?.cliente)}</strong>
                       <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>{getClienteContacto(abono.pedido?.cliente)}</span>
                     </td>
                     <td className={styles.tableCell}>{fmt(abono.pedido?.total)}</td>

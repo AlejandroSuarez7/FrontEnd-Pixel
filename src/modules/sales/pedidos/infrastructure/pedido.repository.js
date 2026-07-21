@@ -64,6 +64,15 @@ export class PedidoApiRepository {
     }
   }
 
+  async marcarPendienteSaldo(id) {
+    try {
+      const { data } = await apiClient.patch(`${ENDPOINT}/${id}/pendiente-saldo`);
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo solicitar el saldo final');
+    }
+  }
+
   // Anula el pedido: PATCH /api/pedidos/:id/anular
   async anular(id) {
     try {

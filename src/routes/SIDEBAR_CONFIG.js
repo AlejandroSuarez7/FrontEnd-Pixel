@@ -3,6 +3,7 @@ import { PATHS } from './paths';
 
 export const ROUTE_PERMISSIONS = {
   [PATHS.DASHBOARD]: ['dashboard.admin', 'dashboard.cliente'],
+  [PATHS.CLIENT_DESIGNS]: ['disenos.cliente.ver'],
   [PATHS.ROLES]: ['roles.ver'],
   [PATHS.USERS]: ['usuarios.ver'],
   [PATHS.USERS_EMPLOYEES]: ['usuarios.ver'],
@@ -95,7 +96,8 @@ export const canAccessPath = (permissions, pathname, user = null) => {
   if (pathname === PATHS.HOME || pathname === PATHS.PROFILE) return true;
 
   if (isClientUser(user, permissions)) {
-    return pathname === PATHS.DASHBOARD;
+    if (pathname === PATHS.DASHBOARD) return true;
+    return hasAnyPermission(permissions, ROUTE_PERMISSIONS[pathname] || []);
   }
 
   const matchedPath = Object.keys(ROUTE_PERMISSIONS)
@@ -135,9 +137,10 @@ export const filterSidebarByPermissions = (permissions, user = null) => {
   if (isClientUser(user, permissions)) {
     return [
       { label: 'Mis pedidos', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
+      { label: 'Mis disenos', icon: 'image', to: PATHS.CLIENT_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_DESIGNS] },
       { label: 'Crear cotizacion', icon: 'add_circle', to: PATHS.HOME },
       { label: 'Mi Perfil', icon: 'account_circle', to: PATHS.PROFILE },
-    ];
+    ].filter((item) => !item.permissions || hasAnyPermission(permissions, item.permissions));
   }
 
   return SIDEBAR_ITEMS

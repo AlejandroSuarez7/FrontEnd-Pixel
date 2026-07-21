@@ -30,6 +30,7 @@ const getFirstCalculationItem = (calculation) => {
 
 export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) => {
   const [observaciones, setObservaciones] = useState('');
+  const [motivoCambio, setMotivoCambio] = useState('');
   const [costosAdicionales, setCostosAdicionales] = useState(0);
   const [cliente, setCliente] = useState({ nombre: '', correo: '', telefono: '' });
   const [detalles, setDetalles] = useState([]);
@@ -46,6 +47,10 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
   const isEditing = !!quote;
   const isPricing = isStaff && isEditing;
   const detail = detalles[0] || initialDetail;
+  const hasExistingValues = Number(quote?.total || 0) > 0
+    || Number(quote?.subtotal || 0) > 0
+    || detalles.some(det => Number(det.precioUnitario || 0) > 0);
+  const shouldShowChangeReason = isPricing && hasExistingValues;
   const calculationItem = getFirstCalculationItem(calculo);
   const quantity = Number(detail.cantidad || 1);
   const unitBase = Number(
@@ -121,6 +126,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
   useEffect(() => {
     if (quote) {
       setObservaciones(quote.observaciones || '');
+      setMotivoCambio('');
       setCostosAdicionales(quote.costosAdicionales || 0);
       setCliente({
         nombre: quote.cliente?.nombre || '',
@@ -130,6 +136,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
       setDetalles(quote.detalles || []);
     } else {
       setObservaciones('');
+      setMotivoCambio('');
       setCostosAdicionales(0);
       setCliente({ nombre: '', correo: '', telefono: '' });
       setCalculo(null);
@@ -236,6 +243,14 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
           notifications.warning('Ingresa un correo valido para el cliente.');
           return;
         }
+        if (!detail.idProducto) {
+          notifications.warning('Selecciona un producto para calcular la cotizacion.');
+          return;
+        }
+        if (Number(detail.cantidad || 0) <= 0) {
+          notifications.warning('La cantidad debe ser mayor a 0.');
+          return;
+        }
       }
 
       const pricedDetails = isPricing
@@ -250,6 +265,9 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
         observaciones: observaciones.trim() || null,
         detalles: pricedDetails,
         ...(isPricing && { costosAdicionales: Number(costosAdicionales || 0) }),
+        ...(shouldShowChangeReason && motivoCambio.trim() && {
+          motivoCambio: motivoCambio.trim(),
+        }),
         ...(isStaff && !isEditing && {
           cliente: {
             nombre: cliente.nombre.trim(),
@@ -445,6 +463,22 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
                   <small>Este sera el valor enviado al cliente para aprobacion.</small>
                 </div>
               </div>
+
+              {shouldShowChangeReason && (
+                <div className={styles.inputGroup}>
+                  <label className={styles.inputLabel}>Motivo del cambio</label>
+                  <textarea
+                    value={motivoCambio}
+                    onChange={event => setMotivoCambio(event.target.value)}
+                    className={styles.inputField}
+                    rows={2}
+                    placeholder="Ej: Se agrego costo de diseno, se ajusto la cantidad, se modifico el valor del producto..."
+                  />
+                  <span className={styles.fieldHint}>
+                    Este motivo sera enviado al cliente por correo si la cotizacion ya habia sido enviada o valorizada.
+                  </span>
+                </div>
+              )}
 
               <div className={styles.observationsGrid}>
                 <div className={styles.readOnlyNote}>

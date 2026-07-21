@@ -11,11 +11,22 @@ export const disenoDTO = {
       archivoUrl: apiData.archivoUrl,
       descripcion: apiData.descripcion,
       observaciones: apiData.observaciones,
+      origenDiseno: apiData.origenDiseno,
+      medioRecepcion: apiData.medioRecepcion,
+      recibidoPorId: apiData.recibidoPorId,
+      recibidoPor: apiData.recibidoPor ?? null,
       estado: apiData.estado,
       fechaCreacion: apiData.fechaCreacion ?? apiData.fecha_creacion,
       fechaActualizacion: apiData.fechaActualizacion,
       fechaEnvio: apiData.fechaEnvio,
+      fechaRecepcion: apiData.fechaRecepcion,
       fechaAprobacion: apiData.fechaAprobacion,
+      fechaRespuestaCliente: apiData.fechaRespuestaCliente,
+      observacionesCliente: apiData.observacionesCliente,
+      medioAprobacion: apiData.medioAprobacion,
+      medioRespuesta: apiData.medioRespuesta,
+      medioRespuestaCliente: apiData.medioRespuestaCliente,
+      respuestaRegistradaPor: apiData.respuestaRegistradaPor ?? null,
       pedido: apiData.pedido ?? null,
       disenador: apiData.disenador ?? null,
     });
@@ -29,10 +40,14 @@ export const disenoDTO = {
   toApi(domainData) {
     return {
       idPedido: Number(domainData.idPedido),
-      ...(domainData.idDisenador && { idDisenador: Number(domainData.idDisenador) }),
+      ...(domainData.origenDiseno !== 'CLIENTE' && domainData.idDisenador && { idDisenador: Number(domainData.idDisenador) }),
+      origenDiseno: domainData.origenDiseno || 'DISENADOR',
+      ...(domainData.medioRecepcion && { medioRecepcion: domainData.medioRecepcion }),
       archivoUrl: domainData.archivoUrl?.trim() || null,
       descripcion: domainData.descripcion?.trim() || null,
       observaciones: domainData.observaciones?.trim() || null,
+      observacionesCliente: domainData.observacionesCliente?.trim() || null,
+      ...(domainData.estado && { estado: domainData.estado }),
     };
   },
 

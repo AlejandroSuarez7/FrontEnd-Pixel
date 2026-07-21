@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   BadgeDollarSign,
+  Check,
   Clock3,
   Factory,
   FileText,
@@ -47,8 +48,10 @@ const trackingIcons = {
   'Primer abono confirmado': BadgeDollarSign,
   'Diseno en proceso': PencilRuler,
   'Diseno pendiente de aprobacion': ShieldCheck,
+  'Diseno aprobado': ShieldCheck,
+  'Correcciones solicitadas': PencilRuler,
   'En produccion': Factory,
-  'Pendiente de segundo abono / saldo final': Clock3,
+  'Pendiente de saldo final': Clock3,
   'Pedido finalizado': ShieldCheck,
   'Listo para reclamar / entregar': Truck,
 };
@@ -63,6 +66,7 @@ const statusClassMap = {
   Cotizar: 'statusProduction',
   PENDIENTE: 'statusPending',
   EN_PROCESO: 'statusProduction',
+  PENDIENTE_SALDO_FINAL: 'statusPending',
   FINALIZADO: 'statusDone',
   ANULADO: 'statusCancelled',
   POR_APROBAR: 'statusProduction',
@@ -72,6 +76,7 @@ const readableStatus = (status) => {
   const labels = {
     PENDIENTE: 'Pendiente',
     EN_PROCESO: 'En produccion',
+    PENDIENTE_SALDO_FINAL: 'Pendiente saldo final',
     FINALIZADO: 'Terminado',
     ANULADO: 'Anulado',
     POR_APROBAR: 'Por aprobar',
@@ -437,9 +442,18 @@ const TrackingPanel = ({ order }) => (
         <p>No hay un pedido activo para mostrar seguimiento.</p>
       </div>
     ) : (
-      <div className="dashboard-tracking">
+      <>
+      {order.isPendingFinalBalance && (
+        <div className="dashboard-final-balance-alert">
+          <strong>Tu pedido ya termino produccion.</strong>
+          <span>Falta confirmar el saldo final para coordinar la entrega.</span>
+          <small>Saldo pendiente: {formatCopFull(order.balance)}</small>
+          <p>Un asesor se comunicara contigo para coordinar el segundo abono y la entrega.</p>
+        </div>
+      )}
+      <div className="dashboard-tracking dashboard-tracking-timeline">
         {order.tracking.map((step) => {
-        const Icon = trackingIcons[step.label] || Clock3;
+        const Icon = step.state === 'completed' ? Check : trackingIcons[step.label] || Clock3;
         return (
           <article className={`tracking-step ${step.state}`} key={step.label}>
             <span className="tracking-marker">
@@ -448,11 +462,13 @@ const TrackingPanel = ({ order }) => (
             <div>
               <strong>{step.label}</strong>
               <small>{trackingStatusText[step.state] || 'Pendiente'}</small>
+              {step.detail && <p>{step.detail}</p>}
             </div>
           </article>
         );
       })}
       </div>
+      </>
     )}
   </section>
 );

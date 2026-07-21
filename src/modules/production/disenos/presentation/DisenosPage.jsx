@@ -8,6 +8,7 @@ import { useAuth } from '../../../../store/AuthContext';
 import { useDisenos } from '../application/useDisenos';
 import { DisenoModal } from './DisenoModal';
 import { DisenoViewModal } from './DisenoViewModal';
+import { DesignClientResponseModal } from './DesignClientResponseModal';
 import { formatDate } from '../../../../core/utils/fechaFormato';
 import './DisenosPage.css';
 
@@ -44,6 +45,7 @@ const styles = {
   estadoPagoParcial: 'disenos-status-warning',
   estadoPedidoEnProceso: 'disenos-status-info',
   estadoPagoCompleto: 'disenos-status-success',
+  estadoRechazado: 'disenos-status-danger',
   actionsCell: 'disenos-actions-cell',
   actionBtn: 'disenos-action-btn',
   actionBtnProcess: 'disenos-action-btn-process',
@@ -62,16 +64,32 @@ const ESTADO_CLASS = {
   PENDIENTE: styles.estadoPagoParcial,
   ENVIADO: styles.estadoPedidoEnProceso,
   APROBADO: styles.estadoPagoCompleto,
+  RECHAZADO: styles.estadoRechazado,
 };
 
 const getClienteContacto = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
+const normalizeStatus = (value = '') => String(value || '').toUpperCase();
+const isClientOrigin = (diseno) => normalizeStatus(diseno?.origenDiseno) === 'CLIENTE';
+const formatDesignOrigin = (origen = '') => {
+  const value = normalizeStatus(origen);
+  if (value === 'CLIENTE') return 'Enviado por cliente';
+  if (value === 'ADMIN') return 'Admin';
+  if (value === 'OTRO') return 'Otro';
+  return 'Equipo PIXEL';
+};
+const canRegisterClientResponse = (estado) => [
+  'ENVIADO',
+  'PENDIENTE_APROBACION',
+  'PENDIENTE_DE_APROBACION',
+  'POR_APROBAR',
+  'EN_REVISION',
+].includes(normalizeStatus(estado));
 
 export const DisenosPage = () => {
   const { hasPermission } = useAuth();
   const confirm = useConfirm();
   const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
   const userRole = session?.rol?.nombre || 'Cliente';
-  const userId = Number(session?.idUsuario || session?.id || 0);
   const isStaff = userRole === 'Admin' || userRole === 'Secretaria';
   const isDisenador = userRole?.toLowerCase?.().includes('dise');
 
@@ -79,6 +97,7 @@ export const DisenosPage = () => {
   const [selectedDiseno, setSelectedDiseno] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [responseModal, setResponseModal] = useState({ open: false, mode: 'approve', diseno: null });
 
   const {
     disenos,
@@ -86,6 +105,8 @@ export const DisenosPage = () => {
     handleCreate,
     handleUpdate,
     handleApprove,
+    handleApproveByClientAdmin,
+    handleRejectByClientAdmin,
     handleDelete,
     getPedidos,
   } = useDisenos({
@@ -115,6 +136,7 @@ export const DisenosPage = () => {
   const pendientes = filteredDisenos.filter(item => item.estado === 'PENDIENTE').length;
   const enviados = filteredDisenos.filter(item => item.estado === 'ENVIADO').length;
   const aprobados = filteredDisenos.filter(item => item.estado === 'APROBADO').length;
+  const rechazados = filteredDisenos.filter(item => item.estado === 'RECHAZADO').length;
   const {
     currentPage,
     pageSize,
@@ -144,9 +166,23 @@ export const DisenosPage = () => {
   };
 
   const canApprove = (diseno) => {
-    const ownerId = Number(diseno.pedido?.cliente?.idUsuario || 0);
-    return diseno.estado === 'ENVIADO' && hasPermission('disenos.aprobar') && (isStaff || ownerId === userId);
+    return diseno.estado === 'ENVIADO' &&
+      hasPermission('disenos.aprobar') &&
+      !hasPermission('disenos.aprobar_cliente') &&
+      (isStaff || userRole === 'Cliente');
   };
+
+  const canApproveByClient = (diseno) => (
+    hasPermission('disenos.aprobar_cliente') &&
+    isStaff &&
+    canRegisterClientResponse(diseno.estado)
+  );
+
+  const canRejectByClient = (diseno) => (
+    hasPermission('disenos.rechazar_cliente') &&
+    isStaff &&
+    canRegisterClientResponse(diseno.estado)
+  );
 
   const onApproveClick = async (diseno) => {
     const result = await confirm({
@@ -166,6 +202,40 @@ export const DisenosPage = () => {
       notifications.success(response.message || 'Diseno aprobado correctamente.');
     } catch (error) {
       notifications.error(error.message || 'No se pudo aprobar el diseno.');
+    }
+  };
+
+  const openClientResponseModal = (mode, diseno) => {
+    setResponseModal({ open: true, mode, diseno });
+  };
+
+  const closeClientResponseModal = () => {
+    setResponseModal({ open: false, mode: 'approve', diseno: null });
+  };
+
+  const handleClientResponseSubmit = async ({ medio, observaciones }) => {
+    const diseno = responseModal.diseno;
+    if (!diseno) return;
+
+    try {
+      const response = responseModal.mode === 'reject'
+        ? await handleRejectByClientAdmin(diseno.idDiseno, {
+          medioRespuesta: medio,
+          observacionesCliente: observaciones,
+        })
+        : await handleApproveByClientAdmin(diseno.idDiseno, {
+          medioAprobacion: medio,
+          observaciones,
+        });
+
+      notifications.success(response.message || (
+        responseModal.mode === 'reject'
+          ? 'Rechazo del cliente registrado correctamente.'
+          : 'Aprobacion del cliente registrada correctamente.'
+      ));
+      closeClientResponseModal();
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo registrar la respuesta del cliente.');
     }
   };
 
@@ -209,6 +279,7 @@ export const DisenosPage = () => {
         <div className={`${styles.kpiCard} ${styles.kpiCardWarning}`}><span className={styles.kpiLabel}>Pendientes</span><span className={`${styles.kpiValue} ${styles.kpiValueWarning}`}>{pendientes}</span></div>
         <div className={`${styles.kpiCard} ${styles.kpiCardInfo}`}><span className={styles.kpiLabel}>Enviados</span><span className={`${styles.kpiValue} ${styles.kpiValueInfo}`}>{enviados}</span></div>
         <div className={`${styles.kpiCard} ${styles.kpiCardSuccess}`}><span className={styles.kpiLabel}>Aprobados</span><span className={`${styles.kpiValue} ${styles.kpiValueSuccess}`}>{aprobados}</span></div>
+        <div className={styles.kpiCard}><span className={styles.kpiLabel}>Rechazados</span><span className={styles.kpiValue}>{rechazados}</span></div>
       </div>
 
       <div className={styles.filterSection}>
@@ -232,6 +303,7 @@ export const DisenosPage = () => {
           <option value="PENDIENTE">Pendiente</option>
           <option value="ENVIADO">Enviado</option>
           <option value="APROBADO">Aprobado</option>
+          <option value="RECHAZADO">Rechazado</option>
         </select>
       </div>
 
@@ -248,6 +320,7 @@ export const DisenosPage = () => {
                   <th className={styles.tableHeader}>ID</th>
                   <th className={styles.tableHeader}>Pedido</th>
                   <th className={styles.tableHeader}>Cliente</th>
+                  <th className={styles.tableHeader}>Origen</th>
                   <th className={styles.tableHeader}>Producto / descripcion</th>
                   <th className={styles.tableHeader}>Disenador</th>
                   <th className={styles.tableHeader}>Estado</th>
@@ -261,11 +334,17 @@ export const DisenosPage = () => {
                     <td className={styles.tableCellId}>#{diseno.idDiseno}</td>
                     <td className={styles.tableCell}>#{diseno.idPedido}</td>
                     <td className={styles.tableCell}>
-                      <strong>{diseno.pedido?.cliente?.nombre || 'N/A'}</strong>
+                      <strong>{diseno.pedido?.cliente?.nombre || 'Cliente no especificado'}</strong>
                       <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>{getClienteContacto(diseno.pedido?.cliente)}</span>
                     </td>
+                    <td className={styles.tableCell}>
+                      <strong>{formatDesignOrigin(diseno.origenDiseno)}</strong>
+                      {diseno.medioRecepcion && (
+                        <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>{diseno.medioRecepcion}</span>
+                      )}
+                    </td>
                     <td className={styles.tableCell}>{diseno.descripcion || diseno.pedido?.detalles?.[0]?.descripcion || 'Sin descripcion'}</td>
-                    <td className={styles.tableCell}>{diseno.disenador?.nombre || 'Sin asignar'}</td>
+                    <td className={styles.tableCell}>{isClientOrigin(diseno) ? 'No aplica' : diseno.disenador?.nombre || 'Sin asignar'}</td>
                     <td className={styles.tableCell}>
                       <span className={`${styles.statusBadge} ${ESTADO_CLASS[diseno.estado] || ''}`}>
                         {diseno.estado}
@@ -276,6 +355,8 @@ export const DisenosPage = () => {
                       <TableActions
                         primaryAction={{ label: 'Ver', onClick: () => { setSelectedDiseno(diseno); setIsViewOpen(true); }, variant: 'accent' }}
                         actions={[
+                          canApproveByClient(diseno) && { label: 'Aprobar por cliente', onClick: () => openClientResponseModal('approve', diseno), variant: 'success' },
+                          canRejectByClient(diseno) && { label: 'Rechazar por cliente', onClick: () => openClientResponseModal('reject', diseno), variant: 'danger' },
                           canApprove(diseno) && { label: 'Aprobar', onClick: () => onApproveClick(diseno), variant: 'success' },
                           hasPermission('disenos.editar') && (isStaff || isDisenador) && diseno.estado !== 'APROBADO' && { label: 'Editar', onClick: () => handleOpenEdit(diseno), variant: 'warning' },
                           hasPermission('disenos.eliminar') && isStaff && diseno.estado !== 'APROBADO' && { label: 'Eliminar', onClick: () => onDeleteClick(diseno), variant: 'danger' },
@@ -311,6 +392,14 @@ export const DisenosPage = () => {
         isOpen={isViewOpen}
         onClose={() => { setIsViewOpen(false); setSelectedDiseno(null); }}
         diseno={selectedDiseno}
+      />
+
+      <DesignClientResponseModal
+        isOpen={responseModal.open}
+        mode={responseModal.mode}
+        diseno={responseModal.diseno}
+        onClose={closeClientResponseModal}
+        onSubmit={handleClientResponseSubmit}
       />
     </div>
   );

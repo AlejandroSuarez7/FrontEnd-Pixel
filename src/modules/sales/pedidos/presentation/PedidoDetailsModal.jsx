@@ -12,6 +12,7 @@ import styles from './pedidos.module.css';
 const ESTADO_PEDIDO_CLASS = {
   PENDIENTE:   styles.estadoPedidoPendiente,
   EN_PROCESO:  styles.estadoPedidoEnProceso,
+  PENDIENTE_SALDO_FINAL: styles.estadoPedidoPendienteSaldo,
   FINALIZADO:  styles.estadoPedidoFinalizado,
   ANULADO:     styles.estadoPedidoAnulado,
 };
@@ -36,6 +37,7 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
 
   const fmt = (val) => formatMoneyCOP(val ?? 0);
   const clienteContacto = [pedido.cliente?.correo, pedido.cliente?.telefono].filter(Boolean).join(' | ');
+  const clienteNombre = pedido.cliente?.nombre || 'Cliente no especificado';
 
   return (
     <div className={styles.overlay}>
@@ -45,13 +47,13 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
           <div>
             <h3 className={styles.modalTitle}>Pedido #{pedido.idPedido}</h3>
             <p className={styles.modalSubtitle}>
-              Cliente: {pedido.cliente?.nombre || 'N/A'} · Cotización #{pedido.idCotizacion}
+              Cliente: {clienteNombre} · Cotización #{pedido.idCotizacion}
             </p>
             {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span className={`${styles.statusBadge} ${ESTADO_PEDIDO_CLASS[pedido.estadoPedido] || ''}`}>
-              {pedido.estadoPedido}
+              {pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' ? 'Pendiente saldo final' : pedido.estadoPedido}
             </span>
             <span className={`${styles.statusBadge} ${ESTADO_PAGO_CLASS[pedido.estadoPago] || ''}`}>
               {pedido.estadoPago}
@@ -67,6 +69,13 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
             <strong>Observaciones:</strong>{' '}
             {formatObservaciones(pedido.observaciones)}
           </div>
+
+          {pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' && (
+            <div className={styles.detailsInfoBox}>
+              <strong>Saldo final pendiente:</strong>{' '}
+              El pedido termino produccion y falta confirmar el saldo final para coordinar la entrega.
+            </div>
+          )}
 
           {/* Fechas */}
           <div className={styles.readOnlyGrid}>

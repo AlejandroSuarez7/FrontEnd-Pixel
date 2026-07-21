@@ -76,6 +76,7 @@ export const quotesDTO = {
       }),
       detalles: domainData.detalles?.map(d => ({
         idDetalleCotizacion: d.idDetalleCotizacion ? Number(d.idDetalleCotizacion) : undefined,
+        idProducto:  d.idProducto && !isNaN(d.idProducto) ? Number(d.idProducto) : undefined,
         idTecnica:   d.idTecnica && !isNaN(d.idTecnica) ? Number(d.idTecnica) : 0,
         descripcion: d.descripcion?.trim() || '',
         cantidad:    Number(d.cantidad || 1),

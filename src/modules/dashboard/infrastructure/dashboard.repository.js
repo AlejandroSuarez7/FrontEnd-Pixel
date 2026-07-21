@@ -60,7 +60,7 @@ const buildOrderStatus = (distribucion = {}) => [
 const buildLatestOrders = (pedidos = []) =>
   pedidos.map((pedido) => ({
     number: `PX-${pedido.idPedido}`,
-    customer: pedido.cliente?.nombre || 'Cliente',
+    customer: pedido.cliente?.nombre || 'Cliente no especificado',
     date: formatShortDate(pedido.fechaCreacion),
     status: pedido.estadoPedido || 'PENDIENTE',
   }));
@@ -68,7 +68,7 @@ const buildLatestOrders = (pedidos = []) =>
 const buildPendingQuotesList = (cotizaciones = []) =>
   cotizaciones.map((quote) => ({
     number: `CT-${quote.idCotizacion}`,
-    customer: quote.cliente?.nombre || 'Cliente',
+    customer: quote.cliente?.nombre || 'Cliente no especificado',
     date: formatShortDate(quote.fechaCreacion),
     status: quote.estado || 'PENDIENTE',
   }));
@@ -89,7 +89,7 @@ const hasFinalPaymentPending = (pedido = {}) => {
   const estadoPago = normalizeStatus(pedido.estadoPago);
   const saldo = Number(pedido.saldoPendiente ?? pedido.saldo ?? 0);
 
-  return estadoPago === 'PARCIAL' || saldo > 0;
+  return estadoPago !== 'COMPLETO' || saldo > 0;
 };
 
 const isOrderFinalized = (pedido = {}) => ['FINALIZADO', 'TERMINADO'].includes(normalizeStatus(pedido.estadoPedido));
@@ -99,12 +99,14 @@ const buildClientTrackingSteps = (pedido = {}) => {
   const diseno = getOrderDesign(pedido);
   const estadoDiseno = normalizeStatus(diseno?.estado || pedido.estadoDiseno);
   const firstPaymentConfirmed = hasConfirmedPayment(pedido);
-  const inProduction = ['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION', 'FINALIZADO', 'TERMINADO'].includes(estadoPedido);
+  const pendingFinalBalance = estadoPedido === 'PENDIENTE_SALDO_FINAL';
+  const inProduction = ['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION', 'PENDIENTE_SALDO_FINAL', 'FINALIZADO', 'TERMINADO'].includes(estadoPedido);
   const finalized = isOrderFinalized(pedido);
   const finalPaymentPending = hasFinalPaymentPending(pedido);
   const readyToDeliver = finalized && !finalPaymentPending;
   const delivered = ['ENTREGADO', 'RECLAMADO'].includes(estadoPedido);
-  const designWaitingApproval = ['PENDIENTE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(estadoDiseno);
+  const designWaitingApproval = ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(estadoDiseno);
+  const designRejected = ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(estadoDiseno);
   const designApproved = ['APROBADO', 'APROBADA', 'PRODUCCION'].includes(estadoDiseno) || inProduction || finalized;
 
   const steps = [
@@ -113,30 +115,44 @@ const buildClientTrackingSteps = (pedido = {}) => {
     { label: 'Primer abono confirmado', completed: firstPaymentConfirmed },
     {
       label: 'Diseno en proceso',
-      completed: designWaitingApproval || designApproved || inProduction || finalized,
-      current: firstPaymentConfirmed && !designWaitingApproval && !designApproved && !inProduction && !finalized,
+      completed: designWaitingApproval || designRejected || designApproved || inProduction || finalized,
+      current: firstPaymentConfirmed && !designWaitingApproval && !designRejected && !designApproved && !inProduction && !finalized,
     },
     {
       label: 'Diseno pendiente de aprobacion',
-      completed: designApproved || inProduction || finalized,
-      current: designWaitingApproval && !designApproved,
+      completed: designRejected || designApproved || inProduction || finalized,
+      current: designWaitingApproval && !designRejected && !designApproved,
     },
-    { label: 'En produccion', completed: finalized, current: inProduction && !finalized },
-    { label: 'Pendiente de segundo abono / saldo final', completed: readyToDeliver, current: finalized && finalPaymentPending },
+    {
+      label: 'Correcciones solicitadas',
+      completed: false,
+      current: designRejected,
+      visible: designRejected,
+    },
+    {
+      label: 'Diseno aprobado',
+      completed: designApproved || inProduction || finalized,
+    },
+    { label: 'En produccion', completed: pendingFinalBalance || finalized, current: inProduction && !pendingFinalBalance && !finalized },
+    { label: 'Pendiente de saldo final', completed: readyToDeliver, current: pendingFinalBalance || (finalized && finalPaymentPending) },
     { label: 'Pedido finalizado', completed: readyToDeliver, current: finalized && !readyToDeliver },
     { label: 'Listo para reclamar / entregar', completed: delivered, current: readyToDeliver && !delivered },
   ];
 
-  const currentIndex = steps.findIndex((step) => step.current);
-  const fallbackCurrentIndex = currentIndex === -1 ? steps.findIndex((step) => !step.completed) : currentIndex;
+  const visibleSteps = steps.filter((step) => step.visible !== false);
+  const currentIndex = visibleSteps.findIndex((step) => step.current);
+  const fallbackCurrentIndex = currentIndex === -1 ? visibleSteps.findIndex((step) => !step.completed) : currentIndex;
 
-  return steps.map((step, index) => ({
+  return visibleSteps.map((step, index) => ({
     label: step.label,
     state: step.completed
       ? 'completed'
       : index === fallbackCurrentIndex
         ? 'current'
         : 'pending',
+    detail: step.label === 'Correcciones solicitadas'
+      ? [diseno?.observacionesCliente, formatShortDate(diseno?.fechaRespuestaCliente)].filter(Boolean).join(' | ')
+      : undefined,
   }));
 };
 
@@ -147,6 +163,7 @@ const buildClientActiveOrder = (pedido = {}) => ({
   status: pedido.estadoPedido || 'PENDIENTE',
   total: toNumber(pedido.total),
   balance: toNumber(pedido.saldoPendiente ?? pedido.saldo),
+  isPendingFinalBalance: normalizeStatus(pedido.estadoPedido) === 'PENDIENTE_SALDO_FINAL',
   tracking: buildClientTrackingSteps(pedido),
 });
 

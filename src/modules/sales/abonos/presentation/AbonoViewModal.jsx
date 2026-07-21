@@ -25,6 +25,7 @@ const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 export const AbonoViewModal = ({ isOpen, onClose, abono }) => {
   if (!isOpen || !abono) return null;
   const clienteContacto = [abono.pedido?.cliente?.correo, abono.pedido?.cliente?.telefono].filter(Boolean).join(' | ');
+  const clienteNombre = abono.pedido?.cliente?.nombre || 'Cliente no especificado';
 
   return (
     <div className={styles.overlay}>
@@ -33,7 +34,7 @@ export const AbonoViewModal = ({ isOpen, onClose, abono }) => {
           <div>
             <h3 className={styles.modalTitle}>Abono #{abono.idAbono}</h3>
             <p className={styles.modalSubtitle}>
-              Pedido #{abono.idPedido} | Cliente: {abono.pedido?.cliente?.nombre || 'N/A'}
+              Pedido #{abono.idPedido} | Cliente: {clienteNombre}
             </p>
             {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>

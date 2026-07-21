@@ -44,6 +44,9 @@ export class QuoteApiRepository {
     const payload = {
       costosAdicionales: Number(pricingData.costosAdicionales || 0),
       observaciones: pricingData.observaciones?.trim() || null,
+      ...(pricingData.motivoCambio?.trim() && {
+        motivoCambio: pricingData.motivoCambio.trim(),
+      }),
       detalles: pricingData.detalles.map(det => ({
         idDetalleCotizacion: Number(det.idDetalleCotizacion),
         precioUnitario: Number(det.precioUnitario || 0),

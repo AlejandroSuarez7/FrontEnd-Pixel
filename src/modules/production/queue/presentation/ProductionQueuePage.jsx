@@ -247,7 +247,7 @@ export const ProductionQueuePage = () => {
                         </span>
                       </td>
                       <td className={styles.tableCell}>
-                        <span className={styles.clientName}>{pedido.cliente?.nombre || 'N/A'}</span>
+                        <span className={styles.clientName}>{pedido.cliente?.nombre || 'Cliente no especificado'}</span>
                         <span className={styles.clientEmail}>{pedido.cliente?.correo || ''}</span>
                       </td>
                       <td className={styles.tableCell}>{formatQueueDate(pedido.fechaIngresoProduccion, pedido.fechaActualizacion, pedido.fechaCreacion)}</td>

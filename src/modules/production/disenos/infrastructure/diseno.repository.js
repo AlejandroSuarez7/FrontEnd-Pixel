@@ -84,6 +84,68 @@ export class DisenoApiRepository {
     }
   }
 
+  async approveByClientAdmin(idDiseno, payload = {}) {
+    try {
+      const { data } = await apiClient.patch(`${ENDPOINT}/${idDiseno}/aprobar-cliente`, {
+        medioAprobacion: payload.medioAprobacion,
+        observaciones: payload.observaciones?.trim() || undefined,
+      });
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo registrar la aprobacion del cliente', { cause: error });
+    }
+  }
+
+  async rejectByClientAdmin(idDiseno, payload = {}) {
+    try {
+      const { data } = await apiClient.patch(`${ENDPOINT}/${idDiseno}/rechazar-cliente`, {
+        medioRespuesta: payload.medioRespuesta,
+        observacionesCliente: payload.observacionesCliente?.trim(),
+      });
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo registrar el rechazo del cliente', { cause: error });
+    }
+  }
+
+  async listClientDesigns() {
+    try {
+      const { data } = await apiClient.get('api/cliente/disenos');
+      return disenoDTO.fromApiList(data.data || []);
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudieron consultar tus disenos', { cause: error });
+    }
+  }
+
+  async getClientDesign(idDiseno) {
+    try {
+      const { data } = await apiClient.get(`api/cliente/disenos/${idDiseno}`);
+      return disenoDTO.fromApi(data.data);
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo consultar el diseno', { cause: error });
+    }
+  }
+
+  async approveClientDesign(idDiseno) {
+    try {
+      const { data } = await apiClient.patch(`api/cliente/disenos/${idDiseno}/aprobar`);
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo aprobar el diseno', { cause: error });
+    }
+  }
+
+  async rejectClientDesign(idDiseno, payload = {}) {
+    try {
+      const { data } = await apiClient.patch(`api/cliente/disenos/${idDiseno}/rechazar`, {
+        observacionesCliente: payload.observacionesCliente?.trim(),
+      });
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo rechazar el diseno', { cause: error });
+    }
+  }
+
   async remove(idDiseno) {
     try {
       const { data } = await apiClient.delete(`${ENDPOINT}/${idDiseno}`);

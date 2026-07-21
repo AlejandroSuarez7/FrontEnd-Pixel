@@ -69,6 +69,16 @@ export const usePedidos = (filters = {}) => {
     }
   };
 
+  const handlePendienteSaldo = async (id) => {
+    try {
+      await pedidoRepository.marcarPendienteSaldo(id);
+      await fetchPedidos();
+    } catch (error) {
+      console.error(`Error al solicitar saldo final pedido #${id}:`, error);
+      throw error;
+    }
+  };
+
   const handleAnular = async (id) => {
     try {
       await pedidoRepository.anular(id);
@@ -87,6 +97,7 @@ export const usePedidos = (filters = {}) => {
     handleCreate,
     handleUpdate,
     handleMarcarEnProceso,
+    handlePendienteSaldo,
     handleFinalizar,
     handleAnular,
   };

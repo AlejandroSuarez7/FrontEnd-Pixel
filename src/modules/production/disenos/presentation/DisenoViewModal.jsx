@@ -25,6 +25,14 @@ const styles = {
 };
 
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
+const normalizeStatus = (value = '') => String(value || '').toUpperCase();
+const formatDesignOrigin = (origen = '') => {
+  const value = normalizeStatus(origen);
+  if (value === 'CLIENTE') return 'Enviado por cliente';
+  if (value === 'ADMIN') return 'Admin';
+  if (value === 'OTRO') return 'Otro';
+  return 'Equipo PIXEL / Disenador';
+};
 
 export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
   const [previewError, setPreviewError] = useState(false);
@@ -36,7 +44,9 @@ export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
   if (!isOpen || !diseno) return null;
   const archivoUrl = diseno.archivoUrl?.trim();
   const clienteContacto = [diseno.pedido?.cliente?.correo, diseno.pedido?.cliente?.telefono].filter(Boolean).join(' | ');
+  const clienteNombre = diseno.pedido?.cliente?.nombre || 'Cliente no especificado';
   const producto = diseno.pedido?.detalles?.[0]?.descripcion;
+  const enviadoPorCliente = normalizeStatus(diseno.origenDiseno) === 'CLIENTE';
 
   return (
     <div className={styles.overlay}>
@@ -45,7 +55,7 @@ export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
           <div>
             <h3 className={styles.modalTitle}>Diseno #{diseno.idDiseno}</h3>
             <p className={styles.modalSubtitle}>
-              Pedido #{diseno.idPedido} | Cliente: {diseno.pedido?.cliente?.nombre || 'N/A'}
+              Pedido #{diseno.idPedido} | Cliente: {clienteNombre}
             </p>
             {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>
@@ -57,15 +67,29 @@ export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
             <div className={styles.readOnlyItem}>Estado<strong>{diseno.estado}</strong></div>
             <div className={styles.readOnlyItem}>Creado<strong>{formatDate(diseno.fechaCreacion)}</strong></div>
             <div className={styles.readOnlyItem}>Enviado<strong>{formatDate(diseno.fechaEnvio)}</strong></div>
+            <div className={styles.readOnlyItem}>Recibido<strong>{formatDate(diseno.fechaRecepcion)}</strong></div>
             <div className={styles.readOnlyItem}>Aprobado<strong>{formatDate(diseno.fechaAprobacion)}</strong></div>
+            <div className={styles.readOnlyItem}>Respuesta cliente<strong>{formatDate(diseno.fechaRespuestaCliente)}</strong></div>
           </div>
 
           <div className={styles.detailsInfoBox}>
-            <strong>Disenador:</strong> {diseno.disenador?.nombre || 'Sin asignar'}
+            <strong>Origen del diseno:</strong> {formatDesignOrigin(diseno.origenDiseno)}
           </div>
 
           <div className={styles.detailsInfoBox}>
-            <strong>Descripcion:</strong> {diseno.descripcion || 'Sin descripcion'}
+            <strong>Medio de recepcion:</strong> {diseno.medioRecepcion || 'No aplica'}
+          </div>
+
+          <div className={styles.detailsInfoBox}>
+            <strong>Recibido por:</strong> {diseno.recibidoPor?.nombre || (diseno.recibidoPorId ? `Usuario #${diseno.recibidoPorId}` : 'No especificado')}
+          </div>
+
+          <div className={styles.detailsInfoBox}>
+            <strong>Disenador:</strong> {enviadoPorCliente ? 'No aplica' : diseno.disenador?.nombre || 'Sin asignar'}
+          </div>
+
+          <div className={styles.detailsInfoBox}>
+            <strong>Descripcion:</strong> {diseno.descripcion || (enviadoPorCliente ? 'Diseno enviado por el cliente' : 'Sin descripcion')}
           </div>
           {producto && (
             <div className={styles.detailsInfoBox}>
@@ -76,6 +100,19 @@ export const DisenoViewModal = ({ isOpen, onClose, diseno }) => {
           <div className={styles.detailsInfoBox}>
             <strong>Observaciones:</strong> {diseno.observaciones || 'Sin observaciones'}
           </div>
+
+          <div className={styles.detailsInfoBox}>
+            <strong>Observaciones del cliente:</strong> {diseno.observacionesCliente || 'Sin observaciones del cliente'}
+          </div>
+
+          {(diseno.medioRespuestaCliente || diseno.medioRespuesta || diseno.medioAprobacion || diseno.respuestaRegistradaPor) && (
+            <div className={styles.detailsInfoBox}>
+              <strong>Respuesta registrada:</strong>{' '}
+              {[diseno.medioRespuestaCliente || diseno.medioRespuesta || diseno.medioAprobacion, diseno.respuestaRegistradaPor?.nombre]
+                .filter(Boolean)
+                .join(' | ') || 'Sin informacion adicional'}
+            </div>
+          )}
 
           <div className={styles.detailsInfoBox}>
             <strong>Archivo:</strong>{' '}

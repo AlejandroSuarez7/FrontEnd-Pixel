@@ -14,6 +14,7 @@ import styles from '../pedidos/presentation/pedidos.module.css';
 const ESTADO_PEDIDO_CLASS = {
   PENDIENTE:   styles.estadoPedidoPendiente,
   EN_PROCESO:  styles.estadoPedidoEnProceso,
+  PENDIENTE_SALDO_FINAL: styles.estadoPedidoPendienteSaldo,
   FINALIZADO:  styles.estadoPedidoFinalizado,
   ANULADO:     styles.estadoPedidoAnulado,
 };
@@ -39,6 +40,7 @@ const PedidosPage = () => {
     loading,
     handleUpdate,
     handleMarcarEnProceso,
+    handlePendienteSaldo,
     handleFinalizar,
     handleAnular,
     paginationMeta,
@@ -58,7 +60,13 @@ const PedidosPage = () => {
   const total      = paginationMeta.total;
   const pendientes = pedidos.filter(p => p.estadoPedido === 'PENDIENTE').length;
   const enProceso  = pedidos.filter(p => p.estadoPedido === 'EN_PROCESO').length;
+  const saldoFinal = pedidos.filter(p => p.estadoPedido === 'PENDIENTE_SALDO_FINAL').length;
   const finalizados = pedidos.filter(p => p.estadoPedido === 'FINALIZADO').length;
+  const canFinalizePedido = (pedido) => (
+    pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' &&
+    pedido.estadoPago === 'COMPLETO' &&
+    Number(pedido.saldoPendiente || 0) <= 0
+  );
 
   const onEnProcesoClick = async (id) => {
     const accepted = await confirm({
@@ -78,6 +86,24 @@ const PedidosPage = () => {
     }
   };
 
+  const onPendienteSaldoClick = async (id) => {
+    const accepted = await confirm({
+      title: 'Solicitar saldo final',
+      message: 'El cliente sera notificado por correo de que el pedido termino produccion, pero falta pagar el saldo final para coordinar la entrega.',
+      confirmText: 'Confirmar',
+      variant: 'warning',
+    });
+
+    if (!accepted) return;
+
+    try {
+      await handlePendienteSaldo(id);
+      notifications.success('Saldo final solicitado. El cliente fue notificado por correo.');
+    } catch (err) {
+      notifications.error(err.message || 'No se pudo solicitar el saldo final.');
+    }
+  };
+
   const onFinalizarClick = async (id) => {
     const accepted = await confirm({
       title: 'Finalizar pedido',
@@ -90,9 +116,9 @@ const PedidosPage = () => {
 
     try {
       await handleFinalizar(id);
-      notifications.success('Pedido finalizado. El cliente fue notificado para reclamar.');
+      notifications.success('Pedido finalizado correctamente.');
     } catch (err) {
-      notifications.error(err.message || 'No se pudo finalizar el pedido.');
+      notifications.error(err.message || 'No se puede finalizar porque el pedido aun tiene saldo pendiente.');
     }
   };
 
@@ -118,6 +144,7 @@ const PedidosPage = () => {
     ? new Date(val).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
     : '—';
 
+  const getClientName = (cliente) => cliente?.nombre || 'Cliente no especificado';
   const getContactText = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
 
   return (
@@ -149,6 +176,10 @@ const PedidosPage = () => {
         <div className={`${styles.kpiCard} ${styles.kpiCardInfo}`}>
           <span className={styles.kpiLabel}>En proceso</span>
           <span className={`${styles.kpiValue} ${styles.kpiValueInfo}`}>{enProceso}</span>
+        </div>
+        <div className={`${styles.kpiCard} ${styles.kpiCardWarning}`}>
+          <span className={styles.kpiLabel}>Saldo final</span>
+          <span className={`${styles.kpiValue} ${styles.kpiValueWarning}`}>{saldoFinal}</span>
         </div>
         <div className={`${styles.kpiCard} ${styles.kpiCardSuccess}`}>
           <span className={styles.kpiLabel}>Finalizados</span>
@@ -198,13 +229,13 @@ const PedidosPage = () => {
                     <td className={styles.tableCellId}>#{pedido.idPedido}</td>
 
                     <td className={styles.tableCell}>
-                      <span className={styles.clientName}>{pedido.cliente?.nombre || 'N/A'}</span>
+                      <span className={styles.clientName}>{getClientName(pedido.cliente)}</span>
                       <span className={styles.clientEmail}>{getContactText(pedido.cliente)}</span>
                     </td>
 
                     <td className={styles.tableCell}>
                       <span className={`${styles.statusBadge} ${ESTADO_PEDIDO_CLASS[pedido.estadoPedido] || ''}`}>
-                        {pedido.estadoPedido.replace('_', ' ')}
+                        {pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' ? 'Pendiente saldo final' : pedido.estadoPedido.replace('_', ' ')}
                       </span>
                     </td>
 
@@ -240,7 +271,8 @@ const PedidosPage = () => {
                         primaryAction={{ label: 'Ver', onClick: () => { setSelectedPedido(pedido); setIsDetailsOpen(true); }, variant: 'accent' }}
                         actions={[
                           hasPermission('pedidos.pasar_proceso') && isStaff && pedido.estadoPedido === 'PENDIENTE' && { label: 'En proceso', onClick: () => onEnProcesoClick(pedido.idPedido), variant: 'info' },
-                          hasPermission('pedidos.finalizar') && isStaff && pedido.estadoPedido === 'EN_PROCESO' && { label: 'Finalizar', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },
+                          hasPermission('pedidos.finalizar') && isStaff && pedido.estadoPedido === 'EN_PROCESO' && { label: 'Solicitar saldo final', onClick: () => onPendienteSaldoClick(pedido.idPedido), variant: 'warning' },
+                          hasPermission('pedidos.finalizar') && isStaff && canFinalizePedido(pedido) && { label: 'Finalizar pedido', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },
                           hasPermission('pedidos.anular') && isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },
                           hasPermission('pedidos.editar') && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ANULADO' && {
                             label: 'Editar',

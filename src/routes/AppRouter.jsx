@@ -28,6 +28,7 @@ import PedidosPage from '../modules/sales/pages/PedidosPage.jsx';
 import ProductionPage from '../modules/production/pages/ProductionPage';
 import DesignsPage from '../modules/production/pages/DesignsPage';
 import DeliveryPage from '../modules/production/pages/DeliveryPage';
+import { ClientDisenosPage } from '../modules/production/disenos/presentation/ClientDisenosPage';
 import ServicesPage from '../modules/services/pages/ServicesPage';
 import QuotesPage from '../modules/services/pages/QuotesPage';
 import { ProductsPage } from '../modules/products/pages/ProductsPage';
@@ -55,6 +56,7 @@ const AppRouter = () => {
           }
         >
           <Route index element={<DashboardPage />} />
+          <Route path={PATHS.CLIENT_DESIGNS} element={<ClientDisenosPage />} />
           <Route path={PATHS.ROLES} element={<RolesPage />} />
           <Route path={PATHS.USERS} element={<UsersPage />} />
           <Route path={PATHS.USERS_EMPLOYEES} element={<EmployeesPage />} />

@@ -214,6 +214,11 @@
   color: var(--color-success, #00b894);
 }
 
+.disenos-status-danger {
+  background-color: var(--color-danger-bg, #fff0f0);
+  color: var(--color-danger, #d63031);
+}
+
 .disenos-actions-cell {
   display: flex;
   align-items: center;
@@ -374,6 +379,80 @@
   color: var(--color-text-secondary, #8f9bb3);
   text-transform: uppercase;
   letter-spacing: 0.4px;
+}
+
+.disenos-help-text {
+  color: var(--color-text-secondary, #8f9bb3);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.disenos-input-field:is(textarea) {
+  resize: none;
+}
+
+.disenos-client-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.disenos-client-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--color-border, #edf1f7);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.disenos-client-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.disenos-client-card-header strong,
+.disenos-client-card-header span {
+  display: block;
+}
+
+.disenos-client-card-header strong {
+  color: var(--color-text-primary, #1a2038);
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.disenos-client-card-header span {
+  color: var(--color-text-secondary, #8f9bb3);
+  font-size: 12px;
+}
+
+.disenos-client-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border, #edf1f7);
+}
+
+.disenos-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-primary, #1a2038);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.disenos-checkbox-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent, #6c5ce7);
 }
 
 .disenos-details-info-box {

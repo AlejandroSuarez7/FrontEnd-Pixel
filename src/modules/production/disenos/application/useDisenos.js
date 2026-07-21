@@ -39,6 +39,18 @@ export const useDisenos = (filters = {}) => {
     return result;
   };
 
+  const handleApproveByClientAdmin = async (idDiseno, payload) => {
+    const result = await disenoRepository.approveByClientAdmin(idDiseno, payload);
+    await fetchDisenos();
+    return result;
+  };
+
+  const handleRejectByClientAdmin = async (idDiseno, payload) => {
+    const result = await disenoRepository.rejectByClientAdmin(idDiseno, payload);
+    await fetchDisenos();
+    return result;
+  };
+
   const handleDelete = async (idDiseno) => {
     await disenoRepository.remove(idDiseno);
     await fetchDisenos();
@@ -55,6 +67,8 @@ export const useDisenos = (filters = {}) => {
     handleCreate,
     handleUpdate,
     handleApprove,
+    handleApproveByClientAdmin,
+    handleRejectByClientAdmin,
     handleDelete,
     getDisenosByPedido,
     getPendingProduction,
