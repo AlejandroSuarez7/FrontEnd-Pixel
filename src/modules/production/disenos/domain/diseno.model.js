@@ -1,6 +1,8 @@
 export const createDiseno = ({
   idDiseno,
   idPedido,
+  idDetallePedido = null,
+  esDisenoGeneral = false,
   idDisenador = null,
   archivoUrl = '',
   descripcion = '',
@@ -21,11 +23,14 @@ export const createDiseno = ({
   medioRespuesta = '',
   medioRespuestaCliente = '',
   respuestaRegistradaPor = null,
+  detallePedido = null,
   pedido = null,
   disenador = null,
 }) => ({
   idDiseno,
   idPedido,
+  idDetallePedido,
+  esDisenoGeneral: Boolean(esDisenoGeneral),
   idDisenador,
   archivoUrl: archivoUrl || '',
   descripcion: descripcion || '',
@@ -46,6 +51,7 @@ export const createDiseno = ({
   medioRespuesta: medioRespuesta || '',
   medioRespuestaCliente: medioRespuestaCliente || '',
   respuestaRegistradaPor,
+  detallePedido,
   pedido,
   disenador,
 });

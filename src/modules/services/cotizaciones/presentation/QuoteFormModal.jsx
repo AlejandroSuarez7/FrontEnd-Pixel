@@ -21,12 +21,15 @@ const initialDetail = {
   observaciones: '',
 };
 
-const getFirstCalculationItem = (calculation) => {
-  if (!calculation) return null;
-  if (Array.isArray(calculation.items)) return calculation.items[0] || null;
-  if (Array.isArray(calculation.detalles)) return calculation.detalles[0] || null;
-  return calculation.item || calculation.detalle || null;
+const getCalculationItems = (calculation) => {
+  if (!calculation) return [];
+  if (Array.isArray(calculation.items)) return calculation.items;
+  if (Array.isArray(calculation.detalles)) return calculation.detalles;
+  const singleItem = calculation.item || calculation.detalle;
+  return singleItem ? [singleItem] : [];
 };
+
+const createEmptyDetail = () => ({ ...initialDetail });
 
 export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) => {
   const [observaciones, setObservaciones] = useState('');
@@ -34,6 +37,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
   const [costosAdicionales, setCostosAdicionales] = useState(0);
   const [cliente, setCliente] = useState({ nombre: '', correo: '', telefono: '' });
   const [detalles, setDetalles] = useState([]);
+  const [activeDetailIndex, setActiveDetailIndex] = useState(0);
 
   const [tecnicas, setTecnicas] = useState([]);
   const [loadingTecnicas, setLoadingTecnicas] = useState(false);
@@ -46,49 +50,20 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
 
   const isEditing = !!quote;
   const isPricing = isStaff && isEditing;
-  const detail = detalles[0] || initialDetail;
   const hasExistingValues = Number(quote?.total || 0) > 0
     || Number(quote?.subtotal || 0) > 0
     || detalles.some(det => Number(det.precioUnitario || 0) > 0);
   const shouldShowChangeReason = isPricing && hasExistingValues;
-  const calculationItem = getFirstCalculationItem(calculo);
-  const quantity = Number(detail.cantidad || 1);
-  const unitBase = Number(
-    calculationItem?.precioBase
-      ?? calculationItem?.precioUnitarioBase
-      ?? detail.precioBase
-      ?? detail.producto?.precioBase
-      ?? 0
-  );
-  const suggestedUnitPrice = Number(
-    calculationItem?.precioUnitario
-      ?? calculationItem?.precioUnitarioFinal
-      ?? detail.precioUnitario
-      ?? unitBase
-      ?? 0
-  );
-  const appliedUnitPrice = Number(detail.precioUnitario ?? suggestedUnitPrice ?? 0);
-  const unitPriceInputValue = detail.precioUnitario ?? (suggestedUnitPrice > 0 ? suggestedUnitPrice : '');
-  const discountPercent =
-    calculationItem?.descuentoPorcentaje
-      ?? calculationItem?.descuento
-      ?? detail.descuentoPorcentaje
-      ?? null;
-  const calculationSource = calculationItem || detail;
-  const discountAmount = getQuoteDiscountTotal(calculationSource);
+  const calculationItems = getCalculationItems(calculo);
   const additionalCosts = Number(costosAdicionales || 0);
-  const subtotalBruto = getQuoteSubtotalBruto(calculationSource) || ((unitBase || appliedUnitPrice) * quantity);
-  const subtotalWithDiscount = getQuoteSubtotalWithDiscount(calculationSource);
   const finalTotal = getQuoteTotal({
     ...calculo,
-    total: undefined,
-    subtotalConDescuento: subtotalWithDiscount,
     costosAdicionales: additionalCosts,
   });
   const quoteNumber = quote?.idCotizacion ? `#${quote.idCotizacion}` : '';
 
   useEffect(() => {
-    if (!isOpen || isPricing) return;
+    if (!isOpen) return;
 
     setLoadingTecnicas(true);
     publicQuoteRepository
@@ -99,10 +74,10 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
         setTecnicas([]);
       })
       .finally(() => setLoadingTecnicas(false));
-  }, [isOpen, isPricing]);
+  }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || isPricing) return;
+    if (!isOpen) return;
 
     setLoadingProductos(true);
     Promise.all([
@@ -120,7 +95,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
         setProductos([]);
       })
       .finally(() => setLoadingProductos(false));
-  }, [isOpen, isPricing]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (quote) {
@@ -132,21 +107,32 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
         correo: quote.cliente?.correo || '',
         telefono: quote.cliente?.telefono || '',
       });
-      setDetalles(quote.detalles || []);
+      setDetalles(quote.detalles?.length ? quote.detalles : [createEmptyDetail()]);
+      setActiveDetailIndex(0);
     } else {
       setObservaciones('');
       setMotivoCambio('');
       setCostosAdicionales(0);
       setCliente({ nombre: '', correo: '', telefono: '' });
       setCalculo(null);
-      setDetalles([{ ...initialDetail }]);
+      setDetalles([createEmptyDetail()]);
+      setActiveDetailIndex(0);
     }
   }, [quote, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    if (!detail.idProducto || Number(detail.cantidad) <= 0) {
+    const calculableDetails = detalles
+      .filter(det => det.idProducto && Number(det.cantidad) > 0)
+      .map(det => ({
+        idProducto: Number(det.idProducto),
+        ...(det.idTecnica && { idTecnica: Number(det.idTecnica) }),
+        cantidad: Number(det.cantidad),
+        observaciones: det.observaciones?.trim() || null,
+      }));
+
+    if (calculableDetails.length === 0) {
       setCalculo(null);
       return;
     }
@@ -154,10 +140,7 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
     const timer = window.setTimeout(() => {
       setCalculando(true);
       publicQuoteRepository
-        .calculate([{
-          idProducto: Number(detail.idProducto),
-          cantidad: Number(detail.cantidad),
-        }])
+        .calculate(calculableDetails)
         .then(setCalculo)
         .catch((err) => {
           console.error('Error al calcular producto:', err);
@@ -168,14 +151,31 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
     }, 350);
 
     return () => window.clearTimeout(timer);
-  }, [isOpen, detail.idProducto, detail.cantidad]);
+  }, [isOpen, detalles]);
 
   if (!isOpen) return null;
 
-  const updateDetail = (field, value) => {
+  const updateDetail = (index, field, value) => {
     setDetalles(prev => {
       const next = [...prev];
-      next[0] = { ...(next[0] || initialDetail), [field]: value };
+      next[index] = { ...(next[index] || initialDetail), [field]: value };
+      return next;
+    });
+  };
+
+  const addDetail = () => {
+    setDetalles(prev => {
+      const next = [...prev, createEmptyDetail()];
+      setActiveDetailIndex(next.length - 1);
+      return next;
+    });
+  };
+
+  const removeDetail = (index) => {
+    setDetalles(prev => {
+      if (prev.length <= 1) return prev;
+      const next = prev.filter((_, itemIndex) => itemIndex !== index);
+      setActiveDetailIndex(current => Math.max(0, Math.min(current >= index ? current - 1 : current, next.length - 1)));
       return next;
     });
   };
@@ -184,11 +184,11 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
     setCliente(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCategoryChange = async (value) => {
+  const handleCategoryChange = (index, value) => {
     setDetalles(prev => {
       const next = [...prev];
-      next[0] = {
-        ...(next[0] || initialDetail),
+      next[index] = {
+        ...(next[index] || initialDetail),
         idCategoriaProducto: value,
         idProducto: '',
         descripcion: '',
@@ -196,26 +196,14 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
       return next;
     });
     setCalculo(null);
-
-    setLoadingProductos(true);
-    try {
-      const filteredProducts = await publicQuoteRepository.listProductsByCategory(value);
-      setProductos(filteredProducts || []);
-    } catch (err) {
-      console.error('Error al filtrar productos:', err);
-      notifications.error('No se pudieron cargar los productos de la categoria.');
-      setProductos([]);
-    } finally {
-      setLoadingProductos(false);
-    }
   };
 
-  const handleProductChange = (value) => {
+  const handleProductChange = (index, value) => {
     const product = productos.find(item => Number(item.idProducto) === Number(value));
     setDetalles(prev => {
       const next = [...prev];
-      next[0] = {
-        ...(next[0] || initialDetail),
+      next[index] = {
+        ...(next[index] || initialDetail),
         idProducto: value,
         descripcion: product?.nombre || '',
       };
@@ -246,22 +234,35 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
           notifications.warning('Ingresa un correo valido para el cliente.');
           return;
         }
-        if (!detail.idProducto) {
-          notifications.warning('Selecciona un producto para calcular la cotizacion.');
+        const invalidProductIndex = detalles.findIndex(det => !det.idProducto);
+        if (invalidProductIndex >= 0) {
+          setActiveDetailIndex(invalidProductIndex);
+          notifications.warning(`Selecciona un producto para el item ${invalidProductIndex + 1}.`);
           return;
         }
-        if (Number(detail.cantidad || 0) <= 0) {
-          notifications.warning('La cantidad debe ser mayor a 0.');
+        const invalidQuantityIndex = detalles.findIndex(det => Number(det.cantidad || 0) <= 0);
+        if (invalidQuantityIndex >= 0) {
+          setActiveDetailIndex(invalidQuantityIndex);
+          notifications.warning(`La cantidad del item ${invalidQuantityIndex + 1} debe ser mayor a 0.`);
+          return;
+        }
+        const invalidTechniqueIndex = detalles.findIndex(det => !det.idTecnica);
+        if (invalidTechniqueIndex >= 0) {
+          setActiveDetailIndex(invalidTechniqueIndex);
+          notifications.warning(`Selecciona una tecnica para el item ${invalidTechniqueIndex + 1}.`);
           return;
         }
       }
 
       const pricedDetails = isPricing
-        ? detalles.map(det => ({
+        ? detalles.map((det, index) => {
+          const itemCalculation = calculationItems[index] || {};
+          return {
           ...det,
-          precioUnitario: det.precioUnitario || appliedUnitPrice || det.precioBase || 0,
+          precioUnitario: det.precioUnitario || itemCalculation.precioUnitario || det.precioBase || 0,
           costoDiseno: det.costoDiseno || 0,
-        }))
+        };
+        })
         : detalles;
 
       const payload = {
@@ -348,285 +349,292 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
             </div>
           )}
 
-          {isPricing ? (
-            <>
-              <div className={styles.quoteSummaryCard}>
-                <div className={styles.quoteSummaryItem}>
-                  <span>Cliente</span>
-                  <strong>{quote?.cliente?.nombre || 'Cliente sin nombre'}</strong>
-                  <small>{[quote?.cliente?.correo, quote?.cliente?.telefono].filter(Boolean).join(' | ') || 'Sin contacto registrado'}</small>
-                </div>
-                <div className={styles.quoteSummaryItem}>
-                  <span>Producto</span>
-                  <strong>{detail.producto?.nombre || detail.descripcion || 'Producto sin nombre'}</strong>
-                  <small>{detail.tecnica?.nombre ? `Tecnica: ${detail.tecnica.nombre}` : 'Tecnica no registrada'}</small>
-                </div>
-                <div className={styles.quoteSummaryItem}>
-                  <span>Cantidad</span>
-                  <strong>{quantity.toLocaleString('es-CO')}</strong>
-                  <small>Una cotizacion corresponde a un solo producto</small>
-                </div>
-                <div className={styles.quoteSummaryItem}>
-                  <span>Estado</span>
-                  <strong>{quote?.estado || 'PENDIENTE'}</strong>
-                  <small>{quote?.tipoCotizacion || 'Cotizacion'}</small>
-                </div>
+          {isPricing && (
+            <div className={styles.quoteSummaryCard}>
+              <div className={styles.quoteSummaryItem}>
+                <span>Cliente</span>
+                <strong>{quote?.cliente?.nombre || 'Cliente sin nombre'}</strong>
+                <small>{[quote?.cliente?.correo, quote?.cliente?.telefono].filter(Boolean).join(' | ') || 'Sin contacto registrado'}</small>
               </div>
-
-              <div className={styles.pricingPanel}>
-                <div className={styles.pricingPanelHeader}>
-                  <div>
-                    <p className={styles.detailsSectionLabel}>Calculo del precio</p>
-                    <p className={styles.pricingHelpText}>
-                      Los valores se toman del producto cotizable y sus rangos. Ajusta solo si necesitas sobrescribir el precio sugerido.
-                    </p>
-                  </div>
-                  {calculando && <span className={styles.pricingBadge}>Calculando...</span>}
-                </div>
-
-                <div className={styles.pricingGrid}>
-                  <div className={styles.priceMetric}>
-                    <span>Precio base unitario</span>
-                    <strong>{unitBase > 0 ? formatMoneyCOP(unitBase) : 'Por cotizar'}</strong>
-                  </div>
-                  <div className={styles.priceMetric}>
-                    <span>Descuento aplicado</span>
-                    <strong>{formatPercentage(discountPercent)}</strong>
-                  </div>
-                  <div className={styles.priceMetric}>
-                    <span>Valor descontado</span>
-                    <strong>{discountAmount > 0 ? `-${formatMoneyCOP(discountAmount)}` : 'Sin descuento'}</strong>
-                  </div>
-                  <div className={styles.priceMetric}>
-                    <span>Cantidad</span>
-                    <strong>{quantity.toLocaleString('es-CO')}</strong>
-                  </div>
-                  <div className={styles.priceMetric}>
-                    <span>Subtotal bruto</span>
-                    <strong>{subtotalBruto > 0 ? formatMoneyCOP(subtotalBruto) : 'Por cotizar'}</strong>
-                  </div>
-                  <div className={styles.priceMetric}>
-                    <span>Subtotal con descuento</span>
-                    <strong>{subtotalWithDiscount > 0 ? formatMoneyCOP(subtotalWithDiscount) : 'Por cotizar'}</strong>
-                  </div>
-                </div>
-
-                <div className={styles.pricingInputsGrid}>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.inputLabel}>Precio unitario aplicado</label>
-                    <input
-                      type="number"
-                      value={unitPriceInputValue}
-                      onChange={event => {
-                        const next = [...detalles];
-                        next[0] = { ...(next[0] || initialDetail), precioUnitario: event.target.value };
-                        setDetalles(next);
-                      }}
-                      className={styles.inputFieldStaff}
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                    <span className={styles.fieldHint}>Ajuste manual si el precio sugerido necesita cambiar.</span>
-                  </div>
-
-                  <div className={styles.inputGroup}>
-                    <label className={styles.inputLabel}>Costo de diseno</label>
-                    <input
-                      type="number"
-                      value={detail.costoDiseno || ''}
-                      onChange={event => {
-                        const next = [...detalles];
-                        next[0] = { ...(next[0] || initialDetail), costoDiseno: event.target.value };
-                        setDetalles(next);
-                      }}
-                      className={styles.inputFieldStaff}
-                      min="0"
-                      step="0.01"
-                    />
-                    <span className={styles.fieldHint}>Si no aplica, dejalo en cero.</span>
-                  </div>
-
-                  <div className={styles.inputGroup}>
-                    <label className={styles.inputLabel}>Costos adicionales</label>
-                    <input
-                      type="number"
-                      value={costosAdicionales}
-                      onChange={event => setCostosAdicionales(event.target.value)}
-                      className={styles.inputFieldStaff}
-                      min="0"
-                      step="0.01"
-                    />
-                    <span className={styles.fieldHint}>Ej: diseno extra, urgencia, domicilio, personalizacion especial.</span>
-                  </div>
-                </div>
-
-                <div className={styles.quoteTotalCard}>
-                  <span>Total final</span>
-                  <strong>{finalTotal > 0 ? formatMoneyCOP(finalTotal) : 'Por cotizar'}</strong>
-                  <small>Este sera el valor enviado al cliente para aprobacion.</small>
-                </div>
+              <div className={styles.quoteSummaryItem}>
+                <span>Productos</span>
+                <strong>{detalles.length}</strong>
+                <small>{quote?.productosResumen || 'Productos de la solicitud'}</small>
               </div>
-
-              {shouldShowChangeReason && (
-                <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Motivo del cambio</label>
-                  <textarea
-                    value={motivoCambio}
-                    onChange={event => setMotivoCambio(event.target.value)}
-                    className={styles.inputField}
-                    rows={2}
-                    placeholder="Ej: Se agrego costo de diseno, se ajusto la cantidad, se modifico el valor del producto..."
-                  />
-                  <span className={styles.fieldHint}>
-                    Este motivo sera enviado al cliente por correo si la cotizacion ya habia sido enviada o valorizada.
-                  </span>
-                </div>
-              )}
-
-              <div className={styles.observationsGrid}>
-                <div className={styles.readOnlyNote}>
-                  <span>Observaciones del cliente</span>
-                  <p>{quote?.observaciones || detail.observaciones || 'El cliente no dejo observaciones.'}</p>
-                </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Observaciones internas del administrador</label>
-                  <textarea
-                    value={observaciones}
-                    onChange={event => setObservaciones(event.target.value)}
-                    className={styles.inputField}
-                    rows={3}
-                    placeholder="Notas internas, condiciones o aclaraciones para esta cotizacion..."
-                  />
-                </div>
+              <div className={styles.quoteSummaryItem}>
+                <span>Estado</span>
+                <strong>{quote?.estado || 'PENDIENTE'}</strong>
+                <small>{quote?.tipoCotizacion || 'Cotizacion'}</small>
               </div>
-            </>
-          ) : (
-            <>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Observaciones generales</label>
-                <textarea
-                  value={observaciones}
-                  onChange={event => setObservaciones(event.target.value)}
-                  className={styles.inputField}
-                  rows={2}
-                  placeholder="Entrega, urgencia, empaque u otra aclaracion..."
-                />
-              </div>
+            </div>
+          )}
 
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>
+              {isPricing ? 'Observaciones internas del administrador' : 'Observaciones generales'}
+            </label>
+            <textarea
+              value={observaciones}
+              onChange={event => setObservaciones(event.target.value)}
+              className={styles.inputField}
+              rows={2}
+              placeholder="Entrega, urgencia, empaque u otra aclaracion..."
+            />
+          </div>
+
+          <div className={styles.pricingPanel}>
+            <div className={styles.pricingPanelHeader}>
               <div>
-                <p className={styles.detailsSectionLabel}>Producto a cotizar</p>
+                <p className={styles.detailsSectionLabel}>Productos a cotizar</p>
+                <p className={styles.pricingHelpText}>
+                  Agrega uno o varios productos. El backend recalcula precios, descuentos y totales.
+                </p>
+              </div>
+              <div className={styles.quotePanelActions}>
+                {calculando && <span className={styles.pricingBadge}>Calculando...</span>}
+                <button type="button" className={styles.btnSecondary} onClick={addDetail} disabled={isSubmitting}>
+                  Agregar producto
+                </button>
+              </div>
+            </div>
 
-                <div className={styles.detailRowsWrapper}>
-                <div className={styles.quoteProductBlock}>
-                  <div className={styles.quoteProductGrid}>
-                    {categorias.length > 0 && (
+            <div className={styles.detailRowsWrapper}>
+              {detalles.map((item, index) => {
+                const availableProducts = item.idCategoriaProducto
+                  ? productos.filter(product => Number(product.idCategoriaProducto || product.categoriaProducto?.idCategoriaProducto) === Number(item.idCategoriaProducto))
+                  : productos;
+                const calculationItem = calculationItems[index] || item;
+                const unitBase = Number(calculationItem?.precioBase ?? item.precioBase ?? item.producto?.precioBase ?? 0);
+                const suggestedUnitPrice = Number(calculationItem?.precioUnitario ?? item.precioUnitario ?? unitBase ?? 0);
+                const discountPercent = calculationItem?.descuentoPorcentaje ?? item.descuentoPorcentaje ?? null;
+                const discountAmount = getQuoteDiscountTotal(calculationItem || {});
+                const subtotalBruto = getQuoteSubtotalBruto(calculationItem || {}) || (unitBase * Number(item.cantidad || 1));
+                const subtotalWithDiscount = getQuoteSubtotalWithDiscount(calculationItem || {});
+                const selectedProduct = productos.find(product => Number(product.idProducto) === Number(item.idProducto));
+                const selectedTechnique = tecnicas.find(tecnica => Number(tecnica.idTecnica) === Number(item.idTecnica));
+                const itemTitle = selectedProduct?.nombre || item.producto?.nombre || item.descripcion || 'Falta seleccionar producto';
+                const isComplete = Boolean(item.idProducto && item.idTecnica && Number(item.cantidad || 0) > 0);
+                const isOpen = activeDetailIndex === index;
+
+                return (
+                  <div
+                    className={`${styles.quoteProductBlock} ${!isComplete ? styles.quoteProductIncomplete : ''}`}
+                    key={item.idDetalleCotizacion || `detail-${index}`}
+                  >
+                    <div className={styles.quoteItemAccordionHeader}>
+                      <button
+                        type="button"
+                        className={styles.quoteItemSummaryButton}
+                        onClick={() => setActiveDetailIndex(index)}
+                        aria-expanded={isOpen}
+                      >
+                        <span className={styles.quoteItemTitle}>
+                          Producto {index + 1} - {itemTitle}
+                        </span>
+                        <span className={styles.quoteItemSummaryMeta}>
+                          Cant. {Number(item.cantidad || 0).toLocaleString('es-CO')} - {selectedTechnique?.nombre || item.tecnica?.nombre || 'Sin tecnica'} - {subtotalWithDiscount > 0 ? formatMoneyCOP(subtotalWithDiscount) : 'Por cotizar'}
+                        </span>
+                      </button>
+                      <span className={`${styles.quoteItemStatus} ${isComplete ? styles.quoteItemStatusComplete : styles.quoteItemStatusPending}`}>
+                        {isComplete ? 'Completo' : 'Falta informacion'}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.quoteItemTinyBtn}
+                        onClick={() => setActiveDetailIndex(index)}
+                        disabled={isSubmitting}
+                      >
+                        {isOpen ? 'Editando' : 'Editar'}
+                      </button>
+                      {detalles.length > 1 && (
+                        <button type="button" className={styles.quoteItemTinyBtnDanger} onClick={() => removeDetail(index)} disabled={isSubmitting}>
+                          Quitar
+                        </button>
+                      )}
+                    </div>
+
+                    {isOpen && (
+                      <div className={styles.quoteItemAccordionBody}>
+                    <div className={styles.quoteProductGrid}>
+                      {categorias.length > 0 && !isPricing && (
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>Categoria</label>
+                          <select
+                            value={item.idCategoriaProducto || ''}
+                            onChange={event => handleCategoryChange(index, event.target.value)}
+                            className={styles.selectField}
+                          >
+                            <option value="">Todas las categorias</option>
+                            {categorias.map(category => (
+                              <option key={category.idCategoriaProducto} value={category.idCategoriaProducto}>
+                                {category.nombre}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
                       <div className={styles.inputGroup}>
-                        <label className={styles.inputLabel}>Categoria</label>
-                        <select
-                          value={detail.idCategoriaProducto || ''}
-                          onChange={event => handleCategoryChange(event.target.value)}
-                          className={styles.selectField}
-                        >
-                          <option value="">Todas las categorias</option>
-                          {categorias.map(category => (
-                            <option key={category.idCategoriaProducto} value={category.idCategoriaProducto}>
-                              {category.nombre}
-                            </option>
-                          ))}
-                        </select>
+                        <label className={styles.inputLabel}>Tecnica *</label>
+                        {loadingTecnicas ? (
+                          <p className={styles.inlineLoadingText}>Cargando tecnicas...</p>
+                        ) : tecnicas.length === 0 && !isPricing ? (
+                          <p className={styles.inlineErrorText}>No hay tecnicas activas disponibles.</p>
+                        ) : (
+                          <select
+                            value={item.idTecnica || ''}
+                            onChange={event => updateDetail(index, 'idTecnica', event.target.value)}
+                            className={styles.selectField}
+                            required
+                          >
+                            <option value="">{item.tecnica?.nombre || 'Seleccione una tecnica'}</option>
+                            {tecnicas.map(tecnica => (
+                              <option key={tecnica.idTecnica} value={tecnica.idTecnica}>
+                                {tecnica.nombre}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={styles.quoteItemGrid}>
+                      <div className={styles.inputGroup}>
+                        <label className={styles.inputLabel}>Producto *</label>
+                        {loadingProductos ? (
+                          <p className={styles.inlineLoadingText}>Cargando productos...</p>
+                        ) : productos.length === 0 && !isPricing ? (
+                          <p className={styles.inlineErrorText}>No hay productos activos disponibles.</p>
+                        ) : (
+                          <select
+                            value={item.idProducto || ''}
+                            onChange={event => handleProductChange(index, event.target.value)}
+                            className={styles.selectField}
+                            required
+                          >
+                            <option value="">{item.producto?.nombre || 'Seleccione un producto'}</option>
+                            {availableProducts.map(product => (
+                              <option key={product.idProducto} value={product.idProducto}>
+                                {product.categoriaProducto?.nombre ? `${product.categoriaProducto.nombre} - ${product.nombre}` : product.nombre}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+
+                      <div className={styles.inputGroup}>
+                        <label className={styles.inputLabel}>Cantidad *</label>
+                        <input
+                          type="number"
+                          value={item.cantidad || 1}
+                          onChange={event => updateDetail(index, 'cantidad', event.target.value)}
+                          className={styles.detailRowInputSm}
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="Detalle opcional: color, talla o ubicacion del estampado"
+                      value={item.observaciones || ''}
+                      onChange={event => updateDetail(index, 'observaciones', event.target.value)}
+                      className={styles.detailRowInputFlex}
+                    />
+
+                    {isPricing && (
+                      <div className={styles.pricingInputsGrid}>
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>Precio unitario aplicado</label>
+                          <input
+                            type="number"
+                            value={item.precioUnitario ?? (suggestedUnitPrice > 0 ? suggestedUnitPrice : '')}
+                            onChange={event => updateDetail(index, 'precioUnitario', event.target.value)}
+                            className={styles.inputFieldStaff}
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>Costo de diseno</label>
+                          <input
+                            type="number"
+                            value={item.costoDiseno || ''}
+                            onChange={event => updateDetail(index, 'costoDiseno', event.target.value)}
+                            className={styles.inputFieldStaff}
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
                       </div>
                     )}
 
-                    <div className={styles.inputGroup}>
-                      <label className={styles.inputLabel}>Tecnica *</label>
-                      {loadingTecnicas ? (
-                        <p className={styles.inlineLoadingText}>Cargando tecnicas...</p>
-                      ) : tecnicas.length === 0 ? (
-                        <p className={styles.inlineErrorText}>No hay tecnicas activas disponibles.</p>
-                      ) : (
-                        <select
-                          value={detail.idTecnica || ''}
-                          onChange={event => updateDetail('idTecnica', event.target.value)}
-                          className={styles.selectField}
-                          required
-                        >
-                          <option value="">Seleccione una tecnica</option>
-                          {tecnicas.map(tecnica => (
-                            <option key={tecnica.idTecnica} value={tecnica.idTecnica}>
-                              {tecnica.nombre}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                    <div className={styles.pricingGrid}>
+                      <div className={styles.priceMetric}>
+                        <span>Precio base</span>
+                        <strong>{unitBase > 0 ? formatMoneyCOP(unitBase) : 'Por cotizar'}</strong>
+                      </div>
+                      <div className={styles.priceMetric}>
+                        <span>Descuento</span>
+                        <strong>{formatPercentage(discountPercent, '0%')}</strong>
+                      </div>
+                      <div className={styles.priceMetric}>
+                        <span>Valor descontado</span>
+                        <strong>{discountAmount > 0 ? `-${formatMoneyCOP(discountAmount)}` : 'Sin descuento'}</strong>
+                      </div>
+                      <div className={styles.priceMetric}>
+                        <span>Subtotal bruto</span>
+                        <strong>{subtotalBruto > 0 ? formatMoneyCOP(subtotalBruto) : 'Por cotizar'}</strong>
+                      </div>
+                      <div className={styles.priceMetric}>
+                        <span>Subtotal final</span>
+                        <strong>{subtotalWithDiscount > 0 ? formatMoneyCOP(subtotalWithDiscount) : 'Por cotizar'}</strong>
+                      </div>
                     </div>
+                    </div>
+                    )}
                   </div>
+                );
+              })}
+            </div>
 
-                  <div className={styles.quoteItemGrid}>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.inputLabel}>Producto *</label>
-                      {loadingProductos ? (
-                        <p className={styles.inlineLoadingText}>Cargando productos...</p>
-                      ) : productos.length === 0 ? (
-                        <p className={styles.inlineErrorText}>No hay productos activos disponibles.</p>
-                      ) : (
-                        <select
-                          value={detail.idProducto || ''}
-                          onChange={event => handleProductChange(event.target.value)}
-                          className={styles.selectField}
-                          required
-                        >
-                          <option value="">Seleccione un producto</option>
-                          {productos.map(product => (
-                            <option key={product.idProducto} value={product.idProducto}>
-                              {product.categoriaProducto?.nombre ? `${product.categoriaProducto.nombre} - ${product.nombre}` : product.nombre}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-
-                    <div className={styles.inputGroup}>
-                      <label className={styles.inputLabel}>Cantidad *</label>
-                      <input
-                        type="number"
-                        placeholder="Cant."
-                        value={detail.cantidad || 1}
-                        onChange={event => updateDetail('cantidad', event.target.value)}
-                        className={styles.detailRowInputSm}
-                        min="1"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <input
-                    type="text"
-                    placeholder="Detalle opcional: color, talla o ubicacion del estampado"
-                    value={detail.observaciones || ''}
-                    onChange={event => updateDetail('observaciones', event.target.value)}
-                    className={styles.detailRowInputFlex}
-                  />
-
-                  <div className={styles.quoteEstimateBox}>
-                    <div>
-                      <span className={styles.quoteEstimateLabel}>Total estimado</span>
-                      <strong className={styles.quoteEstimateValue}>
-                        {formatMoneyCOP(calculo?.total ?? 0)}
-                      </strong>
-                    </div>
-                    <span className={styles.quoteEstimateText}>
-                      {calculando ? 'Calculando con precios reales...' : 'Este valor se confirmara al cotizar.'}
-                    </span>
-                  </div>
-                </div>
-                </div>
-
-                <p className={styles.infoNote}>
-                  Cada cotizacion corresponde a un solo producto. Para otro articulo, crea una nueva cotizacion.
-                </p>
+            {isPricing && (
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel}>Costos adicionales</label>
+                <input
+                  type="number"
+                  value={costosAdicionales}
+                  onChange={event => setCostosAdicionales(event.target.value)}
+                  className={styles.inputFieldStaff}
+                  min="0"
+                  step="0.01"
+                />
+                <span className={styles.fieldHint}>Ej: diseno extra, urgencia, domicilio, personalizacion especial.</span>
               </div>
-            </>
+            )}
+
+            <div className={styles.quoteTotalCard}>
+              <span>Total final</span>
+              <strong>{finalTotal > 0 ? formatMoneyCOP(finalTotal) : formatMoneyCOP(calculo?.total ?? 0)}</strong>
+              <small>{calculando ? 'Calculando con precios reales...' : 'Total general de la cotizacion.'}</small>
+            </div>
+          </div>
+
+          {shouldShowChangeReason && (
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel}>Motivo del cambio</label>
+              <textarea
+                value={motivoCambio}
+                onChange={event => setMotivoCambio(event.target.value)}
+                className={styles.inputField}
+                rows={2}
+                placeholder="Ej: Se agrego costo de diseno, se ajusto la cantidad, se modifico el valor del producto..."
+              />
+              <span className={styles.fieldHint}>
+                Este motivo sera enviado al cliente por correo si la cotizacion ya habia sido enviada o valorizada.
+              </span>
+            </div>
           )}
 
           <div className={styles.modalFooter}>

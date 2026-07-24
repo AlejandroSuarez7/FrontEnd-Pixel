@@ -34,6 +34,14 @@ import {
   FaYoutube,
 } from "react-icons/fa";
 
+const createPublicQuoteItem = () => ({
+  idCategoriaProducto: '',
+  idProducto: '',
+  idTecnica: '',
+  cantidad: 1,
+  detalleProducto: '',
+});
+
 const LandingPage = () => {
   const { user, permissions, logout } = useAuth();
   const confirm = useConfirm();
@@ -50,23 +58,37 @@ const LandingPage = () => {
     nombre: '',
     correo: '',
     telefono: '',
-    idCategoriaProducto: '',
-    idProducto: '',
-    idTecnica: '',
-    cantidad: 1,
-    detalleProducto: '',
+    items: [createPublicQuoteItem()],
     observaciones: '',
   });
   const [publicQuoteCalculation, setPublicQuoteCalculation] = useState(null);
+  const [activePublicQuoteIndex, setActivePublicQuoteIndex] = useState(0);
+  const [quoteLoginRequired, setQuoteLoginRequired] = useState(false);
   const { isLocked: isQuoteSubmitting, runLocked: runQuoteLocked } = useAsyncLock();
   const isLoggedIn = Boolean(user);
   const isClient = isClientUser(user, permissions);
+  const isLoggedNonClient = isLoggedIn && !isClient;
+  const contactFieldsDisabled = isClient || isLoggedNonClient;
   const userName = user?.nombre || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
-  const publicQuoteItem = publicQuoteCalculation?.items?.[0] || null;
-  const publicQuoteSubtotalBruto = getQuoteSubtotalBruto(publicQuoteItem || {});
-  const publicQuoteDiscountTotal = getQuoteDiscountTotal(publicQuoteItem || {});
-  const publicQuoteSubtotalWithDiscount = getQuoteSubtotalWithDiscount(publicQuoteItem || {});
+  const publicQuoteItems = publicQuoteForm.items || [];
+  const calculationItems = publicQuoteCalculation?.items || publicQuoteCalculation?.detalles || [];
+  const publicQuoteSubtotalBruto = publicQuoteCalculation?.subtotalBruto ?? getQuoteSubtotalBruto(publicQuoteCalculation || {});
+  const publicQuoteDiscountTotal = publicQuoteCalculation?.descuentoTotal ?? getQuoteDiscountTotal(publicQuoteCalculation || {});
+  const publicQuoteSubtotalWithDiscount = publicQuoteCalculation?.subtotalConDescuento
+    ?? publicQuoteCalculation?.subtotalFinal
+    ?? getQuoteSubtotalWithDiscount(publicQuoteCalculation || {});
+
+  useEffect(() => {
+    if (!isClient || !user) return;
+    setPublicQuoteForm(prev => ({
+      ...prev,
+      nombre: user.nombre || prev.nombre,
+      correo: user.correo || prev.correo,
+      telefono: user.telefono || prev.telefono,
+    }));
+    setQuoteLoginRequired(false);
+  }, [isClient, user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -98,13 +120,9 @@ const LandingPage = () => {
 
   useEffect(() => {
     setLoadingProducts(true);
-    publicQuoteRepository.listProductsByCategory(publicQuoteForm.idCategoriaProducto)
+    publicQuoteRepository.listProductsByCategory()
       .then((products) => {
         setPublicProducts(products);
-        if (!products.some(product => Number(product.idProducto) === Number(publicQuoteForm.idProducto))) {
-          setPublicQuoteForm(prev => ({ ...prev, idProducto: '' }));
-          setPublicQuoteCalculation(null);
-        }
         setProductsError('');
       })
       .catch((error) => {
@@ -113,20 +131,26 @@ const LandingPage = () => {
         notifications.error(message);
       })
       .finally(() => setLoadingProducts(false));
-  }, [publicQuoteForm.idCategoriaProducto]);
+  }, []);
 
   useEffect(() => {
-    if (!publicQuoteForm.idProducto || Number(publicQuoteForm.cantidad) <= 0) {
+    const validItems = publicQuoteItems
+      .filter(item => item.idProducto && Number(item.cantidad) > 0)
+      .map(item => ({
+        idProducto: Number(item.idProducto),
+        ...(item.idTecnica && { idTecnica: Number(item.idTecnica) }),
+        cantidad: Number(item.cantidad),
+        observaciones: item.detalleProducto?.trim() || null,
+      }));
+
+    if (validItems.length === 0) {
       setPublicQuoteCalculation(null);
       return;
     }
 
     const timer = window.setTimeout(() => {
       setCalculatingQuote(true);
-      publicQuoteRepository.calculate([{
-        idProducto: Number(publicQuoteForm.idProducto),
-        cantidad: Number(publicQuoteForm.cantidad),
-      }])
+      publicQuoteRepository.calculate(validItems)
         .then(setPublicQuoteCalculation)
         .catch((error) => {
           setPublicQuoteCalculation(null);
@@ -136,38 +160,74 @@ const LandingPage = () => {
     }, 450);
 
     return () => window.clearTimeout(timer);
-  }, [publicQuoteForm.idProducto, publicQuoteForm.cantidad]);
+  }, [publicQuoteItems]);
 
   const updatePublicQuoteField = (field, value) => {
+    if (field === 'correo') setQuoteLoginRequired(false);
     setPublicQuoteForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const updatePublicQuoteItem = (index, field, value) => {
+    setPublicQuoteForm(prev => ({
+      ...prev,
+      items: prev.items.map((item, itemIndex) => (
+        itemIndex === index ? { ...item, [field]: value } : item
+      )),
+    }));
+  };
+
+  const addPublicQuoteItem = () => {
+    setPublicQuoteForm(prev => ({
+      ...prev,
+      items: [...prev.items, createPublicQuoteItem()],
+    }));
+    setActivePublicQuoteIndex(publicQuoteItems.length);
+  };
+
+  const removePublicQuoteItem = (index) => {
+    setPublicQuoteForm(prev => ({
+      ...prev,
+      items: prev.items.length > 1
+        ? prev.items.filter((_, itemIndex) => itemIndex !== index)
+        : prev.items,
+    }));
+    setActivePublicQuoteIndex(current => Math.max(0, Math.min(current >= index ? current - 1 : current, publicQuoteItems.length - 2)));
   };
 
   const resetPublicQuoteForm = () => {
     setPublicQuoteForm({
-      nombre: '',
-      correo: '',
-      telefono: '',
-      idCategoriaProducto: '',
-      idProducto: '',
-      idTecnica: '',
-      cantidad: 1,
-      detalleProducto: '',
+      nombre: isClient ? user?.nombre || '' : '',
+      correo: isClient ? user?.correo || '' : '',
+      telefono: isClient ? user?.telefono || '' : '',
+      items: [createPublicQuoteItem()],
       observaciones: '',
     });
     setPublicQuoteCalculation(null);
+    setActivePublicQuoteIndex(0);
   };
 
   const validatePublicQuote = () => {
     const telefonoLimpio = publicQuoteForm.telefono.trim();
 
-    if (!publicQuoteForm.nombre.trim()) return 'El nombre completo es obligatorio.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicQuoteForm.correo.trim())) return 'Ingresa un email valido con @.';
-    if (!/^\d{10}$/.test(telefonoLimpio)) return 'El telefono debe tener exactamente 10 digitos numericos.';
+    if (isLoggedNonClient) return 'Para cotizar como cliente, usa una cuenta de cliente o crea una cotizacion presencial desde el panel.';
 
-    if (!publicQuoteForm.idProducto || Number(publicQuoteForm.cantidad) <= 0) {
-      return 'Selecciona un producto y una cantidad mayor a 0.';
+    if (!isClient) {
+      if (!publicQuoteForm.nombre.trim()) return 'El nombre completo es obligatorio.';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicQuoteForm.correo.trim())) return 'Ingresa un email valido con @.';
+      if (!/^\d{10}$/.test(telefonoLimpio)) return 'El telefono debe tener exactamente 10 digitos numericos.';
     }
-    if (!publicQuoteForm.idTecnica) return 'Selecciona la tecnica de estampacion.';
+
+    if (!publicQuoteItems.length) return 'Agrega al menos un producto para cotizar.';
+    const invalidItemIndex = publicQuoteItems.findIndex(item => !item.idProducto || Number(item.cantidad) <= 0);
+    if (invalidItemIndex >= 0) {
+      setActivePublicQuoteIndex(invalidItemIndex);
+      return `Completa el producto y la cantidad del item ${invalidItemIndex + 1}.`;
+    }
+    const missingTechniqueIndex = publicQuoteItems.findIndex(item => !item.idTecnica);
+    if (missingTechniqueIndex >= 0) {
+      setActivePublicQuoteIndex(missingTechniqueIndex);
+      return `Selecciona la tecnica de estampacion del item ${missingTechniqueIndex + 1}.`;
+    }
     return null;
   };
 
@@ -195,26 +255,50 @@ const LandingPage = () => {
 
       await publicQuoteRepository.create({
         cliente: {
-          nombre: publicQuoteForm.nombre.trim(),
-          correo: publicQuoteForm.correo.trim().toLowerCase(),
-          telefono: publicQuoteForm.telefono.trim(),
+          nombre: (isClient ? user?.nombre : publicQuoteForm.nombre)?.trim?.() || '',
+          correo: ((isClient ? user?.correo : publicQuoteForm.correo) || '').trim().toLowerCase(),
+          telefono: ((isClient ? user?.telefono : publicQuoteForm.telefono) || '').trim(),
         },
-        items: [{
-          idProducto: Number(publicQuoteForm.idProducto),
-          idTecnica: Number(publicQuoteForm.idTecnica),
-          cantidad: Number(publicQuoteForm.cantidad),
-          observaciones: publicQuoteForm.detalleProducto.trim() || null,
-        }],
+        items: publicQuoteItems.map(item => ({
+          idProducto: Number(item.idProducto),
+          idTecnica: Number(item.idTecnica),
+          cantidad: Number(item.cantidad),
+          observaciones: item.detalleProducto.trim() || null,
+        })),
         observaciones: publicQuoteForm.observaciones.trim() || null,
       });
       notifications.success('Solicitud enviada correctamente. Revisa tu correo para ver la constancia. Si no lo encuentras, revisa la carpeta de SPAM o correo no deseado.');
       resetPublicQuoteForm();
     } catch (error) {
+      const errorCode = error.payload?.code || error.response?.data?.code;
+      if (error.status === 409 && errorCode === 'EMAIL_REQUIRES_LOGIN') {
+        setQuoteLoginRequired(true);
+        notifications.warning('Este correo ya esta registrado. Inicia sesion para realizar una cotizacion con tu cuenta.', {
+          duration: 8000,
+          action: {
+            label: 'Iniciar sesion',
+            onClick: () => navigate('/login', { state: { redirectTo: '/#contacto' } }),
+          },
+        });
+        return;
+      }
+
+      if (error.status === 401) {
+        notifications.error('Tu sesion no es valida. Inicia sesion nuevamente.');
+        logout();
+        navigate('/login', { state: { redirectTo: '/#contacto' } });
+        return;
+      }
+
       notifications.error(error.message || 'No se pudo enviar la solicitud.');
     } finally {
       setSendingQuote(false);
     }
     });
+  };
+
+  const handleQuoteLoginRedirect = () => {
+    navigate('/login', { state: { redirectTo: '/#contacto' } });
   };
 
   const handleGoDashboard = () => {
@@ -1521,6 +1605,8 @@ const LandingPage = () => {
               className="contact-input"
               value={publicQuoteForm.nombre}
               onChange={(event) => updatePublicQuoteField('nombre', event.target.value)}
+              disabled={contactFieldsDisabled}
+              readOnly={contactFieldsDisabled}
             />
 
           </div>
@@ -1538,6 +1624,8 @@ const LandingPage = () => {
               className="contact-input"
               value={publicQuoteForm.correo}
               onChange={(event) => updatePublicQuoteField('correo', event.target.value)}
+              disabled={contactFieldsDisabled}
+              readOnly={contactFieldsDisabled}
             />
 
           </div>
@@ -1557,45 +1645,45 @@ const LandingPage = () => {
               maxLength={10}
               value={publicQuoteForm.telefono}
               onChange={(event) => updatePublicQuoteField('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))}
+              disabled={contactFieldsDisabled}
+              readOnly={contactFieldsDisabled}
             />
 
           </div>
 
+          {isClient && (
+            <div className="quote-account-notice">
+              Cotizando con los datos de tu cuenta.
+            </div>
+          )}
+
+          {isLoggedNonClient && (
+            <div className="quote-account-notice warning">
+              Para cotizar como cliente, usa una cuenta de cliente o crea una cotizacion presencial desde el panel.
+            </div>
+          )}
+
+          {quoteLoginRequired && !isLoggedIn && (
+            <div className="quote-login-required">
+              <span>Este correo ya esta registrado. Inicia sesion para cotizar con tu cuenta.</span>
+              <button type="button" onClick={handleQuoteLoginRedirect}>
+                Iniciar sesion
+              </button>
+            </div>
+          )}
+
           </div>
 
           <div className="quote-products-panel">
-            <label className="contact-field-label">Datos de la cotizacion</label>
-            <div className="quote-select-grid">
-            {publicCategories.length > 0 && (
-              <select
-                className="contact-input quote-category-select"
-                value={publicQuoteForm.idCategoriaProducto}
-                onChange={(event) => updatePublicQuoteField('idCategoriaProducto', event.target.value)}
+            <div className="quote-products-header">
+              <label className="contact-field-label">Productos a cotizar</label>
+              <button
+                type="button"
+                className="quote-add-product-btn"
+                onClick={addPublicQuoteItem}
               >
-                <option value="">Todas las categorias</option>
-                {publicCategories.map(category => (
-                  <option key={category.idCategoriaProducto} value={category.idCategoriaProducto}>
-                    {category.nombre}
-                  </option>
-                ))}
-              </select>
-            )}
-            <select
-              className="contact-input quote-technique-select"
-              value={publicQuoteForm.idTecnica}
-              onChange={(event) => updatePublicQuoteField('idTecnica', event.target.value)}
-              required
-              disabled={publicTechniques.length === 0}
-            >
-              <option value="">
-                {publicTechniques.length === 0 ? 'Sin tecnicas disponibles' : 'Tecnica de estampacion'}
-              </option>
-              {publicTechniques.map(technique => (
-                <option key={technique.idTecnica} value={technique.idTecnica}>
-                  {technique.nombre}
-                </option>
-              ))}
-            </select>
+                Agregar producto
+              </button>
             </div>
 
             {loadingProducts ? (
@@ -1605,60 +1693,142 @@ const LandingPage = () => {
             ) : publicProducts.length === 0 ? (
               <p className="quote-helper-text">No hay productos activos para cotizar por ahora.</p>
             ) : (
-              <div className="quote-product-row">
-                <select
-                  className="contact-input quote-product-select"
-                  value={publicQuoteForm.idProducto}
-                  onChange={(event) => updatePublicQuoteField('idProducto', event.target.value)}
-                  required
-                >
-                  <option value="">Selecciona un producto</option>
-                  {publicProducts.map(product => (
-                    <option key={product.idProducto} value={product.idProducto}>
-                      {product.categoriaProducto?.nombre ? `${product.categoriaProducto.nombre} - ${product.nombre}` : product.nombre}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  min="1"
-                  className="contact-input quote-quantity-input"
-                  value={publicQuoteForm.cantidad}
-                  onChange={(event) => updatePublicQuoteField('cantidad', event.target.value)}
-                  placeholder="Cantidad"
-                  required
-                />
-                <input
-                  type="text"
-                  className="contact-input quote-item-note"
-                  value={publicQuoteForm.detalleProducto}
-                  onChange={(event) => updatePublicQuoteField('detalleProducto', event.target.value)}
-                  placeholder="Color, talla o ubicacion del estampado"
-                />
-                {publicQuoteItem && (
-                  <div className="quote-line-summary">
-                    <span className="quote-price-before">
-                      Unitario base: {formatMoneyCOP(publicQuoteItem.precioBase)}
-                    </span>
-                    <span className="quote-discount-chip">
-                      -{formatPercentage(publicQuoteItem.descuentoPorcentaje, '0%')}
-                    </span>
-                    <span>
-                      Unitario final: {formatMoneyCOP(publicQuoteItem.precioUnitario)} c/u
-                    </span>
-                    <span>
-                      Subtotal: {formatMoneyCOP(publicQuoteSubtotalBruto)}
-                    </span>
-                    {publicQuoteDiscountTotal > 0 && (
-                      <span>
-                        Descuento: -{formatMoneyCOP(publicQuoteDiscountTotal)}
-                      </span>
-                    )}
-                    <strong>
-                      Con descuento: {formatMoneyCOP(publicQuoteSubtotalWithDiscount)}
-                    </strong>
-                  </div>
-                )}
+              <div className="quote-items-list">
+                {publicQuoteItems.map((item, index) => {
+                  const availableProducts = item.idCategoriaProducto
+                    ? publicProducts.filter(product => Number(product.idCategoriaProducto || product.categoriaProducto?.idCategoriaProducto) === Number(item.idCategoriaProducto))
+                    : publicProducts;
+                  const calculationItem = calculationItems[index] || null;
+                  const itemSubtotalBruto = getQuoteSubtotalBruto(calculationItem || {});
+                  const itemDiscountTotal = getQuoteDiscountTotal(calculationItem || {});
+                  const itemSubtotalWithDiscount = getQuoteSubtotalWithDiscount(calculationItem || {});
+                  const selectedProduct = publicProducts.find(product => Number(product.idProducto) === Number(item.idProducto));
+                  const selectedTechnique = publicTechniques.find(technique => Number(technique.idTecnica) === Number(item.idTecnica));
+                  const isComplete = Boolean(item.idProducto && item.idTecnica && Number(item.cantidad || 0) > 0);
+                  const isOpen = activePublicQuoteIndex === index;
+                  const itemTitle = selectedProduct?.nombre || 'Falta seleccionar producto';
+
+                  return (
+                    <div className={`quote-item-card ${!isComplete ? 'quote-item-card-incomplete' : ''}`} key={`public-quote-item-${index}`}>
+                      <div className="quote-item-card-header">
+                        <button
+                          type="button"
+                          className="quote-item-summary-btn"
+                          onClick={() => setActivePublicQuoteIndex(index)}
+                          aria-expanded={isOpen}
+                        >
+                          <span>Producto {index + 1} - {itemTitle}</span>
+                          <small>
+                            Cant. {Number(item.cantidad || 0).toLocaleString('es-CO')} - {selectedTechnique?.nombre || 'Sin tecnica'} - {itemSubtotalWithDiscount > 0 ? formatMoneyCOP(itemSubtotalWithDiscount) : 'Por cotizar'}
+                          </small>
+                        </button>
+                        <span className={`quote-item-status ${isComplete ? 'complete' : 'pending'}`}>
+                          {isComplete ? 'Completo' : 'Falta informacion'}
+                        </span>
+                        <button
+                          type="button"
+                          className="quote-edit-product-btn"
+                          onClick={() => setActivePublicQuoteIndex(index)}
+                        >
+                          {isOpen ? 'Editando' : 'Editar'}
+                        </button>
+                        {publicQuoteItems.length > 1 && (
+                          <button
+                            type="button"
+                            className="quote-remove-product-btn"
+                            onClick={() => removePublicQuoteItem(index)}
+                          >
+                            Quitar
+                          </button>
+                        )}
+                      </div>
+
+                      {isOpen && (
+                        <div className="quote-item-card-body">
+                      <div className="quote-select-grid">
+                        {publicCategories.length > 0 && (
+                          <select
+                            className="contact-input quote-category-select"
+                            value={item.idCategoriaProducto}
+                            onChange={(event) => {
+                              updatePublicQuoteItem(index, 'idCategoriaProducto', event.target.value);
+                              updatePublicQuoteItem(index, 'idProducto', '');
+                            }}
+                          >
+                            <option value="">Todas las categorias</option>
+                            {publicCategories.map(category => (
+                              <option key={category.idCategoriaProducto} value={category.idCategoriaProducto}>
+                                {category.nombre}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        <select
+                          className="contact-input quote-technique-select"
+                          value={item.idTecnica}
+                          onChange={(event) => updatePublicQuoteItem(index, 'idTecnica', event.target.value)}
+                          required
+                          disabled={publicTechniques.length === 0}
+                        >
+                          <option value="">
+                            {publicTechniques.length === 0 ? 'Sin tecnicas disponibles' : 'Tecnica de estampacion'}
+                          </option>
+                          {publicTechniques.map(technique => (
+                            <option key={technique.idTecnica} value={technique.idTecnica}>
+                              {technique.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="quote-product-row">
+                        <select
+                          className="contact-input quote-product-select"
+                          value={item.idProducto}
+                          onChange={(event) => updatePublicQuoteItem(index, 'idProducto', event.target.value)}
+                          required
+                        >
+                          <option value="">Selecciona un producto</option>
+                          {availableProducts.map(product => (
+                            <option key={product.idProducto} value={product.idProducto}>
+                              {product.categoriaProducto?.nombre ? `${product.categoriaProducto.nombre} - ${product.nombre}` : product.nombre}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="1"
+                          className="contact-input quote-quantity-input"
+                          value={item.cantidad}
+                          onChange={(event) => updatePublicQuoteItem(index, 'cantidad', event.target.value)}
+                          placeholder="Cantidad"
+                          required
+                        />
+                        <input
+                          type="text"
+                          className="contact-input quote-item-note"
+                          value={item.detalleProducto}
+                          onChange={(event) => updatePublicQuoteItem(index, 'detalleProducto', event.target.value)}
+                          placeholder="Color, talla o ubicacion del estampado"
+                        />
+                      </div>
+
+                      {calculationItem && (
+                        <div className="quote-line-summary">
+                          <span>Unitario: {formatMoneyCOP(calculationItem.precioUnitario ?? calculationItem.precioBase)}</span>
+                          <span className="quote-discount-chip">
+                            -{formatPercentage(calculationItem.descuentoPorcentaje, '0%')}
+                          </span>
+                          <span>Subtotal: {formatMoneyCOP(itemSubtotalBruto)}</span>
+                          {itemDiscountTotal > 0 && <span>Descuento: -{formatMoneyCOP(itemDiscountTotal)}</span>}
+                          <strong>Con descuento: {formatMoneyCOP(itemSubtotalWithDiscount)}</strong>
+                        </div>
+                      )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1685,6 +1855,11 @@ const LandingPage = () => {
               <strong className="quote-total-value">
                 {formatMoneyCOP(publicQuoteCalculation?.total ?? 0)}
               </strong>
+              {publicQuoteCalculation && (
+                <small className="quote-total-breakdown">
+                  Subtotal: {formatMoneyCOP(publicQuoteSubtotalBruto)} - Descuento: -{formatMoneyCOP(publicQuoteDiscountTotal)} - Con descuento: {formatMoneyCOP(publicQuoteSubtotalWithDiscount)}
+                </small>
+              )}
             </div>
             <span className="quote-helper-text">
               {calculatingQuote
@@ -1697,7 +1872,7 @@ const LandingPage = () => {
           <button
             type="submit"
             className="contact-submit-btn"
-            disabled={sendingQuote || isQuoteSubmitting || loadingProducts || publicProducts.length === 0}
+            disabled={isLoggedNonClient || sendingQuote || isQuoteSubmitting || loadingProducts || publicProducts.length === 0}
           >
             {sendingQuote || isQuoteSubmitting ? 'Enviando...' : 'Enviar solicitud'}
           </button>

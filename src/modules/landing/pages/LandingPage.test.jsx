@@ -24,12 +24,14 @@ vi.mock('motion/react', async () => {
 
 vi.mock('react-router-dom', () => ({
   Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a>,
+  useLocation: () => ({ state: null }),
   useNavigate: () => navigateMock,
 }));
 
 vi.mock('../../../store/AuthContext', () => ({
   useAuth: () => ({
     user: null,
+    permissions: [],
     logout: vi.fn(),
   }),
 }));
@@ -82,14 +84,14 @@ describe('LandingPage public quote form', () => {
     confirmMock.mockResolvedValue(true);
   });
 
-  it('renders a single-product quote form without add/remove product controls', async () => {
+  it('renders a multiproduct quote form with add product control', async () => {
     render(<LandingPage />);
 
     expect(await screen.findByText(/solicita tu cotizaci/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/nombre completo/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/tu@email.com/i)).toBeInTheDocument();
     expect(screen.getByText(/selecciona un producto/i)).toBeInTheDocument();
-    expect(screen.queryByText(/agregar producto/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/agregar producto/i)).toBeInTheDocument();
     expect(screen.queryByText(/^quitar$/i)).not.toBeInTheDocument();
   });
 
@@ -124,5 +126,32 @@ describe('LandingPage public quote form', () => {
       idTecnica: 2,
       cantidad: 2,
     });
+  });
+
+  it('can submit multiple quoted products', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<LandingPage />);
+
+    await user.type(screen.getByPlaceholderText(/nombre completo/i), 'Cliente Pixel');
+    await user.type(screen.getByPlaceholderText(/tu@email.com/i), 'cliente@pixel.com');
+    await user.type(screen.getByPlaceholderText('3000000000'), '3001234567');
+    await waitFor(() => expect(publicQuoteRepository.listProductsByCategory).toHaveBeenCalled());
+
+    let selects = container.querySelectorAll('select.contact-input');
+    await user.selectOptions(selects[1], '2');
+    await user.selectOptions(selects[2], '10');
+
+    await user.click(screen.getByText(/agregar producto/i));
+
+    selects = container.querySelectorAll('select.contact-input');
+    await user.selectOptions(selects[1], '2');
+    await user.selectOptions(selects[2], '10');
+
+    await user.click(screen.getByRole('button', { name: /enviar solicitud/i }));
+
+    await waitFor(() => expect(publicQuoteRepository.create).toHaveBeenCalledTimes(1));
+    const payload = publicQuoteRepository.create.mock.calls[0][0];
+    expect(payload.items).toHaveLength(2);
+    expect(payload.items.every(item => item.idProducto === 10 && item.idTecnica === 2)).toBe(true);
   });
 });

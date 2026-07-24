@@ -93,6 +93,17 @@ export class PedidoApiRepository {
     }
   }
 
+  async actualizarRequiereDiseno(idPedido, idDetallePedido, requiereDiseno) {
+    try {
+      const { data } = await apiClient.patch(`${ENDPOINT}/${idPedido}/detalles/${idDetallePedido}/requiere-diseno`, {
+        requiereDiseno,
+      });
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo actualizar el requisito de diseno');
+    }
+  }
+
   // Anula el pedido: PATCH /api/pedidos/:id/anular
   async anular(id, motivoAnulacion) {
     try {

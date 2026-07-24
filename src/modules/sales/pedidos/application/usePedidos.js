@@ -109,6 +109,16 @@ export const usePedidos = (filters = {}) => {
     }
   };
 
+  const handleActualizarRequiereDiseno = async (idPedido, idDetallePedido, requiereDiseno) => {
+    try {
+      await pedidoRepository.actualizarRequiereDiseno(idPedido, idDetallePedido, requiereDiseno);
+      await fetchPedidos();
+    } catch (error) {
+      console.error(`Error al actualizar requisito de diseno detalle #${idDetallePedido}:`, error);
+      throw error;
+    }
+  };
+
   return {
     pedidos,
     paginationMeta,
@@ -122,5 +132,6 @@ export const usePedidos = (filters = {}) => {
     handleFinalizar,
     handleAnular,
     handleConfirmarEntrega,
+    handleActualizarRequiereDiseno,
   };
 };

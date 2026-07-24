@@ -469,9 +469,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: none;
-  overflow: visible;
-  padding-right: 0;
+  max-height: 360px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 3px;
 }
 
 .detailRow {
@@ -493,7 +494,125 @@
 .quoteProductBlock {
   display: flex;
   flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.quoteProductIncomplete {
+  border-color: #fed7aa;
+  background-color: #fffaf3;
+}
+
+.quoteItemHeader,
+.quotePanelActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quoteItemHeader strong {
+  color: var(--color-text-primary);
+  font-size: 13.5px;
+}
+
+.quoteItemAccordionHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
   gap: 8px;
+  padding: 10px 12px;
+}
+
+.quoteItemSummaryButton {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.quoteItemSummaryButton:hover .quoteItemTitle {
+  color: var(--color-accent);
+}
+
+.quoteItemTitle,
+.quoteItemSummaryMeta {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quoteItemTitle {
+  color: var(--color-text-primary);
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.quoteItemSummaryMeta {
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+}
+
+.quoteItemStatus {
+  border-radius: var(--radius-pill);
+  padding: 5px 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.quoteItemStatusComplete {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.quoteItemStatusPending {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+.quoteItemTinyBtn,
+.quoteItemTinyBtnDanger {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: var(--color-text-secondary);
+  padding: 7px 9px;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.quoteItemTinyBtn:hover {
+  color: var(--color-accent);
+  background: var(--color-accent-light);
+  border-color: #d8b4fe;
+}
+
+.quoteItemTinyBtnDanger {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+.quoteItemAccordionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--color-border);
 }
 
 .quoteProductGrid,
@@ -858,6 +977,12 @@
   align-items: start;
 }
 
+.quoteProductsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .quoteProductMain {
   padding: 11px 12px;
   border-radius: var(--radius-sm);
@@ -974,6 +1099,29 @@
   padding: 24px 28px;
 }
 
+.modalSm,
+.modalQuotePricing {
+  max-height: min(90vh, 860px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalSm .form,
+.modalQuotePricing .form {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.modalSm .modalFooter,
+.modalQuotePricing .modalFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--color-surface);
+}
+
 .quoteSummaryCard {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1015,8 +1163,8 @@
 .pricingPanel {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 16px;
+  gap: 10px;
+  padding: 14px;
   border: 1px solid #e9d5ff;
   border-radius: var(--radius-md);
   background-color: #fdfaff;
@@ -1048,15 +1196,15 @@
 
 .pricingGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .priceMetric {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  padding: 12px;
+  padding: 9px 10px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background-color: #ffffff;
@@ -1070,7 +1218,7 @@
 
 .priceMetric strong {
   color: var(--color-text-primary);
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .pricingInputsGrid {
@@ -1260,6 +1408,16 @@
   .quoteTotalsPanel {
     grid-template-columns: 1fr;
   }
+  .quoteItemAccordionHeader {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .quoteItemTinyBtn,
+  .quoteItemTinyBtnDanger {
+    width: 100%;
+  }
+  .detailRowsWrapper {
+    max-height: 46vh;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1282,6 +1440,13 @@
   .quoteTotalCard {
     grid-template-columns: 1fr;
   }
+  .quoteItemAccordionHeader {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .quoteItemSummaryMeta {
+    white-space: normal;
+  }
   .quoteDetailsHeader,
   .quoteTotalsRows div {
     flex-direction: column;
@@ -1302,4 +1467,739 @@
   .btnPrimary,
   .btnSecondary { width: 100%; }
   .paginationControls { flex-wrap: wrap; }
+}
+
+/* Multiproduct quote modal: compact, controlled scrolling */
+.modalSm,
+.modalQuotePricing {
+  width: min(92vw, 760px);
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalQuotePricing {
+  width: min(92vw, 820px);
+}
+
+.modalSm .modalHeader,
+.modalQuotePricing .modalHeader {
+  flex-shrink: 0;
+  padding: 20px 28px 14px;
+  margin: 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modalSm .form,
+.modalQuotePricing .form {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 28px 0;
+  gap: 10px;
+}
+
+.modalSm .modalFooter,
+.modalQuotePricing .modalFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  flex-shrink: 0;
+  padding: 12px 0 20px;
+  margin-top: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), #ffffff 32%);
+  box-shadow: 0 -10px 22px rgba(15, 23, 42, 0.04);
+}
+
+.pricingPanel {
+  gap: 8px;
+  padding: 12px;
+  background: #fffcff;
+}
+
+.pricingPanelHeader {
+  align-items: center;
+}
+
+.pricingHelpText {
+  margin-top: -6px;
+  font-size: 11.5px;
+}
+
+.detailRowsWrapper {
+  max-height: clamp(210px, 34vh, 310px);
+  min-height: 0;
+  gap: 6px;
+  padding-right: 5px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #c4b5fd transparent;
+}
+
+.detailRowsWrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detailRowsWrapper::-webkit-scrollbar-thumb {
+  background: #c4b5fd;
+  border-radius: 999px;
+}
+
+.quoteProductBlock {
+  border-radius: 10px;
+  box-shadow: none;
+  flex: 0 0 auto;
+  min-height: 42px;
+}
+
+.quoteItemAccordionHeader {
+  min-height: 42px;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 7px;
+  padding: 7px 9px;
+}
+
+.quoteItemTitle {
+  font-size: 13px;
+}
+
+.quoteItemSummaryMeta {
+  margin-top: 1px;
+  font-size: 11px;
+}
+
+.quoteItemStatus {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.quoteItemTinyBtn,
+.quoteItemTinyBtnDanger {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.quoteItemAccordionBody {
+  gap: 7px;
+  padding: 8px 10px 10px;
+  flex: 0 0 auto;
+}
+
+.quoteProductGrid,
+.quoteItemGrid,
+.pricingInputsGrid {
+  gap: 8px;
+}
+
+.detailRowInputFlex,
+.detailRowInputSm,
+.inputFieldStaff,
+.selectField {
+  min-height: 36px;
+}
+
+.pricingGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.priceMetric {
+  min-width: 112px;
+  flex: 1 1 112px;
+  gap: 2px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: #fafbff;
+}
+
+.priceMetric span {
+  font-size: 10.5px;
+}
+
+.priceMetric strong {
+  font-size: 12px;
+}
+
+.quoteTotalCard {
+  position: sticky;
+  bottom: 72px;
+  z-index: 4;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.quoteTotalCard strong {
+  font-size: 24px;
+}
+
+@media (max-width: 900px) {
+  .modalSm,
+  .modalQuotePricing {
+    width: min(95vw, 760px);
+    max-height: 90vh;
+  }
+
+  .modalSm .modalHeader,
+  .modalQuotePricing .modalHeader {
+    padding: 18px 20px 12px;
+  }
+
+  .modalSm .form,
+  .modalQuotePricing .form {
+    padding: 12px 20px 0;
+  }
+
+  .detailRowsWrapper {
+    max-height: 36vh;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .modalSm,
+  .modalQuotePricing {
+    width: 95vw;
+    max-height: 90vh;
+  }
+
+  .modalSm .modalHeader,
+  .modalQuotePricing .modalHeader {
+    padding: 16px 16px 10px;
+  }
+
+  .modalSm .form,
+  .modalQuotePricing .form {
+    padding: 10px 16px 0;
+  }
+
+  .quoteItemAccordionHeader {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .quoteItemSummaryMeta {
+    white-space: normal;
+  }
+
+  .quoteItemTinyBtn,
+  .quoteItemTinyBtnDanger {
+    width: 100%;
+  }
+
+  .detailRowsWrapper {
+    max-height: 32vh;
+    overflow-y: auto;
+  }
+
+  .quoteTotalCard {
+    bottom: 128px;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Quote detail modal: readable multiproduct layout */
+.quoteDetailsModal {
+  width: min(92vw, 780px);
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.quoteDetailsModal .quoteDetailsHeader {
+  flex-shrink: 0;
+  padding: 18px 24px 12px;
+  margin: 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.quoteDetailsModal .quoteDetailsBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 24px 18px;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #c4b5fd transparent;
+}
+
+.quoteDetailsModal .quoteDetailsBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quoteDetailsModal .quoteDetailsBody::-webkit-scrollbar-thumb {
+  background: #c4b5fd;
+  border-radius: 999px;
+}
+
+.quoteDetailsModal .modalFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 12px 24px 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), #ffffff 34%);
+  box-shadow: 0 -10px 22px rgba(15, 23, 42, 0.04);
+}
+
+.quoteDetailsModal .quoteDetailsSummary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quoteDetailsModal .quoteDetailsSummaryItem {
+  padding: 9px 10px;
+}
+
+.quoteDetailsModal .quoteDetailsSection {
+  padding: 11px 12px;
+  min-height: auto;
+  overflow: visible;
+  flex: 0 0 auto;
+}
+
+.quoteDetailsModal .quoteDetailsSectionHeader {
+  margin-bottom: 8px;
+}
+
+.quoteDetailsModal .quoteProductsList {
+  max-height: clamp(190px, 30vh, 285px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  gap: 8px;
+  padding: 0 10px 0 0;
+  box-sizing: border-box;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #c4b5fd transparent;
+}
+
+.quoteDetailsModal .quoteProductsList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quoteDetailsModal .quoteProductsList::-webkit-scrollbar-thumb {
+  background: #c4b5fd;
+  border-radius: 999px;
+}
+
+.quoteDetailsModal .quoteProductsToolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.quoteDetailsModal .quoteProductSearch {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  padding: 9px 11px;
+  outline: none;
+}
+
+.quoteDetailsModal .quoteProductSearch:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.quoteDetailsModal .quoteProductsToolbar span {
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quoteDetailsModal .quoteProductsCompactList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: clamp(150px, 24vh, 230px);
+  flex: 0 0 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+  box-sizing: border-box;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #c4b5fd transparent;
+}
+
+.quoteDetailsModal .quoteProductsCompactList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quoteDetailsModal .quoteProductsCompactList::-webkit-scrollbar-thumb {
+  background: #c4b5fd;
+  border-radius: 999px;
+}
+
+.quoteDetailsModal .quoteProductCompactItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 8px;
+  align-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fbfcff;
+  padding: 8px;
+}
+
+.quoteDetailsModal .quoteProductCompactItemActive {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+}
+
+.quoteDetailsModal .quoteProductCompactSummary {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.quoteDetailsModal .quoteProductCompactSummary span,
+.quoteDetailsModal .quoteProductCompactSummary small {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.quoteDetailsModal .quoteProductCompactSummary strong {
+  display: block;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quoteDetailsModal .quoteProductExpandBtn,
+.quoteDetailsModal .quoteProductsPager button {
+  border: 1px solid #ddd6fe;
+  border-radius: 9px;
+  background: #faf5ff;
+  color: var(--color-accent);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.quoteDetailsModal .quoteProductExpandBtn:hover,
+.quoteDetailsModal .quoteProductsPager button:hover:not(:disabled) {
+  background: var(--color-accent-light);
+}
+
+.quoteDetailsModal .quoteProductsPager button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.quoteDetailsModal .quoteProductExpandedDetail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, auto);
+  gap: 6px;
+  overflow: visible;
+}
+
+.quoteDetailsModal .quoteProductExpandedDetail div {
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.quoteDetailsModal .quoteProductExpandedDetail span {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.quoteDetailsModal .quoteProductExpandedDetail strong {
+  display: block;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  line-height: 1.25;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.quoteDetailsModal .quoteProductObservation {
+  grid-column: 1 / -1;
+}
+
+.quoteDetailsModal .quoteSelectedProductPanel {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #e9d5ff;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfaff 100%);
+  overflow: visible;
+  flex: 0 0 auto;
+}
+
+.quoteDetailsModal .quoteSelectedProductHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.quoteDetailsModal .quoteSelectedProductHeader span {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+.quoteDetailsModal .quoteSelectedProductHeader strong {
+  color: var(--color-accent);
+  font-size: 12px;
+}
+
+.quoteDetailsModal .quoteSelectedProductTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 9px;
+}
+
+.quoteDetailsModal .quoteSelectedProductTitle strong {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.quoteDetailsModal .quoteSelectedProductTitle small {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.quoteDetailsModal .quoteProductEmptyState {
+  padding: 18px;
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.quoteDetailsModal .quoteProductsPager {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quoteDetailsModal .quoteProductDetailCard {
+  grid-template-columns: minmax(190px, 0.75fr) minmax(0, 1.25fr);
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fbfcff;
+  box-sizing: border-box;
+}
+
+.quoteDetailsModal .quoteProductMain {
+  padding: 8px 9px;
+  background: #ffffff;
+  min-width: 0;
+}
+
+.quoteDetailsModal .quoteProductMain p {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.quoteDetailsModal .quoteProductMain small {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.quoteDetailsModal .quoteProductStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  min-width: 0;
+}
+
+.quoteDetailsModal .quoteProductStats div {
+  padding: 6px 7px;
+  min-width: 0;
+}
+
+.quoteDetailsModal .quoteProductStats span {
+  font-size: 10px;
+}
+
+.quoteDetailsModal .quoteProductStats strong {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+}
+
+.quoteDetailsModal .observationsGrid {
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.quoteDetailsModal .readOnlyNote {
+  padding: 10px 12px;
+}
+
+.quoteDetailsModal .detailsCreatedBy {
+  margin: 2px 0;
+}
+
+.quoteDetailsModal .quoteTotalsPanel {
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.55fr);
+  gap: 8px;
+  padding: 10px 0 4px;
+  background: #ffffff;
+  border-top: 1px solid var(--color-border);
+}
+
+.quoteDetailsModal .quoteTotalsRows {
+  padding: 9px 12px;
+  gap: 4px;
+}
+
+.quoteDetailsModal .quoteTotalsRows div {
+  font-size: 12px;
+}
+
+.quoteDetailsModal .quoteGrandTotalCard {
+  padding: 12px 14px;
+}
+
+.quoteDetailsModal .quoteGrandTotalCard strong {
+  font-size: 22px;
+}
+
+@media (max-width: 900px) {
+  .quoteDetailsModal {
+    width: min(95vw, 760px);
+    max-height: 90vh;
+  }
+
+  .quoteDetailsModal .quoteDetailsHeader {
+    padding: 16px 18px 10px;
+  }
+
+  .quoteDetailsModal .quoteDetailsBody {
+    padding: 12px 18px 16px;
+  }
+
+  .quoteDetailsModal .quoteDetailsSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quoteDetailsModal .quoteProductDetailCard,
+  .quoteDetailsModal .quoteTotalsPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .quoteDetailsModal .quoteProductStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quoteDetailsModal .quoteProductExpandedDetail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .quoteDetailsModal {
+    width: 95vw;
+    max-height: 90vh;
+  }
+
+  .quoteDetailsModal .quoteDetailsHeader {
+    padding: 14px 16px 10px;
+  }
+
+  .quoteDetailsModal .quoteDetailsBody {
+    padding: 10px 16px 16px;
+  }
+
+  .quoteDetailsModal .quoteDetailsSummary,
+  .quoteDetailsModal .quoteProductStats {
+    grid-template-columns: 1fr;
+  }
+
+  .quoteDetailsModal .quoteProductsList {
+    max-height: 24vh;
+  }
+
+  .quoteDetailsModal .quoteProductsToolbar,
+  .quoteDetailsModal .quoteProductCompactItem,
+  .quoteDetailsModal .quoteProductExpandedDetail {
+    grid-template-columns: 1fr;
+  }
+
+  .quoteDetailsModal .quoteProductsCompactList {
+    max-height: 30vh;
+  }
+
+  .quoteDetailsModal .quoteProductCompactSummary strong,
+  .quoteDetailsModal .quoteProductCompactSummary small {
+    white-space: normal;
+  }
+
+  .quoteDetailsModal .quoteProductExpandBtn {
+    width: 100%;
+  }
+
+  .quoteDetailsModal .quoteProductsPager {
+    justify-content: stretch;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .quoteDetailsModal .modalFooter {
+    padding: 10px 16px 14px;
+  }
 }

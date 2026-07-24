@@ -48,8 +48,12 @@ export class QuoteApiRepository {
         motivoCambio: pricingData.motivoCambio.trim(),
       }),
       detalles: pricingData.detalles.map(det => ({
-        idDetalleCotizacion: Number(det.idDetalleCotizacion),
-        precioUnitario: Number(det.precioUnitario || 0),
+        ...(det.idDetalleCotizacion && { idDetalleCotizacion: Number(det.idDetalleCotizacion) }),
+        ...(det.idProducto && { idProducto: Number(det.idProducto) }),
+        ...(det.idTecnica && { idTecnica: Number(det.idTecnica) }),
+        descripcion: det.descripcion?.trim() || det.producto?.nombre || '',
+        cantidad: Number(det.cantidad || 1),
+        precioUnitario: Number(det.precioUnitario || det.precioBase || 0),
         costoDiseno: Number(det.costoDiseno || 0),
         observaciones: det.observaciones?.trim() || null
       }))

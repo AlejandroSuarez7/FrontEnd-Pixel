@@ -7,6 +7,8 @@ export const disenoDTO = {
     return createDiseno({
       idDiseno: apiData.idDiseno,
       idPedido: apiData.idPedido,
+      idDetallePedido: apiData.idDetallePedido ?? null,
+      esDisenoGeneral: apiData.esDisenoGeneral ?? false,
       idDisenador: apiData.idDisenador,
       archivoUrl: apiData.archivoUrl,
       descripcion: apiData.descripcion,
@@ -27,6 +29,7 @@ export const disenoDTO = {
       medioRespuesta: apiData.medioRespuesta,
       medioRespuestaCliente: apiData.medioRespuestaCliente,
       respuestaRegistradaPor: apiData.respuestaRegistradaPor ?? null,
+      detallePedido: apiData.detallePedido ?? null,
       pedido: apiData.pedido ?? null,
       disenador: apiData.disenador ?? null,
     });
@@ -40,6 +43,8 @@ export const disenoDTO = {
   toApi(domainData) {
     return {
       idPedido: Number(domainData.idPedido),
+      ...(domainData.esDisenoGeneral && { esDisenoGeneral: true }),
+      ...(!domainData.esDisenoGeneral && domainData.idDetallePedido && { idDetallePedido: Number(domainData.idDetallePedido) }),
       ...(domainData.origenDiseno !== 'CLIENTE' && domainData.idDisenador && { idDisenador: Number(domainData.idDisenador) }),
       origenDiseno: domainData.origenDiseno || 'DISENADOR',
       ...(domainData.medioRecepcion && { medioRecepcion: domainData.medioRecepcion }),

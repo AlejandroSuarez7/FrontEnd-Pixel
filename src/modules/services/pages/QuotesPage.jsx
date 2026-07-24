@@ -106,7 +106,18 @@ const QuotesPage = () => {
   const cotizacionAprobada = (quote) => quote.estado === 'APROBADA';
 
   const getContactText = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
-  const getProductsText = (quote) => quote.detalles?.map(det => `${det.descripcion} x${det.cantidad}`).join(', ') || 'Sin productos';
+  const getProductsText = (quote) => {
+    if (quote.productosResumen) {
+      const count = Number(quote.cantidadItems || quote.detalles?.length || 0);
+      return count > 1 ? `${quote.productosResumen} (${count} productos)` : quote.productosResumen;
+    }
+    const detalles = quote.detalles || [];
+    if (!detalles.length) return 'Sin productos';
+    if (detalles.length === 1) return `${detalles[0].producto?.nombre || detalles[0].descripcion} x${detalles[0].cantidad}`;
+    const names = detalles.slice(0, 2).map(det => det.producto?.nombre || det.descripcion).filter(Boolean).join(', ');
+    const remaining = detalles.length - 2;
+    return remaining > 0 ? `${names} y ${remaining} mas` : names;
+  };
 
 
   // Solo Staff puede eliminar permanentemente una cotización

@@ -691,6 +691,32 @@
   font-weight: 700;
 }
 
+.orderItemActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.orderItemToggleBtn {
+  border: 1px solid rgba(108, 92, 231, 0.24);
+  border-radius: var(--radius-sm);
+  background: #f7f4ff;
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.orderItemToggleBtn:hover:not(:disabled) {
+  background: #ede9ff;
+}
+
+.orderItemToggleBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .orderTotalsPanel {
   padding: 14px;
   background: #fbfcff;

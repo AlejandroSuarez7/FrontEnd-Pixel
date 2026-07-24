@@ -3,9 +3,7 @@ import { formatDate } from '../../../../core/utils/fechaFormato';
 import {
   formatMoneyCOP,
   formatPercentage,
-  getQuoteDiscountTotal,
-  getQuoteSubtotalBruto,
-  getQuoteSubtotalWithDiscount,
+  toNumberOrNull,
 } from '../../../../core/utils/formatters';
 import styles from './pedidos.module.css';
 
@@ -53,7 +51,78 @@ const formatDateValue = (value, fallback = 'Por definir') => {
   return formatDate(value);
 };
 
-export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
+const firstValue = (...values) => values.find((value) => value !== null && value !== undefined && value !== '');
+
+const moneyOrText = (value, fallback = 'No especificado') => {
+  const numericValue = toNumberOrNull(value);
+  return numericValue === null ? fallback : formatMoneyCOP(numericValue);
+};
+
+const discountOrText = (value) => {
+  if (value === null || value === undefined || value === '') return 'No especificado';
+  return formatPercentage(value);
+};
+
+const getItemProductName = (item) => (
+  item.producto?.nombre
+  || item.nombreProducto
+  || item.descripcion
+  || 'Producto no especificado'
+);
+
+const getItemDiscountTotal = (item) => {
+  const explicitDiscount = toNumberOrNull(firstValue(item.descuentoTotal, item.descuentoAplicado));
+  if (explicitDiscount !== null) return explicitDiscount;
+
+  const unitDiscount = toNumberOrNull(item.descuentoValorUnitario);
+  const quantity = toNumberOrNull(item.cantidad);
+  if (unitDiscount !== null && quantity !== null) return unitDiscount * quantity;
+
+  return null;
+};
+
+const getItemSubtotalBruto = (item) => firstValue(item.subtotalBruto, item.subtotal);
+
+const getItemSubtotalWithDiscount = (item) => firstValue(
+  item.subtotalConDescuento,
+  item.subtotalFinal,
+  item.totalConDescuento,
+  item.total,
+  item.subtotal
+);
+
+const getDetailDesigns = (item = {}, pedido = {}) => {
+  const itemDesigns = Array.isArray(item.disenos)
+    ? item.disenos
+    : (item.disenos ? [item.disenos] : []);
+  const pedidoDesigns = Array.isArray(pedido.disenos)
+    ? pedido.disenos
+    : [];
+  return [
+    ...itemDesigns,
+    ...pedidoDesigns.filter((diseno) => diseno?.idDetallePedido === item.idDetallePedido),
+  ].filter(Boolean);
+};
+
+const getDesignRequirementLabel = (item = {}, pedido = {}) => {
+  if (item.requiereDiseno === false) return 'No requiere diseno';
+  const disenos = getDetailDesigns(item, pedido);
+  if (disenos.some((diseno) => String(diseno.estado || '').toUpperCase() === 'APROBADO')) return 'Diseno aprobado';
+  if (disenos.some((diseno) => String(diseno.estado || '').toUpperCase() === 'RECHAZADO')) return 'Correcciones solicitadas';
+  if (disenos.some((diseno) => ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(String(diseno.estado || '').toUpperCase()))) {
+    return 'Pendiente de aprobacion';
+  }
+  return 'Pendiente de diseno';
+};
+
+export const PedidoDetailsModal = ({
+  isOpen,
+  onClose,
+  pedido,
+  canEditDesignRequirement = false,
+  onToggleDesignRequirement,
+  pendingDesignRequirementId = null,
+}) => {
   if (!isOpen || !pedido) return null;
 
   const fmt = (value, fallback = '$0') => formatMoneyCOP(value, fallback);
@@ -64,9 +133,16 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
   const detalles = Array.isArray(pedido.detalles) ? pedido.detalles : [];
   const estadoPedidoLabel = ESTADO_PEDIDO_LABEL[pedido.estadoPedido] || pedido.estadoPedido || 'Sin estado';
   const estadoPagoLabel = ESTADO_PAGO_LABEL[pedido.estadoPago] || pedido.estadoPago || 'Sin estado';
-  const subtotal = pedido.subtotal ?? null;
-  const descuentoTotal = pedido.descuentoTotal ?? 0;
-  const costosAdicionales = pedido.costosAdicionales ?? 0;
+  const subtotalBrutoPedido = firstValue(pedido.subtotalBruto, pedido.subtotal, pedido.cotizacion?.subtotalBruto, pedido.cotizacion?.subtotal);
+  const subtotalConDescuentoPedido = firstValue(
+    pedido.subtotalConDescuento,
+    pedido.subtotalFinal,
+    pedido.cotizacion?.subtotalConDescuento,
+    pedido.cotizacion?.subtotalFinal
+  );
+  const descuentoTotal = firstValue(pedido.descuentoTotal, pedido.cotizacion?.descuentoTotal);
+  const costosAdicionales = firstValue(pedido.costosAdicionales, pedido.cotizacion?.costosAdicionales);
+  const costoDiseno = firstValue(pedido.costoDiseno, pedido.cotizacion?.costoDiseno);
   const totalFinal = pedido.total ?? 0;
   const totalPagado = pedido.totalPagado ?? 0;
   const saldoPendiente = pedido.saldoPendiente ?? 0;
@@ -175,20 +251,24 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
               ) : (
                 <div className={styles.orderItemsList}>
                   {detalles.map((det, index) => {
-                    const subtotalBruto = getQuoteSubtotalBruto(det);
-                    const subtotalFinal = getQuoteSubtotalWithDiscount(det);
-                    const itemDiscountTotal = getQuoteDiscountTotal(det);
+                    const subtotalBruto = getItemSubtotalBruto(det);
+                    const subtotalFinal = getItemSubtotalWithDiscount(det);
+                    const itemDiscountTotal = getItemDiscountTotal(det);
+                    const productName = getItemProductName(det);
 
                     return (
                       <article key={det.idDetallePedido || index} className={styles.orderItemCard}>
                         <div className={styles.orderItemHeader}>
                           <div>
                             <span className={styles.orderItemEyebrow}>Producto #{index + 1}</span>
-                            <h4>{det.descripcion || 'Producto no especificado'}</h4>
+                            <h4>{productName}</h4>
                           </div>
                           <span className={styles.orderItemQuantity}>{det.cantidad || 0} uds</span>
                         </div>
 
+                        {det.descripcion && det.descripcion !== productName && (
+                          <p className={styles.orderItemNote}>{det.descripcion}</p>
+                        )}
                         {det.observaciones && <p className={styles.orderItemNote}>{det.observaciones}</p>}
 
                         <div className={styles.orderItemMetrics}>
@@ -197,23 +277,58 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
                             <strong>{det.tecnica?.nombre || (det.idTecnica ? `Tecnica #${det.idTecnica}` : 'No especificada')}</strong>
                           </div>
                           <div>
-                            <span>Precio unitario</span>
-                            <strong>{fmt(det.precioUnitario)}</strong>
+                            <span>Precio base unitario</span>
+                            <strong>{moneyOrText(firstValue(det.precioBase, det.producto?.precioBase))}</strong>
                           </div>
                           <div>
-                            <span>Descuento</span>
-                            <strong>{formatPercentage(det.descuentoPorcentaje, '0%')}</strong>
-                            {itemDiscountTotal > 0 && <small>-{fmt(itemDiscountTotal)}</small>}
+                            <span>Descuento aplicado</span>
+                            <strong>{discountOrText(det.descuentoPorcentaje)}</strong>
+                          </div>
+                          <div>
+                            <span>Valor descontado</span>
+                            <strong>{itemDiscountTotal !== null && itemDiscountTotal > 0 ? `-${fmt(itemDiscountTotal)}` : moneyOrText(itemDiscountTotal, 'No especificado')}</strong>
+                          </div>
+                          <div>
+                            <span>Costo de diseno</span>
+                            <strong>{moneyOrText(det.costoDiseno, 'No aplica')}</strong>
+                          </div>
+                          <div>
+                            <span>Precio unitario con descuento</span>
+                            <strong>{moneyOrText(det.precioUnitario)}</strong>
                           </div>
                           <div>
                             <span>Subtotal bruto</span>
-                            <strong>{fmt(subtotalBruto)}</strong>
+                            <strong>{moneyOrText(subtotalBruto)}</strong>
                           </div>
                           <div>
-                            <span>Subtotal final</span>
-                            <strong>{fmt(subtotalFinal)}</strong>
+                            <span>Subtotal con descuento</span>
+                            <strong>{moneyOrText(subtotalFinal)}</strong>
+                          </div>
+                          <div>
+                            <span>Requiere diseno</span>
+                            <strong>{det.requiereDiseno === false ? 'No' : 'Si'}</strong>
+                          </div>
+                          <div>
+                            <span>Diseno asociado</span>
+                            <strong>{getDesignRequirementLabel(det, pedido)}</strong>
                           </div>
                         </div>
+                        {canEditDesignRequirement && det.idDetallePedido && (
+                          <div className={styles.orderItemActions}>
+                            <button
+                              type="button"
+                              className={styles.orderItemToggleBtn}
+                              disabled={pendingDesignRequirementId === det.idDetallePedido}
+                              onClick={() => onToggleDesignRequirement?.(det)}
+                            >
+                              {pendingDesignRequirementId === det.idDetallePedido
+                                ? 'Actualizando...'
+                                : det.requiereDiseno === false
+                                  ? 'Marcar requiere diseno'
+                                  : 'Marcar no requiere diseno'}
+                            </button>
+                          </div>
+                        )}
                       </article>
                     );
                   })}
@@ -225,19 +340,23 @@ export const PedidoDetailsModal = ({ isOpen, onClose, pedido }) => {
               <p className={styles.detailsSectionTitle}>Desglose economico</p>
               <div className={styles.orderMoneyRow}>
                 <span>Subtotal bruto</span>
-                <strong>{subtotal !== null ? fmt(subtotal) : 'No especificado'}</strong>
+                <strong>{moneyOrText(subtotalBrutoPedido)}</strong>
               </div>
               <div className={styles.orderMoneyRow}>
                 <span>Descuento</span>
-                <strong>{Number(descuentoTotal) > 0 ? `-${fmt(descuentoTotal)}` : 'Sin descuento'}</strong>
+                <strong>{toNumberOrNull(descuentoTotal) > 0 ? `-${fmt(descuentoTotal)}` : moneyOrText(descuentoTotal, 'Sin descuento')}</strong>
+              </div>
+              <div className={styles.orderMoneyRow}>
+                <span>Subtotal con descuento</span>
+                <strong>{moneyOrText(subtotalConDescuentoPedido)}</strong>
               </div>
               <div className={styles.orderMoneyRow}>
                 <span>Costos adicionales</span>
-                <strong>{fmt(costosAdicionales)}</strong>
+                <strong>{moneyOrText(costosAdicionales, 'No aplica')}</strong>
               </div>
               <div className={styles.orderMoneyRow}>
                 <span>Costo de diseno</span>
-                <strong>No aplica</strong>
+                <strong>{moneyOrText(costoDiseno, 'No aplica')}</strong>
               </div>
               <div className={`${styles.orderMoneyRow} ${styles.orderMoneyTotal}`}>
                 <span>Total final</span>

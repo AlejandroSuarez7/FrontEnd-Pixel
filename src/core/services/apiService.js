@@ -37,7 +37,7 @@ apiClient.interceptors.response.use(
       const isAuthPage = authPaths.some((path) => window.location.pathname.startsWith(path));
 
       console.warn('[API] No autorizado.');
-      if (!isAuthPage) {
+      if (!isAuthPage && !error.config?.skipAuthRedirect) {
         window.location.href = '/login';
       }
     }

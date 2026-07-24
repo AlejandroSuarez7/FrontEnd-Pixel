@@ -25,22 +25,31 @@ export const pedidoDTO = {
       ?? apiData.entregadoAt
       ?? apiData.entregado_at;
 
-    const detalles = Array.isArray(apiData.detalles)
-      ? apiData.detalles.map(d => createDetallePedido({
+    const detallesSource = Array.isArray(apiData.detalles)
+      ? apiData.detalles
+      : (Array.isArray(apiData.cotizacion?.detalles) ? apiData.cotizacion.detalles : []);
+
+    const detalles = detallesSource.length > 0
+      ? detallesSource.map(d => createDetallePedido({
           idDetallePedido: d.idDetallePedido,
           idPedido:        d.idPedido,
           idTecnica:       d.idTecnica,
-          descripcion:     d.descripcion,
+          descripcion:     d.descripcion ?? d.producto?.nombre,
           cantidad:        d.cantidad,
-          precioBase:      d.precioBase ?? null,
+          precioBase:      d.precioBase ?? d.producto?.precioBase ?? null,
           descuentoPorcentaje: d.descuentoPorcentaje ?? d.descuento ?? null,
+          descuentoValorUnitario: d.descuentoValorUnitario ?? null,
           descuentoTotal:  d.descuentoTotal ?? d.descuentoAplicado ?? null,
+          costoDiseno:     d.costoDiseno ?? null,
           precioUnitario:  d.precioUnitario,
           subtotal:        d.subtotal,
           subtotalBruto:   d.subtotalBruto ?? d.subtotal ?? null,
           subtotalConDescuento: d.subtotalConDescuento ?? null,
           subtotalFinal:   d.subtotalFinal ?? null,
           observaciones:   d.observaciones,
+          requiereDiseno:  d.requiereDiseno ?? true,
+          disenos:         d.disenos ?? d.diseno ?? [],
+          producto:        d.producto ?? null,
           tecnica:         d.tecnica,
         }))
       : [];
@@ -52,9 +61,13 @@ export const pedidoDTO = {
       estadoPedido:         apiData.estadoPedido,
       estadoPago:           apiData.estadoPago,
       total:                apiData.total,
-      subtotal:             apiData.subtotalBruto ?? apiData.subtotal ?? apiData.cotizacion?.subtotalBruto ?? apiData.cotizacion?.subtotal,
+      subtotal:             apiData.subtotal ?? apiData.cotizacion?.subtotal,
+      subtotalBruto:        apiData.subtotalBruto ?? apiData.cotizacion?.subtotalBruto,
+      subtotalConDescuento: apiData.subtotalConDescuento ?? apiData.cotizacion?.subtotalConDescuento,
+      subtotalFinal:        apiData.subtotalFinal ?? apiData.cotizacion?.subtotalFinal,
       descuentoTotal:       apiData.descuentoTotal ?? apiData.cotizacion?.descuentoTotal,
       costosAdicionales:    apiData.costosAdicionales ?? apiData.cotizacion?.costosAdicionales,
+      costoDiseno:          apiData.costoDiseno ?? apiData.cotizacion?.costoDiseno,
       totalPagado:          apiData.totalPagado,
       saldoPendiente:       apiData.saldoPendiente,
       fechaCreacion,
@@ -66,6 +79,7 @@ export const pedidoDTO = {
       cliente:              apiData.cliente,
       cotizacion:           apiData.cotizacion,
       detalles,
+      disenos:              apiData.disenos ?? [],
       abonos: apiData.abonos || [],
     });
   },

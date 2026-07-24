@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
 import { getDefaultProtectedPath } from '../../../routes/SIDEBAR_CONFIG';
 import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
@@ -20,6 +20,7 @@ const LoginPage = () => {
 
   const { login }  = useAuth();
   const navigate   = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,9 +30,10 @@ const LoginPage = () => {
 
     try {
       const loggedInUser = await login(correo, contrasena);
-      const nextPath = isClientUser(loggedInUser, loggedInUser.codigos)
+      const redirectTo = location.state?.redirectTo;
+      const nextPath = redirectTo || (isClientUser(loggedInUser, loggedInUser.codigos)
         ? '/dashboard'
-        : getDefaultProtectedPath(loggedInUser.codigos, loggedInUser) || '/dashboard';
+        : getDefaultProtectedPath(loggedInUser.codigos, loggedInUser) || '/dashboard');
       navigate(nextPath);
     } catch (err) {
       const message = err.message || 'Credenciales incorrectas';

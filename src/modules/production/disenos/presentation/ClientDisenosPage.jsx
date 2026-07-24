@@ -42,6 +42,19 @@ const normalizeStatus = (value = '') => String(value || '').toUpperCase();
 const formatDesignOrigin = (origen = '') => normalizeStatus(origen) === 'CLIENTE'
   ? 'Enviado por cliente'
   : 'Equipo PIXEL';
+const getDesignProductName = (diseno) => {
+  if (diseno?.esDisenoGeneral) return 'Diseno general del pedido';
+  const detalle = diseno?.detallePedido;
+  return detalle?.producto?.nombre || detalle?.descripcion || diseno?.descripcion || diseno?.pedido?.detalles?.[0]?.descripcion || 'Producto no especificado';
+};
+const getDesignDetailText = (diseno) => {
+  if (diseno?.esDisenoGeneral) return 'Aplica para todo el pedido';
+  const detalle = diseno?.detallePedido;
+  return [
+    detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : null),
+    detalle?.cantidad ? `Cant. ${detalle.cantidad}` : null,
+  ].filter(Boolean).join(' | ') || 'Detalle no especificado';
+};
 const canRespondDesign = (estado) => [
   'ENVIADO',
   'PENDIENTE_APROBACION',
@@ -49,6 +62,13 @@ const canRespondDesign = (estado) => [
   'POR_APROBAR',
   'EN_REVISION',
 ].includes(normalizeStatus(estado));
+const getApprovalMessage = (response) => {
+  const pedidoEstado = normalizeStatus(response?.data?.pedido?.estadoPedido || response?.pedido?.estadoPedido || response?.data?.estadoPedido);
+  if (pedidoEstado === 'EN_PROCESO') {
+    return 'Diseno aprobado. Todos los disenos requeridos fueron aprobados y el pedido entro en produccion.';
+  }
+  return 'Diseno aprobado. El pedido seguira pendiente hasta que todos los disenos requeridos esten aprobados.';
+};
 
 export const ClientDisenosPage = () => {
   const { hasPermission } = useAuth();
@@ -113,7 +133,7 @@ export const ClientDisenosPage = () => {
       setPendingActionId(diseno.idDiseno);
       try {
         const response = await disenoRepository.approveClientDesign(diseno.idDiseno);
-        notifications.success(response.message || 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
+        notifications.success(response.message || getApprovalMessage(response));
         await fetchDisenos();
         return true;
       } catch (error) {
@@ -184,7 +204,7 @@ export const ClientDisenosPage = () => {
             {disenos.map((diseno) => {
               const isPending = pendingActionId === diseno.idDiseno || isLocked;
               const canRespond = canRespondDesign(diseno.estado);
-              const producto = diseno.pedido?.detalles?.[0]?.descripcion || diseno.descripcion || 'Producto no especificado';
+              const producto = getDesignProductName(diseno);
 
               return (
                 <article
@@ -213,6 +233,7 @@ export const ClientDisenosPage = () => {
 
                   <div className={styles.detailsInfoBox}>
                     <strong>Producto:</strong> {producto}
+                    <span style={{ display: 'block', marginTop: 4 }}>{getDesignDetailText(diseno)}</span>
                   </div>
 
                   <div className={styles.detailsInfoBox}>

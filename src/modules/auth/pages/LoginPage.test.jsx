@@ -22,6 +22,7 @@ vi.mock('motion/react', async () => {
 });
 
 vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ state: null }),
   useNavigate: () => navigateMock,
 }));
 

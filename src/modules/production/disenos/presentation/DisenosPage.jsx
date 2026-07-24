@@ -77,6 +77,17 @@ const formatDesignOrigin = (origen = '') => {
   if (value === 'OTRO') return 'Otro';
   return 'Equipo PIXEL';
 };
+const getDesignDetail = (diseno) => diseno?.detallePedido || null;
+const getDesignProductName = (diseno) => {
+  if (diseno?.esDisenoGeneral) return 'Diseno general del pedido';
+  const detalle = getDesignDetail(diseno);
+  return detalle?.producto?.nombre || detalle?.descripcion || diseno.descripcion || diseno.pedido?.detalles?.[0]?.descripcion || 'Producto no especificado';
+};
+const getDesignTechniqueName = (diseno) => {
+  const detalle = getDesignDetail(diseno);
+  return detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : '');
+};
+const getDesignQuantity = (diseno) => getDesignDetail(diseno)?.cantidad;
 const canRegisterClientResponse = (estado) => [
   'ENVIADO',
   'PENDIENTE_APROBACION',
@@ -84,6 +95,13 @@ const canRegisterClientResponse = (estado) => [
   'POR_APROBAR',
   'EN_REVISION',
 ].includes(normalizeStatus(estado));
+const getApprovalMessage = (response) => {
+  const pedidoEstado = normalizeStatus(response?.data?.pedido?.estadoPedido || response?.pedido?.estadoPedido || response?.data?.estadoPedido);
+  if (pedidoEstado === 'EN_PROCESO') {
+    return 'Diseno aprobado. Todos los disenos requeridos fueron aprobados y el pedido entro en produccion.';
+  }
+  return 'Diseno aprobado. El pedido seguira pendiente hasta que todos los disenos requeridos esten aprobados.';
+};
 
 export const DisenosPage = () => {
   const { hasPermission } = useAuth();
@@ -127,7 +145,9 @@ export const DisenosPage = () => {
         cliente.toLowerCase().includes(term) ||
         contacto.toLowerCase().includes(term) ||
         disenador.toLowerCase().includes(term) ||
-        diseno.descripcion.toLowerCase().includes(term)
+        diseno.descripcion.toLowerCase().includes(term) ||
+        getDesignProductName(diseno).toLowerCase().includes(term) ||
+        getDesignTechniqueName(diseno).toLowerCase().includes(term)
       );
     });
   }, [disenos, filters.search]);
@@ -204,7 +224,7 @@ export const DisenosPage = () => {
 
     try {
       const response = await handleApprove(diseno.idDiseno, { observaciones: result.value });
-      notifications.success(response.message || 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
+      notifications.success(response.message || getApprovalMessage(response));
     } catch (error) {
       notifications.error(error.message || 'No se pudo aprobar el diseno.');
     }
@@ -236,7 +256,7 @@ export const DisenosPage = () => {
       notifications.success(response.message || (
         responseModal.mode === 'reject'
           ? 'Rechazo del cliente registrado correctamente.'
-          : 'Diseno aprobado. El pedido entro en produccion y el cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.'
+          : getApprovalMessage(response)
       ));
       closeClientResponseModal();
     } catch (error) {
@@ -348,7 +368,12 @@ export const DisenosPage = () => {
                         <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>{diseno.medioRecepcion}</span>
                       )}
                     </td>
-                    <td className={styles.tableCell}>{diseno.descripcion || diseno.pedido?.detalles?.[0]?.descripcion || 'Sin descripcion'}</td>
+                    <td className={styles.tableCell}>
+                      <strong>{getDesignProductName(diseno)}</strong>
+                      <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>
+                        {[getDesignTechniqueName(diseno), getDesignQuantity(diseno) ? `Cant. ${getDesignQuantity(diseno)}` : null].filter(Boolean).join(' | ') || 'Sin detalle asociado'}
+                      </span>
+                    </td>
                     <td className={styles.tableCell}>{isClientOrigin(diseno) ? 'No aplica' : diseno.disenador?.nombre || 'Sin asignar'}</td>
                     <td className={styles.tableCell}>
                       <span className={`${styles.statusBadge} ${ESTADO_CLASS[diseno.estado] || ''}`}>

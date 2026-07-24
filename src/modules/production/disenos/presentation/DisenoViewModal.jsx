@@ -41,6 +41,15 @@ const formatStatus = (status = '') => ({
 
 const safeDate = (value) => value ? formatDate(value) : 'No registrada';
 const isWaitingResponse = (status) => ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR'].includes(normalizeStatus(status));
+const getDesignProductName = (diseno) => {
+  if (diseno?.esDisenoGeneral) return 'Diseno general del pedido';
+  const detalle = diseno?.detallePedido;
+  return detalle?.producto?.nombre || detalle?.descripcion || diseno?.descripcion || diseno?.pedido?.detalles?.[0]?.descripcion || 'Producto no especificado';
+};
+const getDesignTechniqueName = (diseno) => {
+  const detalle = diseno?.detallePedido;
+  return detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : 'No especificada');
+};
 
 export const DisenoViewModal = ({
   isOpen,
@@ -63,7 +72,8 @@ export const DisenoViewModal = ({
   const enviadoPorCliente = normalizeStatus(diseno.origenDiseno) === 'CLIENTE';
   const clienteNombre = diseno.pedido?.cliente?.nombre || 'Cliente no especificado';
   const clienteContacto = [diseno.pedido?.cliente?.correo, diseno.pedido?.cliente?.telefono].filter(Boolean).join(' | ');
-  const producto = diseno.pedido?.detalles?.[0]?.descripcion || diseno.descripcion || 'Producto no especificado';
+  const producto = getDesignProductName(diseno);
+  const detallePedido = diseno.detallePedido;
   const resumenCotizacion = diseno.pedido?.cotizacion || diseno.cotizacion || diseno.pedido || {};
   const subtotal = getQuoteSubtotalBruto(resumenCotizacion);
   const descuentoTotal = getQuoteDiscountTotal(resumenCotizacion);
@@ -92,6 +102,7 @@ export const DisenoViewModal = ({
             <div><span>Enviado</span><strong>{safeDate(diseno.fechaEnvio)}</strong></div>
             <div><span>Respuesta</span><strong>{safeDate(diseno.fechaRespuestaCliente)}</strong></div>
             <div><span>Origen</span><strong>{enviadoPorCliente ? 'Cliente' : 'Equipo PIXEL'}</strong></div>
+            <div><span>Alcance</span><strong>{diseno.esDisenoGeneral ? 'Todo el pedido' : 'Producto especifico'}</strong></div>
           </section>
 
           <section className="disenos-view-design-grid">
@@ -120,6 +131,14 @@ export const DisenoViewModal = ({
               <div className="disenos-view-info-block">
                 <span className="disenos-view-section-label">Producto</span>
                 <strong>{producto}</strong>
+                {diseno.esDisenoGeneral && <p>Aplica para todo el pedido.</p>}
+                {!diseno.esDisenoGeneral && detallePedido && (
+                  <p>
+                    Tecnica: {getDesignTechniqueName(diseno)}
+                    {detallePedido.cantidad ? ` | Cant. ${detallePedido.cantidad}` : ''}
+                    {detallePedido.requiereDiseno === false ? ' | No requiere diseno' : ''}
+                  </p>
+                )}
                 {diseno.descripcion && diseno.descripcion !== producto && <p>{diseno.descripcion}</p>}
               </div>
               <div className="disenos-view-info-block">

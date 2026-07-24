@@ -40,8 +40,11 @@ export const quotesDTO = {
       descuentoTotal:    apiData.descuentoTotal ?? null,
       subtotalConDescuento: apiData.subtotalConDescuento ?? null,
       subtotalFinal:     apiData.subtotalFinal ?? null,
+      costoDiseno:       apiData.costoDiseno ?? 0,
       costosAdicionales: apiData.costosAdicionales ?? 0,
       total:             apiData.total ?? 0,
+      cantidadItems:     apiData.cantidadItems ?? detalles.length,
+      productosResumen:  apiData.productosResumen ?? '',
       observaciones:     apiData.observaciones ?? '',
       fechaCreacion:     apiData.fechaCreacion
         ?? apiData.fecha_creacion

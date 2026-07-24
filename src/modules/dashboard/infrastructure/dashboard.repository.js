@@ -76,7 +76,53 @@ const buildPendingQuotesList = (cotizaciones = []) =>
 
 const normalizeStatus = (value = '') => String(value || '').toUpperCase();
 
-const getOrderDesign = (pedido = {}) => pedido.diseno || pedido.disenos?.[0] || null;
+const getOrderDesigns = (pedido = {}) => {
+  if (Array.isArray(pedido.disenos)) return pedido.disenos;
+  if (pedido.diseno) return [pedido.diseno];
+  return [];
+};
+
+const getRequiredDesignDetails = (pedido = {}) => {
+  const detalles = Array.isArray(pedido.detalles) ? pedido.detalles : [];
+  return detalles.filter((detalle) => detalle.requiereDiseno !== false);
+};
+
+const getDesignProgress = (pedido = {}) => {
+  const disenos = getOrderDesigns(pedido);
+  const requiredDetails = getRequiredDesignDetails(pedido);
+  const generalApproved = disenos.some((diseno) => diseno.esDisenoGeneral && normalizeStatus(diseno.estado) === 'APROBADO');
+
+  if (requiredDetails.length === 0) {
+    return {
+      totalRequired: 0,
+      approvedCount: 0,
+      allApproved: true,
+      hasWaitingApproval: false,
+      hasRejected: false,
+      rejectedDesign: disenos.find((diseno) => normalizeStatus(diseno.estado) === 'RECHAZADO') || null,
+      label: 'No requiere diseno',
+    };
+  }
+
+  const approvedDetailIds = new Set(
+    disenos
+      .filter((diseno) => normalizeStatus(diseno.estado) === 'APROBADO' && diseno.idDetallePedido)
+      .map((diseno) => String(diseno.idDetallePedido))
+  );
+  const approvedCount = generalApproved
+    ? requiredDetails.length
+    : requiredDetails.filter((detalle) => approvedDetailIds.has(String(detalle.idDetallePedido))).length;
+
+  return {
+    totalRequired: requiredDetails.length,
+    approvedCount,
+    allApproved: approvedCount >= requiredDetails.length,
+    hasWaitingApproval: disenos.some((diseno) => ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(normalizeStatus(diseno.estado))),
+    hasRejected: disenos.some((diseno) => ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(normalizeStatus(diseno.estado))),
+    rejectedDesign: disenos.find((diseno) => ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(normalizeStatus(diseno.estado))) || null,
+    label: `${approvedCount} de ${requiredDetails.length} disenos aprobados`,
+  };
+};
 
 const hasConfirmedPayment = (pedido = {}) => {
   const estadoPago = normalizeStatus(pedido.estadoPago);
@@ -104,8 +150,7 @@ const buildClientTrackingSteps = (pedido = {}) => {
       detail: 'Este pedido fue anulado y conserva su historial para consulta.',
     }];
   }
-  const diseno = getOrderDesign(pedido);
-  const estadoDiseno = normalizeStatus(diseno?.estado || pedido.estadoDiseno);
+  const designProgress = getDesignProgress(pedido);
   const firstPaymentConfirmed = hasConfirmedPayment(pedido);
   const pendingFinalBalance = estadoPedido === 'PENDIENTE_SALDO_FINAL';
   const inProduction = ['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION', 'PENDIENTE_SALDO_FINAL', 'FINALIZADO', 'TERMINADO', 'ENTREGADO'].includes(estadoPedido);
@@ -113,9 +158,9 @@ const buildClientTrackingSteps = (pedido = {}) => {
   const finalPaymentPending = hasFinalPaymentPending(pedido);
   const delivered = ['ENTREGADO', 'RECLAMADO'].includes(estadoPedido);
   const readyToDeliver = (estadoPedido === 'FINALIZADO' || estadoPedido === 'TERMINADO' || delivered) && !finalPaymentPending;
-  const designWaitingApproval = ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(estadoDiseno);
-  const designRejected = ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(estadoDiseno);
-  const designApproved = ['APROBADO', 'APROBADA', 'PRODUCCION'].includes(estadoDiseno) || inProduction || finalized;
+  const designWaitingApproval = designProgress.hasWaitingApproval;
+  const designRejected = designProgress.hasRejected;
+  const designApproved = designProgress.allApproved || inProduction || finalized;
 
   const steps = [
     { label: 'Cotizacion aceptada', completed: Boolean(pedido.idPedido) },
@@ -130,6 +175,7 @@ const buildClientTrackingSteps = (pedido = {}) => {
       label: 'Diseno pendiente de aprobacion',
       completed: designRejected || designApproved || inProduction || finalized,
       current: designWaitingApproval && !designRejected && !designApproved,
+      detail: designProgress.label,
     },
     {
       label: 'Correcciones solicitadas',
@@ -140,6 +186,7 @@ const buildClientTrackingSteps = (pedido = {}) => {
     {
       label: 'Diseno aprobado',
       completed: designApproved || inProduction || finalized,
+      detail: designProgress.label,
     },
     { label: 'En produccion', completed: pendingFinalBalance || finalized, current: inProduction && !pendingFinalBalance && !finalized },
     { label: 'Pendiente de saldo final', completed: readyToDeliver, current: pendingFinalBalance || (finalized && finalPaymentPending) },
@@ -159,8 +206,8 @@ const buildClientTrackingSteps = (pedido = {}) => {
         ? 'current'
         : 'pending',
     detail: step.label === 'Correcciones solicitadas'
-      ? [diseno?.observacionesCliente, formatShortDate(diseno?.fechaRespuestaCliente)].filter(Boolean).join(' | ')
-      : undefined,
+      ? [designProgress.rejectedDesign?.observacionesCliente, formatShortDate(designProgress.rejectedDesign?.fechaRespuestaCliente)].filter(Boolean).join(' | ')
+      : step.detail,
   }));
 };
 

@@ -45,6 +45,7 @@ const PedidosPage = () => {
     handleFinalizar,
     handleAnular,
     handleConfirmarEntrega,
+    handleActualizarRequiereDiseno,
     paginationMeta,
   } = usePedidos({
     page: currentPage,
@@ -57,6 +58,7 @@ const PedidosPage = () => {
   const [isDetailsOpen, setIsDetailsOpen]   = useState(false);
   const [isEditOpen, setIsEditOpen]         = useState(false);
   const [selectedPedido, setSelectedPedido] = useState(null);
+  const [pendingDesignRequirementId, setPendingDesignRequirementId] = useState(null);
 
   // KPIs
   const total      = paginationMeta.total;
@@ -164,6 +166,41 @@ const PedidosPage = () => {
       notifications.success('Entrega confirmada correctamente. El cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
     } catch (err) {
       notifications.error(err.message || 'No se pudo confirmar la entrega.');
+    }
+  };
+
+  const onToggleDesignRequirement = async (detalle) => {
+    if (!selectedPedido || !detalle?.idDetallePedido) return;
+
+    const nextValue = detalle.requiereDiseno === false;
+    const accepted = await confirm({
+      title: 'Actualizar requisito de diseno',
+      message: 'Confirmas cambiar si este producto requiere diseno?',
+      confirmText: 'Confirmar',
+      variant: 'warning',
+    });
+
+    if (!accepted) return;
+
+    setPendingDesignRequirementId(detalle.idDetallePedido);
+    try {
+      await handleActualizarRequiereDiseno(selectedPedido.idPedido, detalle.idDetallePedido, nextValue);
+      setSelectedPedido((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          detalles: (prev.detalles || []).map((item) => (
+            item.idDetallePedido === detalle.idDetallePedido
+              ? { ...item, requiereDiseno: nextValue }
+              : item
+          )),
+        };
+      });
+      notifications.success(nextValue ? 'El producto fue marcado como requiere diseno.' : 'El producto fue marcado como no requiere diseno.');
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo actualizar el requisito de diseno.');
+    } finally {
+      setPendingDesignRequirementId(null);
     }
   };
 
@@ -339,6 +376,9 @@ const PedidosPage = () => {
         isOpen={isDetailsOpen}
         onClose={() => { setIsDetailsOpen(false); setSelectedPedido(null); }}
         pedido={selectedPedido}
+        canEditDesignRequirement={hasPermission('pedidos.editar') && isStaff}
+        onToggleDesignRequirement={onToggleDesignRequirement}
+        pendingDesignRequirementId={pendingDesignRequirementId}
       />
 
       <PedidoEditModal

@@ -1,5 +1,12 @@
 // domain/pedidoModel.js
 
+const toNumberOrNull = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const normalizedValue = typeof value === 'string' ? value.replace(',', '.') : value;
+  const numberValue = Number(normalizedValue);
+  return Number.isNaN(numberValue) ? null : numberValue;
+};
+
 export const createPedido = ({
   idPedido,
   idCotizacion,
@@ -8,8 +15,12 @@ export const createPedido = ({
   estadoPago     = 'PENDIENTE',
   total          = 0,
   subtotal       = null,
+  subtotalBruto  = null,
+  subtotalConDescuento = null,
+  subtotalFinal  = null,
   descuentoTotal = null,
   costosAdicionales = null,
+  costoDiseno = null,
   totalPagado    = 0,
   saldoPendiente = 0,
   fechaCreacion,
@@ -21,6 +32,7 @@ export const createPedido = ({
   cliente    = null,
   cotizacion = null,
   detalles   = [],
+  disenos    = [],
   abonos     = [],
 }) => ({
   idPedido,
@@ -29,9 +41,13 @@ export const createPedido = ({
   estadoPedido,
   estadoPago,
   total:          Number(total),
-  subtotal:       subtotal !== null && subtotal !== undefined ? Number(subtotal) : null,
-  descuentoTotal: descuentoTotal !== null && descuentoTotal !== undefined ? Number(descuentoTotal) : null,
-  costosAdicionales: costosAdicionales !== null && costosAdicionales !== undefined ? Number(costosAdicionales) : null,
+  subtotal:       toNumberOrNull(subtotal),
+  subtotalBruto:  toNumberOrNull(subtotalBruto),
+  subtotalConDescuento: toNumberOrNull(subtotalConDescuento),
+  subtotalFinal:  toNumberOrNull(subtotalFinal),
+  descuentoTotal: toNumberOrNull(descuentoTotal),
+  costosAdicionales: toNumberOrNull(costosAdicionales),
+  costoDiseno: toNumberOrNull(costoDiseno),
   totalPagado:    Number(totalPagado),
   saldoPendiente: Number(saldoPendiente),
   fechaCreacion,
@@ -43,6 +59,7 @@ export const createPedido = ({
   cliente,
   cotizacion,
   detalles,
+  disenos: Array.isArray(disenos) ? disenos : [],
   abonos,
 });
 
@@ -55,12 +72,17 @@ export const createDetallePedido = ({
   precioUnitario = 0,
   precioBase     = null,
   descuentoPorcentaje = null,
+  descuentoValorUnitario = null,
   descuentoTotal = null,
+  costoDiseno    = null,
   subtotal       = 0,
   subtotalBruto  = null,
   subtotalConDescuento = null,
   subtotalFinal  = null,
   observaciones  = null,
+  requiereDiseno = true,
+  disenos        = [],
+  producto        = null,
   tecnica        = null,
 }) => ({
   idDetallePedido,
@@ -68,16 +90,19 @@ export const createDetallePedido = ({
   idTecnica,
   descripcion,
   cantidad:       Number(cantidad),
-  precioBase:     precioBase !== null && precioBase !== undefined ? Number(precioBase) : null,
-  descuentoPorcentaje: descuentoPorcentaje !== null && descuentoPorcentaje !== undefined && descuentoPorcentaje !== ''
-    ? Number(String(descuentoPorcentaje).replace(',', '.'))
-    : null,
-  descuentoTotal: descuentoTotal !== null && descuentoTotal !== undefined ? Number(descuentoTotal) : null,
+  precioBase:     toNumberOrNull(precioBase),
+  descuentoPorcentaje: toNumberOrNull(descuentoPorcentaje),
+  descuentoValorUnitario: toNumberOrNull(descuentoValorUnitario),
+  descuentoTotal: toNumberOrNull(descuentoTotal),
+  costoDiseno:    toNumberOrNull(costoDiseno),
   precioUnitario: Number(precioUnitario),
   subtotal:       Number(subtotal),
-  subtotalBruto:  subtotalBruto !== null && subtotalBruto !== undefined ? Number(subtotalBruto) : null,
-  subtotalConDescuento: subtotalConDescuento !== null && subtotalConDescuento !== undefined ? Number(subtotalConDescuento) : null,
-  subtotalFinal: subtotalFinal !== null && subtotalFinal !== undefined ? Number(subtotalFinal) : null,
+  subtotalBruto:  toNumberOrNull(subtotalBruto),
+  subtotalConDescuento: toNumberOrNull(subtotalConDescuento),
+  subtotalFinal: toNumberOrNull(subtotalFinal),
   observaciones,
+  requiereDiseno: requiereDiseno !== false,
+  disenos: Array.isArray(disenos) ? disenos : (disenos ? [disenos] : []),
+  producto,
   tecnica,
 });

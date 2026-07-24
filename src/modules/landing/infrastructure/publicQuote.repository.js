@@ -25,12 +25,12 @@ export const publicQuoteRepository = {
   },
 
   async calculate(items) {
-    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones/calcular`, { items });
+    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones/calcular`, { items }, { skipAuthRedirect: true });
     return data.data;
   },
 
   async create(payload) {
-    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones`, payload);
+    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones`, payload, { skipAuthRedirect: true });
     return data;
   },
 };
