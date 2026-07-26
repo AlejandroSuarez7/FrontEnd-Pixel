@@ -6,22 +6,30 @@ const BASE_URL = 'http://localhost:3000/';
 // Instancia de Axios compartida por todos los modulos.
 export const apiClient = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
+
+export const prepareApiRequest = (config) => {
+  const token = localStorage.getItem('token');
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Axios debe generar el Content-Type con su boundary para cuerpos multipart.
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    if (typeof config.headers.delete === 'function') {
+      config.headers.delete('Content-Type');
+    } else {
+      delete config.headers['Content-Type'];
+    }
+  }
+
+  return config;
+};
 
 // Interceptor de REQUEST: agrega el Bearer token automaticamente.
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
-  },
+  prepareApiRequest,
   (error) => Promise.reject(error)
 );
 

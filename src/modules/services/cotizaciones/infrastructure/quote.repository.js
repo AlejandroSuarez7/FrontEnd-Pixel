@@ -29,6 +29,10 @@ export class QuoteApiRepository {
 
   async createAsStaff(quoteData) {
     const payload = quotesDTO.toApi(quoteData);
+    payload.detalles = payload.detalles.map((detail, index) => ({
+      ...detail,
+      costoDiseno: Number(quoteData.detalles?.[index]?.costoDiseno || 0),
+    }));
     const { data } = await apiClient.post(`${ENDPOINT}`, payload);
     return quotesDTO.fromApi(data.data);
   }
@@ -55,7 +59,11 @@ export class QuoteApiRepository {
         cantidad: Number(det.cantidad || 1),
         precioUnitario: Number(det.precioUnitario || det.precioBase || 0),
         costoDiseno: Number(det.costoDiseno || 0),
-        observaciones: det.observaciones?.trim() || null
+        observaciones: det.observaciones?.trim() || null,
+        requiereDiseno: det.requiereDiseno !== false,
+        origenDiseno: det.origenDiseno === 'CLIENTE' ? 'CLIENTE' : 'PIXEL',
+        esDisenoGeneral: Boolean(det.esDisenoGeneral),
+        archivoDisenoInicialUrl: det.archivoDisenoInicialUrl?.trim() || null,
       }))
     };
 

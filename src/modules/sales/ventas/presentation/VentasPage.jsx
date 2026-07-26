@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { RotateCcw } from 'lucide-react';
 import { Pagination } from '../../../../core/components/Pagination';
 import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { usePagination } from '../../../../core/hooks/usePagination';
@@ -24,7 +25,10 @@ const styles = {
   kpiValueSuccess: 'ventas-kpi-value-success',
   kpiValueWarning: 'ventas-kpi-value-warning',
   filterSection: 'ventas-filter-section',
+  filterField: 'ventas-filter-field',
+  filterSearch: 'ventas-filter-search',
   filterDateGroup: 'ventas-filter-date-group',
+  clearFiltersButton: 'ventas-clear-filters-button',
   searchInput: 'ventas-search-input',
   inputField: 'ventas-input-field',
   tableContainer: 'ventas-table-container',
@@ -44,6 +48,8 @@ const styles = {
   statusDanger: 'ventas-status-danger',
   techniqueList: 'ventas-technique-list',
   totalPrice: 'ventas-total-price',
+  paidAmount: 'ventas-paid-amount',
+  balanceAmount: 'ventas-balance-amount',
   pagination: 'ventas-pagination',
   paginationInfo: 'ventas-pagination-info',
   paginationControls: 'ventas-pagination-controls',
@@ -53,8 +59,10 @@ const styles = {
 
 const ESTADO_CLASS = {
   COMPLETO: styles.statusSuccess,
+  COMPLETA: styles.statusSuccess,
   PARCIAL: styles.statusWarning,
   PENDIENTE: styles.statusDanger,
+  ANULADA: styles.statusDanger,
 };
 
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
@@ -120,6 +128,17 @@ export const VentasPage = () => {
     };
   }, []);
 
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      fechaInicio: '',
+      fechaFin: '',
+      idCliente: '',
+      estadoPago: '',
+    });
+    setCurrentPage(1);
+  };
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
@@ -127,7 +146,7 @@ export const VentasPage = () => {
           <span className={styles.breadcrumb}>Ventas / Gestion</span>
           <h1 className={styles.pageTitle}>Gestion de Ventas</h1>
           <p className={styles.pageSubtitle}>
-            Consulta pedidos finalizados, pagos y resumen comercial.
+            Consulta una venta por pedido desde el primer abono confirmado.
           </p>
         </div>
       </div>
@@ -145,16 +164,23 @@ export const VentasPage = () => {
           <span className={styles.kpiLabel}>Completas</span>
           <span className={`${styles.kpiValue} ${styles.kpiValueSuccess}`}>{resumen.ventasPagadasCompletas || ventasCompletas}</span>
         </div>
+        <div className={`${styles.kpiCard} ${styles.kpiCardWarning}`}>
+          <span className={styles.kpiLabel}>Parciales</span>
+          <span className={`${styles.kpiValue} ${styles.kpiValueWarning}`}>{resumen.ventasPagadasParciales || ventas.filter(item => item.estado === 'PARCIAL').length}</span>
+        </div>
       </div>
 
       <div className={styles.filterSection}>
-        <input
-          type="text"
-          placeholder="Buscar por cliente, correo, documento o pedido..."
-          value={filters.search}
-          onChange={event => setFilters(prev => ({ ...prev, search: event.target.value }))}
-          className={styles.searchInput}
-        />
+        <label className={`${styles.filterField} ${styles.filterSearch}`}>
+          <span>Buscar ventas</span>
+          <input
+            type="text"
+            placeholder="Cliente, correo, documento o pedido..."
+            value={filters.search}
+            onChange={event => setFilters(prev => ({ ...prev, search: event.target.value }))}
+            className={styles.searchInput}
+          />
+        </label>
         <label className={styles.filterDateGroup}>
           <span>Fecha inicio</span>
           <input
@@ -173,29 +199,39 @@ export const VentasPage = () => {
             className={styles.inputField}
           />
         </label>
-        <select
-          value={filters.idCliente}
-          onChange={event => setFilters(prev => ({ ...prev, idCliente: event.target.value }))}
-          className={styles.inputField}
-          disabled={loadingClientes}
-        >
-          <option value="">{loadingClientes ? 'Cargando clientes...' : 'Todos los clientes'}</option>
-          {clientes.map(cliente => (
-            <option key={cliente.id} value={cliente.id}>
-              {cliente.nombre} - {cliente.correo}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filters.estadoPago}
-          onChange={event => setFilters(prev => ({ ...prev, estadoPago: event.target.value }))}
-          className={styles.inputField}
-        >
-          <option value="">Todos los pagos</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="PARCIAL">Parcial</option>
-          <option value="COMPLETO">Completo</option>
-        </select>
+        <label className={styles.filterField}>
+          <span>Cliente</span>
+          <select
+            value={filters.idCliente}
+            onChange={event => setFilters(prev => ({ ...prev, idCliente: event.target.value }))}
+            className={styles.inputField}
+            disabled={loadingClientes}
+          >
+            <option value="">{loadingClientes ? 'Cargando clientes...' : 'Todos los clientes'}</option>
+            {clientes.map(cliente => (
+              <option key={cliente.id} value={cliente.id}>
+                {cliente.nombre} - {cliente.correo}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={styles.filterField}>
+          <span>Estado de pago</span>
+          <select
+            value={filters.estadoPago}
+            onChange={event => setFilters(prev => ({ ...prev, estadoPago: event.target.value }))}
+            className={styles.inputField}
+          >
+            <option value="">Todos los pagos</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="PARCIAL">Parcial</option>
+            <option value="COMPLETO">Completo</option>
+          </select>
+        </label>
+        <button type="button" className={styles.clearFiltersButton} onClick={clearFilters}>
+          <RotateCcw size={15} />
+          Limpiar
+        </button>
       </div>
 
       <div className={styles.tableContainer}>
@@ -214,8 +250,10 @@ export const VentasPage = () => {
                     <th className={styles.tableHeader}>Contacto</th>
                     <th className={styles.tableHeader}>Total</th>
                     <th className={styles.tableHeader}>Pagado</th>
+                    <th className={styles.tableHeader}>Saldo</th>
+                    <th className={styles.tableHeader}>Venta</th>
                     <th className={styles.tableHeader}>Pago</th>
-                    <th className={styles.tableHeader}>Finalizado</th>
+                    <th className={styles.tableHeader}>Primer pago</th>
                     <th className={styles.tableHeader}>Tecnicas</th>
                     <th className={styles.tableHeader}>Cantidad</th>
                   </tr>
@@ -233,13 +271,19 @@ export const VentasPage = () => {
                         <span className={styles.clientEmail}>{venta.correoCliente || 'Sin correo'}</span>
                       </td>
                       <td className={styles.tableCell}><strong className={styles.totalPrice}>{fmt(venta.total)}</strong></td>
-                      <td className={styles.tableCell}>{fmt(venta.totalPagado)}</td>
+                      <td className={styles.tableCell}><span className={styles.paidAmount}>{fmt(venta.totalPagado)}</span></td>
+                      <td className={styles.tableCell}><span className={Number(venta.saldoPendiente) > 0 ? styles.balanceAmount : styles.paidAmount}>{fmt(venta.saldoPendiente)}</span></td>
+                      <td className={styles.tableCell}>
+                        <span className={`${styles.statusBadge} ${ESTADO_CLASS[venta.estado] || ''}`}>
+                          {venta.estado || 'Sin venta'}
+                        </span>
+                      </td>
                       <td className={styles.tableCell}>
                         <span className={`${styles.statusBadge} ${ESTADO_CLASS[venta.estadoPago] || ''}`}>
                           {venta.estadoPago}
                         </span>
                       </td>
-                      <td className={styles.tableCell}>{formatDate(venta.fechaFinalizado)}</td>
+                      <td className={styles.tableCell}>{formatDate(venta.fechaPrimerPago)}</td>
                       <td className={styles.tableCell}>
                         <span className={styles.techniqueList}>
                           {venta.tecnicas?.length ? venta.tecnicas.map(tecnica => tecnica.nombre).join(', ') : 'Sin tecnica'}

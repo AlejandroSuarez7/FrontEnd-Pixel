@@ -26,6 +26,7 @@ export const PATHS = {
   SALES_PAYMENTS: '/dashboard/sales/payments',
   SALES_RETURNS: '/dashboard/sales/returns',
   ORDERS: '/dashboard/orders',
+  ORDER_FILE: '/dashboard/orders/:idPedido/expediente',
 
   SERVICES: '/dashboard/services',
   SERVICES_QUOTES: '/dashboard/services/quotes',

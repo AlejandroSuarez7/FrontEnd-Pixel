@@ -1,5 +1,6 @@
 import { apiClient } from '../../../core/services/apiService';
 import { isClientUser } from '../../../core/utils/permissions';
+import { getDesignCoverageInfo } from '../../../core/utils/designCoverage';
 
 const currentYear = new Date().getFullYear();
 
@@ -90,6 +91,35 @@ const getRequiredDesignDetails = (pedido = {}) => {
 const getDesignProgress = (pedido = {}) => {
   const disenos = getOrderDesigns(pedido);
   const requiredDetails = getRequiredDesignDetails(pedido);
+  const hasBackendCoverage = requiredDetails.some(detail => detail.estadoCoberturaDiseno);
+
+  if (hasBackendCoverage) {
+    const coverage = requiredDetails.map(getDesignCoverageInfo);
+    const approvedCount = coverage.filter(item => item.covered).length;
+    const hasRejected = coverage.some(item => item.state.includes('RECHAZADO'));
+    const hasClientDesignPending = coverage.some(item => [
+      'DISENO_ENTREGADO_POR_CLIENTE',
+      'DISENO_GENERAL_ENTREGADO_POR_CLIENTE',
+      'DISENO_CLIENTE_PENDIENTE_VINCULACION',
+    ].includes(item.state));
+    const hasSentDesignPending = coverage.some(item => [
+      'DISENO_ENVIADO',
+      'DISENO_GENERAL_ENVIADO',
+    ].includes(item.state));
+    const hasPixelCreationPending = coverage.some(item => item.state === 'PENDIENTE_CREACION_PIXEL');
+
+    return {
+      totalRequired: requiredDetails.length,
+      approvedCount,
+      allApproved: approvedCount >= requiredDetails.length,
+      hasWaitingApproval: hasClientDesignPending || hasSentDesignPending,
+      hasRejected,
+      rejectedDesign: disenos.find(diseno => normalizeStatus(diseno.estado) === 'RECHAZADO') || null,
+      hasClientDesignPending,
+      hasPixelCreationPending,
+      label: `${approvedCount} de ${requiredDetails.length} disenos aprobados`,
+    };
+  }
   const generalApproved = disenos.some((diseno) => diseno.esDisenoGeneral && normalizeStatus(diseno.estado) === 'APROBADO');
 
   if (requiredDetails.length === 0) {
@@ -101,6 +131,8 @@ const getDesignProgress = (pedido = {}) => {
       hasRejected: false,
       rejectedDesign: disenos.find((diseno) => normalizeStatus(diseno.estado) === 'RECHAZADO') || null,
       label: 'No requiere diseno',
+      hasClientDesignPending: false,
+      hasPixelCreationPending: false,
     };
   }
 
@@ -121,6 +153,8 @@ const getDesignProgress = (pedido = {}) => {
     hasRejected: disenos.some((diseno) => ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(normalizeStatus(diseno.estado))),
     rejectedDesign: disenos.find((diseno) => ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(normalizeStatus(diseno.estado))) || null,
     label: `${approvedCount} de ${requiredDetails.length} disenos aprobados`,
+    hasClientDesignPending: false,
+    hasPixelCreationPending: false,
   };
 };
 
@@ -152,6 +186,7 @@ const buildClientTrackingSteps = (pedido = {}) => {
   }
   const designProgress = getDesignProgress(pedido);
   const firstPaymentConfirmed = hasConfirmedPayment(pedido);
+  const hasPendingReceipt = (pedido.abonos || []).some(abono => normalizeStatus(abono.estado) === 'PENDIENTE');
   const pendingFinalBalance = estadoPedido === 'PENDIENTE_SALDO_FINAL';
   const inProduction = ['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION', 'PENDIENTE_SALDO_FINAL', 'FINALIZADO', 'TERMINADO', 'ENTREGADO'].includes(estadoPedido);
   const finalized = isOrderFinalized(pedido);
@@ -164,32 +199,46 @@ const buildClientTrackingSteps = (pedido = {}) => {
 
   const steps = [
     { label: 'Cotizacion aceptada', completed: Boolean(pedido.idPedido) },
-    { label: 'Pendiente de primer abono', completed: firstPaymentConfirmed, current: !firstPaymentConfirmed },
+    {
+      label: 'Comprobante en revision',
+      completed: false,
+      current: hasPendingReceipt && !firstPaymentConfirmed,
+      visible: hasPendingReceipt && !firstPaymentConfirmed,
+    },
+    { label: 'Pendiente de primer abono', completed: firstPaymentConfirmed, current: !firstPaymentConfirmed && !hasPendingReceipt },
     { label: 'Primer abono confirmado', completed: firstPaymentConfirmed },
     {
-      label: 'Diseno en proceso',
+      label: designProgress.hasPixelCreationPending ? 'Diseno en preparacion' : 'Diseno en proceso',
       completed: designWaitingApproval || designRejected || designApproved || inProduction || finalized,
       current: firstPaymentConfirmed && !designWaitingApproval && !designRejected && !designApproved && !inProduction && !finalized,
+      visible: designProgress.totalRequired > 0,
     },
     {
-      label: 'Diseno pendiente de aprobacion',
+      label: designProgress.hasClientDesignPending ? 'Diseno pendiente de revision' : 'Diseno pendiente de aprobacion',
       completed: designRejected || designApproved || inProduction || finalized,
       current: designWaitingApproval && !designRejected && !designApproved,
       detail: designProgress.label,
+      visible: designProgress.totalRequired > 0,
     },
     {
       label: 'Correcciones solicitadas',
       completed: false,
       current: designRejected,
-      visible: designRejected,
+      visible: designProgress.totalRequired > 0 && designRejected,
     },
     {
       label: 'Diseno aprobado',
       completed: designApproved || inProduction || finalized,
       detail: designProgress.label,
+      visible: designProgress.totalRequired > 0,
     },
     { label: 'En produccion', completed: pendingFinalBalance || finalized, current: inProduction && !pendingFinalBalance && !finalized },
-    { label: 'Pendiente de saldo final', completed: readyToDeliver, current: pendingFinalBalance || (finalized && finalPaymentPending) },
+    {
+      label: 'Pendiente de saldo final',
+      completed: readyToDeliver,
+      current: pendingFinalBalance || (finalized && finalPaymentPending),
+      visible: finalPaymentPending,
+    },
     { label: 'Pedido listo para reclamar / entregar', completed: delivered, current: readyToDeliver && !delivered },
     { label: 'Producto entregado', completed: delivered },
   ];
@@ -217,7 +266,9 @@ const buildClientActiveOrder = (pedido = {}) => ({
   date: formatShortDate(pedido.fechaCreacion),
   status: pedido.estadoPedido || 'PENDIENTE',
   total: toNumber(pedido.total),
+  paid: toNumber(pedido.totalPagado),
   balance: toNumber(pedido.saldoPendiente ?? pedido.saldo),
+  paymentStatus: pedido.estadoPago || 'PENDIENTE',
   estimatedDelivery: pedido.fechaEntregaEstimada ?? pedido.fecha_estimada_entrega ?? null,
   isPendingFinalBalance: normalizeStatus(pedido.estadoPedido) === 'PENDIENTE_SALDO_FINAL',
   isReadyToDeliver: ['FINALIZADO', 'TERMINADO'].includes(normalizeStatus(pedido.estadoPedido)) &&

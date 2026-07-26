@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../store/AuthContext';
+import { rolesRepository } from '../../configuration/roles/infrastructure/roles.repository';
 import { useUsers } from '../application/useUsers';
 import { UserFormModal } from '../presentation/UserFormModal';
 import styles from '../presentation/users.module.css';
@@ -14,6 +15,8 @@ export const UsersPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
   const { hasPermission } = useAuth();
   const confirm = useConfirm();
 
@@ -36,6 +39,43 @@ export const UsersPage = () => {
   const totalUsers = paginationMeta.total;
   const activeUsers = users.filter(user => user.estado === true).length;
   const inactiveUsers = users.filter(user => user.estado === false).length;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRoles = async () => {
+      setLoadingRoles(true);
+      const collectedRoles = [];
+      let page = 1;
+
+      while (true) {
+        const response = await rolesRepository.list({
+          page,
+          limit: DEFAULT_PAGE_SIZE,
+          sortBy: 'nombre',
+          order: 'asc',
+        });
+        collectedRoles.push(...response.items);
+        const totalPages = response.meta.totalPages || 1;
+        if (page >= totalPages) break;
+        page += 1;
+      }
+
+      if (isMounted) {
+        setAvailableRoles(
+          collectedRoles.filter(
+            role => role.nombre?.trim().toLocaleLowerCase('es') !== 'cliente',
+          ),
+        );
+        setLoadingRoles(false);
+      }
+    };
+
+    loadRoles();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleOpenCreate = () => {
     setSelectedUser(null);
@@ -125,28 +165,36 @@ export const UsersPage = () => {
       </div>
 
       <div className={styles.filterSection}>
-        <input
-          type="text"
-          placeholder="Buscar por nombre, correo o documento..."
-          value={filters.search}
-          onChange={event => {
-            setFilters(prev => ({ ...prev, search: event.target.value }));
-            setCurrentPage(1);
-          }}
-          className={styles.searchInput}
-        />
-        <select
-          value={filters.idRol}
-          onChange={event => {
-            setFilters(prev => ({ ...prev, idRol: event.target.value ? Number(event.target.value) : '' }));
-            setCurrentPage(1);
-          }}
-          className={styles.selectFilter}
-        >
-          <option value="">Todos los roles</option>
-          <option value="1">Administrador</option>
-          <option value="2">Secretaria</option>
-        </select>
+        <label className={`${styles.filterField} ${styles.filterSearch}`}>
+          <span>Buscar usuarios</span>
+          <input
+            type="text"
+            placeholder="Nombre, correo o documento..."
+            value={filters.search}
+            onChange={event => {
+              setFilters(prev => ({ ...prev, search: event.target.value }));
+              setCurrentPage(1);
+            }}
+            className={styles.searchInput}
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span>Rol del sistema</span>
+          <select
+            value={filters.idRol}
+            onChange={event => {
+              setFilters(prev => ({ ...prev, idRol: event.target.value ? Number(event.target.value) : '' }));
+              setCurrentPage(1);
+            }}
+            className={styles.selectFilter}
+            disabled={loadingRoles}
+          >
+            <option value="">{loadingRoles ? 'Cargando roles...' : 'Todos los roles'}</option>
+            {availableRoles.map(role => (
+              <option value={role.id} key={role.id}>{role.nombre}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className={styles.tableContainer}>

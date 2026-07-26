@@ -26,6 +26,8 @@ const styles = {
   kpiValueSuccess: 'proveedores-kpi-value-success',
   kpiValueDanger: 'proveedores-kpi-value-danger',
   filterSection: 'proveedores-filter-section',
+  filterField: 'proveedores-filter-field',
+  filterSearch: 'proveedores-filter-search',
   searchInput: 'proveedores-search-input',
   inputField: 'proveedores-input-field',
   tableContainer: 'proveedores-table-container',
@@ -168,28 +170,34 @@ export const ProveedoresPage = () => {
       </div>
 
       <div className={styles.filterSection}>
-        <input
-          type="text"
-          placeholder="Buscar proveedor por nombre..."
-          value={filters.search}
-          onChange={event => {
-            setFilters(prev => ({ ...prev, search: event.target.value }));
-            setCurrentPage(1);
-          }}
-          className={styles.searchInput}
-        />
-        <select
-          value={filters.estado}
-          onChange={event => {
-            setFilters(prev => ({ ...prev, estado: event.target.value }));
-            setCurrentPage(1);
-          }}
-          className={styles.inputField}
-        >
-          <option value="">Todos los estados</option>
-          <option value="true">Activos</option>
-          <option value="false">Inactivos</option>
-        </select>
+        <label className={`${styles.filterField} ${styles.filterSearch}`}>
+          <span>Buscar proveedores</span>
+          <input
+            type="text"
+            placeholder="Nombre del proveedor..."
+            value={filters.search}
+            onChange={event => {
+              setFilters(prev => ({ ...prev, search: event.target.value }));
+              setCurrentPage(1);
+            }}
+            className={styles.searchInput}
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span>Estado</span>
+          <select
+            value={filters.estado}
+            onChange={event => {
+              setFilters(prev => ({ ...prev, estado: event.target.value }));
+              setCurrentPage(1);
+            }}
+            className={styles.inputField}
+          >
+            <option value="">Todos los estados</option>
+            <option value="true">Activos</option>
+            <option value="false">Inactivos</option>
+          </select>
+        </label>
       </div>
 
       <div className={styles.tableContainer}>

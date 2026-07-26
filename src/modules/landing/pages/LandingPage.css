@@ -2815,3 +2815,34 @@
     width: 100%;
   }
 }
+.quote-design-config {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #eadfff;
+  border-radius: 8px;
+  background: #fbf9ff;
+}
+
+.quote-design-config label {
+  display: grid;
+  gap: 5px;
+  color: #59627a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.quote-general-design {
+  grid-column: 1 / -1;
+  display: flex !important;
+  grid-auto-flow: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+@media (max-width: 620px) {
+  .quote-design-config {
+    grid-template-columns: 1fr;
+  }
+}

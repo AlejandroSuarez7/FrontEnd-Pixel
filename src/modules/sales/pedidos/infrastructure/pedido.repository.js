@@ -7,6 +7,15 @@ const ENDPOINT = 'api/pedidos';
 
 export class PedidoApiRepository {
 
+  async getExpediente(idPedido) {
+    try {
+      const { data } = await apiClient.get(`${ENDPOINT}/${idPedido}/expediente`);
+      return data.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo consultar el expediente del pedido', { cause: error });
+    }
+  }
+
   async list(filters = {}) {
     try {
       const params = buildPaginationParams({

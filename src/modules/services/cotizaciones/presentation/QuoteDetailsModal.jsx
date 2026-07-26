@@ -94,6 +94,15 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
   const selectedDetailDiscountTotal = getQuoteDiscountTotal(selectedDetail || {});
   const selectedDetailSubtotalBruto = getQuoteSubtotalBruto(selectedDetail || {});
   const selectedDetailSubtotalWithDiscount = getQuoteSubtotalWithDiscount(selectedDetail || {});
+  const selectedDetailRequiresDesign = selectedDetail?.requiereDiseno !== false;
+  const selectedDetailDesignOrigin = selectedDetailRequiresDesign
+    ? (selectedDetail?.origenDiseno === 'CLIENTE' ? 'Cliente' : 'PIXEL')
+    : 'No aplica';
+  const selectedDetailDesignStatus = !selectedDetailRequiresDesign
+    ? 'No requiere diseno'
+    : selectedDetail?.origenDiseno === 'CLIENTE'
+      ? 'Diseno aportado por el cliente'
+      : 'PIXEL crea el diseno';
 
   const getStatusClass = (estado) => {
     switch (estado) {
@@ -185,11 +194,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
                 const index = details.indexOf(detail);
                 const itemName = detail.producto?.nombre || detail.descripcion || `Producto ${index + 1}`;
                 const quantity = Number(detail.cantidad || 0);
-                const basePrice = Number(detail.precioBase || detail.producto?.precioBase || 0);
-                const unitPrice = Number(detail.precioUnitario || 0);
                 const discount = detail.descuentoPorcentaje ?? null;
-                const itemSubtotalBruto = getQuoteSubtotalBruto(detail || {});
-                const itemDiscountTotal = getQuoteDiscountTotal(detail || {});
                 const itemSubtotalWithDiscount = getQuoteSubtotalWithDiscount(detail || {});
                 const isSelected = selectedProductIndex === index;
 
@@ -286,6 +291,36 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
                     <span>Subtotal con descuento</span>
                     <strong>{formatMoney(selectedDetailSubtotalWithDiscount)}</strong>
                   </div>
+                  <div>
+                    <span>Configuracion de diseno</span>
+                    <strong>{selectedDetailDesignStatus}</strong>
+                  </div>
+                  <div>
+                    <span>Origen del diseno</span>
+                    <strong>{selectedDetailDesignOrigin}</strong>
+                  </div>
+                  <div>
+                    <span>Costo de diseno</span>
+                    <strong>
+                      {selectedDetailRequiresDesign && Number(selectedDetail.costoDiseno || 0) > 0
+                        ? formatMoneyCOP(selectedDetail.costoDiseno)
+                        : 'No aplica'}
+                    </strong>
+                  </div>
+                  {selectedDetail?.esDisenoGeneral && (
+                    <div>
+                      <span>Alcance</span>
+                      <strong>Diseno general del pedido</strong>
+                    </div>
+                  )}
+                  {selectedDetail?.archivoDisenoInicialUrl && (
+                    <div>
+                      <span>Archivo aportado</span>
+                      <a href={selectedDetail.archivoDisenoInicialUrl} target="_blank" rel="noreferrer">
+                        Ver diseno
+                      </a>
+                    </div>
+                  )}
                   <div className={styles.quoteProductObservation}>
                     <span>Observaciones del item</span>
                     <strong>{selectedDetail.observaciones || 'Sin observaciones'}</strong>

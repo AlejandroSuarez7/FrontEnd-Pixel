@@ -79,15 +79,16 @@
 /* ── KPI Grid ── */
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .kpiCard {
   background-color: var(--color-surface);
-  padding: 22px 24px;
-  border-radius: var(--radius-lg);
+  min-width: 0;
+  padding: 17px 18px;
+  border-radius: 8px;
   border: 1px solid var(--color-border);
   border-left: 3px solid var(--color-accent);
   box-shadow: 0 1px 4px var(--color-shadow);
@@ -123,12 +124,29 @@
 
 /* ── Search ── */
 .filterSection {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px var(--color-shadow);
+}
+
+.filterField {
+  display: flex;
+  max-width: 560px;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 .searchInput {
   width: 100%;
-  max-width: 380px;
+  max-width: none;
   padding: 9px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -194,7 +212,7 @@
 }
 
 .tableBodyRow:last-child { border-bottom: none; }
-.tableBodyRow:hover { background-color: #fafbfc; }
+.tableBodyRow:hover { background-color: #f8f7ff; }
 
 .tableCell {
   padding: 16px 20px;
@@ -214,7 +232,30 @@
 
 .tableCellMuted { color: var(--color-text-muted); font-style: italic; font-size: 12px; }
 
-.totalPrice { font-size: 13.5px; font-weight: 700; }
+.totalPrice { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+
+.balanceDue {
+  color: var(--color-danger);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.balancePaid {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.deliveryDate {
+  color: var(--color-text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 /* ── Status badges ── */
 .statusBadge {
@@ -224,6 +265,11 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .kpiGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 .estadoPedidoPendiente  { background-color: var(--color-warning-bg); color: var(--color-warning); }

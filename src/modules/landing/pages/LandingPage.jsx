@@ -40,6 +40,10 @@ const createPublicQuoteItem = () => ({
   idTecnica: '',
   cantidad: 1,
   detalleProducto: '',
+  requiereDiseno: true,
+  origenDiseno: 'PIXEL',
+  esDisenoGeneral: false,
+  archivoDisenoInicialUrl: '',
 });
 
 const LandingPage = () => {
@@ -264,6 +268,10 @@ const LandingPage = () => {
           idTecnica: Number(item.idTecnica),
           cantidad: Number(item.cantidad),
           observaciones: item.detalleProducto.trim() || null,
+          requiereDiseno: item.requiereDiseno !== false,
+          origenDiseno: item.origenDiseno === 'CLIENTE' ? 'CLIENTE' : 'PIXEL',
+          esDisenoGeneral: Boolean(item.esDisenoGeneral),
+          archivoDisenoInicialUrl: item.archivoDisenoInicialUrl.trim() || null,
         })),
         observaciones: publicQuoteForm.observaciones.trim() || null,
       });
@@ -1811,6 +1819,48 @@ const LandingPage = () => {
                           onChange={(event) => updatePublicQuoteItem(index, 'detalleProducto', event.target.value)}
                           placeholder="Color, talla o ubicacion del estampado"
                         />
+                      </div>
+
+                      <div className="quote-design-config">
+                        <label>
+                          <span>Como se manejara el diseno?</span>
+                          <select
+                            className="contact-input"
+                            value={item.requiereDiseno === false ? 'NO_REQUIERE' : item.origenDiseno === 'CLIENTE' ? 'CLIENTE' : 'PIXEL'}
+                            onChange={(event) => {
+                              const mode = event.target.value;
+                              updatePublicQuoteItem(index, 'requiereDiseno', mode !== 'NO_REQUIERE');
+                              updatePublicQuoteItem(index, 'origenDiseno', mode === 'CLIENTE' ? 'CLIENTE' : 'PIXEL');
+                              if (mode !== 'CLIENTE') updatePublicQuoteItem(index, 'archivoDisenoInicialUrl', '');
+                            }}
+                          >
+                            <option value="CLIENTE">Ya tengo el diseno</option>
+                            <option value="PIXEL">Quiero que PIXEL cree el diseno</option>
+                            <option value="NO_REQUIERE">Este producto no requiere diseno</option>
+                          </select>
+                        </label>
+                        {item.requiereDiseno !== false && item.origenDiseno === 'CLIENTE' && (
+                          <label>
+                            <span>Enlace del diseno (opcional)</span>
+                            <input
+                              type="url"
+                              className="contact-input"
+                              value={item.archivoDisenoInicialUrl}
+                              onChange={event => updatePublicQuoteItem(index, 'archivoDisenoInicialUrl', event.target.value)}
+                              placeholder="https://..."
+                            />
+                          </label>
+                        )}
+                        {item.requiereDiseno !== false && (
+                          <label className="quote-general-design">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(item.esDisenoGeneral)}
+                              onChange={event => updatePublicQuoteItem(index, 'esDisenoGeneral', event.target.checked)}
+                            />
+                            Este diseno aplica para todos los productos
+                          </label>
+                        )}
                       </div>
 
                       {calculationItem && (

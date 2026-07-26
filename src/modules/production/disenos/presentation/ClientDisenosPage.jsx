@@ -40,7 +40,7 @@ const ESTADO_CLASS = {
 
 const normalizeStatus = (value = '') => String(value || '').toUpperCase();
 const formatDesignOrigin = (origen = '') => normalizeStatus(origen) === 'CLIENTE'
-  ? 'Enviado por cliente'
+  ? 'Diseno aportado por ti'
   : 'Equipo PIXEL';
 const getDesignProductName = (diseno) => {
   if (diseno?.esDisenoGeneral) return 'Diseno general del pedido';
@@ -234,6 +234,7 @@ export const ClientDisenosPage = () => {
                   <div className={styles.detailsInfoBox}>
                     <strong>Producto:</strong> {producto}
                     <span style={{ display: 'block', marginTop: 4 }}>{getDesignDetailText(diseno)}</span>
+                    {diseno.esDisenoGeneral && <span style={{ display: 'block', marginTop: 4 }}>Aplica a todos los productos que requieren diseno.</span>}
                   </div>
 
                   <div className={styles.detailsInfoBox}>

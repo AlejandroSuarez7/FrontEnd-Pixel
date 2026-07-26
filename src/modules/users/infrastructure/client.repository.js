@@ -34,6 +34,11 @@ export const clientRepository = {
     return mapClient(data.data);
   },
 
+  async listOrders(idCliente) {
+    const { data } = await apiClient.get(`${ENDPOINT}/${idCliente}/pedidos`);
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
   async deactivate(idCliente) {
     const { data } = await apiClient.patch(`${ENDPOINT}/${idCliente}/desactivar`);
     return mapClient(data.data);

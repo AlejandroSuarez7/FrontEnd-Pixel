@@ -1,4 +1,7 @@
+import { useCallback, useState } from 'react';
 import { formatDate } from '../../../../core/utils/fechaFormato';
+import { abonoRepository } from '../infrastructure/abono.repository';
+import { ReceiptPreviewModal } from './ReceiptPreviewModal';
 import './AbonosPage.css';
 
 const styles = {
@@ -20,9 +23,19 @@ const styles = {
   btnPrimary: 'abonos-btn-primary',
 };
 
-const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
+const fmt = (value, fallback = 'Pendiente de revision') => (
+  value === null || value === undefined || value === ''
+    ? fallback
+    : `$${Number(value).toLocaleString('es-CO')}`
+);
 
 export const AbonoViewModal = ({ isOpen, onClose, abono }) => {
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const loadReceipt = useCallback(
+    () => abonoRepository.getAdminReceipt(abono?.idAbono),
+    [abono?.idAbono],
+  );
+
   if (!isOpen || !abono) return null;
   const clienteContacto = [abono.pedido?.cliente?.correo, abono.pedido?.cliente?.telefono].filter(Boolean).join(' | ');
   const clienteNombre = abono.pedido?.cliente?.nombre || 'Cliente no especificado';
@@ -44,7 +57,8 @@ export const AbonoViewModal = ({ isOpen, onClose, abono }) => {
         <div className={styles.form}>
           <div className={styles.readOnlyGrid}>
             <div className={styles.readOnlyItem}>Estado<strong>{abono.estado}</strong></div>
-            <div className={styles.readOnlyItem}>Monto<strong>{fmt(abono.monto)}</strong></div>
+            <div className={styles.readOnlyItem}>Monto final<strong>{fmt(abono.monto)}</strong></div>
+            <div className={styles.readOnlyItem}>Monto detectado<strong>{fmt(abono.montoDetectadoOcr)}</strong></div>
             <div className={styles.readOnlyItem}>Metodo<strong>{abono.metodoPago}</strong></div>
             <div className={styles.readOnlyItem}>Creado<strong>{formatDate(abono.fechaCreacion)}</strong></div>
             <div className={styles.readOnlyItem}>Confirmado<strong>{formatDate(abono.fechaConfirmacion)}</strong></div>
@@ -52,16 +66,28 @@ export const AbonoViewModal = ({ isOpen, onClose, abono }) => {
           </div>
 
           <div className={styles.detailsInfoBox}>
-            <strong>Referencia:</strong> {abono.referencia || 'Sin referencia'}
+            <strong>Referencia final:</strong> {abono.referencia || 'Pendiente de revision'}
+          </div>
+
+          <div className={styles.detailsInfoBox}>
+            <strong>Datos detectados:</strong>{' '}
+            {[abono.referenciaDetectadaOcr, abono.bancoDetectadoOcr, formatDate(abono.fechaDetectadaOcr)]
+              .filter(Boolean)
+              .join(' | ') || 'Sin datos detectados'}
+          </div>
+
+          <div className={styles.detailsInfoBox}>
+            <strong>Revision:</strong>{' '}
+            {abono.requiereRevisionManual ? 'Requiere revision manual' : 'Datos disponibles para revision'}
           </div>
 
           <div className={styles.detailsInfoBox}>
             <strong>Comprobante:</strong>{' '}
-            {abono.comprobanteUrl ? (
-              <a href={abono.comprobanteUrl} target="_blank" rel="noreferrer">
-                Abrir comprobante
-              </a>
-            ) : 'Sin comprobante'}
+            {abono.comprobanteDisponible ? (
+              <button type="button" className={styles.btnSecondary} onClick={() => setIsReceiptOpen(true)}>
+                Ver comprobante
+              </button>
+            ) : 'Comprobante no disponible'}
           </div>
 
           {abono.motivoRechazo && (
@@ -92,6 +118,12 @@ export const AbonoViewModal = ({ isOpen, onClose, abono }) => {
           </button>
         </div>
       </div>
+      <ReceiptPreviewModal
+        isOpen={isReceiptOpen}
+        onClose={() => setIsReceiptOpen(false)}
+        loadReceipt={loadReceipt}
+        title={`Comprobante del abono #${abono.idAbono}`}
+      />
     </div>
   );
 };

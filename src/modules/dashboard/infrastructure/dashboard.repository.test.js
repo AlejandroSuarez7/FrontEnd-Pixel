@@ -10,6 +10,7 @@ vi.mock('../../../core/services/apiService', () => ({
 
 describe('dashboardRepository', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     apiClient.get.mockResolvedValue({ data: { data: {} } });
   });
 
@@ -85,5 +86,93 @@ describe('dashboardRepository', () => {
       { rol: { nombre: 'Cliente' } },
       ['dashboard.cliente']
     )).rejects.toThrow('No se pudo cargar');
+  });
+
+  it('omits the final-balance step when the order is already fully paid', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 40,
+            estadoPedido: 'EN_PROCESO',
+            estadoPago: 'COMPLETO',
+            saldoPendiente: 0,
+            detalles: [],
+            disenos: [],
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente']
+    );
+
+    expect(result.client.activeOrders[0].tracking.map(step => step.label))
+      .not.toContain('Pendiente de saldo final');
+  });
+
+  it('does not add design steps when every product is marked as not requiring design', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 41,
+            estadoPedido: 'PENDIENTE',
+            estadoPago: 'PARCIAL',
+            detalles: [{
+              idDetallePedido: 1,
+              requiereDiseno: false,
+              estadoCoberturaDiseno: 'NO_REQUIERE_DISENO',
+              cubiertoPorDiseno: true,
+            }],
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente']
+    );
+    const labels = result.client.activeOrders[0].tracking.map(step => step.label);
+
+    expect(labels.some(label => label.toLowerCase().includes('diseno'))).toBe(false);
+  });
+
+  it('shows client design review without assuming that the order entered production', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 42,
+            estadoPedido: 'PENDIENTE',
+            estadoPago: 'PARCIAL',
+            detalles: [{
+              idDetallePedido: 2,
+              requiereDiseno: true,
+              origenDiseno: 'CLIENTE',
+              estadoCoberturaDiseno: 'DISENO_ENTREGADO_POR_CLIENTE',
+              cubiertoPorDiseno: false,
+            }],
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente']
+    );
+    const tracking = result.client.activeOrders[0].tracking;
+
+    expect(tracking.find(step => step.label === 'Diseno pendiente de revision')?.state)
+      .toBe('current');
+    expect(tracking.find(step => step.label === 'En produccion')?.state)
+      .toBe('pending');
   });
 });

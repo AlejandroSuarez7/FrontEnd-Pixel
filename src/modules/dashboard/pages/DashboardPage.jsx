@@ -4,6 +4,7 @@ import {
   Check,
   Clock3,
   Factory,
+  FileSearch,
   FileText,
   PencilRuler,
   ShieldCheck,
@@ -33,6 +34,7 @@ import { useAuth } from '../../../store/AuthContext';
 import { PATHS } from '../../../routes/paths';
 import { isClientUser } from '../../../core/utils/permissions';
 import { useDashboardData } from '../application/useDashboardData';
+import { ClientPaymentsPanel } from './ClientPaymentsPanel';
 import './DashboardPage.css';
 
 const kpiIcons = {
@@ -44,6 +46,7 @@ const kpiIcons = {
 
 const trackingIcons = {
   'Cotizacion aceptada': FileText,
+  'Comprobante en revision': FileSearch,
   'Pendiente de primer abono': Clock3,
   'Primer abono confirmado': BadgeDollarSign,
   'Diseno en proceso': PencilRuler,
@@ -88,11 +91,27 @@ const readableStatus = (status) => {
   return labels[status] || status;
 };
 
-const KpiCard = ({ item }) => {
+const KpiCard = ({ item, onActivate }) => {
   const Icon = kpiIcons[item.iconKey] || Clock3;
+  const interactiveProps = onActivate
+    ? {
+        role: 'link',
+        tabIndex: 0,
+        onClick: onActivate,
+        onKeyDown: (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onActivate();
+          }
+        },
+      }
+    : {};
 
   return (
-    <article className={`dashboard-kpi-card dashboard-tone-${item.tone}`}>
+    <article
+      className={`dashboard-kpi-card dashboard-tone-${item.tone}${onActivate ? ' dashboard-kpi-card-link' : ''}`}
+      {...interactiveProps}
+    >
       <div>
         <p className="dashboard-kpi-label">{item.label}</p>
         <strong>{item.value}</strong>
@@ -105,7 +124,7 @@ const KpiCard = ({ item }) => {
   );
 };
 
-const RevenueKpiCard = ({ revenue }) => {
+const RevenueKpiCard = ({ revenue, onActivate }) => {
   const [period, setPeriod] = useState('monthly');
   const selected = revenue[period];
   const options = [
@@ -115,7 +134,18 @@ const RevenueKpiCard = ({ revenue }) => {
   ];
 
   return (
-    <article className="dashboard-kpi-card dashboard-revenue-card dashboard-tone-success">
+    <article
+      className={`dashboard-kpi-card dashboard-revenue-card dashboard-tone-success${onActivate ? ' dashboard-kpi-card-link' : ''}`}
+      role={onActivate ? 'link' : undefined}
+      tabIndex={onActivate ? 0 : undefined}
+      onClick={onActivate}
+      onKeyDown={(event) => {
+        if (onActivate && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onActivate();
+        }
+      }}
+    >
       <div className="dashboard-kpi-content">
         <p className="dashboard-kpi-label">Ingresos</p>
         <strong>{selected.value}</strong>
@@ -131,7 +161,10 @@ const RevenueKpiCard = ({ revenue }) => {
               type="button"
               key={option.key}
               className={period === option.key ? 'active' : ''}
-              onClick={() => setPeriod(option.key)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setPeriod(option.key);
+              }}
             >
               {option.label}
             </button>
@@ -536,8 +569,19 @@ const ErrorDashboard = ({ message }) => (
   </div>
 );
 
-const AdminDashboard = ({ userName, data }) => (
-  <div className="dashboard-page">
+const AdminDashboard = ({ userName, data }) => {
+  const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+  const destinations = {
+    'Pedidos pendientes': hasPermission('pedidos.ver') ? PATHS.ORDERS : null,
+    'Total clientes': hasPermission('clientes.ver') ? PATHS.USERS_CLIENTS : null,
+  };
+  const salesPath = hasPermission('ventas.ver') || hasPermission('ventas.resumen')
+    ? PATHS.SALES
+    : null;
+
+  return (
+    <div className="dashboard-page">
     <header className="dashboard-hero">
       <div>
         <span className="dashboard-eyebrow"><Sparkles size={16} /> Panel administrador</span>
@@ -552,8 +596,17 @@ const AdminDashboard = ({ userName, data }) => (
     </header>
 
     <section className="dashboard-kpi-grid admin-kpis">
-      {data.kpis.map((item) => <KpiCard item={item} key={item.label} />)}
-      <RevenueKpiCard revenue={data.revenue} />
+      {data.kpis.map((item) => (
+        <KpiCard
+          item={item}
+          key={item.label}
+          onActivate={destinations[item.label] ? () => navigate(destinations[item.label]) : undefined}
+        />
+      ))}
+      <RevenueKpiCard
+        revenue={data.revenue}
+        onActivate={salesPath ? () => navigate(salesPath) : undefined}
+      />
     </section>
 
     <div className="dashboard-grid dashboard-grid-charts">
@@ -565,10 +618,12 @@ const AdminDashboard = ({ userName, data }) => (
       <OrdersTable title="Ultimos pedidos" orders={data.latestOrders} />
       <QuoteFlowPanel data={data.pendingQuotes} quotes={data.pendingQuotesList} />
     </div>
-  </div>
-);
+    </div>
+  );
+};
 
 const ClientDashboard = ({ userName, data }) => {
+  const { hasPermission } = useAuth();
   const activeOrders = data.activeOrders || [];
   const [selectedOrderId, setSelectedOrderId] = useState(activeOrders[0]?.id || '');
   const selectedOrder = activeOrders.find((order) => order.id === selectedOrderId) || activeOrders[0] || null;
@@ -614,6 +669,11 @@ const ClientDashboard = ({ userName, data }) => {
       </div>
 
       <TrackingPanel order={selectedOrder} />
+      <ClientPaymentsPanel
+        order={selectedOrder}
+        canUpload={hasPermission('abonos.cliente.crear')}
+        canView={hasPermission('abonos.cliente.ver')}
+      />
 
       <OrdersTable title="Historial" orders={data.history} showCustomer={false} />
     </div>

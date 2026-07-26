@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '../../../../core/services/apiService';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
+import { canCreateDesignForDetail, getDesignCoverageInfo } from '../../../../core/utils/designCoverage';
 import { notifications } from '../../../../core/utils/notifications';
 import './DisenosPage.css';
 
@@ -65,8 +66,15 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
 
   const isEditing = Boolean(diseno);
   const selectedPedido = pedidosDisponibles.find((item) => String(item.idPedido) === String(idPedido)) || diseno?.pedido || null;
-  const detallesPedido = Array.isArray(selectedPedido?.detalles) ? selectedPedido.detalles : [];
-  const hasMultipleDetails = detallesPedido.length > 1;
+  const detallesPedido = useMemo(
+    () => (Array.isArray(selectedPedido?.detalles) ? selectedPedido.detalles : []),
+    [selectedPedido],
+  );
+  const detallesPendientesPixel = useMemo(
+    () => detallesPedido.filter(canCreateDesignForDetail),
+    [detallesPedido],
+  );
+  const hasMultipleDetails = detallesPendientesPixel.length > 1;
 
   useEffect(() => {
     if (diseno) {
@@ -100,12 +108,12 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
 
   useEffect(() => {
     if (!isOpen || isEditing || esDisenoGeneral) return;
-    if (detallesPedido.length === 1) {
-      setIdDetallePedido(detallesPedido[0].idDetallePedido || '');
-    } else if (detallesPedido.length > 1 && !detallesPedido.some((detalle) => String(detalle.idDetallePedido) === String(idDetallePedido))) {
+    if (detallesPendientesPixel.length === 1) {
+      setIdDetallePedido(detallesPendientesPixel[0].idDetallePedido || '');
+    } else if (detallesPendientesPixel.length > 1 && !detallesPendientesPixel.some((detalle) => String(detalle.idDetallePedido) === String(idDetallePedido))) {
       setIdDetallePedido('');
     }
-  }, [detallesPedido, esDisenoGeneral, idDetallePedido, isEditing, isOpen]);
+  }, [detallesPendientesPixel, esDisenoGeneral, idDetallePedido, isEditing, isOpen]);
 
   useEffect(() => {
     if (!isOpen || isEditing || !getPedidos) return;
@@ -165,6 +173,11 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
         notifications.error('Selecciona el producto del pedido o marca que el diseno aplica para todo el pedido.');
         return;
       }
+      const selectedDetail = detallesPedido.find(detalle => String(detalle.idDetallePedido) === String(idDetallePedido));
+      if (!isEditing && !esDisenoGeneral && (!selectedDetail || !canCreateDesignForDetail(selectedDetail))) {
+        notifications.error('Solo puedes crear disenos para productos pendientes de creacion por PIXEL.');
+        return;
+      }
       await onSubmit({
         idPedido,
         idDetallePedido: esDisenoGeneral ? undefined : idDetallePedido,
@@ -196,8 +209,9 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Pedido *</label>
+            <label className={styles.inputLabel} htmlFor="diseno-pedido">Pedido *</label>
             <select
+              id="diseno-pedido"
               value={idPedido}
               onChange={event => setIdPedido(event.target.value)}
               className={styles.inputField}
@@ -235,7 +249,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
                     setEsDisenoGeneral(event.target.checked);
                     if (event.target.checked) setIdDetallePedido('');
                   }}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || detallesPendientesPixel.length === 0}
                 />
                 <span>Este diseno aplica para todo el pedido</span>
               </label>
@@ -244,23 +258,36 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
 
           {!isEditing && idPedido && !esDisenoGeneral && (
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Producto del pedido *</label>
+              <label className={styles.inputLabel} htmlFor="diseno-producto">Producto del pedido *</label>
               <select
+                id="diseno-producto"
                 value={idDetallePedido}
                 onChange={event => setIdDetallePedido(event.target.value)}
                 className={styles.inputField}
-                disabled={isSubmitting || detallesPedido.length === 1}
+                disabled={isSubmitting || detallesPendientesPixel.length === 1}
                 required={hasMultipleDetails}
               >
                 <option value="">
                   {detallesPedido.length === 0 ? 'El pedido no tiene productos cargados' : 'Selecciona un producto'}
                 </option>
-                {detallesPedido.map((detalle, index) => (
-                  <option key={detalle.idDetallePedido || index} value={detalle.idDetallePedido || ''}>
-                    {formatDetailOption(detalle, index)}
-                  </option>
-                ))}
+                {detallesPedido.map((detalle, index) => {
+                  const coverage = getDesignCoverageInfo(detalle);
+                  return (
+                    <option
+                      key={detalle.idDetallePedido || index}
+                      value={detalle.idDetallePedido || ''}
+                      disabled={!coverage.canCreate}
+                    >
+                      {formatDetailOption(detalle, index)} - {coverage.label}
+                    </option>
+                  );
+                })}
               </select>
+              {detallesPendientesPixel.length === 0 && (
+                <p className={styles.detailsInfoBox}>
+                  Este pedido no tiene productos pendientes de creacion por PIXEL.
+                </p>
+              )}
               {idDetallePedido && (
                 <p className={styles.detailsInfoBox}>
                   {getDetailTechniqueName(detallesPedido.find((detalle) => String(detalle.idDetallePedido) === String(idDetallePedido)))}.
@@ -270,22 +297,24 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
           )}
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Origen del diseno *</label>
+            <label className={styles.inputLabel} htmlFor="diseno-origen">Origen del diseno *</label>
             <select
+              id="diseno-origen"
               value={origenDiseno}
-              onChange={event => {
-                const nextOrigin = event.target.value;
-                setOrigenDiseno(nextOrigin);
-                if (nextOrigin === 'CLIENTE') setIdDisenador('');
-              }}
+              onChange={event => setOrigenDiseno(event.target.value)}
               className={styles.inputField}
-              disabled={isSubmitting || isEditing}
+              disabled
               required
             >
               <option value="DISENADOR">Equipo PIXEL / Disenador</option>
-              <option value="CLIENTE">Cliente ya tiene diseno</option>
-              <option value="OTRO">Otro</option>
+              {isEditing && <option value="CLIENTE">Cliente ya tiene diseno</option>}
+              {isEditing && <option value="OTRO">Otro</option>}
             </select>
+            {!isEditing && (
+              <p className={styles.detailsInfoBox}>
+                Los disenos aportados por el cliente ya existen en el pedido y deben revisarse desde Gestion de Disenos.
+              </p>
+            )}
           </div>
 
           {isClientOrigin && (

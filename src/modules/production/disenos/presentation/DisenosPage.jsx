@@ -30,6 +30,8 @@ const styles = {
   kpiValueInfo: 'disenos-kpi-value-info',
   kpiValueSuccess: 'disenos-kpi-value-success',
   filterSection: 'disenos-filter-section',
+  filterField: 'disenos-filter-field',
+  filterSearch: 'disenos-filter-search',
   searchInput: 'disenos-search-input',
   inputField: 'disenos-input-field',
   tableContainer: 'disenos-table-container',
@@ -308,28 +310,37 @@ export const DisenosPage = () => {
       </div>
 
       <div className={styles.filterSection}>
-        <input
-          type="text"
-          placeholder="Buscar por pedido, cliente, disenador o descripcion..."
-          value={filters.search}
-          onChange={event => setFilters(prev => ({ ...prev, search: event.target.value }))}
-          className={styles.searchInput}
-        />
-        <input
-          type="number"
-          min="1"
-          placeholder="ID pedido"
-          value={filters.idPedido}
-          onChange={event => setFilters(prev => ({ ...prev, idPedido: event.target.value }))}
-          className={styles.searchInput}
-        />
-        <select value={filters.estado} onChange={event => setFilters(prev => ({ ...prev, estado: event.target.value }))} className={styles.inputField}>
-          <option value="">Todos los estados</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="ENVIADO">Enviado</option>
-          <option value="APROBADO">Aprobado</option>
-          <option value="RECHAZADO">Rechazado</option>
-        </select>
+        <label className={`${styles.filterField} ${styles.filterSearch}`}>
+          <span>Buscar diseños</span>
+          <input
+            type="text"
+            placeholder="Cliente, diseñador o producto..."
+            value={filters.search}
+            onChange={event => setFilters(prev => ({ ...prev, search: event.target.value }))}
+            className={styles.searchInput}
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span>Pedido</span>
+          <input
+            type="number"
+            min="1"
+            placeholder="ID del pedido"
+            value={filters.idPedido}
+            onChange={event => setFilters(prev => ({ ...prev, idPedido: event.target.value }))}
+            className={styles.searchInput}
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span>Estado</span>
+          <select value={filters.estado} onChange={event => setFilters(prev => ({ ...prev, estado: event.target.value }))} className={styles.inputField}>
+            <option value="">Todos los estados</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="ENVIADO">Enviado</option>
+            <option value="APROBADO">Aprobado</option>
+            <option value="RECHAZADO">Rechazado</option>
+          </select>
+        </label>
       </div>
 
       <div className={styles.tableContainer}>
@@ -346,7 +357,7 @@ export const DisenosPage = () => {
                   <th className={styles.tableHeader}>Pedido</th>
                   <th className={styles.tableHeader}>Cliente</th>
                   <th className={styles.tableHeader}>Origen</th>
-                  <th className={styles.tableHeader}>Producto / descripcion</th>
+                  <th className={styles.tableHeader}>Producto / tecnica</th>
                   <th className={styles.tableHeader}>Disenador</th>
                   <th className={styles.tableHeader}>Estado</th>
                   <th className={styles.tableHeader}>Envio</th>

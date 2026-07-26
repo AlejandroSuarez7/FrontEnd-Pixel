@@ -5,6 +5,7 @@ import {
   formatPercentage,
   toNumberOrNull,
 } from '../../../../core/utils/formatters';
+import { getDesignCoverageInfo } from '../../../../core/utils/designCoverage';
 import styles from './pedidos.module.css';
 
 const ESTADO_PEDIDO_CLASS = {
@@ -90,30 +91,6 @@ const getItemSubtotalWithDiscount = (item) => firstValue(
   item.total,
   item.subtotal
 );
-
-const getDetailDesigns = (item = {}, pedido = {}) => {
-  const itemDesigns = Array.isArray(item.disenos)
-    ? item.disenos
-    : (item.disenos ? [item.disenos] : []);
-  const pedidoDesigns = Array.isArray(pedido.disenos)
-    ? pedido.disenos
-    : [];
-  return [
-    ...itemDesigns,
-    ...pedidoDesigns.filter((diseno) => diseno?.idDetallePedido === item.idDetallePedido),
-  ].filter(Boolean);
-};
-
-const getDesignRequirementLabel = (item = {}, pedido = {}) => {
-  if (item.requiereDiseno === false) return 'No requiere diseno';
-  const disenos = getDetailDesigns(item, pedido);
-  if (disenos.some((diseno) => String(diseno.estado || '').toUpperCase() === 'APROBADO')) return 'Diseno aprobado';
-  if (disenos.some((diseno) => String(diseno.estado || '').toUpperCase() === 'RECHAZADO')) return 'Correcciones solicitadas';
-  if (disenos.some((diseno) => ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(String(diseno.estado || '').toUpperCase()))) {
-    return 'Pendiente de aprobacion';
-  }
-  return 'Pendiente de diseno';
-};
 
 export const PedidoDetailsModal = ({
   isOpen,
@@ -255,6 +232,7 @@ export const PedidoDetailsModal = ({
                     const subtotalFinal = getItemSubtotalWithDiscount(det);
                     const itemDiscountTotal = getItemDiscountTotal(det);
                     const productName = getItemProductName(det);
+                    const designCoverage = getDesignCoverageInfo(det);
 
                     return (
                       <article key={det.idDetallePedido || index} className={styles.orderItemCard}>
@@ -310,9 +288,35 @@ export const PedidoDetailsModal = ({
                           </div>
                           <div>
                             <span>Diseno asociado</span>
-                            <strong>{getDesignRequirementLabel(det, pedido)}</strong>
+                            <strong>{designCoverage.label}</strong>
+                          </div>
+                          <div>
+                            <span>Origen del diseno</span>
+                            <strong>
+                              {designCoverage.noDesignRequired
+                                ? 'No aplica'
+                                : det.origenDiseno === 'CLIENTE'
+                                  ? 'Cliente'
+                                  : 'PIXEL'}
+                            </strong>
                           </div>
                         </div>
+                        {designCoverage.message && (
+                          <p className={styles.orderItemNote}>{designCoverage.message}</p>
+                        )}
+                        {designCoverage.isGeneral && (
+                          <p className={styles.orderItemNote}>Cubierto por un diseno general del pedido.</p>
+                        )}
+                        {designCoverage.fileUrl && (
+                          <a
+                            className={styles.orderItemToggleBtn}
+                            href={designCoverage.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Ver archivo del diseno
+                          </a>
+                        )}
                         {canEditDesignRequirement && det.idDetallePedido && (
                           <div className={styles.orderItemActions}>
                             <button

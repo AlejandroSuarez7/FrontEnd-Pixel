@@ -19,6 +19,10 @@ const initialDetail = {
   descripcion: '',
   cantidad: 1,
   observaciones: '',
+  requiereDiseno: true,
+  origenDiseno: 'PIXEL',
+  esDisenoGeneral: false,
+  archivoDisenoInicialUrl: '',
 };
 
 const getCalculationItems = (calculation) => {
@@ -542,6 +546,64 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
                       onChange={event => updateDetail(index, 'observaciones', event.target.value)}
                       className={styles.detailRowInputFlex}
                     />
+
+                    <div className={styles.inputGroup}>
+                      <label className={styles.inputLabel}>Como se manejara el diseno?</label>
+                      <select
+                        value={item.requiereDiseno === false ? 'NO_REQUIERE' : item.origenDiseno === 'CLIENTE' ? 'CLIENTE' : 'PIXEL'}
+                        onChange={(event) => {
+                          const mode = event.target.value;
+                          updateDetail(index, 'requiereDiseno', mode !== 'NO_REQUIERE');
+                          updateDetail(index, 'origenDiseno', mode === 'CLIENTE' ? 'CLIENTE' : 'PIXEL');
+                          if (mode !== 'CLIENTE') updateDetail(index, 'archivoDisenoInicialUrl', '');
+                        }}
+                        className={styles.selectField}
+                      >
+                        <option value="CLIENTE">Ya tengo el diseno</option>
+                        <option value="PIXEL">Quiero que PIXEL cree el diseno</option>
+                        <option value="NO_REQUIERE">Este producto no requiere diseno</option>
+                      </select>
+                    </div>
+
+                    {item.requiereDiseno !== false && item.origenDiseno === 'CLIENTE' && (
+                      <div className={styles.inputGroup}>
+                        <label className={styles.inputLabel}>Enlace del diseno</label>
+                        <input
+                          type="url"
+                          value={item.archivoDisenoInicialUrl || ''}
+                          onChange={event => updateDetail(index, 'archivoDisenoInicialUrl', event.target.value)}
+                          className={styles.detailRowInputFlex}
+                          placeholder="https://... (opcional)"
+                        />
+                        <small>El backend actual acepta un enlace. No hay endpoint de carga local de diseno en esta cotizacion.</small>
+                      </div>
+                    )}
+
+                    {isStaff && !isEditing && item.requiereDiseno !== false && item.origenDiseno === 'PIXEL' && (
+                      <div className={styles.inputGroup}>
+                        <label className={styles.inputLabel}>Costo de diseno</label>
+                        <input
+                          type="number"
+                          value={item.costoDiseno || ''}
+                          onChange={event => updateDetail(index, 'costoDiseno', event.target.value)}
+                          className={styles.inputFieldStaff}
+                          min="0"
+                          step="0.01"
+                          placeholder="0"
+                        />
+                      </div>
+                    )}
+
+                    {item.requiereDiseno !== false && (
+                      <label className={styles.detailsInfoBox}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(item.esDisenoGeneral)}
+                          onChange={event => updateDetail(index, 'esDisenoGeneral', event.target.checked)}
+                        />
+                        Este diseno aplica para todos los productos
+                      </label>
+                    )}
 
                     {isPricing && (
                       <div className={styles.pricingInputsGrid}>

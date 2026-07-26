@@ -1,4 +1,6 @@
 import { apiClient } from '../../../../core/services/apiService.js';
+import { fetchProtectedBlob } from '../../../../core/services/protectedFileService.js';
+import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
 import { abonoDTO } from './adapters/abono.dto.js';
 
 const ENDPOINT = 'api/abonos';
@@ -6,38 +8,15 @@ const ENDPOINT = 'api/abonos';
 export class AbonoApiRepository {
   async list(filters = {}) {
     try {
-      if (filters.onlyOwnPedidos) {
-        const pedidos = await this.listPedidos();
-        const abonosPorPedido = await Promise.all(
-          pedidos.map(pedido => this.listByPedido(pedido.idPedido).catch(() => []))
-        );
-        return abonosPorPedido
-          .flat()
-          .filter(item =>
-            (!filters.estado || item.estado === filters.estado) &&
-            (!filters.metodoPago || item.metodoPago === filters.metodoPago)
-          );
-      }
-
-      if (filters.idPedido) {
-        const items = await this.listByPedido(filters.idPedido);
-        return items.filter(item =>
-          (!filters.estado || item.estado === filters.estado) &&
-          (!filters.metodoPago || item.metodoPago === filters.metodoPago)
-        );
-      }
-
-      const params = {};
-      if (filters.estado) params.estado = filters.estado;
-      if (filters.metodoPago) params.metodoPago = filters.metodoPago;
-      if (filters.desde) params.desde = filters.desde;
-      if (filters.hasta) params.hasta = filters.hasta;
-
+      const params = buildPaginationParams({
+        sortBy: 'idAbono',
+        order: 'desc',
+        ...filters,
+      });
       const { data } = await apiClient.get(ENDPOINT, { params });
-      return abonoDTO.fromApiList(data.data || []);
+      return normalizePaginatedResponse(data, abonoDTO.fromApiList.bind(abonoDTO));
     } catch (error) {
-      console.error('Error al listar abonos:', error);
-      return [];
+      throw new Error(error.response?.data?.message || error.message || 'No se pudieron consultar los abonos', { cause: error });
     }
   }
 
@@ -57,6 +36,43 @@ export class AbonoApiRepository {
     } catch (error) {
       throw new Error(error.response?.data?.message || error.message || 'No se pudieron consultar los abonos del pedido', { cause: error });
     }
+  }
+
+  async listClientByPedido(idPedido) {
+    try {
+      const { data } = await apiClient.get(`api/cliente/pedidos/${idPedido}/abonos`);
+      return abonoDTO.fromApiList(data.data || []);
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudieron consultar tus abonos', { cause: error });
+    }
+  }
+
+  async uploadClientReceipt(idPedido, file) {
+    if (typeof File === 'undefined' || !(file instanceof File)) {
+      throw new Error('Selecciona un comprobante antes de continuar.');
+    }
+
+    const formData = new FormData();
+    formData.append('archivo', file);
+
+    try {
+      const { data } = await apiClient.post(
+        `api/cliente/pedidos/${idPedido}/abonos/comprobante`,
+        formData,
+        { timeout: 120000 },
+      );
+      return data.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo procesar el comprobante', { cause: error });
+    }
+  }
+
+  getClientReceipt(idAbono) {
+    return fetchProtectedBlob(`api/cliente/abonos/${idAbono}/comprobante`);
+  }
+
+  getAdminReceipt(idAbono) {
+    return fetchProtectedBlob(`${ENDPOINT}/${idAbono}/comprobante`);
   }
 
   async getPedido(idPedido) {
@@ -83,7 +99,15 @@ export class AbonoApiRepository {
   async create(abonoData) {
     try {
       const payload = abonoDTO.toApi(abonoData);
-      const { data } = await apiClient.post(ENDPOINT, payload);
+      let requestBody = payload;
+      if (typeof File !== 'undefined' && abonoData.archivo instanceof File) {
+        requestBody = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) requestBody.append(key, String(value));
+        });
+        requestBody.append('archivo', abonoData.archivo);
+      }
+      const { data } = await apiClient.post(ENDPOINT, requestBody);
       return abonoDTO.fromApi(data.data);
     } catch (error) {
       throw new Error(error.response?.data?.message || error.message || 'No se pudo registrar el abono', { cause: error });

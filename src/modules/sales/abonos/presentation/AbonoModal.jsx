@@ -42,7 +42,9 @@ export const AbonoModal = ({
   const [monto, setMonto] = useState('');
   const [metodoPago, setMetodoPago] = useState('TRANSFERENCIA');
   const [referencia, setReferencia] = useState('');
-  const [comprobanteUrl, setComprobanteUrl] = useState('');
+  const [fechaPago, setFechaPago] = useState('');
+  const [observaciones, setObservaciones] = useState('');
+  const [archivo, setArchivo] = useState(null);
   const [confirmar, setConfirmar] = useState(false);
   const [pedido, setPedido] = useState(null);
   const [abonosPedido, setAbonosPedido] = useState([]);
@@ -62,14 +64,18 @@ export const AbonoModal = ({
       setMonto(abono.monto || '');
       setMetodoPago(isStaff ? abono.metodoPago || 'TRANSFERENCIA' : 'TRANSFERENCIA');
       setReferencia(abono.referencia || '');
-      setComprobanteUrl(abono.comprobanteUrl || '');
+      setFechaPago(abono.fechaPago ? String(abono.fechaPago).slice(0, 10) : '');
+      setObservaciones(abono.observaciones || '');
+      setArchivo(null);
       setConfirmar(false);
     } else {
       setIdPedido('');
       setMonto('');
       setMetodoPago('TRANSFERENCIA');
       setReferencia('');
-      setComprobanteUrl('');
+      setFechaPago('');
+      setObservaciones('');
+      setArchivo(null);
       setConfirmar(false);
     }
     setPedido(null);
@@ -83,7 +89,7 @@ export const AbonoModal = ({
       setMetodoPago('TRANSFERENCIA');
     }
     if (metodoPago === 'EFECTIVO') {
-      setComprobanteUrl('');
+      setArchivo(null);
     }
   }, [metodoPago, metodosPagoDisponibles]);
 
@@ -188,7 +194,9 @@ export const AbonoModal = ({
       monto,
       metodoPago,
       referencia,
-      comprobanteUrl: metodoPago === 'EFECTIVO' ? '' : comprobanteUrl,
+      fechaPago,
+      observaciones,
+      archivo: metodoPago === 'EFECTIVO' ? null : archivo,
       ...(isStaff && !isEditing && { confirmar }),
     };
 
@@ -274,17 +282,60 @@ export const AbonoModal = ({
             />
           </div>
 
-          {metodoPago !== 'EFECTIVO' && (
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>Fecha del pago</label>
+            <input
+              type="date"
+              value={fechaPago}
+              onChange={event => setFechaPago(event.target.value)}
+              className={styles.inputField}
+            />
+          </div>
+
+          {metodoPago !== 'EFECTIVO' && !isEditing && (
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Comprobante URL</label>
+              <label className={styles.inputLabel}>Comprobante (opcional)</label>
               <input
-                type="url"
-                value={comprobanteUrl}
-                onChange={event => setComprobanteUrl(event.target.value)}
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                onChange={event => setArchivo(event.target.files?.[0] || null)}
                 className={styles.inputField}
-                maxLength={500}
-                placeholder="https://..."
               />
+              <small>JPG, PNG o PDF. Los datos detectados deben revisarse antes de confirmar el abono.</small>
+            </div>
+          )}
+
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>Observaciones</label>
+            <textarea
+              value={observaciones}
+              onChange={event => setObservaciones(event.target.value)}
+              className={styles.inputField}
+              maxLength={500}
+              rows={3}
+              placeholder="Aclaraciones sobre el pago..."
+              style={{ resize: 'none' }}
+            />
+          </div>
+
+          {isEditing && abono.origenRegistro?.includes('OCR') && (
+            <div className={styles.paymentSummary}>
+              <div className={styles.paymentSummaryItem}>
+                <span>Monto detectado</span>
+                <strong>{abono.montoDetectadoOcr == null ? 'No identificado' : `$${Number(abono.montoDetectadoOcr).toLocaleString('es-CO')}`}</strong>
+              </div>
+              <div className={styles.paymentSummaryItem}>
+                <span>Referencia detectada</span>
+                <strong>{abono.referenciaDetectadaOcr || 'No identificada'}</strong>
+              </div>
+              <div className={styles.paymentSummaryItem}>
+                <span>Fecha detectada</span>
+                <strong>{abono.fechaDetectadaOcr || 'No identificada'}</strong>
+              </div>
+              <div className={styles.paymentSummaryItem}>
+                <span>Valor que se guardara</span>
+                <strong>{monto ? `$${Number(monto).toLocaleString('es-CO')}` : 'Pendiente'}</strong>
+              </div>
             </div>
           )}
 

@@ -2,17 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ventaRepository } from '../infrastructure/venta.repository';
 
 export const useVentas = (filters = {}) => {
-  const { page, limit, search, sortBy, order, desde, hasta, estado } = filters;
+  const { search, fechaInicio, fechaFin, idCliente, estadoPago } = filters;
   const listFilters = useMemo(() => ({
-    page,
-    limit,
     search,
-    sortBy,
-    order,
-    desde,
-    hasta,
-    estado,
-  }), [page, limit, search, sortBy, order, desde, hasta, estado]);
+    fechaInicio,
+    fechaFin,
+    idCliente,
+    estadoPago,
+  }), [search, fechaInicio, fechaFin, idCliente, estadoPago]);
   const [ventas, setVentas] = useState([]);
   const [resumen, setResumen] = useState({
     totalVentas: 0,

@@ -1,19 +1,25 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/use-memo, react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useState } from 'react';
+import { createPaginationMeta } from '../../../../core/utils/serverPagination';
 import { abonoRepository } from '../infrastructure/abono.repository';
 
 export const useAbonos = (filters = {}) => {
   const [abonos, setAbonos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
+  const [error, setError] = useState('');
 
   const fetchAbonos = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
-      const data = await abonoRepository.list(filters);
-      setAbonos(data);
+      const result = await abonoRepository.list(filters);
+      setAbonos(result.items);
+      setPaginationMeta(result.meta);
     } catch (error) {
-      console.error('Error en useAbonos al listar:', error);
       setAbonos([]);
+      setPaginationMeta(createPaginationMeta({ page: filters.page, limit: filters.limit }));
+      setError(error.message || 'No se pudieron consultar los abonos.');
     } finally {
       setLoading(false);
     }
@@ -56,6 +62,8 @@ export const useAbonos = (filters = {}) => {
   return {
     abonos,
     loading,
+    error,
+    paginationMeta,
     refetch: fetchAbonos,
     handleCreate,
     handleUpdate,

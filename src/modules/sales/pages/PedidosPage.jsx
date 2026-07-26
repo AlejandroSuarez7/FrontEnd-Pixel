@@ -1,5 +1,6 @@
 // pedidos/presentation/PedidosPage.jsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../../core/components/Pagination';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
@@ -27,6 +28,7 @@ const ESTADO_PAGO_CLASS = {
 };
 
 const PedidosPage = () => {
+  const navigate = useNavigate();
   const { hasPermission } = useAuth();
   const confirm = useConfirm();
   const session  = JSON.parse(localStorage.getItem('pixel_user') || '{}');
@@ -253,16 +255,19 @@ const PedidosPage = () => {
 
       {/* BUSCADOR */}
       <div className={styles.filterSection}>
-        <input
-          type="text"
-          placeholder="Buscar pedido por cliente o descripción..."
-          value={searchTerm}
-          onChange={e => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1);
-          }}
-          className={styles.searchInput}
-        />
+        <label className={styles.filterField}>
+          <span>Buscar pedidos</span>
+          <input
+            type="text"
+            placeholder="Cliente, pedido o descripcion..."
+            value={searchTerm}
+            onChange={e => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className={styles.searchInput}
+          />
+        </label>
       </div>
 
       {/* TABLA */}
@@ -323,16 +328,16 @@ const PedidosPage = () => {
 
                     <td className={styles.tableCell}>
                       {Number(pedido.saldoPendiente) > 0
-                        ? <span style={{ color: 'var(--color-danger)', fontWeight: 600 }}>
+                        ? <span className={styles.balanceDue}>
                             ${Number(pedido.saldoPendiente).toLocaleString('es-CO')}
                           </span>
-                        : <span className={styles.tableCellMuted}>Al día</span>
+                        : <span className={styles.balancePaid}>Al dia</span>
                       }
                     </td>
 
                     <td className={styles.tableCell}>
-                      <span className={pedido.fechaEntregaEstimada ? '' : styles.tableCellMuted}>
-                        {pedido.fechaEntregaEstimada}
+                      <span className={pedido.fechaEntregaEstimada ? styles.deliveryDate : styles.tableCellMuted}>
+                        {pedido.fechaEntregaEstimada ? fmtFecha(pedido.fechaEntregaEstimada) : 'Por definir'}
                       </span>
                     </td>
 
@@ -340,6 +345,7 @@ const PedidosPage = () => {
                       <TableActions
                         primaryAction={{ label: 'Ver', onClick: () => { setSelectedPedido(pedido); setIsDetailsOpen(true); }, variant: 'accent' }}
                         actions={[
+                          hasPermission('pedidos.ver') && isStaff && { label: 'Ver expediente', onClick: () => navigate(`/dashboard/orders/${pedido.idPedido}/expediente`), variant: 'accent' },
                           hasPermission('pedidos.pasar_proceso') && isStaff && pedido.estadoPedido === 'PENDIENTE' && { label: 'En proceso', onClick: () => onEnProcesoClick(pedido.idPedido), variant: 'info' },
                           hasPermission('pedidos.finalizar') && isStaff && pedido.estadoPedido === 'EN_PROCESO' && { label: 'Solicitar saldo final', onClick: () => onPendienteSaldoClick(pedido.idPedido), variant: 'warning' },
                           hasPermission('pedidos.finalizar') && isStaff && canFinalizePedido(pedido) && { label: 'Finalizar pedido', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },

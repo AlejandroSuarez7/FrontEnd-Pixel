@@ -10,7 +10,21 @@ export const abonoDTO = {
       monto: apiData.monto,
       metodoPago: apiData.metodoPago,
       referencia: apiData.referencia,
+      fechaPago: apiData.fechaPago,
       comprobanteUrl: apiData.comprobanteUrl,
+      comprobanteDisponible: apiData.comprobanteDisponible,
+      nombreOriginalComprobante: apiData.nombreOriginalComprobante,
+      comprobanteMimeType: apiData.comprobanteMimeType,
+      comprobanteSizeBytes: apiData.comprobanteSizeBytes,
+      comprobanteSubidoEn: apiData.comprobanteSubidoEn,
+      montoDetectadoOcr: apiData.montoDetectadoOcr,
+      referenciaDetectadaOcr: apiData.referenciaDetectadaOcr,
+      fechaDetectadaOcr: apiData.fechaDetectadaOcr,
+      bancoDetectadoOcr: apiData.bancoDetectadoOcr,
+      confianzaOcr: apiData.confianzaOcr,
+      requiereRevisionManual: apiData.requiereRevisionManual,
+      origenRegistro: apiData.origenRegistro,
+      observaciones: apiData.observaciones,
       estado: apiData.estado,
       fechaCreacion: apiData.fechaCreacion
         ?? apiData.fecha_creacion
@@ -41,20 +55,30 @@ export const abonoDTO = {
   toApi(domainData) {
     return {
       idPedido: Number(domainData.idPedido),
-      monto: Number(domainData.monto),
+      monto: domainData.monto === null || domainData.monto === undefined || domainData.monto === ''
+        ? null
+        : Number(domainData.monto),
       metodoPago: domainData.metodoPago,
       referencia: domainData.referencia?.trim() || null,
       comprobanteUrl: domainData.comprobanteUrl?.trim() || null,
+      fechaPago: domainData.fechaPago || null,
+      observaciones: domainData.observaciones?.trim() || null,
       ...(domainData.confirmar !== undefined && { confirmar: Boolean(domainData.confirmar) }),
     };
   },
 
   toApiUpdate(domainData) {
     const payload = {};
-    if (domainData.monto !== undefined) payload.monto = Number(domainData.monto);
+    if (domainData.monto !== undefined) {
+      payload.monto = domainData.monto === null || domainData.monto === ''
+        ? null
+        : Number(domainData.monto);
+    }
     if (domainData.metodoPago !== undefined) payload.metodoPago = domainData.metodoPago;
     if (domainData.referencia !== undefined) payload.referencia = domainData.referencia?.trim() || null;
     if (domainData.comprobanteUrl !== undefined) payload.comprobanteUrl = domainData.comprobanteUrl?.trim() || null;
+    if (domainData.fechaPago !== undefined) payload.fechaPago = domainData.fechaPago || null;
+    if (domainData.observaciones !== undefined) payload.observaciones = domainData.observaciones?.trim() || null;
     return payload;
   },
 };
