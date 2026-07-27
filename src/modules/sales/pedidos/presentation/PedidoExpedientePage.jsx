@@ -20,13 +20,17 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notifications } from '../../../../core/utils/notifications';
-import { formatDate } from '../../../../core/utils/fechaFormato';
+import { formatDate, formatOptionalDate } from '../../../../core/utils/fechaFormato';
 import { getDesignCoverageInfo } from '../../../../core/utils/designCoverage';
+import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { useAuth } from '../../../../store/AuthContext';
 import { abonoRepository } from '../../abonos/infrastructure/abono.repository';
+import { AbonoModal } from '../../abonos/presentation/AbonoModal';
 import { ReceiptPreviewModal } from '../../abonos/presentation/ReceiptPreviewModal';
 import { ReviewConfirmAbonoModal } from '../../abonos/presentation/ReviewConfirmAbonoModal';
+import { disenoRepository } from '../../../production/disenos/infrastructure/diseno.repository';
+import { DisenoModal } from '../../../production/disenos/presentation/DisenoModal';
 import { pedidoRepository } from '../infrastructure/pedido.repository';
 import './pedido-expediente.css';
 
@@ -104,13 +108,14 @@ const formatPaymentOrigin = origin => (
     : origin || 'Registro manual'
 );
 
-const DesignCoverageCard = ({ detail, index, canManage, onManage }) => {
+const DesignCoverageCard = ({ detail, index, canManage, onCreate, onReview }) => {
   const coverage = getDesignCoverageInfo(detail);
   return (
     <article className="expediente-design-card">
       <div className="expediente-design-card-heading">
         <span className="expediente-item-index">Producto {index + 1}</span>
         <strong>{detail.producto?.nombre || detail.descripcion || 'Producto no especificado'}</strong>
+        <small>Categoria: {getProductCategoryName(detail)}</small>
         <small>{detail.tecnica?.nombre || 'Tecnica no especificada'} · Cantidad {Number(detail.cantidad || 0).toLocaleString('es-CO')}</small>
       </div>
       <span className={`expediente-status-badge ${getStatusTone(coverage.state)}`}>{coverage.label}</span>
@@ -119,8 +124,8 @@ const DesignCoverageCard = ({ detail, index, canManage, onManage }) => {
       {coverage.isGeneral && <strong className="expediente-general-badge">Diseno general del pedido</strong>}
       <div className="expediente-card-actions">
         {coverage.fileUrl && <a className="expediente-button secondary" href={coverage.fileUrl} target="_blank" rel="noreferrer">Ver diseno <ExternalLink size={14} /></a>}
-        {canManage && coverage.canCreate && <button className="expediente-button primary" type="button" onClick={onManage}>Crear o asignar diseno</button>}
-        {canManage && coverage.canReview && !coverage.fileUrl && <button className="expediente-button secondary" type="button" onClick={onManage}>Revisar diseno</button>}
+        {canManage && coverage.canCreate && <button className="expediente-button primary" type="button" onClick={onCreate}>Crear o asignar diseno</button>}
+        {canManage && coverage.canReview && !coverage.fileUrl && <button className="expediente-button secondary" type="button" onClick={onReview}>Revisar diseno</button>}
       </div>
     </article>
   );
@@ -138,6 +143,8 @@ export const PedidoExpedientePage = () => {
   const [receiptPayment, setReceiptPayment] = useState(null);
   const [reviewPayment, setReviewPayment] = useState(null);
   const [pendingActionId, setPendingActionId] = useState(null);
+  const [showAbonoModal, setShowAbonoModal] = useState(false);
+  const [designModalContext, setDesignModalContext] = useState(null);
 
   const loadExpediente = useCallback(async () => {
     setLoading(true);
@@ -160,9 +167,9 @@ export const PedidoExpedientePage = () => {
     [receiptPayment?.idAbono],
   );
 
-  const summary = expediente?.resumenEconomico || {};
-  const pedido = expediente?.pedido || {};
-  const client = expediente?.cliente || {};
+  const summary = useMemo(() => expediente?.resumenEconomico || {}, [expediente?.resumenEconomico]);
+  const pedido = useMemo(() => expediente?.pedido || {}, [expediente?.pedido]);
+  const client = useMemo(() => expediente?.cliente || {}, [expediente?.cliente]);
   const tabCounts = {
     abonos: expediente?.abonos?.length || 0,
     disenos: expediente?.detalles?.length || 0,
@@ -172,6 +179,45 @@ export const PedidoExpedientePage = () => {
     () => new Map((expediente?.abonos || []).map(item => [item.idAbono, item])),
     [expediente?.abonos],
   );
+  const presetPedido = useMemo(() => ({
+    ...pedido,
+    idPedido: pedido.idPedido || Number(idPedido),
+    cliente: client,
+    detalles: expediente?.detalles || [],
+    total: summary.total,
+    totalPedido: summary.total,
+    totalConfirmado: summary.totalConfirmado,
+    totalPagado: summary.totalConfirmado,
+    saldoPendiente: summary.saldoPendiente,
+    estadoPago: summary.estadoPago || pedido.estadoPago,
+    montoMinimoPrimerAbono:
+      expediente?.montoMinimoPrimerAbono
+      ?? summary.montoMinimoPrimerAbono
+      ?? pedido.montoMinimoPrimerAbono,
+  }), [client, expediente?.detalles, expediente?.montoMinimoPrimerAbono, idPedido, pedido, summary]);
+
+  const handleCreatePayment = async payload => {
+    await abonoRepository.create(payload);
+    setShowAbonoModal(false);
+    await loadExpediente();
+    notifications.success('Abono registrado correctamente.');
+  };
+
+  const handleCreateDesign = async payload => {
+    await disenoRepository.create(payload);
+    setDesignModalContext(null);
+    await loadExpediente();
+    notifications.success('Diseno registrado correctamente.');
+  };
+
+  const openDesignModal = detail => {
+    const coverage = detail ? getDesignCoverageInfo(detail) : null;
+    if (detail && !coverage?.canCreate) {
+      notifications.info(coverage?.message || 'Este producto no admite un nuevo diseno.');
+      return;
+    }
+    setDesignModalContext({ detailId: detail?.idDetallePedido || '' });
+  };
 
   const handleRejectPayment = async payment => {
     const result = await confirm({
@@ -234,7 +280,7 @@ export const PedidoExpedientePage = () => {
         <div><span className="expediente-kpi-icon purple"><CircleDollarSign size={19} /></span><div><span>Total</span><strong>{formatMoney(summary.total)}</strong></div></div>
         <div><span className="expediente-kpi-icon green"><WalletCards size={19} /></span><div><span>Pagado</span><strong>{formatMoney(summary.totalConfirmado)}</strong></div></div>
         <div><span className="expediente-kpi-icon orange"><BadgeDollarSign size={19} /></span><div><span>Saldo pendiente</span><strong>{formatMoney(summary.saldoPendiente)}</strong></div></div>
-        <div><span className="expediente-kpi-icon blue"><CalendarDays size={19} /></span><div><span>Entrega estimada</span><strong>{pedido.fechaEntregaEstimada ? formatDate(pedido.fechaEntregaEstimada) : 'Por definir'}</strong></div></div>
+        <div><span className="expediente-kpi-icon blue"><CalendarDays size={19} /></span><div><span>Entrega estimada</span><strong>{formatOptionalDate(pedido.fechaEntregaEstimada)}</strong></div></div>
       </section>
 
       <nav className="expediente-tabs" aria-label="Secciones del expediente" role="tablist">
@@ -269,6 +315,7 @@ export const PedidoExpedientePage = () => {
                 <div className="expediente-product-main">
                   <span className="expediente-item-index">Producto {index + 1}</span>
                   <strong>{detail.producto?.nombre || detail.descripcion || 'Producto no especificado'}</strong>
+                  <small>Categoria: {getProductCategoryName(detail)}</small>
                   <small>{detail.tecnica?.nombre || 'Tecnica no especificada'} · Cantidad {Number(detail.cantidad || 0).toLocaleString('es-CO')}</small>
                 </div>
                 <div className="expediente-product-design">
@@ -282,7 +329,7 @@ export const PedidoExpedientePage = () => {
                   <div className="expediente-card-actions">
                     {coverage.fileUrl && <a className="expediente-button secondary" href={coverage.fileUrl} target="_blank" rel="noreferrer">Ver diseno</a>}
                     {(hasPermission('disenos.crear') || hasPermission('disenos.editar')) && coverage.canCreate && (
-                      <button className="expediente-button primary" type="button" onClick={() => navigate('/dashboard/production/designs')}>Crear o asignar diseno</button>
+                      <button className="expediente-button primary" type="button" onClick={() => openDesignModal(detail)}>Crear o asignar diseno</button>
                     )}
                   </div>
                 </div>
@@ -321,7 +368,10 @@ export const PedidoExpedientePage = () => {
           <div className="expediente-section-heading">
             <div><span>Pagos</span><h2>Abonos del pedido</h2></div>
             {hasPermission('abonos.crear') && (
-              <button type="button" onClick={() => navigate('/dashboard/sales/payments')}>Gestionar abonos <ExternalLink size={15} /></button>
+              <div className="expediente-heading-actions">
+                <button type="button" onClick={() => setShowAbonoModal(true)}>Registrar abono</button>
+                <button type="button" className="secondary" onClick={() => navigate('/dashboard/sales/payments')}>Ver todos <ExternalLink size={15} /></button>
+              </div>
             )}
           </div>
           <div className="expediente-payment-list">
@@ -355,7 +405,10 @@ export const PedidoExpedientePage = () => {
           <div className="expediente-section-heading">
             <div><span>Disenos</span><h2>Disenos por producto</h2></div>
             {hasPermission('disenos.ver') && (
-              <button type="button" onClick={() => navigate('/dashboard/production/designs')}>Gestionar disenos <ExternalLink size={15} /></button>
+              <div className="expediente-heading-actions">
+                {hasPermission('disenos.crear') && <button type="button" onClick={() => openDesignModal(null)}>Nuevo diseno</button>}
+                <button type="button" className="secondary" onClick={() => navigate('/dashboard/production/designs')}>Ver todos <ExternalLink size={15} /></button>
+              </div>
             )}
           </div>
           <div className="expediente-design-grid">
@@ -365,7 +418,8 @@ export const PedidoExpedientePage = () => {
                 detail={detail}
                 index={index}
                 canManage={hasPermission('disenos.crear') || hasPermission('disenos.editar')}
-                onManage={() => navigate('/dashboard/production/designs')}
+                onCreate={() => openDesignModal(detail)}
+                onReview={() => navigate('/dashboard/production/designs')}
               />
             ))}
             {(expediente.detalles || []).length === 0 && <p className="expediente-empty">No hay productos para revisar.</p>}
@@ -409,6 +463,28 @@ export const PedidoExpedientePage = () => {
         onClose={() => setReviewPayment(null)}
         onCompleted={loadExpediente}
         canReject={hasPermission('abonos.rechazar')}
+      />
+      <AbonoModal
+        isOpen={showAbonoModal}
+        onClose={() => setShowAbonoModal(false)}
+        onSubmit={handleCreatePayment}
+        isStaff
+        getPedido={abonoRepository.getPedido.bind(abonoRepository)}
+        getAbonosByPedido={abonoRepository.listByPedido.bind(abonoRepository)}
+        getPedidos={abonoRepository.listPedidos.bind(abonoRepository)}
+        presetPedido={presetPedido}
+        presetAbonos={expediente.abonos || []}
+        lockPedido
+      />
+      <DisenoModal
+        isOpen={Boolean(designModalContext)}
+        onClose={() => setDesignModalContext(null)}
+        onSubmit={handleCreateDesign}
+        isStaff
+        getPedidos={disenoRepository.listPedidos.bind(disenoRepository)}
+        presetPedido={presetPedido}
+        presetDetailId={designModalContext?.detailId || ''}
+        lockPedido
       />
     </main>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatDate } from '../../../../core/utils/fechaFormato';
+import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import {
   formatMoneyCOP,
   getQuoteDiscountTotal,
@@ -131,6 +132,7 @@ export const DisenoViewModal = ({
               <div className="disenos-view-info-block">
                 <span className="disenos-view-section-label">Producto</span>
                 <strong>{producto}</strong>
+                <p>Categoria: {getProductCategoryName(detallePedido || {})}</p>
                 {diseno.esDisenoGeneral && <p>Aplica para todo el pedido.</p>}
                 {!diseno.esDisenoGeneral && detallePedido && (
                   <p>

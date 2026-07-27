@@ -8,6 +8,7 @@ import {
   getQuoteSubtotalWithDiscount,
   getQuoteTotal,
 } from '../../../../core/utils/formatters';
+import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import styles from './quotes.module.css';
 
 const formatMoney = (value) => {
@@ -261,6 +262,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
                 <div className={styles.quoteSelectedProductTitle}>
                   <strong>{selectedDetailName}</strong>
                   <small>{selectedDetail.tecnica?.nombre ? `Tecnica: ${selectedDetail.tecnica.nombre}` : 'Tecnica no registrada'}</small>
+                  <small>Categoria: {getProductCategoryName(selectedDetail)}</small>
                 </div>
                 <div className={styles.quoteProductExpandedDetail}>
                   <div>

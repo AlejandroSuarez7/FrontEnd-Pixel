@@ -10,7 +10,7 @@ const getStoredUser = () => {
   }
 };
 
-export const useDashboardData = (user, permissions = []) => {
+export const useDashboardData = (user, permissions = [], refreshKey = 0) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,7 +51,7 @@ export const useDashboardData = (user, permissions = []) => {
     return () => {
       isMounted = false;
     };
-  }, [user, permissionsKey]);
+  }, [user, permissionsKey, refreshKey]);
 
   return { data, loading, error };
 };

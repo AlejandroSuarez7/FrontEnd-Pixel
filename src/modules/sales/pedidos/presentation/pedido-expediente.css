@@ -478,6 +478,19 @@
   transform: translateY(-1px);
 }
 
+.expediente-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.expediente-heading-actions button.secondary {
+  border-color: #e3e6ed;
+  background: #fff;
+  color: #65708a;
+}
+
 .expediente-product-list,
 .expediente-payment-list {
   gap: 10px;
@@ -772,6 +785,7 @@
     flex-direction: column;
   }
   .expediente-section-heading button { width: 100%; justify-content: center; }
+  .expediente-heading-actions { width: 100%; }
   .expediente-product-list article,
   .expediente-payment-list article,
   .expediente-summary-grid,

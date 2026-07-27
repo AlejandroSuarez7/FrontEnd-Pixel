@@ -15,10 +15,10 @@ const currencyCompact = (value) =>
   }).format(toNumber(value));
 
 const formatShortDate = (value) => {
-  if (!value) return 'Sin fecha';
+  if (!value) return 'Por definir';
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
+  if (Number.isNaN(date.getTime())) return 'Por definir';
 
   return new Intl.DateTimeFormat('es-CO', {
     day: '2-digit',
@@ -270,6 +270,11 @@ const buildClientActiveOrder = (pedido = {}) => ({
   balance: toNumber(pedido.saldoPendiente ?? pedido.saldo),
   paymentStatus: pedido.estadoPago || 'PENDIENTE',
   estimatedDelivery: pedido.fechaEntregaEstimada ?? pedido.fecha_estimada_entrega ?? null,
+  details: Array.isArray(pedido.detalles)
+    ? pedido.detalles
+    : Array.isArray(pedido.detallesPedido)
+      ? pedido.detallesPedido
+      : [],
   isPendingFinalBalance: normalizeStatus(pedido.estadoPedido) === 'PENDIENTE_SALDO_FINAL',
   isReadyToDeliver: ['FINALIZADO', 'TERMINADO'].includes(normalizeStatus(pedido.estadoPedido)) &&
     Number(pedido.saldoPendiente ?? pedido.saldo ?? 0) <= 0,

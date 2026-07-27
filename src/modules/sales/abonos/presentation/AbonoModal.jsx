@@ -37,6 +37,9 @@ export const AbonoModal = ({
   getPedido,
   getAbonosByPedido,
   getPedidos,
+  presetPedido = null,
+  presetAbonos = [],
+  lockPedido = false,
 }) => {
   const [idPedido, setIdPedido] = useState('');
   const [monto, setMonto] = useState('');
@@ -69,7 +72,7 @@ export const AbonoModal = ({
       setArchivo(null);
       setConfirmar(false);
     } else {
-      setIdPedido('');
+      setIdPedido(presetPedido?.idPedido || '');
       setMonto('');
       setMetodoPago('TRANSFERENCIA');
       setReferencia('');
@@ -78,11 +81,11 @@ export const AbonoModal = ({
       setArchivo(null);
       setConfirmar(false);
     }
-    setPedido(null);
-    setAbonosPedido([]);
+    setPedido(presetPedido);
+    setAbonosPedido(presetAbonos);
     setPedidoError('');
     setPedidosError('');
-  }, [abono, isOpen, isStaff]);
+  }, [abono, isOpen, isStaff, presetPedido, presetAbonos]);
 
   useEffect(() => {
     if (!metodosPagoDisponibles.includes(metodoPago)) {
@@ -94,7 +97,7 @@ export const AbonoModal = ({
   }, [metodoPago, metodosPagoDisponibles]);
 
   useEffect(() => {
-    if (!isOpen || isEditing || !getPedidos) return;
+    if (!isOpen || isEditing || !getPedidos || lockPedido) return;
 
     let cancelled = false;
     setLoadingPedidos(true);
@@ -121,10 +124,15 @@ export const AbonoModal = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, isEditing, getPedidos]);
+  }, [isOpen, isEditing, getPedidos, lockPedido]);
 
   useEffect(() => {
     if (!isOpen || !idPedido || !Number.isInteger(Number(idPedido))) return;
+    if (lockPedido && presetPedido) {
+      setPedido(presetPedido);
+      setAbonosPedido(presetAbonos);
+      return;
+    }
 
     let cancelled = false;
     setLoadingPedido(true);
@@ -149,7 +157,7 @@ export const AbonoModal = ({
     return () => {
       cancelled = true;
     };
-  }, [idPedido, isOpen, getPedido, getAbonosByPedido]);
+  }, [idPedido, isOpen, getPedido, getAbonosByPedido, lockPedido, presetPedido, presetAbonos]);
 
   const resumenPago = useMemo(() => {
     const total = Number(pedido?.totalPedido ?? pedido?.total ?? 0);
@@ -219,7 +227,15 @@ export const AbonoModal = ({
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formRow}>
+          <section className="abonos-modal-section">
+            <span className="abonos-modal-section-title">A. Resumen del pedido</span>
+            {lockPedido && presetPedido ? (
+              <div className="abonos-locked-order">
+                <strong>Pedido #{presetPedido.idPedido}</strong>
+                <span>{presetPedido.cliente?.nombre || presetPedido.nombreCliente || 'Cliente no especificado'}</span>
+                <small>Pedido precargado desde el expediente</small>
+              </div>
+            ) : (
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Pedido *</label>
               <select
@@ -242,6 +258,21 @@ export const AbonoModal = ({
                 ))}
               </select>
             </div>
+            )}
+            {pedido && (
+              <div className={styles.paymentSummary}>
+                <div className={styles.paymentSummaryItem}><span>Total</span><strong>${resumenPago.total.toLocaleString('es-CO')}</strong></div>
+                <div className={styles.paymentSummaryItem}><span>Confirmado</span><strong>${resumenPago.confirmado.toLocaleString('es-CO')}</strong></div>
+                <div className={styles.paymentSummaryItem}><span>Saldo</span><strong>${resumenPago.saldo.toLocaleString('es-CO')}</strong></div>
+                <div className={styles.paymentSummaryItem}><span>Minimo primer abono</span><strong>${resumenPago.minimo.toLocaleString('es-CO')}</strong></div>
+                <div className={styles.paymentSummaryItem}><span>Estado</span><strong>{resumenPago.estadoPago}</strong></div>
+              </div>
+            )}
+          </section>
+
+          <section className="abonos-modal-section">
+            <span className="abonos-modal-section-title">B. Datos del pago</span>
+            <div className={styles.formRow}>
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Monto *</label>
               <input
@@ -291,7 +322,10 @@ export const AbonoModal = ({
               className={styles.inputField}
             />
           </div>
+          </section>
 
+          <section className="abonos-modal-section">
+            <span className="abonos-modal-section-title">C. Comprobante y observaciones</span>
           {metodoPago !== 'EFECTIVO' && !isEditing && (
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Comprobante (opcional)</label>
@@ -317,6 +351,7 @@ export const AbonoModal = ({
               style={{ resize: 'none' }}
             />
           </div>
+          </section>
 
           {isEditing && abono.origenRegistro?.includes('OCR') && (
             <div className={styles.paymentSummary}>
@@ -341,22 +376,12 @@ export const AbonoModal = ({
 
           {loadingPedido && <p className={styles.loadingText}>Consultando pedido...</p>}
           {pedidosError && <p className={styles.detailsInfoBox}>{pedidosError}</p>}
-          {!isEditing && !loadingPedidos && pedidosDisponibles.length === 0 && !pedidosError && (
+          {!lockPedido && !isEditing && !loadingPedidos && pedidosDisponibles.length === 0 && !pedidosError && (
             <p className={styles.detailsInfoBox}>
               No tienes pedidos pendientes de pago disponibles para registrar abonos.
             </p>
           )}
           {pedidoError && <p className={styles.detailsInfoBox}>{pedidoError}</p>}
-          {pedido && (
-            <div className={styles.paymentSummary}>
-              <div className={styles.paymentSummaryItem}><span>Total del pedido</span><strong>${resumenPago.total.toLocaleString('es-CO')}</strong></div>
-              <div className={styles.paymentSummaryItem}><span>Confirmado</span><strong>${resumenPago.confirmado.toLocaleString('es-CO')}</strong></div>
-              <div className={styles.paymentSummaryItem}><span>Saldo pendiente</span><strong>${resumenPago.saldo.toLocaleString('es-CO')}</strong></div>
-              <div className={styles.paymentSummaryItem}><span>Minimo primer abono</span><strong>${resumenPago.minimo.toLocaleString('es-CO')}</strong></div>
-              <div className={styles.paymentSummaryItem}><span>Estado de pago</span><strong>{resumenPago.estadoPago}</strong></div>
-            </div>
-          )}
-
           {incumplePrimerAbono && (
             <div className={styles.detailsInfoBox}>
               Este monto no cumple el minimo del primer abono confirmado.
@@ -364,7 +389,7 @@ export const AbonoModal = ({
           )}
 
           {isStaff && !isEditing && (
-            <label className={styles.detailsInfoBox}>
+            <label className="abonos-confirm-toggle">
               <span className={styles.inputLabel}>Confirmar al registrar</span>
               <input
                 type="checkbox"

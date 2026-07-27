@@ -1,11 +1,12 @@
 // pedidos/presentation/PedidoDetailsModal.jsx
-import { formatDate } from '../../../../core/utils/fechaFormato';
+import { formatDate, formatOptionalDate } from '../../../../core/utils/fechaFormato';
 import {
   formatMoneyCOP,
   formatPercentage,
   toNumberOrNull,
 } from '../../../../core/utils/formatters';
 import { getDesignCoverageInfo } from '../../../../core/utils/designCoverage';
+import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import styles from './pedidos.module.css';
 
 const ESTADO_PEDIDO_CLASS = {
@@ -48,8 +49,7 @@ const formatObservaciones = (observaciones) => {
 };
 
 const formatDateValue = (value, fallback = 'Por definir') => {
-  if (!value) return fallback;
-  return formatDate(value);
+  return formatOptionalDate(value, fallback);
 };
 
 const firstValue = (...values) => values.find((value) => value !== null && value !== undefined && value !== '');
@@ -250,6 +250,10 @@ export const PedidoDetailsModal = ({
                         {det.observaciones && <p className={styles.orderItemNote}>{det.observaciones}</p>}
 
                         <div className={styles.orderItemMetrics}>
+                          <div>
+                            <span>Categoria</span>
+                            <strong>{getProductCategoryName(det)}</strong>
+                          </div>
                           <div>
                             <span>Tecnica</span>
                             <strong>{det.tecnica?.nombre || (det.idTecnica ? `Tecnica #${det.idTecnica}` : 'No especificada')}</strong>

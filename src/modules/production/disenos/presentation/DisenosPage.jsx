@@ -10,6 +10,7 @@ import { DisenoModal } from './DisenoModal';
 import { DisenoViewModal } from './DisenoViewModal';
 import { DesignClientResponseModal } from './DesignClientResponseModal';
 import { formatDate } from '../../../../core/utils/fechaFormato';
+import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import './DisenosPage.css';
 
 const styles = {
@@ -383,6 +384,9 @@ export const DisenosPage = () => {
                       <strong>{getDesignProductName(diseno)}</strong>
                       <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>
                         {[getDesignTechniqueName(diseno), getDesignQuantity(diseno) ? `Cant. ${getDesignQuantity(diseno)}` : null].filter(Boolean).join(' | ') || 'Sin detalle asociado'}
+                      </span>
+                      <span style={{ display: 'block', color: '#8f9bb3', fontSize: 12 }}>
+                        Categoria: {getProductCategoryName(getDesignDetail(diseno) || {})}
                       </span>
                     </td>
                     <td className={styles.tableCell}>{isClientOrigin(diseno) ? 'No aplica' : diseno.disenador?.nombre || 'Sin asignar'}</td>

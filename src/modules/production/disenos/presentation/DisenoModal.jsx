@@ -4,6 +4,7 @@ import { apiClient } from '../../../../core/services/apiService';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { canCreateDesignForDetail, getDesignCoverageInfo } from '../../../../core/utils/designCoverage';
 import { notifications } from '../../../../core/utils/notifications';
+import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import './DisenosPage.css';
 
 const styles = {
@@ -44,7 +45,17 @@ const formatDetailOption = (detalle, index) => (
   `Producto ${index + 1} - ${getDetailProductName(detalle)} - Cant. ${detalle?.cantidad || 0}`
 );
 
-export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPedidos }) => {
+export const DisenoModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  diseno,
+  isStaff,
+  getPedidos,
+  presetPedido = null,
+  presetDetailId = '',
+  lockPedido = false,
+}) => {
   const [idPedido, setIdPedido] = useState('');
   const [idDetallePedido, setIdDetallePedido] = useState('');
   const [esDisenoGeneral, setEsDisenoGeneral] = useState(false);
@@ -65,7 +76,10 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(diseno);
-  const selectedPedido = pedidosDisponibles.find((item) => String(item.idPedido) === String(idPedido)) || diseno?.pedido || null;
+  const selectedPedido = presetPedido
+    || pedidosDisponibles.find((item) => String(item.idPedido) === String(idPedido))
+    || diseno?.pedido
+    || null;
   const detallesPedido = useMemo(
     () => (Array.isArray(selectedPedido?.detalles) ? selectedPedido.detalles : []),
     [selectedPedido],
@@ -75,6 +89,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
     [detallesPedido],
   );
   const hasMultipleDetails = detallesPendientesPixel.length > 1;
+  const selectedDetail = detallesPedido.find(detalle => String(detalle.idDetallePedido) === String(idDetallePedido)) || null;
 
   useEffect(() => {
     if (diseno) {
@@ -90,8 +105,8 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
       setObservacionesCliente(diseno.observacionesCliente || '');
       setMarcarAprobado(diseno.estado === 'APROBADO');
     } else {
-      setIdPedido('');
-      setIdDetallePedido('');
+      setIdPedido(presetPedido?.idPedido || '');
+      setIdDetallePedido(presetDetailId || '');
       setEsDisenoGeneral(false);
       setIdDisenador('');
       setArchivoUrl('');
@@ -104,7 +119,8 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
     }
     setPedidosError('');
     setPreviewError(false);
-  }, [diseno, isOpen]);
+    if (presetPedido) setPedidosDisponibles([presetPedido]);
+  }, [diseno, isOpen, presetPedido, presetDetailId]);
 
   useEffect(() => {
     if (!isOpen || isEditing || esDisenoGeneral) return;
@@ -116,7 +132,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
   }, [detallesPendientesPixel, esDisenoGeneral, idDetallePedido, isEditing, isOpen]);
 
   useEffect(() => {
-    if (!isOpen || isEditing || !getPedidos) return;
+    if (!isOpen || isEditing || !getPedidos || lockPedido) return;
 
     let cancelled = false;
     setLoadingPedidos(true);
@@ -143,7 +159,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
     return () => {
       cancelled = true;
     };
-  }, [isOpen, isEditing, getPedidos]);
+  }, [isOpen, isEditing, getPedidos, lockPedido]);
 
   useEffect(() => {
     if (!isOpen || !isStaff || isEditing) return;
@@ -173,7 +189,6 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
         notifications.error('Selecciona el producto del pedido o marca que el diseno aplica para todo el pedido.');
         return;
       }
-      const selectedDetail = detallesPedido.find(detalle => String(detalle.idDetallePedido) === String(idDetallePedido));
       if (!isEditing && !esDisenoGeneral && (!selectedDetail || !canCreateDesignForDetail(selectedDetail))) {
         notifications.error('Solo puedes crear disenos para productos pendientes de creacion por PIXEL.');
         return;
@@ -208,6 +223,24 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
+          <section className="disenos-modal-section">
+            <span className="disenos-modal-section-title">A. Pedido y producto</span>
+          {lockPedido && presetPedido ? (
+            <div className="disenos-locked-context">
+              <div><span>Pedido</span><strong>#{presetPedido.idPedido}</strong></div>
+              <div><span>Cliente</span><strong>{presetPedido.cliente?.nombre || 'Cliente no especificado'}</strong></div>
+              {selectedDetail && (
+                <>
+                  <div><span>Producto</span><strong>{getDetailProductName(selectedDetail)}</strong></div>
+                  <div><span>Categoria</span><strong>{getProductCategoryName(selectedDetail)}</strong></div>
+                  <div><span>Tecnica</span><strong>{getDetailTechniqueName(selectedDetail)}</strong></div>
+                  <div><span>Cantidad</span><strong>{selectedDetail.cantidad || 0}</strong></div>
+                  <div><span>Estado</span><strong>{getDesignCoverageInfo(selectedDetail).label}</strong></div>
+                  <div><span>Costo de diseno</span><strong>${Number(selectedDetail.costoDiseno || 0).toLocaleString('es-CO')}</strong></div>
+                </>
+              )}
+            </div>
+          ) : (
           <div className={styles.inputGroup}>
             <label className={styles.inputLabel} htmlFor="diseno-pedido">Pedido *</label>
             <select
@@ -231,6 +264,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
               ))}
             </select>
           </div>
+          )}
 
           {pedidosError && <p className={styles.detailsInfoBox}>{pedidosError}</p>}
           {!isEditing && !loadingPedidos && pedidosDisponibles.length === 0 && !pedidosError && (
@@ -239,7 +273,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
             </p>
           )}
 
-          {!isEditing && idPedido && (
+          {!isEditing && idPedido && !presetDetailId && (
             <div className={styles.inputGroup}>
               <label className="disenos-checkbox-row">
                 <input
@@ -264,7 +298,7 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
                 value={idDetallePedido}
                 onChange={event => setIdDetallePedido(event.target.value)}
                 className={styles.inputField}
-                disabled={isSubmitting || detallesPendientesPixel.length === 1}
+                disabled={isSubmitting || detallesPendientesPixel.length === 1 || Boolean(presetDetailId)}
                 required={hasMultipleDetails}
               >
                 <option value="">
@@ -295,7 +329,10 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
               )}
             </div>
           )}
+          </section>
 
+          <section className="disenos-modal-section">
+            <span className="disenos-modal-section-title">B. Origen y responsable</span>
           <div className={styles.inputGroup}>
             <label className={styles.inputLabel} htmlFor="diseno-origen">Origen del diseno *</label>
             <select
@@ -343,7 +380,10 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
               </select>
             </div>
           )}
+          </section>
 
+          <section className="disenos-modal-section">
+            <span className="disenos-modal-section-title">C. Archivo y descripcion</span>
           {isClientOrigin && (
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Medio de recepcion *</label>
@@ -427,9 +467,12 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
               </div>
             </>
           )}
+          </section>
 
-          {isClientOrigin && (
-            <>
+          <section className="disenos-modal-section">
+            <span className="disenos-modal-section-title">D. Observaciones</span>
+            {isClientOrigin ? (
+              <>
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Observaciones del cliente</label>
                 <textarea
@@ -451,12 +494,15 @@ export const DisenoModal = ({ isOpen, onClose, onSubmit, diseno, isStaff, getPed
                 />
                 <span>Marcar como aprobado al crear</span>
               </label>
-            </>
-          )}
+              </>
+            ) : (
+              <p className={styles.detailsInfoBox}>Agrega en la seccion anterior las notas necesarias para el equipo.</p>
+            )}
 
-          <div className={styles.detailsInfoBox}>
-            Se verificara que el pedido ya tenga el primer abono.
-          </div>
+            <div className={styles.detailsInfoBox}>
+              Se verificara que el pedido ya tenga el primer abono.
+            </div>
+          </section>
 
           <div className={styles.modalFooter}>
             <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>

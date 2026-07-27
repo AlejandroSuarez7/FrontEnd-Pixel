@@ -113,6 +113,18 @@ export class PedidoApiRepository {
     }
   }
 
+  async saveClientDesignUrl(idPedido, idDetallePedido, archivoDisenoInicialUrl) {
+    try {
+      const { data } = await apiClient.patch(
+        `api/cliente/pedidos/${idPedido}/detalles/${idDetallePedido}/diseno-url`,
+        { archivoDisenoInicialUrl },
+      );
+      return data.data || data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'No se pudo guardar el enlace del diseno', { cause: error });
+    }
+  }
+
   // Anula el pedido: PATCH /api/pedidos/:id/anular
   async anular(id, motivoAnulacion) {
     try {

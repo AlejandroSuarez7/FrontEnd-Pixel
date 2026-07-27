@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../../core/components/Pagination';
 import { notifications } from '../../../core/utils/notifications';
+import { formatOptionalDate } from '../../../core/utils/fechaFormato';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
@@ -206,9 +207,7 @@ const PedidosPage = () => {
     }
   };
 
-  const fmtFecha = (val) => val
-    ? new Date(val).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
-    : '—';
+  const fmtFecha = (val) => formatOptionalDate(val);
 
   const getClientName = (cliente) => cliente?.nombre || 'Cliente no especificado';
   const getContactText = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');

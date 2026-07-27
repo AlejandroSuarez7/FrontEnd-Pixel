@@ -6,6 +6,7 @@ import {
   Factory,
   FileSearch,
   FileText,
+  Link2,
   PencilRuler,
   ShieldCheck,
   ShoppingBag,
@@ -35,6 +36,10 @@ import { PATHS } from '../../../routes/paths';
 import { isClientUser } from '../../../core/utils/permissions';
 import { useDashboardData } from '../application/useDashboardData';
 import { ClientPaymentsPanel } from './ClientPaymentsPanel';
+import { notifications } from '../../../core/utils/notifications';
+import { getDesignCoverageInfo } from '../../../core/utils/designCoverage';
+import { pedidoRepository } from '../../sales/pedidos/infrastructure/pedido.repository';
+import { formatOptionalDate } from '../../../core/utils/fechaFormato';
 import './DashboardPage.css';
 
 const kpiIcons = {
@@ -459,7 +464,7 @@ const ActiveOrdersPanel = ({ orders, selectedOrderId, onSelectOrder }) => (
               <strong>{order.number}</strong>
               <small>{order.date}</small>
               <small>{order.estimatedDelivery
-                ? `Entrega estimada: ${new Date(order.estimatedDelivery).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}`
+                ? `Entrega estimada: ${formatOptionalDate(order.estimatedDelivery)}`
                 : 'Entrega estimada: Por definir'}
               </small>
             </span>
@@ -499,7 +504,7 @@ const TrackingPanel = ({ order }) => (
       )}
       {order.estimatedDelivery && (
         <div className="dashboard-estimated-delivery">
-          Entrega estimada: <strong>{new Date(order.estimatedDelivery).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
+          Entrega estimada: <strong>{formatOptionalDate(order.estimatedDelivery)}</strong>
         </div>
       )}
       <div className="dashboard-tracking dashboard-tracking-timeline">
@@ -622,7 +627,92 @@ const AdminDashboard = ({ userName, data }) => {
   );
 };
 
-const ClientDashboard = ({ userName, data }) => {
+const ClientDesignUrlPanel = ({ order, onSaved }) => {
+  const [urls, setUrls] = useState({});
+  const [pendingDetailId, setPendingDetailId] = useState(null);
+  const clientDetails = (order?.details || []).filter((detail) => (
+    detail.requiereDiseno !== false
+    && String(detail.origenDiseno || '').toUpperCase() === 'CLIENTE'
+  ));
+
+  if (!order || clientDetails.length === 0) return null;
+
+  const saveDesignUrl = async (detail) => {
+    if (pendingDetailId) return;
+    const value = String(urls[detail.idDetallePedido] || '').trim();
+
+    if (!/^https?:\/\/\S+$/i.test(value)) {
+      notifications.warning('Ingresa una URL valida que comience con http:// o https://.');
+      return;
+    }
+
+    setPendingDetailId(detail.idDetallePedido);
+    try {
+      await pedidoRepository.saveClientDesignUrl(order.id, detail.idDetallePedido, value);
+      notifications.success('Diseno enviado correctamente. Quedo pendiente de revision.');
+      setUrls((current) => ({ ...current, [detail.idDetallePedido]: '' }));
+      await onSaved?.();
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo guardar el enlace del diseno.');
+    } finally {
+      setPendingDetailId(null);
+    }
+  };
+
+  return (
+    <section className="dashboard-panel dashboard-client-design-panel">
+      <div className="dashboard-panel-title">
+        <span>Archivos del cliente</span>
+        <h2>Tu diseno</h2>
+      </div>
+      <div className="dashboard-client-design-list">
+        {clientDetails.map((detail, index) => {
+          const coverage = getDesignCoverageInfo(detail);
+          const fileUrl = coverage.fileUrl;
+          return (
+            <article key={detail.idDetallePedido || index}>
+              <div>
+                <strong>{detail.producto?.nombre || detail.descripcion || `Producto ${index + 1}`}</strong>
+                <span>{detail.tecnica?.nombre || 'Tecnica no especificada'} · Cant. {Number(detail.cantidad || 0).toLocaleString('es-CO')}</span>
+              </div>
+              {fileUrl ? (
+                <a href={fileUrl} target="_blank" rel="noreferrer">
+                  <Link2 size={15} /> Abrir diseno
+                </a>
+              ) : (
+                <div className="dashboard-client-design-form">
+                  <label htmlFor={`client-design-${detail.idDetallePedido}`}>URL del diseno</label>
+                  <div>
+                    <input
+                      id={`client-design-${detail.idDetallePedido}`}
+                      type="url"
+                      placeholder="https://drive.google.com/... o enlace accesible"
+                      value={urls[detail.idDetallePedido] || ''}
+                      onChange={(event) => setUrls((current) => ({
+                        ...current,
+                        [detail.idDetallePedido]: event.target.value,
+                      }))}
+                      disabled={pendingDetailId === detail.idDetallePedido}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => saveDesignUrl(detail)}
+                      disabled={Boolean(pendingDetailId)}
+                    >
+                      {pendingDetailId === detail.idDetallePedido ? 'Guardando...' : 'Guardar diseno'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+const ClientDashboard = ({ userName, data, onRefresh }) => {
   const { hasPermission } = useAuth();
   const activeOrders = data.activeOrders || [];
   const [selectedOrderId, setSelectedOrderId] = useState(activeOrders[0]?.id || '');
@@ -674,6 +764,7 @@ const ClientDashboard = ({ userName, data }) => {
         canUpload={hasPermission('abonos.cliente.crear')}
         canView={hasPermission('abonos.cliente.ver')}
       />
+      <ClientDesignUrlPanel order={selectedOrder} onSaved={onRefresh} />
 
       <OrdersTable title="Historial" orders={data.history} showCustomer={false} />
     </div>
@@ -682,7 +773,8 @@ const ClientDashboard = ({ userName, data }) => {
 
 const DashboardPage = () => {
   const { user, permissions } = useAuth();
-  const { data, loading, error } = useDashboardData(user, permissions);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { data, loading, error } = useDashboardData(user, permissions, refreshKey);
   const userName = user?.nombre || user?.name || user?.correo || user?.email || 'Usuario';
   const isClient = isClientUser(user, permissions);
 
@@ -690,7 +782,7 @@ const DashboardPage = () => {
   if (error || !data) return <ErrorDashboard message={error || 'Respuesta vacia desde la API.'} />;
 
   if (isClient && data.client) {
-    return <ClientDashboard userName={userName} data={data.client} />;
+    return <ClientDashboard userName={userName} data={data.client} onRefresh={() => setRefreshKey((value) => value + 1)} />;
   }
 
   if (!isClient && data.admin) {
