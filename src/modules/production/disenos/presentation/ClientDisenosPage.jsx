@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { notifications } from '../../../../core/utils/notifications';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -74,31 +74,24 @@ export const ClientDisenosPage = () => {
   const { hasPermission } = useAuth();
   const confirm = useConfirm();
   const { isLocked, runLocked } = useAsyncLock();
-  const [disenos, setDisenos] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [selectedDiseno, setSelectedDiseno] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [pendingActionId, setPendingActionId] = useState(null);
+  const detailRequestRef = useRef(0);
 
   const canApprove = hasPermission('disenos.cliente.aprobar');
   const canReject = hasPermission('disenos.cliente.rechazar');
 
-  const fetchDisenos = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await disenoRepository.listClientDesigns();
-      setDisenos(data);
-    } catch (error) {
-      setDisenos([]);
-      notifications.error(error.message || 'No se pudieron cargar tus disenos.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDisenos();
-  }, [fetchDisenos]);
+  const {
+    data: disenos,
+    loading,
+    error,
+    refetch: fetchDisenos,
+  } = useLatestListRequest({
+    queryKey: 'client-designs',
+    load: signal => disenoRepository.listClientDesigns({ signal }),
+    initialData: [],
+  });
 
   const counts = useMemo(() => ({
     total: disenos.length,
@@ -108,13 +101,16 @@ export const ClientDisenosPage = () => {
   }), [disenos]);
 
   const openDetail = async (diseno) => {
+    const requestId = ++detailRequestRef.current;
     setSelectedDiseno(diseno);
     setIsViewOpen(true);
 
     try {
       const detail = await disenoRepository.getClientDesign(diseno.idDiseno);
+      if (requestId !== detailRequestRef.current) return;
       setSelectedDiseno(detail || diseno);
     } catch (error) {
+      if (requestId !== detailRequestRef.current) return;
       notifications.error(error.message || 'No se pudo cargar el detalle del diseno.');
     }
   };
@@ -197,6 +193,13 @@ export const ClientDisenosPage = () => {
       <section className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando tus disenos...</p>
+        ) : error && disenos.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar tus disenos.</p>
+            <button type="button" className={styles.btnPrimary} onClick={fetchDisenos}>
+              Reintentar
+            </button>
+          </div>
         ) : disenos.length === 0 ? (
           <p className={styles.loadingText}>Aun no tienes disenos enviados para revisar.</p>
         ) : (
@@ -269,7 +272,11 @@ export const ClientDisenosPage = () => {
 
       <DisenoViewModal
         isOpen={isViewOpen}
-        onClose={() => { setIsViewOpen(false); setSelectedDiseno(null); }}
+        onClose={() => {
+          detailRequestRef.current += 1;
+          setIsViewOpen(false);
+          setSelectedDiseno(null);
+        }}
         diseno={selectedDiseno}
         pendingAction={Boolean(pendingActionId) || isLocked}
         onApprove={canApprove ? async () => {

@@ -1,27 +1,20 @@
-// presentation/hooks/useRoles.js
-import { useState, useEffect } from 'react';
 import { createPaginationMeta } from '../../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { rolesRepository } from '../infrastructure/roles.repository';
 
 export const useRoles = (filters = {}) => {
-  const [roles, setRoles] = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchRoles = async () => {
-    setLoading(true);
-    try {
-      const response = await rolesRepository.list(filters);
-      setRoles(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error("Error en useRoles al cargar data:", error);
-      setRoles([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  };
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchRoles,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => rolesRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   const handleCreate = async (roleData) => {
     try {
@@ -67,14 +60,12 @@ export const useRoles = (filters = {}) => {
     }
   };
 
-  useEffect(() => {
-    fetchRoles();
-  }, [filters.search, filters.page, filters.limit, filters.sortBy, filters.order]);
-
   return {
-    roles,
-    paginationMeta,
+    roles: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     handleCreate,
     handleUpdate,
     handleDelete,

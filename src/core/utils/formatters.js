@@ -1,5 +1,7 @@
-export const formatCurrency = (amount) => {
-  const value = Number(amount) || 0;
+export const formatCurrency = (amount, fallback = 'Pendiente de revision') => {
+  if (amount === null || amount === undefined || amount === '') return fallback;
+  const value = Number(amount);
+  if (Number.isNaN(value)) return fallback;
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -60,18 +62,22 @@ export const getQuoteTotal = (source = {}) => {
     ?? (getQuoteSubtotalWithDiscount(source) + (toNumberOrNull(source.costosAdicionales) ?? 0));
 };
 
-export const formatShortDate = (isoDate) => {
-  if (!isoDate) return '-';
-  return new Date(isoDate).toLocaleDateString('es-CO', {
+export const formatShortDate = (isoDate, fallback = 'Por definir') => {
+  if (!isoDate) return fallback;
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleDateString('es-CO', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
   });
 };
 
-export const formatDateTime = (isoDate) => {
-  if (!isoDate) return '-';
-  return new Date(isoDate).toLocaleString('es-CO', {
+export const formatDateTime = (isoDate, fallback = 'Por definir') => {
+  if (!isoDate) return fallback;
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleString('es-CO', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',

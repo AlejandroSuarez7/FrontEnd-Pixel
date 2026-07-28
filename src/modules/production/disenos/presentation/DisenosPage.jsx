@@ -107,10 +107,9 @@ const getApprovalMessage = (response) => {
 };
 
 export const DisenosPage = () => {
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const confirm = useConfirm();
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const isStaff = userRole === 'Admin' || userRole === 'Secretaria';
   const isDisenador = userRole?.toLowerCase?.().includes('dise');
 
@@ -123,6 +122,8 @@ export const DisenosPage = () => {
   const {
     disenos,
     loading,
+    error,
+    refetch,
     handleCreate,
     handleUpdate,
     handleApprove,
@@ -347,6 +348,11 @@ export const DisenosPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando disenos...</p>
+        ) : error && filteredDisenos.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>{error.message || 'No se pudieron cargar los disenos.'}</p>
+            <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
+          </div>
         ) : filteredDisenos.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron disenos.</p>
         ) : (

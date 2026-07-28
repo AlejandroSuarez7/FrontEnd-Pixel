@@ -8,7 +8,9 @@ export const notifications = {
   },
 
   error(message, options = {}) {
-    toast.error(message || 'Ocurrio un error inesperado.', {
+    const safeMessage = message || 'Ocurrio un error inesperado.';
+    toast.error(safeMessage, {
+      id: options.id || `pixel-error:${safeMessage}`,
       duration: 5200,
       ...options,
     });

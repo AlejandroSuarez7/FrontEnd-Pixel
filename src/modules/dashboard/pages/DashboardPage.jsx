@@ -15,7 +15,7 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Area,
@@ -39,7 +39,7 @@ import { ClientPaymentsPanel } from './ClientPaymentsPanel';
 import { notifications } from '../../../core/utils/notifications';
 import { getDesignCoverageInfo } from '../../../core/utils/designCoverage';
 import { pedidoRepository } from '../../sales/pedidos/infrastructure/pedido.repository';
-import { formatOptionalDate } from '../../../core/utils/fechaFormato';
+import { formatCalendarDate } from '../../../core/utils/fechaFormato';
 import './DashboardPage.css';
 
 const kpiIcons = {
@@ -464,7 +464,7 @@ const ActiveOrdersPanel = ({ orders, selectedOrderId, onSelectOrder }) => (
               <strong>{order.number}</strong>
               <small>{order.date}</small>
               <small>{order.estimatedDelivery
-                ? `Entrega estimada: ${formatOptionalDate(order.estimatedDelivery)}`
+                ? `Entrega estimada: ${formatCalendarDate(order.estimatedDelivery)}`
                 : 'Entrega estimada: Por definir'}
               </small>
             </span>
@@ -504,7 +504,7 @@ const TrackingPanel = ({ order }) => (
       )}
       {order.estimatedDelivery && (
         <div className="dashboard-estimated-delivery">
-          Entrega estimada: <strong>{formatOptionalDate(order.estimatedDelivery)}</strong>
+          Entrega estimada: <strong>{formatCalendarDate(order.estimatedDelivery)}</strong>
         </div>
       )}
       <div className="dashboard-tracking dashboard-tracking-timeline">
@@ -560,16 +560,21 @@ const LoadingDashboard = () => (
   <div className="dashboard-page">
     <section className="dashboard-panel dashboard-state-panel">
       <strong>Cargando dashboard...</strong>
-      <p>Estamos consultando el resumen desde la API.</p>
+      <p>Estamos consultando el resumen del sistema.</p>
     </section>
   </div>
 );
 
-const ErrorDashboard = ({ message }) => (
+const ErrorDashboard = ({ message, onRetry }) => (
   <div className="dashboard-page">
     <section className="dashboard-panel dashboard-state-panel">
       <strong>No se pudo cargar el dashboard</strong>
       <p>{message}</p>
+      {onRetry && (
+        <button type="button" className="dashboard-state-retry" onClick={onRetry}>
+          Reintentar
+        </button>
+      )}
     </section>
   </div>
 );
@@ -714,21 +719,13 @@ const ClientDesignUrlPanel = ({ order, onSaved }) => {
 
 const ClientDashboard = ({ userName, data, onRefresh }) => {
   const { hasPermission } = useAuth();
-  const activeOrders = data.activeOrders || [];
+  const activeOrders = useMemo(() => data.activeOrders || [], [data.activeOrders]);
   const [selectedOrderId, setSelectedOrderId] = useState(activeOrders[0]?.id || '');
-  const selectedOrder = activeOrders.find((order) => order.id === selectedOrderId) || activeOrders[0] || null;
+  const effectiveOrderId = activeOrders.some((order) => order.id === selectedOrderId)
+    ? selectedOrderId
+    : activeOrders[0]?.id || '';
+  const selectedOrder = activeOrders.find((order) => order.id === effectiveOrderId) || null;
   const activeOrderLabel = selectedOrder ? selectedOrder.number : 'Sin pedido activo';
-
-  useEffect(() => {
-    if (activeOrders.length === 0) {
-      setSelectedOrderId('');
-      return;
-    }
-
-    if (!activeOrders.some((order) => order.id === selectedOrderId)) {
-      setSelectedOrderId(activeOrders[0].id);
-    }
-  }, [activeOrders, selectedOrderId]);
 
   return (
     <div className="dashboard-page dashboard-page-client">
@@ -774,12 +771,14 @@ const ClientDashboard = ({ userName, data, onRefresh }) => {
 const DashboardPage = () => {
   const { user, permissions } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { data, loading, error } = useDashboardData(user, permissions, refreshKey);
+  const { data, loading, error, refetch } = useDashboardData(user, permissions, refreshKey);
   const userName = user?.nombre || user?.name || user?.correo || user?.email || 'Usuario';
   const isClient = isClientUser(user, permissions);
 
   if (loading) return <LoadingDashboard />;
-  if (error || !data) return <ErrorDashboard message={error || 'Respuesta vacia desde la API.'} />;
+  if (error || !data) {
+    return <ErrorDashboard message={error || 'El sistema devolvio una respuesta vacia.'} onRetry={refetch} />;
+  }
 
   if (isClient && data.client) {
     return <ClientDashboard userName={userName} data={data.client} onRefresh={() => setRefreshKey((value) => value + 1)} />;
@@ -789,7 +788,7 @@ const DashboardPage = () => {
     return <AdminDashboard userName={userName} data={data.admin} />;
   }
 
-  return <ErrorDashboard message="La API no devolvio datos para este rol." />;
+  return <ErrorDashboard message="No hay datos disponibles para este perfil." />;
 };
 
 export default DashboardPage;

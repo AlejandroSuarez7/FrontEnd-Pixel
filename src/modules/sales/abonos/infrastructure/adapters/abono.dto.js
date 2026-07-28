@@ -4,26 +4,57 @@ export const abonoDTO = {
   fromApi(apiData) {
     if (!apiData) return null;
 
+    const datosDetectados = apiData.datosDetectados || {};
+    const datosDefinitivos = apiData.datosDefinitivos || {};
+    const pedidoApi = apiData.pedido || null;
+    const totalPedido = apiData.totalPedido ?? pedidoApi?.total ?? pedidoApi?.totalPedido;
+    const totalConfirmado = apiData.totalConfirmado
+      ?? pedidoApi?.totalPagadoConfirmado
+      ?? pedidoApi?.totalPagado;
+    const saldoPendiente = apiData.saldoPendiente ?? pedidoApi?.saldoPendiente;
+    const estadoPago = apiData.estadoPago ?? pedidoApi?.estadoPago;
+    const pedido = pedidoApi
+      ? {
+          ...pedidoApi,
+          total: totalPedido ?? pedidoApi.total,
+          totalPedido: totalPedido ?? pedidoApi.totalPedido,
+          totalPagado: totalConfirmado ?? pedidoApi.totalPagado,
+          totalPagadoConfirmado: totalConfirmado ?? pedidoApi.totalPagadoConfirmado,
+          saldoPendiente: saldoPendiente ?? pedidoApi.saldoPendiente,
+          estadoPago: estadoPago ?? pedidoApi.estadoPago,
+        }
+      : null;
+
     return createAbono({
       idAbono: apiData.idAbono,
       idPedido: apiData.idPedido,
-      monto: apiData.monto,
+      monto: datosDefinitivos.monto ?? apiData.monto,
       metodoPago: apiData.metodoPago,
-      referencia: apiData.referencia,
-      fechaPago: apiData.fechaPago,
+      referencia: datosDefinitivos.referencia ?? apiData.referencia,
+      fechaPago: datosDefinitivos.fecha ?? apiData.fechaPago,
       comprobanteUrl: apiData.comprobanteUrl,
       comprobanteDisponible: apiData.comprobanteDisponible,
       nombreOriginalComprobante: apiData.nombreOriginalComprobante,
       comprobanteMimeType: apiData.comprobanteMimeType,
       comprobanteSizeBytes: apiData.comprobanteSizeBytes,
       comprobanteSubidoEn: apiData.comprobanteSubidoEn,
-      montoDetectadoOcr: apiData.montoDetectadoOcr,
-      referenciaDetectadaOcr: apiData.referenciaDetectadaOcr,
-      fechaDetectadaOcr: apiData.fechaDetectadaOcr,
-      bancoDetectadoOcr: apiData.bancoDetectadoOcr,
-      confianzaOcr: apiData.confianzaOcr,
-      requiereRevisionManual: apiData.requiereRevisionManual,
-      origenRegistro: apiData.origenRegistro,
+      montoDetectadoOcr: datosDetectados.monto ?? apiData.montoDetectadoOcr ?? apiData.montoDetectado,
+      referenciaDetectadaOcr: datosDetectados.referencia ?? apiData.referenciaDetectadaOcr ?? apiData.referenciaDetectada,
+      fechaDetectadaOcr: datosDetectados.fecha ?? apiData.fechaDetectadaOcr ?? apiData.fechaDetectada,
+      bancoDetectadoOcr: datosDetectados.banco ?? apiData.bancoDetectadoOcr ?? apiData.bancoDetectado,
+      confianzaOcr: datosDetectados.calidadLectura ?? apiData.confianzaOcr ?? apiData.calidadLectura,
+      calidadLectura: datosDetectados.calidadLectura ?? apiData.calidadLectura ?? apiData.confianzaOcr,
+      requiereRevisionManual: datosDetectados.requiereRevisionManual ?? apiData.requiereRevisionManual,
+      origenAnalisis: apiData.origenAnalisis,
+      origenRegistro: apiData.origenRegistroCodigo ?? apiData.origenRegistro,
+      origenRegistroCodigo: apiData.origenRegistroCodigo ?? apiData.origenRegistro,
+      origenRegistroLabel: apiData.origenRegistroLabel,
+      datosDetectados,
+      datosDefinitivos,
+      totalPedido,
+      totalConfirmado,
+      saldoPendiente,
+      estadoPago,
       observaciones: apiData.observaciones,
       estado: apiData.estado,
       fechaCreacion: apiData.fechaCreacion
@@ -41,7 +72,7 @@ export const abonoDTO = {
         ?? apiData.rejectedAt
         ?? apiData.rejected_at,
       motivoRechazo: apiData.motivoRechazo,
-      pedido: apiData.pedido ?? null,
+      pedido,
       confirmadoPor: apiData.confirmadoPor ?? null,
       rechazadoPor: apiData.rechazadoPor ?? null,
     });

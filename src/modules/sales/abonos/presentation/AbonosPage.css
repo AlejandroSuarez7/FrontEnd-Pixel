@@ -930,6 +930,56 @@
   border-top: 1px solid var(--color-border, #edf1f7);
 }
 
+.abonos-filter-error {
+  display: block;
+  margin-top: 4px;
+  color: #c0392b;
+  font-size: 11px;
+}
+
+.abonos-refreshing {
+  margin: 0 0 10px;
+  padding: 8px 11px;
+  border: 1px solid #ded7ff;
+  border-radius: 7px;
+  background: #f7f5ff;
+  color: #5b43d6;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.abonos-error-state {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  padding: 34px 18px;
+  color: #65708a;
+  text-align: center;
+}
+
+.abonos-error-state strong {
+  color: #1a2038;
+  font-size: 15px;
+}
+
+.abonos-error-state p {
+  max-width: 520px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.abonos-error-state button {
+  margin-top: 5px;
+  padding: 9px 15px;
+  border: 1px solid #6c5ce7;
+  border-radius: 7px;
+  background: #6c5ce7;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .abonos-btn-secondary {
   padding: 10px 20px;
   background-color: transparent;

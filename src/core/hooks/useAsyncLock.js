@@ -1,8 +1,17 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export const useAsyncLock = () => {
   const [isLocked, setIsLocked] = useState(false);
   const lockRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const runLocked = useCallback(async (action) => {
     if (lockRef.current) return undefined;
@@ -13,7 +22,7 @@ export const useAsyncLock = () => {
       return await action();
     } finally {
       lockRef.current = false;
-      setIsLocked(false);
+      if (mountedRef.current) setIsLocked(false);
     }
   }, []);
 

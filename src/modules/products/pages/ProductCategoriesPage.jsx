@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
+import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -16,11 +17,14 @@ export const ProductCategoriesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const debouncedSearch = useDebounce(search, 350);
 
   const {
     categories,
     paginationMeta,
     loading,
+    error,
+    refreshCategories,
     createCategory,
     updateCategory,
     deactivateCategory,
@@ -28,7 +32,7 @@ export const ProductCategoriesPage = () => {
   } = useProductCategories({
     page: currentPage,
     limit: DEFAULT_PAGE_SIZE,
-    search,
+    search: debouncedSearch,
     sortBy: 'idCategoriaProducto',
     order: 'desc',
   });
@@ -119,6 +123,13 @@ export const ProductCategoriesPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando categorias...</p>
+        ) : error && categories.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar las categorias.</p>
+            <button type="button" className={styles.primaryButton} onClick={refreshCategories}>
+              Reintentar
+            </button>
+          </div>
         ) : categories.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron categorias.</p>
         ) : (

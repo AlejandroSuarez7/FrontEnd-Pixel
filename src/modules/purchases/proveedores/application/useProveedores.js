@@ -1,30 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
 import { createPaginationMeta } from '../../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { proveedorRepository } from '../infrastructure/proveedor.repository';
 
 export const useProveedores = (filters = {}) => {
-  const [proveedores, setProveedores] = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchProveedores = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await proveedorRepository.list(filters);
-      setProveedores(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error('Error en useProveedores al listar:', error);
-      setProveedores([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  }, [JSON.stringify(filters)]);
-
-  useEffect(() => {
-    fetchProveedores();
-  }, [fetchProveedores]);
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchProveedores,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => proveedorRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   const handleCreate = async (proveedorData) => {
     await proveedorRepository.create(proveedorData);
@@ -47,9 +37,11 @@ export const useProveedores = (filters = {}) => {
   };
 
   return {
-    proveedores,
-    paginationMeta,
+    proveedores: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     refetch: fetchProveedores,
     handleCreate,
     handleUpdate,

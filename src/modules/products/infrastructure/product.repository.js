@@ -18,7 +18,7 @@ const fromApi = (product) => ({
 const fromApiList = (products) => (Array.isArray(products) ? products.map(fromApi) : []);
 
 export const productRepository = {
-  async list(filters = {}) {
+  async list(filters = {}, options = {}) {
     const params = buildPaginationParams({
       page: 1,
       limit: 10,
@@ -26,7 +26,7 @@ export const productRepository = {
       order: 'desc',
       ...filters,
     });
-    const { data } = await apiClient.get(ENDPOINT, { params });
+    const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
     return normalizePaginatedResponse(data, fromApiList);
   },
 

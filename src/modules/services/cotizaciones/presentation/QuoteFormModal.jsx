@@ -69,36 +69,61 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
   useEffect(() => {
     if (!isOpen) return;
 
-    setLoadingTecnicas(true);
-    publicQuoteRepository
-      .listTechniques()
-      .then(items => setTecnicas((items || []).filter(item => item.estado === true)))
-      .catch((err) => {
-        console.error('Error al cargar tecnicas:', err);
-        setTecnicas([]);
-      })
-      .finally(() => setLoadingTecnicas(false));
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoadingTecnicas(true);
+      publicQuoteRepository
+        .listTechniques({ signal: controller.signal })
+        .then((items) => {
+          if (!controller.signal.aborted) {
+            setTecnicas((items || []).filter(item => item.estado === true));
+          }
+        })
+        .catch((err) => {
+          if (controller.signal.aborted || err?.code === 'ERR_CANCELED') return;
+          setTecnicas([]);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoadingTecnicas(false);
+        });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    setLoadingProductos(true);
-    Promise.all([
-      publicQuoteRepository.listCategories(),
-      publicQuoteRepository.listProducts(),
-    ])
-      .then(([categories, products]) => {
-        setCategorias(categories || []);
-        setProductos(products || []);
-      })
-      .catch((err) => {
-        console.error('Error al cargar productos cotizables:', err);
-        notifications.error('No se pudieron cargar los productos cotizables.');
-        setCategorias([]);
-        setProductos([]);
-      })
-      .finally(() => setLoadingProductos(false));
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoadingProductos(true);
+      Promise.all([
+        publicQuoteRepository.listCategories({ signal: controller.signal }),
+        publicQuoteRepository.listProducts({ signal: controller.signal }),
+      ])
+        .then(([categories, products]) => {
+          if (controller.signal.aborted) return;
+          setCategorias(categories || []);
+          setProductos(products || []);
+        })
+        .catch((err) => {
+          if (controller.signal.aborted || err?.code === 'ERR_CANCELED') return;
+          notifications.error('No se pudieron cargar los productos cotizables.');
+          setCategorias([]);
+          setProductos([]);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoadingProductos(false);
+        });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -138,23 +163,34 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
 
     if (calculableDetails.length === 0) {
       setCalculo(null);
+      setCalculando(false);
       return;
     }
 
+    const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setCalculando(true);
       publicQuoteRepository
-        .calculate(calculableDetails)
-        .then(setCalculo)
+        .calculate(calculableDetails, { signal: controller.signal })
+        .then((calculation) => {
+          if (!controller.signal.aborted) {
+            setCalculo(calculation);
+          }
+        })
         .catch((err) => {
-          console.error('Error al calcular producto:', err);
+          if (controller.signal.aborted || err?.code === 'ERR_CANCELED') return;
           setCalculo(null);
           notifications.error(err.message || 'No se pudo calcular el valor estimado.');
         })
-        .finally(() => setCalculando(false));
+        .finally(() => {
+          if (!controller.signal.aborted) setCalculando(false);
+        });
     }, 350);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [isOpen, detalles]);
 
   if (!isOpen) return null;
@@ -358,7 +394,11 @@ export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) =>
               <div className={styles.quoteSummaryItem}>
                 <span>Cliente</span>
                 <strong>{quote?.cliente?.nombre || 'Cliente sin nombre'}</strong>
-                <small>{[quote?.cliente?.correo, quote?.cliente?.telefono].filter(Boolean).join(' | ') || 'Sin contacto registrado'}</small>
+                <small
+                  title={[quote?.cliente?.correo, quote?.cliente?.telefono].filter(Boolean).join(' | ') || undefined}
+                >
+                  {[quote?.cliente?.correo, quote?.cliente?.telefono].filter(Boolean).join(' | ') || 'Sin contacto registrado'}
+                </small>
               </div>
               <div className={styles.quoteSummaryItem}>
                 <span>Productos</span>

@@ -1,24 +1,20 @@
 // infrastructure/quote.repository.js
 import { apiClient } from '../../../../core/services/apiService.js';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
+import { createRequestError } from '../../../../core/utils/requestError.js';
 import { quotesDTO } from './adapters/cotizacionDTO.js';
 
 const ENDPOINT = 'api/cotizaciones';
 
 export class QuoteApiRepository {
-  async list(filters = {}) {
-    try {
-      const params = buildPaginationParams({
-        sortBy: 'idCotizacion',
-        order: 'desc',
-        ...filters,
-      });
-      const { data } = await apiClient.get(ENDPOINT, { params });
-      return normalizePaginatedResponse(data, quotesDTO.fromApiList.bind(quotesDTO));
-    } catch (error) {
-      console.error("Error al listar cotizaciones:", error);
-      return normalizePaginatedResponse({}, quotesDTO.fromApiList.bind(quotesDTO));
-    }
+  async list(filters = {}, options = {}) {
+    const params = buildPaginationParams({
+      sortBy: 'idCotizacion',
+      order: 'desc',
+      ...filters,
+    });
+    const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
+    return normalizePaginatedResponse(data, quotesDTO.fromApiList.bind(quotesDTO));
   }
 
   async createAsClient(quoteData) {
@@ -76,7 +72,7 @@ export class QuoteApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${idCotizacion}/aprobar`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo aprobar la cotización');
+      throw createRequestError(error, 'No se pudo aprobar la cotizacion');
     }
   }
 
@@ -85,7 +81,7 @@ export class QuoteApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${idCotizacion}/anular`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo anular la cotización');
+      throw createRequestError(error, 'No se pudo anular la cotizacion');
     }
   }
 
@@ -95,7 +91,7 @@ export class QuoteApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${idCotizacion}/eliminar`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo eliminar la cotización');
+      throw createRequestError(error, 'No se pudo eliminar la cotizacion');
     }
   }
 }

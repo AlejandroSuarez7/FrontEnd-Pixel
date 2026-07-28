@@ -68,10 +68,9 @@ const ESTADO_CLASS = {
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 
 export const ComprasPage = () => {
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const confirm = useConfirm();
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const isStaff = userRole === 'Admin' || userRole === 'Secretaria';
   const isDesigner = userRole?.toLowerCase?.().includes('dise');
 
@@ -84,6 +83,8 @@ export const ComprasPage = () => {
     compras,
     resumen,
     loading,
+    error,
+    refetch,
     handleCreate,
     handleUpdate,
     handleConfirm,
@@ -250,6 +251,11 @@ export const ComprasPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando compras...</p>
+        ) : error && filteredCompras.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>{error.message || 'No se pudieron cargar las compras.'}</p>
+            <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
+          </div>
         ) : filteredCompras.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron compras.</p>
         ) : (

@@ -1,34 +1,32 @@
 // infrastructure/pedido.repository.js
 import { apiClient } from '../../../../core/services/apiService.js';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
+import { createRequestError } from '../../../../core/utils/requestError.js';
 import { pedidoDTO } from './adapters/pedidoDTO.js';
 
 const ENDPOINT = 'api/pedidos';
 
 export class PedidoApiRepository {
 
-  async getExpediente(idPedido) {
+  async getExpediente(idPedido, options = {}) {
     try {
-      const { data } = await apiClient.get(`${ENDPOINT}/${idPedido}/expediente`);
+      const { data } = await apiClient.get(`${ENDPOINT}/${idPedido}/expediente`, {
+        signal: options.signal,
+      });
       return data.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'No se pudo consultar el expediente del pedido', { cause: error });
+      throw createRequestError(error, 'No se pudo consultar el expediente del pedido');
     }
   }
 
-  async list(filters = {}) {
-    try {
-      const params = buildPaginationParams({
-        sortBy: 'idPedido',
-        order: 'desc',
-        ...filters,
-      });
-      const { data } = await apiClient.get(ENDPOINT, { params });
-      return normalizePaginatedResponse(data, pedidoDTO.fromApiList.bind(pedidoDTO));
-    } catch (error) {
-      console.error('Error al listar pedidos:', error);
-      return normalizePaginatedResponse({}, pedidoDTO.fromApiList.bind(pedidoDTO));
-    }
+  async list(filters = {}, options = {}) {
+    const params = buildPaginationParams({
+      sortBy: 'idPedido',
+      order: 'desc',
+      ...filters,
+    });
+    const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
+    return normalizePaginatedResponse(data, pedidoDTO.fromApiList.bind(pedidoDTO));
   }
 
   // Crea pedido desde una cotización aprobada: POST /api/pedidos
@@ -38,7 +36,7 @@ export class PedidoApiRepository {
       const { data } = await apiClient.post(ENDPOINT, payload);
       return pedidoDTO.fromApi(data.data);
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo crear el pedido');
+      throw createRequestError(error, 'No se pudo crear el pedido');
     }
   }
 
@@ -49,7 +47,7 @@ export class PedidoApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${id}`, payload);
       return pedidoDTO.fromApi(data.data);
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo actualizar el pedido');
+      throw createRequestError(error, 'No se pudo actualizar el pedido');
     }
   }
 
@@ -59,7 +57,7 @@ export class PedidoApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${id}/en-proceso`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'No se pudo marcar el pedido en proceso');
+      throw createRequestError(error, 'No se pudo marcar el pedido en proceso');
     }
   }
 
@@ -70,7 +68,7 @@ export class PedidoApiRepository {
       });
       return pedidoDTO.fromApi(data.data);
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo actualizar la fecha estimada de entrega');
+      throw createRequestError(error, 'No se pudo actualizar la fecha estimada de entrega');
     }
   }
 
@@ -80,7 +78,7 @@ export class PedidoApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${id}/finalizar`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo finalizar el pedido');
+      throw createRequestError(error, 'No se pudo finalizar el pedido');
     }
   }
 
@@ -89,7 +87,7 @@ export class PedidoApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${id}/pendiente-saldo`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'No se pudo solicitar el saldo final');
+      throw createRequestError(error, 'No se pudo solicitar el saldo final');
     }
   }
 
@@ -98,7 +96,7 @@ export class PedidoApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${id}/confirmar-entrega`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'No se pudo confirmar la entrega');
+      throw createRequestError(error, 'No se pudo confirmar la entrega');
     }
   }
 
@@ -109,7 +107,7 @@ export class PedidoApiRepository {
       });
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'No se pudo actualizar el requisito de diseno');
+      throw createRequestError(error, 'No se pudo actualizar el requisito de diseno');
     }
   }
 
@@ -121,7 +119,25 @@ export class PedidoApiRepository {
       );
       return data.data || data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'No se pudo guardar el enlace del diseno', { cause: error });
+      throw createRequestError(error, 'No se pudo guardar el enlace del diseno');
+    }
+  }
+
+  async registrarDisenoRecibidoCliente(idPedido, idDetallePedido, payload) {
+    try {
+      const { data } = await apiClient.patch(
+        `${ENDPOINT}/${idPedido}/detalles/${idDetallePedido}/diseno-recibido-cliente`,
+        {
+          archivoDisenoInicialUrl: payload.archivoDisenoInicialUrl.trim(),
+          medioRecepcion: payload.medioRecepcion,
+          ...(payload.observaciones?.trim() && {
+            observaciones: payload.observaciones.trim(),
+          }),
+        },
+      );
+      return data.data ?? data;
+    } catch (error) {
+      throw createRequestError(error, 'No se pudo registrar el diseno recibido del cliente');
     }
   }
 
@@ -133,7 +149,7 @@ export class PedidoApiRepository {
       });
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo anular el pedido');
+      throw createRequestError(error, 'No se pudo anular el pedido');
     }
   }
 }

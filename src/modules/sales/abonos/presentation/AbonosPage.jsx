@@ -1,6 +1,6 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { Pagination } from '../../../../core/components/Pagination';
 import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { notifications } from '../../../../core/utils/notifications';
@@ -82,27 +82,45 @@ const getClienteNombre = (cliente) => cliente?.nombre || 'Cliente no especificad
 const getClienteContacto = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
 
 export const AbonosPage = () => {
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const confirm = useConfirm();
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
+  const location = useLocation();
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const isStaff = userRole === 'Admin' || userRole === 'Secretaria';
 
-  const [filters, setFilters] = useState({ search: '', idCliente: '', idPedido: '', estado: '', metodoPago: '' });
+  const initialClientId = Number.isInteger(Number(location.state?.idCliente)) ? String(location.state.idCliente) : '';
+  const initialOrderId = Number.isInteger(Number(location.state?.idPedido)) ? String(location.state.idPedido) : '';
+  const initialNavigationRef = useRef({
+    idCliente: initialClientId,
+    idPedido: initialOrderId,
+  });
+  const navigationOrderResolvedRef = useRef(false);
+  const [filters, setFilters] = useState(() => ({
+    search: '',
+    idCliente: initialClientId,
+    idPedido: initialOrderId,
+    estado: '',
+    metodoPago: '',
+  }));
   const [currentPage, setCurrentPage] = useState(1);
   const [clients, setClients] = useState([]);
   const [clientSearch, setClientSearch] = useState('');
   const [clientOrders, setClientOrders] = useState([]);
-  const [loadingClientOrders, setLoadingClientOrders] = useState(false);
+  const [loadingClients, setLoadingClients] = useState(true);
+  const [clientsError, setClientsError] = useState('');
+  const [loadingClientOrders, setLoadingClientOrders] = useState(Boolean(initialClientId));
+  const [clientOrdersError, setClientOrdersError] = useState('');
   const [selectedAbono, setSelectedAbono] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [reviewAbono, setReviewAbono] = useState(null);
   const debouncedSearch = useDebounce(filters.search, 350);
+  const debouncedClientSearch = useDebounce(clientSearch, 350);
 
   const {
     abonos,
     loading,
+    refreshing,
     error,
     paginationMeta,
     refetch,
@@ -126,34 +144,92 @@ export const AbonosPage = () => {
   });
 
   useEffect(() => {
+    const initialOrderId = initialNavigationRef.current.idPedido;
+    if (!initialOrderId || initialNavigationRef.current.idCliente || navigationOrderResolvedRef.current) return;
+    let canceled = false;
+
+    getPedido(initialOrderId)
+      .then(order => {
+        if (canceled) return;
+        navigationOrderResolvedRef.current = true;
+        const orderClient = order?.cliente;
+        const orderClientId = order?.idCliente || orderClient?.idCliente;
+        if (!orderClientId) return;
+        setFilters(current => (
+          current.idCliente === String(orderClientId)
+            ? current
+            : { ...current, idCliente: String(orderClientId) }
+        ));
+        setLoadingClientOrders(true);
+        if (orderClient) {
+          setClients(current => (
+            current.some(client => Number(client.idCliente) === Number(orderClientId))
+              ? current
+              : [orderClient, ...current]
+          ));
+        }
+      })
+      .catch(() => {
+        if (!canceled) {
+          navigationOrderResolvedRef.current = true;
+          setClientOrdersError('El pedido fue aplicado al filtro, pero no se pudo resolver su cliente.');
+        }
+      });
+
+    return () => {
+      canceled = true;
+    };
+  }, [getPedido]);
+
+  useEffect(() => {
     if (!isStaff) return;
+    const controller = new AbortController();
     const timer = window.setTimeout(() => {
       clientRepository.list({
         page: 1,
         limit: 10,
-        search: clientSearch,
+        search: debouncedClientSearch,
         sortBy: 'nombre',
         order: 'asc',
-      })
-        .then(result => setClients(result.items))
-        .catch(() => setClients([]));
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [isStaff, clientSearch]);
+      }, { signal: controller.signal })
+        .then(result => {
+          if (controller.signal.aborted) return;
+          setClients(result.items);
+          setClientsError('');
+        })
+        .catch((requestError) => {
+          if (controller.signal.aborted || requestError.code === 'ERR_CANCELED') return;
+          setClients([]);
+          setClientsError(requestError.message || 'No se pudieron cargar los clientes.');
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoadingClients(false);
+        });
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [isStaff, debouncedClientSearch]);
 
   useEffect(() => {
-    if (!filters.idCliente) {
-      setClientOrders([]);
-      return;
-    }
-    setLoadingClientOrders(true);
-    clientRepository.listOrders(filters.idCliente)
-      .then(setClientOrders)
-      .catch((requestError) => {
-        setClientOrders([]);
-        notifications.error(requestError.message || 'No se pudieron cargar los pedidos del cliente.');
+    if (!filters.idCliente) return;
+    const controller = new AbortController();
+    clientRepository.listOrders(filters.idCliente, { signal: controller.signal })
+      .then(orders => {
+        if (controller.signal.aborted) return;
+        setClientOrders(orders);
+        setClientOrdersError('');
       })
-      .finally(() => setLoadingClientOrders(false));
+      .catch((requestError) => {
+        if (controller.signal.aborted || requestError.code === 'ERR_CANCELED') return;
+        setClientOrders([]);
+        setClientOrdersError(requestError.message || 'No se pudieron cargar los pedidos del cliente.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingClientOrders(false);
+      });
+    return () => controller.abort();
   }, [filters.idCliente]);
 
   const total = paginationMeta.total;
@@ -162,11 +238,25 @@ export const AbonosPage = () => {
   const rechazados = abonos.filter(item => item.estado === 'RECHAZADO').length;
 
   const updateFilter = (field, value) => {
+    if (field === 'idCliente') {
+      setClientOrders([]);
+      setClientOrdersError('');
+      setLoadingClientOrders(Boolean(value));
+    }
     setFilters(prev => ({
       ...prev,
       [field]: value,
       ...(field === 'idCliente' ? { idPedido: '' } : {}),
     }));
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setFilters({ search: '', idCliente: '', idPedido: '', estado: '', metodoPago: '' });
+    setClientSearch('');
+    setClientOrders([]);
+    setClientOrdersError('');
+    setLoadingClientOrders(false);
     setCurrentPage(1);
   };
 
@@ -207,7 +297,7 @@ export const AbonosPage = () => {
       await handleReject(abono.idAbono, result.value);
       notifications.success('Abono rechazado correctamente.');
     } catch (error) {
-      notifications.error(error.message || 'No se pudo rechazar el abono.');
+      if (!error.wasNotified) notifications.error(error.message || 'No se pudo rechazar el abono.');
     }
   };
 
@@ -225,7 +315,7 @@ export const AbonosPage = () => {
       await handleDelete(abono.idAbono);
       notifications.success('Abono eliminado correctamente.');
     } catch (error) {
-      notifications.error(error.message || 'No se pudo eliminar el abono.');
+      if (!error.wasNotified) notifications.error(error.message || 'No se pudo eliminar el abono.');
     }
   };
 
@@ -274,7 +364,10 @@ export const AbonosPage = () => {
                 aria-label="Buscar cliente"
                 placeholder="Buscar cliente..."
                 value={clientSearch}
-                onChange={event => setClientSearch(event.target.value)}
+                onChange={event => {
+                  setClientSearch(event.target.value);
+                  setLoadingClients(true);
+                }}
                 className={styles.searchInput}
               />
               <select
@@ -283,12 +376,16 @@ export const AbonosPage = () => {
                 onChange={event => updateFilter('idCliente', event.target.value)}
                 className={styles.inputField}
               >
-                <option value="">Todos los clientes</option>
+                <option value="">{loadingClients ? 'Cargando clientes...' : 'Todos los clientes'}</option>
+                {filters.idCliente && !clients.some(client => String(client.idCliente) === String(filters.idCliente)) && (
+                  <option value={filters.idCliente}>Cliente #{filters.idCliente}</option>
+                )}
                 {clients.map(client => (
                   <option key={client.idCliente} value={client.idCliente}>{client.nombre}</option>
                 ))}
               </select>
             </div>
+            {clientsError && <small className="abonos-filter-error">{clientsError}</small>}
           </div>
 
           <label className={`${styles.filterField} ${styles.filterFieldOrder}`}>
@@ -300,12 +397,16 @@ export const AbonosPage = () => {
               disabled={!filters.idCliente || loadingClientOrders}
             >
               <option value="">{loadingClientOrders ? 'Cargando pedidos...' : 'Todos los pedidos'}</option>
+              {filters.idPedido && !clientOrders.some(order => String(order.idPedido) === String(filters.idPedido)) && (
+                <option value={filters.idPedido}>Pedido #{filters.idPedido}</option>
+              )}
               {clientOrders.map(order => (
                 <option key={order.idPedido} value={order.idPedido}>
                   Pedido #{order.idPedido} - Total {fmt(order.total)} - Saldo {fmt(order.saldoPendiente)}
                 </option>
               ))}
             </select>
+            {clientOrdersError && <small className="abonos-filter-error">{clientOrdersError}</small>}
           </label>
 
           <label className={styles.filterField}>
@@ -331,11 +432,7 @@ export const AbonosPage = () => {
             <button
               type="button"
               className={styles.clearFiltersButton}
-              onClick={() => {
-                setFilters({ search: '', idCliente: '', idPedido: '', estado: '', metodoPago: '' });
-                setClientSearch('');
-                setCurrentPage(1);
-              }}
+              onClick={clearFilters}
             >
               <RotateCcw size={15} aria-hidden="true" />
               Limpiar filtros
@@ -345,12 +442,17 @@ export const AbonosPage = () => {
       </div>
 
       <div className={styles.tableContainer}>
+        {refreshing && <div className="abonos-refreshing" role="status">Actualizando abonos...</div>}
         {loading ? (
           <p className={styles.loadingText}>Cargando abonos...</p>
         ) : error ? (
-          <p className={styles.loadingText}>{error}</p>
+          <div className="abonos-error-state" role="alert">
+            <strong>No se pudo cargar Gestion de Abonos</strong>
+            <p>{error}</p>
+            <button type="button" onClick={() => refetch()}>Reintentar</button>
+          </div>
         ) : abonos.length === 0 ? (
-          <p className={styles.loadingText}>No se encontraron abonos con estos filtros.</p>
+          <p className={styles.loadingText}>No hay abonos para los filtros seleccionados.</p>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
@@ -423,16 +525,18 @@ export const AbonosPage = () => {
         />
       </div>
 
-      <AbonoModal
-        isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setSelectedAbono(null); }}
-        onSubmit={handleSubmit}
-        abono={selectedAbono}
-        isStaff={isStaff}
-        getPedido={getPedido}
-        getAbonosByPedido={getAbonosByPedido}
-        getPedidos={getPedidos}
-      />
+      {isModalOpen && (
+        <AbonoModal
+          isOpen
+          onClose={() => { setIsModalOpen(false); setSelectedAbono(null); }}
+          onSubmit={handleSubmit}
+          abono={selectedAbono}
+          isStaff={isStaff}
+          getPedido={getPedido}
+          getAbonosByPedido={getAbonosByPedido}
+          getPedidos={getPedidos}
+        />
+      )}
 
       <AbonoViewModal
         isOpen={isViewOpen}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
+import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -21,11 +22,14 @@ export const ProductsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const debouncedSearch = useDebounce(search, 350);
 
   const {
     products,
     paginationMeta,
     loading,
+    error,
+    refreshProducts,
     createProduct,
     updateProduct,
     deactivateProduct,
@@ -34,16 +38,30 @@ export const ProductsPage = () => {
   } = useProducts({
     page: currentPage,
     limit: DEFAULT_PAGE_SIZE,
-    search,
+    search: debouncedSearch,
     idCategoriaProducto: categoryFilter,
     sortBy: 'idProducto',
     order: 'desc',
   });
 
   useEffect(() => {
-    categoryRepository.listPublic()
-      .then(setCategoryOptions)
-      .catch(() => setCategoryOptions([]));
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      categoryRepository.listPublic({ signal: controller.signal })
+        .then((categories) => {
+          if (!controller.signal.aborted) setCategoryOptions(categories);
+        })
+        .catch((error) => {
+          if (!controller.signal.aborted && error?.code !== 'ERR_CANCELED') {
+            setCategoryOptions([]);
+          }
+        });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, []);
 
   const openCreate = () => {
@@ -152,6 +170,13 @@ export const ProductsPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando productos...</p>
+        ) : error && products.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar los productos.</p>
+            <button type="button" className={styles.primaryButton} onClick={refreshProducts}>
+              Reintentar
+            </button>
+          </div>
         ) : products.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron productos cotizables.</p>
         ) : (

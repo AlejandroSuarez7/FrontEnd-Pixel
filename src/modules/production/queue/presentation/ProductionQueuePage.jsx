@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
 import { usePagination } from '../../../../core/hooks/usePagination';
-import { formatDate } from '../../../../core/utils/fechaFormato';
+import { formatCalendarDate } from '../../../../core/utils/fechaFormato';
 import { notifications } from '../../../../core/utils/notifications';
 import { useAuth } from '../../../../store/AuthContext';
 import { useProductionQueue } from '../application/useProductionQueue';
@@ -50,16 +50,11 @@ const styles = {
 };
 
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
-const getRoleName = () => {
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  return session?.rol?.nombre || 'Cliente';
-};
-
 const canReorderQueue = (role) => role === 'Admin' || role === 'Secretaria';
 
 const formatQueueDate = (...dates) => {
-  const validDate = dates.find(date => date && !Number.isNaN(new Date(date).getTime()));
-  return validDate ? formatDate(validDate) : '--';
+  const validDate = dates.find(Boolean);
+  return validDate ? formatCalendarDate(validDate, '--') : '--';
 };
 
 const mergeQueueOrder = (currentOrder, incoming) => {
@@ -73,10 +68,10 @@ const mergeQueueOrder = (currentOrder, incoming) => {
 };
 
 export const ProductionQueuePage = () => {
-  const { hasPermission } = useAuth();
-  const userRole = getRoleName();
+  const { user, hasPermission } = useAuth();
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const canEditPosition = canReorderQueue(userRole) && hasPermission('disenos.produccion');
-  const { pedidos, loading, saveOrder, savingOrder } = useProductionQueue();
+  const { pedidos, loading, error, refetch, saveOrder, savingOrder } = useProductionQueue();
   const [orderedPedidos, setOrderedPedidos] = useState([]);
   const [draftPedidos, setDraftPedidos] = useState([]);
   const [isEditingOrder, setIsEditingOrder] = useState(false);
@@ -201,6 +196,11 @@ export const ProductionQueuePage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando cola de produccion...</p>
+        ) : error && queueSource.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>{error.message || 'No se pudo cargar la cola de produccion.'}</p>
+            <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
+          </div>
         ) : queueSource.length === 0 ? (
           <p className={styles.loadingText}>No hay pedidos en proceso actualmente.</p>
         ) : (

@@ -14,7 +14,7 @@ describe('design coverage helpers', () => {
     expect(info.canCreate).toBe(false);
   });
 
-  it('allows creation only when PIXEL has a pending design', () => {
+  it('allows initial creation and a corrected version after rejection', () => {
     expect(canCreateDesignForDetail({
       estadoCoberturaDiseno: 'PENDIENTE_CREACION_PIXEL',
     })).toBe(true);
@@ -22,6 +22,29 @@ describe('design coverage helpers', () => {
       estadoCoberturaDiseno: 'DISENO_ENTREGADO_POR_CLIENTE',
       diseno: { estado: 'ENVIADO', origenDiseno: 'CLIENTE' },
     })).toBe(false);
+    expect(canCreateDesignForDetail({
+      estadoCoberturaDiseno: 'DISENO_RECHAZADO',
+      diseno: { estado: 'RECHAZADO' },
+    })).toBe(true);
+    expect(canCreateDesignForDetail({
+      estadoCoberturaDiseno: 'CORRECCIONES_SOLICITADAS',
+      diseno: { estado: 'RECHAZADO' },
+    })).toBe(true);
+    expect(canCreateDesignForDetail({
+      estadoCoberturaDiseno: 'DISENO_APROBADO',
+      diseno: { estado: 'APROBADO' },
+    })).toBe(false);
+  });
+
+  it('marks only pending client files as registerable', () => {
+    expect(getDesignCoverageInfo({
+      estadoCoberturaDiseno: 'PENDIENTE_ARCHIVO_CLIENTE',
+      origenDiseno: 'CLIENTE',
+    }).canRegisterClientFile).toBe(true);
+    expect(getDesignCoverageInfo({
+      estadoCoberturaDiseno: 'DISENO_ENTREGADO_POR_CLIENTE',
+      origenDiseno: 'CLIENTE',
+    }).canRegisterClientFile).toBe(false);
   });
 
   it('recognizes approved general design coverage', () => {

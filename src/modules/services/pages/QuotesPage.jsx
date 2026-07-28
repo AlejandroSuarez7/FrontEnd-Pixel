@@ -12,10 +12,9 @@ import { QuoteDetailsModal } from '../cotizaciones/presentation/QuoteDetailsModa
 import styles from '../cotizaciones/presentation/quotes.module.css';
 
 const QuotesPage = () => {
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const confirm = useConfirm();
-  const session  = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const isStaff  = userRole === 'Admin' || userRole === 'Secretaria';
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,6 +23,8 @@ const QuotesPage = () => {
   const {
     quotes,
     loading,
+    error,
+    refetch,
     handleCreate,
     handleUpdate,
     handleApprove,
@@ -214,6 +215,11 @@ const QuotesPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando cotizaciones...</p>
+        ) : error && quotes.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>{error.message || 'No se pudieron cargar las cotizaciones.'}</p>
+            <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
+          </div>
         ) : quotes.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron cotizaciones.</p>
         ) : (

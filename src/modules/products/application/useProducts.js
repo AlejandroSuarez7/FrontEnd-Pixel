@@ -1,39 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPaginationMeta } from '../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../core/hooks/useLatestListRequest';
 import { productRepository } from '../infrastructure/product.repository';
 
 export const useProducts = (filters = {}) => {
-  const { page, limit, search, sortBy, order, idCategoriaProducto } = filters;
-  const listFilters = useMemo(() => ({
-    page,
-    limit,
-    search,
-    sortBy,
-    order,
-    idCategoriaProducto,
-  }), [page, limit, search, sortBy, order, idCategoriaProducto]);
-  const [products, setProducts] = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await productRepository.list(listFilters);
-      setProducts(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error('Error al listar productos:', error);
-      setProducts([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  }, [listFilters]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchProducts,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => productRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   const createProduct = async (payload) => {
     const product = await productRepository.create(payload);
@@ -63,9 +44,11 @@ export const useProducts = (filters = {}) => {
   };
 
   return {
-    products,
-    paginationMeta,
+    products: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     createProduct,
     updateProduct,
     deactivateProduct,

@@ -90,6 +90,8 @@ export const DisenoModal = ({
   );
   const hasMultipleDetails = detallesPendientesPixel.length > 1;
   const selectedDetail = detallesPedido.find(detalle => String(detalle.idDetallePedido) === String(idDetallePedido)) || null;
+  const selectedCoverage = getDesignCoverageInfo(selectedDetail || {});
+  const isCorrectionVersion = !isEditing && selectedCoverage.isCorrection;
 
   useEffect(() => {
     if (diseno) {
@@ -190,7 +192,7 @@ export const DisenoModal = ({
         return;
       }
       if (!isEditing && !esDisenoGeneral && (!selectedDetail || !canCreateDesignForDetail(selectedDetail))) {
-        notifications.error('Solo puedes crear disenos para productos pendientes de creacion por PIXEL.');
+        notifications.error('Este producto ya tiene una version activa o no requiere un nuevo diseno.');
         return;
       }
       await onSubmit({
@@ -217,7 +219,11 @@ export const DisenoModal = ({
       <div className={`${styles.modalContainer} ${styles.modalSm} ${styles.modalCompact}`}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>
-            {isEditing ? `Editar diseno #${diseno.idDiseno}` : 'Registrar diseno'}
+            {isEditing
+              ? `Editar diseno #${diseno.idDiseno}`
+              : isCorrectionVersion
+                ? 'Cargar diseno corregido'
+                : 'Registrar diseno'}
           </h3>
           <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
         </div>
@@ -226,6 +232,7 @@ export const DisenoModal = ({
           <section className="disenos-modal-section">
             <span className="disenos-modal-section-title">A. Pedido y producto</span>
           {lockPedido && presetPedido ? (
+            <>
             <div className="disenos-locked-context">
               <div><span>Pedido</span><strong>#{presetPedido.idPedido}</strong></div>
               <div><span>Cliente</span><strong>{presetPedido.cliente?.nombre || 'Cliente no especificado'}</strong></div>
@@ -240,6 +247,18 @@ export const DisenoModal = ({
                 </>
               )}
             </div>
+            {isCorrectionVersion && (
+              <div className="disenos-correction-version">
+                <strong>Nueva version para revision</strong>
+                <span>El diseno rechazado se conserva en el historial.</span>
+                {selectedCoverage.fileUrl && (
+                  <a href={selectedCoverage.fileUrl} target="_blank" rel="noreferrer">
+                    Ver version anterior
+                  </a>
+                )}
+              </div>
+            )}
+            </>
           ) : (
           <div className={styles.inputGroup}>
             <label className={styles.inputLabel} htmlFor="diseno-pedido">Pedido *</label>
@@ -319,7 +338,7 @@ export const DisenoModal = ({
               </select>
               {detallesPendientesPixel.length === 0 && (
                 <p className={styles.detailsInfoBox}>
-                  Este pedido no tiene productos pendientes de creacion por PIXEL.
+                  Este pedido no tiene productos disponibles para crear o corregir un diseno.
                 </p>
               )}
               {idDetallePedido && (
@@ -509,7 +528,13 @@ export const DisenoModal = ({
               Cancelar
             </button>
             <button type="submit" className={styles.btnPrimary} disabled={isSubmitting || loadingPedidos || loadingDisenadores}>
-              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Registrar'}
+              {isSubmitting
+                ? 'Guardando...'
+                : isEditing
+                  ? 'Guardar cambios'
+                  : isCorrectionVersion
+                    ? 'Cargar diseno corregido'
+                    : 'Registrar'}
             </button>
           </div>
         </form>

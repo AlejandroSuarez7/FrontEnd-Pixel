@@ -1,64 +1,50 @@
 import { apiClient } from '../../../../core/services/apiService.js';
+import { createRequestError } from '../../../../core/utils/requestError.js';
 import { compraDTO } from './adapters/compra.dto.js';
 
 const ENDPOINT = 'api/compras';
 const getItems = (data) => data.data || data.compras || data || [];
 
 export class CompraApiRepository {
-  async list(filters = {}) {
-    try {
-      const params = {};
-      if (filters.idPedido) params.idPedido = filters.idPedido;
-      if (filters.idProveedor) params.idProveedor = filters.idProveedor;
-      if (filters.estado) params.estado = filters.estado;
-      if (filters.compradoPorId) params.compradoPorId = filters.compradoPorId;
-      if (filters.desde) params.desde = filters.desde;
-      if (filters.hasta) params.hasta = filters.hasta;
+  async list(filters = {}, options = {}) {
+    const params = {};
+    if (filters.idPedido) params.idPedido = filters.idPedido;
+    if (filters.idProveedor) params.idProveedor = filters.idProveedor;
+    if (filters.estado) params.estado = filters.estado;
+    if (filters.compradoPorId) params.compradoPorId = filters.compradoPorId;
+    if (filters.desde) params.desde = filters.desde;
+    if (filters.hasta) params.hasta = filters.hasta;
 
-      const { data } = await apiClient.get(ENDPOINT, { params });
+    const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
+    return compraDTO.fromApiList(getItems(data));
+  }
+
+  async listByPedido(idPedido, options = {}) {
+    try {
+      const { data } = await apiClient.get(`api/pedidos/${idPedido}/compras`, { signal: options.signal });
       return compraDTO.fromApiList(getItems(data));
     } catch (error) {
-      console.error('Error al listar compras:', error);
-      return [];
+      throw createRequestError(error, 'No se pudieron consultar las compras del pedido');
     }
   }
 
-  async listByPedido(idPedido) {
-    try {
-      const { data } = await apiClient.get(`api/pedidos/${idPedido}/compras`);
-      return compraDTO.fromApiList(getItems(data));
-    } catch (error) {
-      throw new Error(error.message || 'No se pudieron consultar las compras del pedido');
-    }
+  async listForDesigner(options = {}) {
+    const { data } = await apiClient.get('api/pedidos', { signal: options.signal });
+    const pedidos = getItems(data);
+    const comprasPorPedido = await Promise.all(
+      pedidos.map(pedido => this.listByPedido(pedido.idPedido, options))
+    );
+    return comprasPorPedido.flat();
   }
 
-  async listForDesigner() {
-    try {
-      const { data } = await apiClient.get('api/pedidos');
-      const pedidos = getItems(data);
-      const comprasPorPedido = await Promise.all(
-        pedidos.map(pedido => this.listByPedido(pedido.idPedido).catch(() => []))
-      );
-      return comprasPorPedido.flat();
-    } catch (error) {
-      console.error('Error al listar compras para disenador:', error);
-      return [];
-    }
-  }
-
-  async getResumen(filters = {}) {
-    try {
-      const params = {};
-      if (filters.idPedido) params.idPedido = filters.idPedido;
-      if (filters.idProveedor) params.idProveedor = filters.idProveedor;
-      if (filters.desde) params.desde = filters.desde;
-      if (filters.hasta) params.hasta = filters.hasta;
-      const { data } = await apiClient.get(`${ENDPOINT}/resumen`, { params });
-      return data.data || { totalCompras: 0, cantidadCompras: 0, porEstado: {} };
-    } catch (error) {
-      console.error('Error al consultar resumen de compras:', error);
-      return { totalCompras: 0, cantidadCompras: 0, porEstado: {} };
-    }
+  async getResumen(filters = {}, options = {}) {
+    const params = {};
+    if (filters.idPedido) params.idPedido = filters.idPedido;
+    if (filters.idProveedor) params.idProveedor = filters.idProveedor;
+    if (filters.desde) params.desde = filters.desde;
+    if (filters.hasta) params.hasta = filters.hasta;
+    const { data } = await apiClient.get(`${ENDPOINT}/resumen`, { params, signal: options.signal });
+    return data.data || { totalCompras: 0, cantidadCompras: 0, porEstado: {} };
   }
 
   async create(compraData) {
@@ -66,7 +52,7 @@ export class CompraApiRepository {
       const { data } = await apiClient.post(ENDPOINT, compraDTO.toApi(compraData));
       return compraDTO.fromApi(data.data);
     } catch (error) {
-      throw new Error(error.message || 'No se pudo crear la compra');
+      throw createRequestError(error, 'No se pudo crear la compra');
     }
   }
 
@@ -75,7 +61,7 @@ export class CompraApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${idCompra}`, compraDTO.toApiUpdate(compraData));
       return compraDTO.fromApi(data.data);
     } catch (error) {
-      throw new Error(error.message || 'No se pudo actualizar la compra');
+      throw createRequestError(error, 'No se pudo actualizar la compra');
     }
   }
 
@@ -84,7 +70,7 @@ export class CompraApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${idCompra}/confirmar`);
       return data;
     } catch (error) {
-      throw new Error(error.message || 'No se pudo confirmar la compra');
+      throw createRequestError(error, 'No se pudo confirmar la compra');
     }
   }
 
@@ -95,7 +81,7 @@ export class CompraApiRepository {
       });
       return data;
     } catch (error) {
-      throw new Error(error.message || 'No se pudo anular la compra');
+      throw createRequestError(error, 'No se pudo anular la compra');
     }
   }
 
@@ -104,7 +90,7 @@ export class CompraApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${idCompra}`);
       return data;
     } catch (error) {
-      throw new Error(error.message || 'No se pudo eliminar la compra');
+      throw createRequestError(error, 'No se pudo eliminar la compra');
     }
   }
 

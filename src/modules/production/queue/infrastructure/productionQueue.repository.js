@@ -43,14 +43,14 @@ const withQueueOrderMarker = (observaciones, position) => {
 };
 
 export class ProductionQueueRepository {
-  async list() {
+  async list(options = {}) {
     const firstPage = await pedidoRepository.list({
       page: 1,
       limit: 10,
       search: 'EN_PROCESO',
       sortBy: 'fechaCreacion',
       order: 'asc',
-    });
+    }, options);
     const pedidos = [...(firstPage.items || [])];
     const totalPages = Number(firstPage.meta?.totalPages || 1);
 
@@ -61,7 +61,7 @@ export class ProductionQueueRepository {
         search: 'EN_PROCESO',
         sortBy: 'fechaCreacion',
         order: 'asc',
-      });
+      }, options);
       pedidos.push(...(response.items || []));
     }
 

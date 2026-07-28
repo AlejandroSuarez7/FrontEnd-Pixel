@@ -25,7 +25,8 @@
     "react-router-dom": "^7.15.0",
     "recharts": "^3.9.2",
     "sonner": "^2.0.7",
-    "sweetalert2": "^11.26.24"
+    "sweetalert2": "^11.26.24",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

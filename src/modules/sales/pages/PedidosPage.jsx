@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../../core/components/Pagination';
 import { notifications } from '../../../core/utils/notifications';
-import { formatOptionalDate } from '../../../core/utils/fechaFormato';
+import { formatCalendarDate } from '../../../core/utils/fechaFormato';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
@@ -30,10 +30,9 @@ const ESTADO_PAGO_CLASS = {
 
 const PedidosPage = () => {
   const navigate = useNavigate();
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const confirm = useConfirm();
-  const session  = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const isStaff  = userRole === 'Admin' || userRole === 'Secretaria';
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +41,8 @@ const PedidosPage = () => {
   const {
     pedidos,
     loading,
+    error,
+    refetch,
     handleUpdateEstimatedDelivery,
     handleMarcarEnProceso,
     handlePendienteSaldo,
@@ -207,7 +208,7 @@ const PedidosPage = () => {
     }
   };
 
-  const fmtFecha = (val) => formatOptionalDate(val);
+  const fmtFecha = (val) => formatCalendarDate(val);
 
   const getClientName = (cliente) => cliente?.nombre || 'Cliente no especificado';
   const getContactText = (cliente) => [cliente?.correo, cliente?.telefono].filter(Boolean).join(' | ');
@@ -273,6 +274,11 @@ const PedidosPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando pedidos...</p>
+        ) : error && pedidos.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>{error.message || 'No se pudieron cargar los pedidos.'}</p>
+            <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
+          </div>
         ) : pedidos.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron pedidos.</p>
         ) : (

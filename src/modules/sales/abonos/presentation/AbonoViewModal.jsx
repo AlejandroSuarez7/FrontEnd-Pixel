@@ -24,7 +24,7 @@ const styles = {
 };
 
 const fmt = (value, fallback = 'Pendiente de revision') => (
-  value === null || value === undefined || value === ''
+  value === null || value === undefined || value === '' || !Number.isFinite(Number(value))
     ? fallback
     : `$${Number(value).toLocaleString('es-CO')}`
 );

@@ -91,10 +91,10 @@ export const VentasPage = () => {
     estadoPago: '',
   });
   const [clientes, setClientes] = useState([]);
-  const [loadingClientes, setLoadingClientes] = useState(false);
+  const [loadingClientes, setLoadingClientes] = useState(true);
   const debouncedSearch = useDebounce(filters.search, 350);
 
-  const { ventas, resumen, loading } = useVentas({
+  const { ventas, resumen, loading, error, refetch } = useVentas({
     ...filters,
     search: debouncedSearch,
   });
@@ -109,7 +109,6 @@ export const VentasPage = () => {
 
   useEffect(() => {
     let isMounted = true;
-    setLoadingClientes(true);
     getClientesActivos()
       .then(data => {
         if (!isMounted) return;
@@ -237,6 +236,13 @@ export const VentasPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando ventas...</p>
+        ) : error && ventas.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar las ventas.</p>
+            <button type="button" className={styles.clearFiltersButton} onClick={refetch}>
+              Reintentar
+            </button>
+          </div>
         ) : ventas.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron ventas finalizadas.</p>
         ) : (

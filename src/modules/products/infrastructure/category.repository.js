@@ -15,7 +15,7 @@ const fromApi = (category) => ({
 const fromApiList = (categories) => (Array.isArray(categories) ? categories.map(fromApi) : []);
 
 export const categoryRepository = {
-  async list(filters = {}) {
+  async list(filters = {}, options = {}) {
     const params = buildPaginationParams({
       page: 1,
       limit: 10,
@@ -23,12 +23,14 @@ export const categoryRepository = {
       order: 'desc',
       ...filters,
     });
-    const { data } = await apiClient.get(ENDPOINT, { params });
+    const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
     return normalizePaginatedResponse(data, fromApiList);
   },
 
-  async listPublic() {
-    const { data } = await apiClient.get(PUBLIC_ENDPOINT);
+  async listPublic(options = {}) {
+    const { data } = await apiClient.get(PUBLIC_ENDPOINT, {
+      signal: options.signal,
+    });
     return fromApiList(data.data || []);
   },
 

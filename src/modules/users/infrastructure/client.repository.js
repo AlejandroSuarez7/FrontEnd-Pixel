@@ -19,13 +19,15 @@ const mapClient = (item) => ({
 });
 
 export const clientRepository = {
-  async list(filters = {}) {
+  async list(filters = {}, options = {}) {
     const params = buildPaginationParams({
       sortBy: 'nombre',
       order: 'asc',
       ...filters,
     });
-    const { data } = await apiClient.get(ENDPOINT, { params });
+    const config = { params };
+    if (options.signal) config.signal = options.signal;
+    const { data } = await apiClient.get(ENDPOINT, config);
     return normalizePaginatedResponse(data, items => items.map(mapClient));
   },
 
@@ -34,8 +36,9 @@ export const clientRepository = {
     return mapClient(data.data);
   },
 
-  async listOrders(idCliente) {
-    const { data } = await apiClient.get(`${ENDPOINT}/${idCliente}/pedidos`);
+  async listOrders(idCliente, options = {}) {
+    const config = options.signal ? { signal: options.signal } : undefined;
+    const { data } = await apiClient.get(`${ENDPOINT}/${idCliente}/pedidos`, config);
     return Array.isArray(data.data) ? data.data : [];
   },
 

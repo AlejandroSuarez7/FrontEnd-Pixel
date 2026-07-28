@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
+import { useDebounce } from '../../../core/hooks/useDebounce';
+import { useLatestListRequest } from '../../../core/hooks/useLatestListRequest';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -89,50 +91,46 @@ const ClientDetailModal = ({ client, loading, onClose }) => {
 const ClientsPage = () => {
   const { hasPermission } = useAuth();
   const confirm = useConfirm();
-  const [clients, setClients] = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(emptyMeta);
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedClient, setSelectedClient] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
-
-  const fetchClients = async () => {
-    setLoading(true);
-    try {
-      const response = await clientRepository.list({
+  const detailRequestRef = useRef(0);
+  const debouncedSearch = useDebounce(search, 350);
+  const {
+    data,
+    loading,
+    error,
+    refetch: fetchClients,
+  } = useLatestListRequest({
+    queryKey: JSON.stringify({ currentPage, search: debouncedSearch }),
+    load: signal => clientRepository.list({
         page: currentPage,
         limit: DEFAULT_PAGE_SIZE,
-        search,
+        search: debouncedSearch,
         sortBy: 'nombre',
         order: 'asc',
-      });
-      setClients(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      notifications.error(error.message || 'No se pudieron cargar los clientes.');
-      setClients([]);
-      setPaginationMeta(emptyMeta);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchClients();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, search]);
+      }, { signal }),
+    initialData: { items: [], meta: emptyMeta },
+  });
+  const clients = data.items;
+  const paginationMeta = data.meta;
 
   const handleView = async (client) => {
+    const requestId = ++detailRequestRef.current;
     setSelectedClient(client);
     setLoadingDetail(true);
     try {
       const detail = await clientRepository.getById(client.idCliente);
+      if (requestId !== detailRequestRef.current) return;
       setSelectedClient(detail);
     } catch (error) {
+      if (requestId !== detailRequestRef.current) return;
       notifications.error(error.message || 'No se pudo cargar el detalle del cliente.');
     } finally {
-      setLoadingDetail(false);
+      if (requestId === detailRequestRef.current) {
+        setLoadingDetail(false);
+      }
     }
   };
 
@@ -222,6 +220,13 @@ const ClientsPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando clientes externos...</p>
+        ) : error && clients.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar los clientes.</p>
+            <button type="button" className={styles.primaryButton} onClick={fetchClients}>
+              Reintentar
+            </button>
+          </div>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
@@ -288,7 +293,11 @@ const ClientsPage = () => {
       <ClientDetailModal
         client={selectedClient}
         loading={loadingDetail}
-        onClose={() => setSelectedClient(null)}
+        onClose={() => {
+          detailRequestRef.current += 1;
+          setSelectedClient(null);
+          setLoadingDetail(false);
+        }}
       />
     </div>
   );

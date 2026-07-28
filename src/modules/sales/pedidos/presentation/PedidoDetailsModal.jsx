@@ -1,5 +1,5 @@
 // pedidos/presentation/PedidoDetailsModal.jsx
-import { formatDate, formatOptionalDate } from '../../../../core/utils/fechaFormato';
+import { formatCalendarDate, formatDate } from '../../../../core/utils/fechaFormato';
 import {
   formatMoneyCOP,
   formatPercentage,
@@ -48,9 +48,7 @@ const formatObservaciones = (observaciones) => {
   return cleanObservaciones.replace(ISO_DATE_IN_BRACKETS, (_, date) => formatDate(date));
 };
 
-const formatDateValue = (value, fallback = 'Por definir') => {
-  return formatOptionalDate(value, fallback);
-};
+const formatDateValue = (value, fallback = 'Por definir') => formatCalendarDate(value, fallback);
 
 const firstValue = (...values) => values.find((value) => value !== null && value !== undefined && value !== '');
 

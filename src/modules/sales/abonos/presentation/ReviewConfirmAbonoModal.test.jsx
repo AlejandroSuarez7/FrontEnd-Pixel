@@ -18,6 +18,7 @@ vi.mock('../infrastructure/abono.repository', () => ({
     update: vi.fn(),
     confirm: vi.fn(),
     reject: vi.fn(),
+    getById: vi.fn(),
     getAdminReceipt: vi.fn(),
   },
 }));
@@ -32,6 +33,8 @@ const basePayment = {
   referenciaDetectadaOcr: 'REF-15',
   fechaPago: null,
   fechaDetectadaOcr: '2026-07-20',
+  bancoDetectadoOcr: 'Nequi',
+  calidadLectura: 82,
   observaciones: '',
   estado: 'PENDIENTE',
   comprobanteDisponible: false,
@@ -56,11 +59,18 @@ const renderModal = (props = {}) => render(
   </ConfirmProvider>,
 );
 
+const getReadyConfirmButton = async () => {
+  const button = screen.getByRole('button', { name: /confirmar abono/i });
+  await waitFor(() => expect(button).toBeEnabled());
+  return button;
+};
+
 describe('ReviewConfirmAbonoModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     abonoRepository.update.mockResolvedValue({});
     abonoRepository.confirm.mockResolvedValue({});
+    abonoRepository.getById.mockResolvedValue(basePayment);
     abonoRepository.getAdminReceipt.mockResolvedValue({
       blob: new Blob(['receipt'], { type: 'image/png' }),
       mimeType: 'image/png',
@@ -75,9 +85,12 @@ describe('ReviewConfirmAbonoModal', () => {
 
     const amount = screen.getByLabelText(/monto a confirmar/i);
     expect(amount).toHaveValue(150000);
+    expect(screen.getByText('Calidad de lectura')).toBeInTheDocument();
+    expect(screen.getByText('82%')).toBeInTheDocument();
+    expect(screen.getByText('Pendiente de confirmacion')).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/\bOCR\b|Tesseract/i);
     fireEvent.change(amount, { target: { value: '140000' } });
-    fireEvent.click(screen.getByRole('button', { name: /confirmar abono/i }));
+    fireEvent.click(await getReadyConfirmButton());
 
     await waitFor(() => {
       expect(abonoRepository.update).toHaveBeenCalledWith(
@@ -94,6 +107,33 @@ describe('ReviewConfirmAbonoModal', () => {
     expect(onCompleted).toHaveBeenCalled();
   });
 
+  it('loads and displays the real backend detail totals and client', async () => {
+    abonoRepository.getById.mockResolvedValueOnce({
+      ...basePayment,
+      origenRegistroCodigo: 'FRONTEND',
+      origenRegistroLabel: 'Enviado desde el portal del cliente',
+      pedido: {
+        total: 800000,
+        totalPagadoConfirmado: 300000,
+        saldoPendiente: 500000,
+        estadoPago: 'PARCIAL',
+        cliente: {
+          nombre: 'Cliente Real',
+          correo: 'cliente.real@example.com',
+        },
+      },
+    });
+
+    renderModal();
+
+    expect(await screen.findByText('Cliente Real')).toBeInTheDocument();
+    expect(screen.getByText('$ 800.000')).toBeInTheDocument();
+    expect(screen.getByText('$ 300.000')).toBeInTheDocument();
+    expect(screen.getByText('$ 500.000')).toBeInTheDocument();
+    expect(screen.getByText('Enviado desde el portal del cliente')).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/\bFRONTEND\b|\bBACKEND\b/);
+  });
+
   it('does not confirm when updating the corrected data fails', async () => {
     abonoRepository.update.mockRejectedValueOnce(new Error('Monto superior al saldo'));
     renderModal();
@@ -101,7 +141,7 @@ describe('ReviewConfirmAbonoModal', () => {
     fireEvent.change(screen.getByLabelText(/monto a confirmar/i), {
       target: { value: '900000' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /confirmar abono/i }));
+    fireEvent.click(await getReadyConfirmButton());
 
     await waitFor(() => {
       expect(notifications.error).toHaveBeenCalledWith('Monto superior al saldo');
@@ -131,16 +171,18 @@ describe('ReviewConfirmAbonoModal', () => {
   });
 
   it('skips the update request when confirmed data did not change', async () => {
+    const unchangedPayment = {
+      ...basePayment,
+      monto: 150000,
+      referencia: 'REF-15',
+      fechaPago: '2026-07-20',
+    };
+    abonoRepository.getById.mockResolvedValueOnce(unchangedPayment);
     renderModal({
-      abono: {
-        ...basePayment,
-        monto: 150000,
-        referencia: 'REF-15',
-        fechaPago: '2026-07-20',
-      },
+      abono: unchangedPayment,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /confirmar abono/i }));
+    fireEvent.click(await getReadyConfirmButton());
 
     await waitFor(() => expect(abonoRepository.confirm).toHaveBeenCalledTimes(1));
     expect(abonoRepository.update).not.toHaveBeenCalled();
@@ -159,7 +201,7 @@ describe('ReviewConfirmAbonoModal', () => {
       },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /confirmar abono/i }));
+    fireEvent.click(await getReadyConfirmButton());
 
     await waitFor(() => {
       expect(notifications.error).toHaveBeenCalledWith('El abono ya fue procesado');
@@ -182,7 +224,7 @@ describe('ReviewConfirmAbonoModal', () => {
       },
     });
 
-    const button = screen.getByRole('button', { name: /confirmar abono/i });
+    const button = await getReadyConfirmButton();
     fireEvent.click(button);
     fireEvent.click(button);
 
@@ -193,6 +235,11 @@ describe('ReviewConfirmAbonoModal', () => {
   });
 
   it('loads a protected image preview and revokes its temporary URL', async () => {
+    abonoRepository.getById.mockResolvedValueOnce({
+      ...basePayment,
+      comprobanteDisponible: true,
+      nombreOriginalComprobante: 'pago.png',
+    });
     const { unmount } = renderModal({
       abono: {
         ...basePayment,
@@ -211,6 +258,11 @@ describe('ReviewConfirmAbonoModal', () => {
   });
 
   it('offers open and download actions for a protected PDF', async () => {
+    abonoRepository.getById.mockResolvedValueOnce({
+      ...basePayment,
+      comprobanteDisponible: true,
+      nombreOriginalComprobante: 'pago.pdf',
+    });
     abonoRepository.getAdminReceipt.mockResolvedValueOnce({
       blob: new Blob(['pdf'], { type: 'application/pdf' }),
       mimeType: 'application/pdf',

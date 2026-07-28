@@ -1,27 +1,20 @@
-/* eslint-disable react-hooks/set-state-in-effect, react-hooks/use-memo, react-hooks/exhaustive-deps */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { disenoRepository } from '../infrastructure/diseno.repository';
 
 export const useDisenos = (filters = {}) => {
-  const [disenos, setDisenos] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchDisenos = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await disenoRepository.list(filters);
-      setDisenos(data);
-    } catch (error) {
-      console.error('Error en useDisenos al listar:', error);
-      setDisenos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [JSON.stringify(filters)]);
-
-  useEffect(() => {
-    fetchDisenos();
-  }, [fetchDisenos]);
+  const queryKey = JSON.stringify(filters);
+  const {
+    data: disenos,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchDisenos,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => disenoRepository.list(filters, { signal }),
+    initialData: [],
+  });
 
   const handleCreate = async (disenoData) => {
     await disenoRepository.create(disenoData);
@@ -63,6 +56,8 @@ export const useDisenos = (filters = {}) => {
   return {
     disenos,
     loading,
+    refreshing,
+    error,
     refetch: fetchDisenos,
     handleCreate,
     handleUpdate,

@@ -91,12 +91,56 @@ const getRequiredDesignDetails = (pedido = {}) => {
 const getDesignProgress = (pedido = {}) => {
   const disenos = getOrderDesigns(pedido);
   const requiredDetails = getRequiredDesignDetails(pedido);
+  const hasCentralizedTotals = [
+    pedido.totalDisenosRequeridos,
+    pedido.totalDisenosAprobados,
+    pedido.totalDisenosPendientes,
+  ].some(value => value !== null && value !== undefined);
+  const coverage = requiredDetails.map(getDesignCoverageInfo);
+
+  if (hasCentralizedTotals) {
+    const totalRequired = toNumber(pedido.totalDisenosRequeridos);
+    const approvedCount = toNumber(pedido.totalDisenosAprobados);
+    const pendingCount = toNumber(pedido.totalDisenosPendientes);
+    const hasRejected = coverage.some(item => (
+      item.isCorrection
+      || item.state.includes('RECHAZADO')
+      || item.state.includes('CORRECCIONES')
+    ));
+    const hasClientDesignPending = coverage.some(item => [
+      'PENDIENTE_ARCHIVO_CLIENTE',
+      'DISENO_ENTREGADO_POR_CLIENTE',
+      'DISENO_GENERAL_ENTREGADO_POR_CLIENTE',
+      'DISENO_CLIENTE_PENDIENTE_VINCULACION',
+    ].includes(item.state));
+    const hasSentDesignPending = coverage.some(item => [
+      'ENVIADO',
+      'DISENO_ENVIADO',
+      'DISENO_GENERAL_ENVIADO',
+    ].includes(item.state));
+
+    return {
+      totalRequired,
+      approvedCount,
+      pendingCount,
+      allApproved: totalRequired > 0 && approvedCount === totalRequired,
+      hasWaitingApproval: pendingCount > 0 && (hasClientDesignPending || hasSentDesignPending),
+      hasRejected,
+      rejectedDesign: disenos.find(diseno => normalizeStatus(diseno.estado) === 'RECHAZADO') || null,
+      hasClientDesignPending,
+      hasPixelCreationPending: coverage.some(item => item.state === 'PENDIENTE_CREACION_PIXEL'),
+      label: totalRequired > 0
+        ? `${approvedCount} de ${totalRequired} disenos aprobados`
+        : 'No requiere diseno',
+      authoritative: true,
+    };
+  }
+
   const hasBackendCoverage = requiredDetails.some(detail => detail.estadoCoberturaDiseno);
 
   if (hasBackendCoverage) {
-    const coverage = requiredDetails.map(getDesignCoverageInfo);
     const approvedCount = coverage.filter(item => item.covered).length;
-    const hasRejected = coverage.some(item => item.state.includes('RECHAZADO'));
+    const hasRejected = coverage.some(item => item.isCorrection || item.state.includes('RECHAZADO'));
     const hasClientDesignPending = coverage.some(item => [
       'DISENO_ENTREGADO_POR_CLIENTE',
       'DISENO_GENERAL_ENTREGADO_POR_CLIENTE',
@@ -118,6 +162,7 @@ const getDesignProgress = (pedido = {}) => {
       hasClientDesignPending,
       hasPixelCreationPending,
       label: `${approvedCount} de ${requiredDetails.length} disenos aprobados`,
+      authoritative: false,
     };
   }
   const generalApproved = disenos.some((diseno) => diseno.esDisenoGeneral && normalizeStatus(diseno.estado) === 'APROBADO');
@@ -133,6 +178,7 @@ const getDesignProgress = (pedido = {}) => {
       label: 'No requiere diseno',
       hasClientDesignPending: false,
       hasPixelCreationPending: false,
+      authoritative: false,
     };
   }
 
@@ -155,6 +201,7 @@ const getDesignProgress = (pedido = {}) => {
     label: `${approvedCount} de ${requiredDetails.length} disenos aprobados`,
     hasClientDesignPending: false,
     hasPixelCreationPending: false,
+    authoritative: false,
   };
 };
 
@@ -195,7 +242,9 @@ const buildClientTrackingSteps = (pedido = {}) => {
   const readyToDeliver = (estadoPedido === 'FINALIZADO' || estadoPedido === 'TERMINADO' || delivered) && !finalPaymentPending;
   const designWaitingApproval = designProgress.hasWaitingApproval;
   const designRejected = designProgress.hasRejected;
-  const designApproved = designProgress.allApproved || inProduction || finalized;
+  const designApproved = designProgress.authoritative
+    ? designProgress.allApproved
+    : designProgress.allApproved || inProduction || finalized;
 
   const steps = [
     { label: 'Cotizacion aceptada', completed: Boolean(pedido.idPedido) },
@@ -377,12 +426,12 @@ const adaptClientDashboard = (payload) => {
 };
 
 export const dashboardRepository = {
-  async getDashboardData(user, permissions = []) {
+  async getDashboardData(user, permissions = [], options = {}) {
     const isClient = isClientUser(user, permissions.length > 0 ? permissions : user?.codigos);
     const endpoint = isClient ? 'api/cliente/dashboard' : 'api/dashboard/admin';
     const params = isClient ? { limite: 5 } : { anio: currentYear, ultimos: 5 };
 
-    const { data } = await apiClient.get(endpoint, { params });
+    const { data } = await apiClient.get(endpoint, { params, signal: options.signal });
     const payload = data.data || {};
 
     return isClient

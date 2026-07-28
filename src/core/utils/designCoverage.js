@@ -3,15 +3,25 @@ export const DESIGN_COVERAGE_LABELS = {
   PENDIENTE_CREACION_PIXEL: 'Pendiente de creacion por PIXEL',
   PENDIENTE_ARCHIVO_CLIENTE: 'Pendiente de archivo del cliente',
   DISENO_CLIENTE_PENDIENTE_VINCULACION: 'Diseno del cliente pendiente de revision',
-  DISENO_ENTREGADO_POR_CLIENTE: 'Diseno entregado por el cliente',
+  DISENO_ENTREGADO_POR_CLIENTE: 'Diseno recibido',
   DISENO_GENERAL_ENTREGADO_POR_CLIENTE: 'Diseno general entregado por el cliente',
-  DISENO_ENVIADO: 'Diseno enviado para revision',
+  ENVIADO: 'Diseno recibido',
+  DISENO_ENVIADO: 'Pendiente de revision',
   DISENO_GENERAL_ENVIADO: 'Diseno general enviado para revision',
   DISENO_APROBADO: 'Diseno aprobado',
   DISENO_RECHAZADO: 'Correcciones solicitadas',
   DISENO_GENERAL_RECHAZADO: 'Correcciones solicitadas',
+  CORRECCIONES_SOLICITADAS: 'Correcciones solicitadas',
+  DISENO_CORRECCIONES_SOLICITADAS: 'Correcciones solicitadas',
   CUBIERTO_POR_DISENO_GENERAL: 'Cubierto por diseno general',
 };
+
+const CORRECTION_STATES = [
+  'DISENO_RECHAZADO',
+  'DISENO_GENERAL_RECHAZADO',
+  'CORRECCIONES_SOLICITADAS',
+  'DISENO_CORRECCIONES_SOLICITADAS',
+];
 
 export const getDesignCoverageState = (detail = {}) => {
   if (detail.estadoCoberturaDiseno) return detail.estadoCoberturaDiseno;
@@ -36,6 +46,7 @@ export const getDesignCoverageState = (detail = {}) => {
 export const getDesignCoverageInfo = (detail = {}) => {
   const state = getDesignCoverageState(detail);
   const design = detail.diseno || null;
+  const designOrigin = String(detail.origenDiseno || design?.origenDiseno || '').toUpperCase();
 
   return {
     state,
@@ -46,7 +57,7 @@ export const getDesignCoverageInfo = (detail = {}) => {
       'DISENO_APROBADO',
       'CUBIERTO_POR_DISENO_GENERAL',
     ].includes(state),
-    canCreate: state === 'PENDIENTE_CREACION_PIXEL',
+    canCreate: state === 'PENDIENTE_CREACION_PIXEL' || CORRECTION_STATES.includes(state),
     canReview: [
       'DISENO_ENTREGADO_POR_CLIENTE',
       'DISENO_GENERAL_ENTREGADO_POR_CLIENTE',
@@ -58,6 +69,8 @@ export const getDesignCoverageInfo = (detail = {}) => {
       'CUBIERTO_POR_DISENO_GENERAL',
     ].includes(state),
     waitingForClient: state === 'PENDIENTE_ARCHIVO_CLIENTE',
+    canRegisterClientFile: state === 'PENDIENTE_ARCHIVO_CLIENTE' && designOrigin === 'CLIENTE',
+    isCorrection: CORRECTION_STATES.includes(state),
     noDesignRequired: state === 'NO_REQUIERE_DISENO',
     isGeneral: Boolean(design?.esDisenoGeneral || detail.esDisenoGeneral),
     design,

@@ -1,6 +1,7 @@
 // presentation/pages/ServicesPage.jsx
 import { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
+import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -16,17 +17,20 @@ const ServicesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const confirm = useConfirm();
   const { hasPermission } = useAuth();
+  const debouncedSearch = useDebounce(searchTerm, 350);
   const {
     tecnicas,
     loading,
+    error,
     handleCreate,
     handleUpdate,
     handleHardDelete,
     paginationMeta,
+    refreshTecnicas,
   } = useTecnicas({
     page: currentPage,
     limit: DEFAULT_PAGE_SIZE,
-    search: searchTerm,
+    search: debouncedSearch,
     sortBy: 'nombre',
     order: 'asc',
   });
@@ -125,6 +129,13 @@ const ServicesPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando servicios de producción...</p>
+        ) : error && tecnicas.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar las tecnicas.</p>
+            <button type="button" className={styles.primaryButton} onClick={refreshTecnicas}>
+              Reintentar
+            </button>
+          </div>
         ) : tecnicas.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron servicios registrados.</p>
         ) : (

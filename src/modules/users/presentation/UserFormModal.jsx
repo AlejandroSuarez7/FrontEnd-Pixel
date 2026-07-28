@@ -1,6 +1,5 @@
 // presentation/UserFormModal.jsx
-import { useState, useEffect } from 'react';
-import { apiClient } from '../../../core/services/apiService';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import {
@@ -10,61 +9,27 @@ import {
 } from '../../../core/utils/userValidation';
 import styles from './users.module.css';
 
-const isInternalUserRole = (rol) => rol?.nombre?.trim().toLowerCase() !== 'cliente';
-
-export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
-  const [nombre, setNombre]         = useState('');
-  const [documento, setDocumento]   = useState('');
-  const [correo, setCorreo]         = useState('');
-  const [telefono, setTelefono]     = useState('');
-  const [direccion, setDireccion]   = useState('');
-  const [idRol, setIdRol]           = useState('');
+export const UserFormModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  user,
+  roles = [],
+  loadingRoles = false,
+}) => {
+  const [nombre, setNombre]         = useState(user?.nombre || '');
+  const [documento, setDocumento]   = useState(user?.documento || '');
+  const [correo, setCorreo]         = useState(user?.correo || '');
+  const [telefono, setTelefono]     = useState(user?.telefono || '');
+  const [direccion, setDireccion]   = useState(user?.direccion || '');
+  const [idRol, setIdRol]           = useState(user?.idRol || '');
   const [contrasena, setContrasena] = useState('');
-  const [estado, setEstado]         = useState(true);
+  const [estado, setEstado]         = useState(user?.estado ?? true);
 
-  const [roles, setRoles]               = useState([]);
-  const [loadingRoles, setLoadingRoles] = useState(false);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = !!user;
   const passwordRulesStatus = getPasswordRulesStatus(contrasena);
-
-  // Carga roles dinámicamente desde la API
-  useEffect(() => {
-    if (isOpen) {
-      setLoadingRoles(true);
-      apiClient.get('api/roles')
-        .then(({ data }) => setRoles((data.data || []).filter(isInternalUserRole)))
-        .catch(() => setRoles([
-          { idRol: 1, nombre: 'Admin' },
-          { idRol: 2, nombre: 'Secretaria' },
-        ]))
-        .finally(() => setLoadingRoles(false));
-    }
-  }, [isOpen]);
-
-  // Precarga los campos con los datos del usuario al editar
-  useEffect(() => {
-    if (user) {
-      setNombre(user.nombre || '');
-      setDocumento(user.documento || '');
-      setCorreo(user.correo || '');
-      setTelefono(user.telefono || '');
-      setDireccion(user.direccion || '');
-      setIdRol(user.idRol || '');
-      setEstado(user.estado ?? true);
-      setContrasena(''); // Siempre vacía al abrir en edición
-    } else {
-      setNombre('');
-      setDocumento('');
-      setCorreo('');
-      setTelefono('');
-      setDireccion('');
-      setIdRol('');
-      setContrasena('');
-      setEstado(true);
-    }
-  }, [user, isOpen]);
 
   if (!isOpen) return null;
 
@@ -191,7 +156,7 @@ export const UserFormModal = ({ isOpen, onClose, onSubmit, user }) => {
                   {loadingRoles ? 'Cargando roles...' : '— Selecciona un rol —'}
                 </option>
                 {roles.map(rol => (
-                  <option key={rol.idRol} value={rol.idRol}>
+                  <option key={rol.idRol ?? rol.id} value={rol.idRol ?? rol.id}>
                     {rol.nombre}
                   </option>
                 ))}

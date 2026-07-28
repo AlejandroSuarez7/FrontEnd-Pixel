@@ -175,4 +175,88 @@ describe('dashboardRepository', () => {
     expect(tracking.find(step => step.label === 'En produccion')?.state)
       .toBe('pending');
   });
+
+  it('uses centralized backend design totals instead of counting raw design records', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 43,
+            estadoPedido: 'PENDIENTE',
+            estadoPago: 'PARCIAL',
+            totalDisenosRequeridos: 2,
+            totalDisenosAprobados: 1,
+            totalDisenosPendientes: 1,
+            detalles: [{
+              idDetallePedido: 3,
+              requiereDiseno: true,
+              estadoCoberturaDiseno: 'DISENO_APROBADO',
+              cubiertoPorDiseno: true,
+            }, {
+              idDetallePedido: 4,
+              requiereDiseno: true,
+              estadoCoberturaDiseno: 'DISENO_ENVIADO',
+              cubiertoPorDiseno: false,
+            }],
+            disenos: [
+              { idDiseno: 10, estado: 'APROBADO' },
+              { idDiseno: 11, estado: 'APROBADO' },
+              { idDiseno: 12, estado: 'RECHAZADO' },
+            ],
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+    const approvedStep = result.client.activeOrders[0].tracking
+      .find(step => step.label === 'Diseno aprobado');
+
+    expect(approvedStep.detail).toBe('1 de 2 disenos aprobados');
+    expect(approvedStep.state).not.toBe('completed');
+  });
+
+  it('reflects backend coverage totals when one general design covers all products', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 44,
+            estadoPedido: 'PENDIENTE',
+            estadoPago: 'PARCIAL',
+            totalDisenosRequeridos: 2,
+            totalDisenosAprobados: 2,
+            totalDisenosPendientes: 0,
+            detalles: [{
+              idDetallePedido: 5,
+              requiereDiseno: true,
+              estadoCoberturaDiseno: 'CUBIERTO_POR_DISENO_GENERAL',
+              cubiertoPorDiseno: true,
+            }, {
+              idDetallePedido: 6,
+              requiereDiseno: true,
+              estadoCoberturaDiseno: 'CUBIERTO_POR_DISENO_GENERAL',
+              cubiertoPorDiseno: true,
+            }],
+            disenos: [{ idDiseno: 20, estado: 'APROBADO', esDisenoGeneral: true }],
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+    const approvedStep = result.client.activeOrders[0].tracking
+      .find(step => step.label === 'Diseno aprobado');
+
+    expect(approvedStep.detail).toBe('2 de 2 disenos aprobados');
+    expect(approvedStep.state).toBe('completed');
+  });
 });

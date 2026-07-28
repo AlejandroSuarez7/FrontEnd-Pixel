@@ -54,7 +54,7 @@ const LandingPage = () => {
   const [publicProducts, setPublicProducts] = useState([]);
   const [publicCategories, setPublicCategories] = useState([]);
   const [publicTechniques, setPublicTechniques] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState('');
   const [calculatingQuote, setCalculatingQuote] = useState(false);
   const [sendingQuote, setSendingQuote] = useState(false);
@@ -75,7 +75,7 @@ const LandingPage = () => {
   const contactFieldsDisabled = isClient || isLoggedNonClient;
   const userName = user?.nombre || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
-  const publicQuoteItems = publicQuoteForm.items || [];
+  const publicQuoteItems = publicQuoteForm.items;
   const calculationItems = publicQuoteCalculation?.items || publicQuoteCalculation?.detalles || [];
   const publicQuoteSubtotalBruto = publicQuoteCalculation?.subtotalBruto ?? getQuoteSubtotalBruto(publicQuoteCalculation || {});
   const publicQuoteDiscountTotal = publicQuoteCalculation?.descuentoTotal ?? getQuoteDiscountTotal(publicQuoteCalculation || {});
@@ -95,46 +95,35 @@ const LandingPage = () => {
   }, [isClient, user]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    Promise.all([
-      publicQuoteRepository.listCategories(),
-      publicQuoteRepository.listTechniques(),
-    ])
-      .then(([categories, techniques]) => {
-        if (!isMounted) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      Promise.all([
+        publicQuoteRepository.listCategories({ signal: controller.signal }),
+        publicQuoteRepository.listTechniques({ signal: controller.signal }),
+        publicQuoteRepository.listProductsByCategory(undefined, { signal: controller.signal }),
+      ])
+      .then(([categories, techniques, products]) => {
+        if (controller.signal.aborted) return;
         setPublicCategories(categories);
         setPublicTechniques(techniques);
+        setPublicProducts(products);
         setProductsError('');
       })
       .catch((error) => {
-        if (!isMounted) return;
+        if (controller.signal.aborted || error?.code === 'ERR_CANCELED') return;
         const message = error.message || 'No se pudieron cargar los productos.';
         setProductsError(message);
         notifications.error(message);
       })
       .finally(() => {
-        if (isMounted) setLoadingProducts(false);
+        if (!controller.signal.aborted) setLoadingProducts(false);
       });
+    }, 0);
 
     return () => {
-      isMounted = false;
+      window.clearTimeout(timer);
+      controller.abort();
     };
-  }, []);
-
-  useEffect(() => {
-    setLoadingProducts(true);
-    publicQuoteRepository.listProductsByCategory()
-      .then((products) => {
-        setPublicProducts(products);
-        setProductsError('');
-      })
-      .catch((error) => {
-        const message = error.message || 'No se pudieron cargar los productos.';
-        setProductsError(message);
-        notifications.error(message);
-      })
-      .finally(() => setLoadingProducts(false));
   }, []);
 
   useEffect(() => {
@@ -149,21 +138,33 @@ const LandingPage = () => {
 
     if (validItems.length === 0) {
       setPublicQuoteCalculation(null);
+      setCalculatingQuote(false);
       return;
     }
 
+    const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setCalculatingQuote(true);
-      publicQuoteRepository.calculate(validItems)
-        .then(setPublicQuoteCalculation)
+      publicQuoteRepository.calculate(validItems, { signal: controller.signal })
+        .then((calculation) => {
+          if (!controller.signal.aborted) {
+            setPublicQuoteCalculation(calculation);
+          }
+        })
         .catch((error) => {
+          if (controller.signal.aborted || error?.code === 'ERR_CANCELED') return;
           setPublicQuoteCalculation(null);
           notifications.error(error.message || 'No se pudo calcular la cotizacion.');
         })
-        .finally(() => setCalculatingQuote(false));
+        .finally(() => {
+          if (!controller.signal.aborted) setCalculatingQuote(false);
+        });
     }, 450);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [publicQuoteItems]);
 
   const updatePublicQuoteField = (field, value) => {

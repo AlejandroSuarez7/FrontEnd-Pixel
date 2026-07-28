@@ -3,29 +3,41 @@ import { apiClient } from '../../../core/services/apiService';
 const PUBLIC_ENDPOINT = '/api/public';
 
 export const publicQuoteRepository = {
-  async listProducts() {
-    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/productos`);
+  async listProducts(options = {}) {
+    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/productos`, {
+      signal: options.signal,
+    });
     return data.data || [];
   },
 
-  async listProductsByCategory(idCategoriaProducto) {
+  async listProductsByCategory(idCategoriaProducto, options = {}) {
     const params = idCategoriaProducto ? { idCategoriaProducto } : {};
-    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/productos`, { params });
+    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/productos`, {
+      params,
+      signal: options.signal,
+    });
     return data.data || [];
   },
 
-  async listCategories() {
-    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/categorias-producto`);
+  async listCategories(options = {}) {
+    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/categorias-producto`, {
+      signal: options.signal,
+    });
     return data.data || [];
   },
 
-  async listTechniques() {
-    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/tecnicas`);
+  async listTechniques(options = {}) {
+    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/tecnicas`, {
+      signal: options.signal,
+    });
     return data.data || [];
   },
 
-  async calculate(items) {
-    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones/calcular`, { items }, { skipAuthRedirect: true });
+  async calculate(items, options = {}) {
+    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones/calcular`, { items }, {
+      skipAuthRedirect: true,
+      signal: options.signal,
+    });
     return data.data;
   },
 

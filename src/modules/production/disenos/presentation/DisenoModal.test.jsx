@@ -71,7 +71,7 @@ describe('DisenoModal design coverage', () => {
     });
 
     const noDesignOption = await screen.findByRole('option', { name: /no requiere diseno/i });
-    const clientOption = screen.getByRole('option', { name: /diseno entregado por el cliente/i });
+    const clientOption = screen.getByRole('option', { name: /diseno recibido/i });
     const pixelOption = screen.getByRole('option', { name: /pendiente de creacion por pixel/i });
 
     expect(noDesignOption).toBeDisabled();
@@ -111,5 +111,54 @@ describe('DisenoModal design coverage', () => {
         origenDiseno: 'DISENADOR',
       }));
     });
+  });
+
+  it('allows a rejected product to receive a corrected version', async () => {
+    const onSubmit = vi.fn().mockResolvedValue({});
+    const rejectedPedido = {
+      ...pedido,
+      detalles: [{
+        idDetallePedido: 104,
+        cantidad: 25,
+        producto: { nombre: 'Camiseta para corregir' },
+        requiereDiseno: true,
+        estadoCoberturaDiseno: 'DISENO_RECHAZADO',
+        diseno: {
+          idDiseno: 77,
+          estado: 'RECHAZADO',
+          archivoUrl: 'https://example.com/version-anterior.png',
+        },
+      }],
+    };
+
+    render(
+      <DisenoModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        isStaff={false}
+        presetPedido={rejectedPedido}
+        presetDetailId="104"
+        lockPedido
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Cargar diseno corregido' })).toBeInTheDocument();
+    expect(screen.getByText('Nueva version para revision')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver version anterior' })).toHaveAttribute(
+      'href',
+      'https://example.com/version-anterior.png',
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('https://archivo.com/diseno.png'), {
+      target: { value: 'https://example.com/version-corregida.png' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Cargar diseno corregido' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      idPedido: 36,
+      idDetallePedido: 104,
+      archivoUrl: 'https://example.com/version-corregida.png',
+    })));
   });
 });

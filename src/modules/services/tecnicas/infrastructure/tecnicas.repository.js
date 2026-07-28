@@ -1,23 +1,19 @@
 import { apiClient } from '../../../../core/services/apiService.js';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
+import { createRequestError } from '../../../../core/utils/requestError.js';
 import { tecnicasDTO } from './adapters/tecnicasDTO.js';
 
 const ENDPOINT = 'api/tecnicas';
 
 export class TecnicasApiRepository {
-  async list(filters = {}) {
-    try {
-      const params = buildPaginationParams({
-        sortBy: 'nombre',
-        order: 'asc',
-        ...filters,
-      });
-      const { data } = await apiClient.get(ENDPOINT, { params });
-      return normalizePaginatedResponse(data, tecnicasDTO.fromApiList.bind(tecnicasDTO));
-    } catch (error) {
-      console.error('Error al listar las tecnicas desde la API', error);
-      return normalizePaginatedResponse({}, tecnicasDTO.fromApiList.bind(tecnicasDTO));
-    }
+  async list(filters = {}, options = {}) {
+    const params = buildPaginationParams({
+      sortBy: 'nombre',
+      order: 'asc',
+      ...filters,
+    });
+    const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
+    return normalizePaginatedResponse(data, tecnicasDTO.fromApiList.bind(tecnicasDTO));
   }
 
   async getById(id) {
@@ -25,7 +21,7 @@ export class TecnicasApiRepository {
       const { data } = await apiClient.get(`${ENDPOINT}/${id}`);
       return tecnicasDTO.fromApi(data.data ?? data);
     } catch (error) {
-      throw new Error(error.response?.data?.message || `No se pudo encontrar la tecnica #${id}`);
+      throw createRequestError(error, `No se pudo encontrar la tecnica #${id}`);
     }
   }
 
@@ -35,7 +31,7 @@ export class TecnicasApiRepository {
       const { data } = await apiClient.post(ENDPOINT, payload);
       return tecnicasDTO.fromApi(data.data ?? data);
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo crear la tecnica');
+      throw createRequestError(error, 'No se pudo crear la tecnica');
     }
   }
 
@@ -45,7 +41,7 @@ export class TecnicasApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${id}`, payload);
       return tecnicasDTO.fromApi(data.data ?? data);
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo actualizar la tecnica');
+      throw createRequestError(error, 'No se pudo actualizar la tecnica');
     }
   }
 
@@ -54,7 +50,7 @@ export class TecnicasApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${id}`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo desactivar la tecnica');
+      throw createRequestError(error, 'No se pudo desactivar la tecnica');
     }
   }
 
@@ -63,7 +59,7 @@ export class TecnicasApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${id}/eliminar`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'No se pudo eliminar la tecnica');
+      throw createRequestError(error, 'No se pudo eliminar la tecnica');
     }
   }
 }

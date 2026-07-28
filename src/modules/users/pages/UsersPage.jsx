@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
+import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -19,17 +20,21 @@ export const UsersPage = () => {
   const [loadingRoles, setLoadingRoles] = useState(true);
   const { hasPermission } = useAuth();
   const confirm = useConfirm();
+  const debouncedSearch = useDebounce(filters.search, 350);
 
   const {
     users,
     loading,
+    error,
     handleCreate,
     handleUpdate,
     handleHardDelete,
     findDuplicateFields,
     paginationMeta,
+    refreshUsers,
   } = useUsers({
     ...filters,
+    search: debouncedSearch,
     page: currentPage,
     limit: DEFAULT_PAGE_SIZE,
     sortBy: 'nombre',
@@ -41,39 +46,47 @@ export const UsersPage = () => {
   const inactiveUsers = users.filter(user => user.estado === false).length;
 
   useEffect(() => {
-    let isMounted = true;
+    const controller = new AbortController();
 
     const loadRoles = async () => {
       setLoadingRoles(true);
-      const collectedRoles = [];
-      let page = 1;
+      try {
+        const collectedRoles = [];
+        let page = 1;
 
-      while (true) {
-        const response = await rolesRepository.list({
-          page,
-          limit: DEFAULT_PAGE_SIZE,
-          sortBy: 'nombre',
-          order: 'asc',
-        });
-        collectedRoles.push(...response.items);
-        const totalPages = response.meta.totalPages || 1;
-        if (page >= totalPages) break;
-        page += 1;
-      }
+        while (!controller.signal.aborted) {
+          const response = await rolesRepository.list({
+            page,
+            limit: DEFAULT_PAGE_SIZE,
+            sortBy: 'nombre',
+            order: 'asc',
+          }, { signal: controller.signal });
+          collectedRoles.push(...response.items);
+          const totalPages = response.meta.totalPages || 1;
+          if (page >= totalPages) break;
+          page += 1;
+        }
 
-      if (isMounted) {
+        if (controller.signal.aborted) return;
         setAvailableRoles(
           collectedRoles.filter(
             role => role.nombre?.trim().toLocaleLowerCase('es') !== 'cliente',
           ),
         );
-        setLoadingRoles(false);
+      } catch (error) {
+        if (error?.code !== 'ERR_CANCELED') {
+          setAvailableRoles([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingRoles(false);
+        }
       }
     };
 
     loadRoles();
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, []);
 
@@ -200,6 +213,13 @@ export const UsersPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando usuarios del sistema...</p>
+        ) : error && users.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar los usuarios.</p>
+            <button type="button" className={styles.primaryButton} onClick={refreshUsers}>
+              Reintentar
+            </button>
+          </div>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
@@ -261,12 +281,16 @@ export const UsersPage = () => {
         />
       </div>
 
-      <UserFormModal
-        isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setSelectedUser(null); }}
-        onSubmit={handleSubmitForm}
-        user={selectedUser}
-      />
+      {isModalOpen && (
+        <UserFormModal
+          isOpen
+          onClose={() => { setIsModalOpen(false); setSelectedUser(null); }}
+          onSubmit={handleSubmitForm}
+          user={selectedUser}
+          roles={availableRoles}
+          loadingRoles={loadingRoles}
+        />
+      )}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
@@ -27,6 +26,7 @@ const styles = {
 
 const METODOS_PAGO_STAFF = ['EFECTIVO', 'TRANSFERENCIA'];
 const METODOS_PAGO_CLIENTE = ['TRANSFERENCIA'];
+const EMPTY_PRESET_ABONOS = Object.freeze([]);
 
 export const AbonoModal = ({
   isOpen,
@@ -38,70 +38,41 @@ export const AbonoModal = ({
   getAbonosByPedido,
   getPedidos,
   presetPedido = null,
-  presetAbonos = [],
+  presetAbonos = EMPTY_PRESET_ABONOS,
   lockPedido = false,
 }) => {
-  const [idPedido, setIdPedido] = useState('');
-  const [monto, setMonto] = useState('');
-  const [metodoPago, setMetodoPago] = useState('TRANSFERENCIA');
-  const [referencia, setReferencia] = useState('');
-  const [fechaPago, setFechaPago] = useState('');
-  const [observaciones, setObservaciones] = useState('');
+  const isEditing = Boolean(abono);
+  const [idPedido, setIdPedido] = useState(() => abono?.idPedido || presetPedido?.idPedido || '');
+  const [monto, setMonto] = useState(() => abono?.monto || '');
+  const [metodoPago, setMetodoPago] = useState(() => (
+    isStaff ? abono?.metodoPago || 'TRANSFERENCIA' : 'TRANSFERENCIA'
+  ));
+  const [referencia, setReferencia] = useState(() => abono?.referencia || '');
+  const [fechaPago, setFechaPago] = useState(() => (
+    abono?.fechaPago ? String(abono.fechaPago).slice(0, 10) : ''
+  ));
+  const [observaciones, setObservaciones] = useState(() => abono?.observaciones || '');
   const [archivo, setArchivo] = useState(null);
   const [confirmar, setConfirmar] = useState(false);
-  const [pedido, setPedido] = useState(null);
-  const [abonosPedido, setAbonosPedido] = useState([]);
+  const [pedido, setPedido] = useState(presetPedido);
+  const [abonosPedido, setAbonosPedido] = useState(presetAbonos);
   const [pedidosDisponibles, setPedidosDisponibles] = useState([]);
-  const [loadingPedidos, setLoadingPedidos] = useState(false);
-  const [loadingPedido, setLoadingPedido] = useState(false);
+  const [loadingPedidos, setLoadingPedidos] = useState(() => (
+    Boolean(isOpen && !isEditing && getPedidos && !lockPedido)
+  ));
+  const [loadingPedido, setLoadingPedido] = useState(() => (
+    Boolean(isOpen && idPedido && !lockPedido)
+  ));
   const [pedidoError, setPedidoError] = useState('');
   const [pedidosError, setPedidosError] = useState('');
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
-  const isEditing = Boolean(abono);
   const metodosPagoDisponibles = isStaff ? METODOS_PAGO_STAFF : METODOS_PAGO_CLIENTE;
-
-  useEffect(() => {
-    if (abono) {
-      setIdPedido(abono.idPedido || '');
-      setMonto(abono.monto || '');
-      setMetodoPago(isStaff ? abono.metodoPago || 'TRANSFERENCIA' : 'TRANSFERENCIA');
-      setReferencia(abono.referencia || '');
-      setFechaPago(abono.fechaPago ? String(abono.fechaPago).slice(0, 10) : '');
-      setObservaciones(abono.observaciones || '');
-      setArchivo(null);
-      setConfirmar(false);
-    } else {
-      setIdPedido(presetPedido?.idPedido || '');
-      setMonto('');
-      setMetodoPago('TRANSFERENCIA');
-      setReferencia('');
-      setFechaPago('');
-      setObservaciones('');
-      setArchivo(null);
-      setConfirmar(false);
-    }
-    setPedido(presetPedido);
-    setAbonosPedido(presetAbonos);
-    setPedidoError('');
-    setPedidosError('');
-  }, [abono, isOpen, isStaff, presetPedido, presetAbonos]);
-
-  useEffect(() => {
-    if (!metodosPagoDisponibles.includes(metodoPago)) {
-      setMetodoPago('TRANSFERENCIA');
-    }
-    if (metodoPago === 'EFECTIVO') {
-      setArchivo(null);
-    }
-  }, [metodoPago, metodosPagoDisponibles]);
 
   useEffect(() => {
     if (!isOpen || isEditing || !getPedidos || lockPedido) return;
 
     let cancelled = false;
-    setLoadingPedidos(true);
-    setPedidosError('');
 
     getPedidos()
       .then((data) => {
@@ -128,15 +99,9 @@ export const AbonoModal = ({
 
   useEffect(() => {
     if (!isOpen || !idPedido || !Number.isInteger(Number(idPedido))) return;
-    if (lockPedido && presetPedido) {
-      setPedido(presetPedido);
-      setAbonosPedido(presetAbonos);
-      return;
-    }
+    if (lockPedido) return;
 
     let cancelled = false;
-    setLoadingPedido(true);
-    setPedidoError('');
 
     Promise.all([getPedido(idPedido), getAbonosByPedido(idPedido)])
       .then(([pedidoData, abonosData]) => {
@@ -157,7 +122,7 @@ export const AbonoModal = ({
     return () => {
       cancelled = true;
     };
-  }, [idPedido, isOpen, getPedido, getAbonosByPedido, lockPedido, presetPedido, presetAbonos]);
+  }, [idPedido, isOpen, getPedido, getAbonosByPedido, lockPedido]);
 
   const resumenPago = useMemo(() => {
     const total = Number(pedido?.totalPedido ?? pedido?.total ?? 0);
@@ -182,6 +147,21 @@ export const AbonoModal = ({
     montoNumber < resumenPago.minimo;
 
   if (!isOpen) return null;
+
+  const handlePedidoChange = (event) => {
+    const nextPedidoId = event.target.value;
+    setIdPedido(nextPedidoId);
+    setPedido(null);
+    setAbonosPedido([]);
+    setPedidoError('');
+    setLoadingPedido(Boolean(nextPedidoId));
+  };
+
+  const handleMetodoPagoChange = (event) => {
+    const nextMetodo = event.target.value;
+    setMetodoPago(nextMetodo);
+    if (nextMetodo === 'EFECTIVO') setArchivo(null);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -211,7 +191,7 @@ export const AbonoModal = ({
     try {
       await onSubmit(payload);
     } catch (error) {
-      notifications.error(error.message || 'No se pudo procesar el abono.');
+      if (!error.wasNotified) notifications.error(error.message || 'No se pudo procesar el abono.');
     }
     });
   };
@@ -240,7 +220,7 @@ export const AbonoModal = ({
               <label className={styles.inputLabel}>Pedido *</label>
               <select
                 value={idPedido}
-                onChange={event => setIdPedido(event.target.value)}
+                onChange={handlePedidoChange}
                 className={styles.inputField}
                 disabled={isSubmitting || isEditing || loadingPedidos}
                 required
@@ -291,7 +271,7 @@ export const AbonoModal = ({
             <label className={styles.inputLabel}>Metodo de pago *</label>
             <select
               value={metodoPago}
-              onChange={event => setMetodoPago(event.target.value)}
+              onChange={handleMetodoPagoChange}
               className={styles.inputField}
               required
             >
@@ -353,7 +333,11 @@ export const AbonoModal = ({
           </div>
           </section>
 
-          {isEditing && abono.origenRegistro?.includes('OCR') && (
+          {isEditing && (
+            abono.origenAnalisis === 'FRONTEND'
+            || abono.montoDetectadoOcr != null
+            || abono.referenciaDetectadaOcr
+          ) && (
             <div className={styles.paymentSummary}>
               <div className={styles.paymentSummaryItem}>
                 <span>Monto detectado</span>

@@ -1,24 +1,28 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { FileSearch, FileText, Upload, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  FileSearch,
+  FileText,
+  Image as ImageIcon,
+  Upload,
+  X,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
+import { formatCalendarDate, formatDate } from '../../../core/utils/fechaFormato';
+import { formatMoneyCOP } from '../../../core/utils/formatters';
 import { notifications } from '../../../core/utils/notifications';
-import { formatDate } from '../../../core/utils/fechaFormato';
+import {
+  createManualReceiptAnalysis,
+  createReceiptAnalysisSession,
+} from '../../sales/abonos/application/receiptAnalysis.service';
 import { abonoRepository } from '../../sales/abonos/infrastructure/abono.repository';
 import { ReceiptPreviewModal } from '../../sales/abonos/presentation/ReceiptPreviewModal';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-const formatMoney = value => (
-  value == null || value === ''
-    ? 'Pendiente de revision'
-    : new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0,
-    }).format(Number(value))
-);
+const formatMoney = value => formatMoneyCOP(value, 'Pendiente de revision');
 
 const paymentStatusLabel = {
   PENDIENTE: 'Pendiente de revision',
@@ -26,62 +30,204 @@ const paymentStatusLabel = {
   RECHAZADO: 'Rechazado',
 };
 
+const normalizeDetectedData = (data, fallback) => {
+  const source = data || fallback || createManualReceiptAnalysis();
+  return {
+    montoDetectado: source.monto ?? source.montoDetectado ?? null,
+    referenciaDetectada: source.referencia ?? source.referenciaDetectada ?? null,
+    fechaDetectada: source.fecha ?? source.fechaDetectada ?? null,
+    bancoDetectado: source.banco ?? source.bancoDetectado ?? null,
+    calidadLectura: source.calidadLectura ?? null,
+    requiereRevisionManual: Boolean(source.requiereRevisionManual),
+    origenAnalisis: 'FRONTEND',
+  };
+};
+
+const isCanceled = error => error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError';
+
 export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
   const inputRef = useRef(null);
+  const analysisSessionRef = useRef(null);
+  const analysisSequenceRef = useRef(0);
+  const previewUrlRef = useRef('');
+  const mountedRef = useRef(true);
+  const requestSequenceRef = useRef(0);
+
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [result, setResult] = useState(null);
   const [receiptPayment, setReceiptPayment] = useState(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [detectedData, setDetectedData] = useState(null);
+  const [analysisStatus, setAnalysisStatus] = useState('idle');
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [observations, setObservations] = useState('');
   const { isLocked: isUploading, runLocked } = useAsyncLock();
+  const orderId = order?.id;
+  const isAnalyzing = analysisStatus === 'preparing' || analysisStatus === 'analyzing';
 
-  const loadPayments = useCallback(async () => {
-    if (!order?.id || !canView) {
+  const releasePreview = useCallback(() => {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = '';
+    if (mountedRef.current) setPreviewUrl('');
+  }, []);
+
+  const cancelCurrentAnalysis = useCallback(() => {
+    analysisSequenceRef.current += 1;
+    const session = analysisSessionRef.current;
+    analysisSessionRef.current = null;
+    if (session) void session.cancel();
+  }, []);
+
+  const clearSelectedFile = useCallback(() => {
+    cancelCurrentAnalysis();
+    releasePreview();
+    if (!mountedRef.current) return;
+    setSelectedFile(null);
+    setDetectedData(null);
+    setAnalysisStatus('idle');
+    setAnalysisProgress(0);
+    setObservations('');
+    if (inputRef.current) inputRef.current.value = '';
+  }, [cancelCurrentAnalysis, releasePreview]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      cancelCurrentAnalysis();
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, [cancelCurrentAnalysis]);
+
+  const loadPayments = useCallback(async (signal) => {
+    const requestId = ++requestSequenceRef.current;
+    if (!orderId || !canView) {
       setPayments([]);
+      setLoadError('');
       return;
     }
     setLoading(true);
+    setLoadError('');
     try {
-      setPayments(await abonoRepository.listClientByPedido(order.id));
+      const items = await abonoRepository.listClientByPedido(orderId, { signal });
+      if (signal?.aborted || requestId !== requestSequenceRef.current) return;
+      setPayments(items);
     } catch (error) {
+      if (signal?.aborted || isCanceled(error) || requestId !== requestSequenceRef.current) return;
       setPayments([]);
-      notifications.error(error.message || 'No se pudieron consultar tus abonos.');
+      setLoadError(error.message || 'No se pudieron consultar tus abonos.');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted && requestId === requestSequenceRef.current) {
+        setLoading(false);
+      }
     }
-  }, [order, canView]);
+  }, [orderId, canView]);
 
   useEffect(() => {
-    setResult(null);
-    loadPayments();
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setResult(null);
+      loadPayments(controller.signal);
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [loadPayments]);
+
+  const analyzeSelectedImage = useCallback(async (file) => {
+    const requestId = ++analysisSequenceRef.current;
+    const previousSession = analysisSessionRef.current;
+    analysisSessionRef.current = null;
+    if (previousSession) await previousSession.cancel();
+    if (!mountedRef.current || requestId !== analysisSequenceRef.current) return;
+
+    const session = createReceiptAnalysisSession();
+    analysisSessionRef.current = session;
+    setDetectedData(null);
+    setAnalysisStatus('preparing');
+    setAnalysisProgress(0);
+
+    try {
+      const analysis = await session.analyze(file, {
+        onProgress: ({ phase, progress }) => {
+          if (!mountedRef.current || requestId !== analysisSequenceRef.current) return;
+          setAnalysisStatus(phase);
+          setAnalysisProgress(progress);
+        },
+      });
+      if (!mountedRef.current || requestId !== analysisSequenceRef.current) return;
+      setDetectedData(analysis);
+      setAnalysisStatus('done');
+      setAnalysisProgress(100);
+    } catch (error) {
+      if (!mountedRef.current || requestId !== analysisSequenceRef.current || isCanceled(error)) return;
+      setDetectedData(createManualReceiptAnalysis());
+      setAnalysisStatus('error');
+      setAnalysisProgress(0);
+      notifications.warning(
+        'No pudimos identificar todos los datos. PIXEL revisara el comprobante manualmente.',
+      );
+    } finally {
+      if (analysisSessionRef.current === session) analysisSessionRef.current = null;
+    }
+  }, []);
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!(file instanceof File) || file.size <= 0) {
+      notifications.warning('Selecciona un comprobante valido antes de continuar.');
+      event.target.value = '';
+      clearSelectedFile();
+      return;
+    }
     if (!ACCEPTED_TYPES.includes(file.type)) {
       notifications.warning('Selecciona un comprobante JPG, PNG o PDF.');
       event.target.value = '';
-      setSelectedFile(null);
+      clearSelectedFile();
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
       notifications.warning('El comprobante no puede superar 10 MB.');
       event.target.value = '';
-      setSelectedFile(null);
+      clearSelectedFile();
       return;
     }
 
+    releasePreview();
     setSelectedFile(file);
+    setResult(null);
+    setObservations('');
+
+    if (file.type === 'application/pdf') {
+      cancelCurrentAnalysis();
+      setDetectedData(createManualReceiptAnalysis());
+      setAnalysisStatus('manual');
+      setAnalysisProgress(0);
+      return;
+    }
+
+    if (typeof URL.createObjectURL === 'function') {
+      const objectUrl = URL.createObjectURL(file);
+      previewUrlRef.current = objectUrl;
+      setPreviewUrl(objectUrl);
+    }
+    setDetectedData(null);
+    setAnalysisStatus('preparing');
+    setAnalysisProgress(0);
+    void analyzeSelectedImage(file);
   };
 
   const closeUpload = (force = false) => {
     if (isUploading && !force) return;
     setIsUploadOpen(false);
-    setSelectedFile(null);
-    if (inputRef.current) inputRef.current.value = '';
+    clearSelectedFile();
   };
 
   const handleUpload = async () => {
@@ -89,23 +235,52 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
       notifications.warning('Selecciona un comprobante antes de continuar.');
       return;
     }
+    if (isAnalyzing) return;
 
     await runLocked(async () => {
       try {
-        const uploadResult = await abonoRepository.uploadClientReceipt(order.id, selectedFile);
-        setResult(uploadResult);
+        const suggestions = detectedData || createManualReceiptAnalysis();
+        const uploadResult = await abonoRepository.uploadClientReceipt(
+          order.id,
+          selectedFile,
+          suggestions,
+          observations,
+        );
+        const responseData = normalizeDetectedData(
+          uploadResult?.datosDetectados,
+          suggestions,
+        );
+        setResult({
+          abono: uploadResult?.abono,
+          datosDetectados: responseData,
+        });
         await loadPayments();
 
+        if (uploadResult?.duplicado) {
+          notifications.warning(
+            'Este comprobante ya estaba registrado para el pedido. No se creo un abono duplicado.',
+          );
+          return;
+        }
+
         if (selectedFile.type === 'application/pdf') {
-          notifications.success('Comprobante recibido. El archivo requiere revision manual.');
-        } else if (uploadResult?.ocr?.requiereRevisionManual || uploadResult?.ocr?.montoDetectado == null) {
-          notifications.success('Comprobante recibido. El equipo de PIXEL revisara los datos manualmente.');
+          notifications.success(
+            'Comprobante recibido. El archivo quedo pendiente de revision manual.',
+          );
+        } else if (responseData.requiereRevisionManual || responseData.montoDetectado == null) {
+          notifications.success(
+            'Comprobante recibido. Algunos datos seran revisados manualmente por PIXEL.',
+          );
         } else {
-          notifications.success(`Comprobante recibido. Detectamos un monto de ${formatMoney(uploadResult.ocr.montoDetectado)} y quedo pendiente de confirmacion.`);
+          notifications.success(
+            `Comprobante recibido. Detectamos un monto de ${formatMoney(responseData.montoDetectado)} y quedo pendiente de confirmacion.`,
+          );
         }
         closeUpload(true);
       } catch (error) {
-        notifications.error(error.message || 'No se pudo procesar el comprobante.');
+        if (!error.wasNotified) {
+          notifications.error(error.message || 'No se pudo enviar el comprobante.');
+        }
       }
     });
   };
@@ -114,8 +289,10 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
     () => abonoRepository.getClientReceipt(receiptPayment?.idAbono),
     [receiptPayment?.idAbono],
   );
+
   if (!order) return null;
-  const canReceivePayment = !['ANULADO', 'ENTREGADO'].includes(order.status) && Number(order.balance || 0) > 0;
+  const canReceivePayment = !['ANULADO', 'ENTREGADO'].includes(order.status)
+    && Number(order.balance || 0) > 0;
 
   return (
     <section className="dashboard-panel dashboard-client-payments">
@@ -123,7 +300,7 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
         <div>
           <span className="dashboard-eyebrow">Abonos</span>
           <h2>Pagos de {order.number}</h2>
-          <p>Consulta tus pagos y envía el comprobante de una transferencia.</p>
+          <p>Consulta tus pagos y envia el comprobante de una transferencia.</p>
         </div>
         {canUpload && canReceivePayment && (
           <button
@@ -144,13 +321,16 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
         <div><span>Estado de pago</span><strong>{Number(order.balance || 0) <= 0 ? 'Pago completo' : order.paymentStatus}</strong></div>
       </div>
 
-      {result?.ocr && (
-        <div className="dashboard-ocr-result">
-          <strong>Datos detectados</strong>
-          <span>Monto detectado: {formatMoney(result.ocr.montoDetectado)}</span>
-          <span>Referencia: {result.ocr.referenciaDetectada || 'Pendiente de revision'}</span>
-          <span>Banco o plataforma: {result.ocr.bancoDetectado || 'No identificado'}</span>
-          <small>Estado: Pendiente de revisión por PIXEL.</small>
+      {result?.datosDetectados && (
+        <div className="dashboard-detected-result">
+          <CheckCircle2 size={19} />
+          <div>
+            <strong>Comprobante pendiente de confirmacion</strong>
+            <span>Monto detectado: {formatMoney(result.datosDetectados.montoDetectado)}</span>
+            <span>Referencia detectada: {result.datosDetectados.referenciaDetectada || 'No identificada'}</span>
+            <span>Banco o plataforma: {result.datosDetectados.bancoDetectado || 'No identificado'}</span>
+            <small>PIXEL revisara estos datos antes de confirmar el pago.</small>
+          </div>
         </div>
       )}
 
@@ -158,8 +338,15 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
         <p className="dashboard-client-payment-empty">No tienes permiso para consultar el historial de abonos.</p>
       ) : loading ? (
         <p className="dashboard-client-payment-empty">Consultando abonos...</p>
+      ) : loadError ? (
+        <div className="dashboard-client-payment-empty">
+          <p>{loadError}</p>
+          <button type="button" onClick={() => loadPayments()}>
+            Reintentar
+          </button>
+        </div>
       ) : payments.length === 0 ? (
-        <p className="dashboard-client-payment-empty">Todavía no hay abonos registrados para este pedido.</p>
+        <p className="dashboard-client-payment-empty">Todavia no hay abonos registrados para este pedido.</p>
       ) : (
         <div className="dashboard-client-payment-list">
           {payments.map(payment => (
@@ -189,7 +376,7 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
         </div>
       )}
 
-      <small className="dashboard-upload-help">Archivos permitidos: JPG, PNG o PDF. Tamaño máximo: 10 MB.</small>
+      <small className="dashboard-upload-help">Archivos permitidos: JPG, PNG o PDF. Tamano maximo: 10 MB.</small>
 
       {isUploadOpen && (
         <div className="dashboard-receipt-upload-overlay" role="presentation">
@@ -203,47 +390,101 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
               <div>
                 <span className="dashboard-eyebrow">Transferencia</span>
                 <h3 id="receipt-upload-title">Subir comprobante</h3>
-                <p>Selecciona el archivo y revisa sus datos antes de enviarlo.</p>
+                <p>Selecciona el archivo, revisa los datos y luego envialo.</p>
               </div>
               <button type="button" onClick={() => closeUpload()} disabled={isUploading} aria-label="Cerrar">
                 <X size={19} />
               </button>
             </div>
 
-            <label className="dashboard-receipt-file-picker">
-              <input
-                ref={inputRef}
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                onChange={handleFileChange}
-                disabled={isUploading}
-              />
-              <Upload size={22} />
-              <strong>{selectedFile ? 'Cambiar comprobante' : 'Seleccionar comprobante'}</strong>
-              <small>JPG, PNG o PDF. Maximo 10 MB.</small>
-            </label>
-
-            {selectedFile && (
-              <div className="dashboard-receipt-selected-file">
-                <FileText size={22} />
-                <div>
-                  <strong>{selectedFile.name}</strong>
-                  <span>
-                    {selectedFile.type || 'Tipo no identificado'} · {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedFile(null);
-                    if (inputRef.current) inputRef.current.value = '';
-                  }}
+            <div className="dashboard-receipt-upload-body">
+              <label className="dashboard-receipt-file-picker">
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                  onChange={handleFileChange}
                   disabled={isUploading}
-                >
-                  Quitar
-                </button>
-              </div>
-            )}
+                />
+                <Upload size={22} />
+                <strong>{selectedFile ? 'Cambiar archivo' : 'Seleccionar comprobante'}</strong>
+                <small>JPG, PNG o PDF. Maximo 10 MB.</small>
+              </label>
+
+              {selectedFile && (
+                <div className="dashboard-receipt-selected-file">
+                  {selectedFile.type === 'application/pdf' ? <FileText size={22} /> : <ImageIcon size={22} />}
+                  <div>
+                    <strong>{selectedFile.name}</strong>
+                    <span>
+                      {selectedFile.type || 'Tipo no identificado'} · {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                  </div>
+                  <button type="button" onClick={clearSelectedFile} disabled={isUploading}>
+                    Quitar
+                  </button>
+                </div>
+              )}
+
+              {previewUrl && (
+                <div className="dashboard-receipt-image-preview">
+                  <img src={previewUrl} alt="Vista previa del comprobante" />
+                </div>
+              )}
+
+              {isAnalyzing && (
+                <div className="dashboard-receipt-analysis-status" role="status">
+                  <strong>
+                    {analysisStatus === 'preparing'
+                      ? 'Preparando comprobante...'
+                      : 'Analizando comprobante...'}
+                  </strong>
+                  <div aria-hidden="true">
+                    <span style={{ width: `${analysisProgress}%` }} />
+                  </div>
+                  <small>{analysisProgress > 0 ? `${analysisProgress}%` : 'Esto puede tardar unos segundos.'}</small>
+                </div>
+              )}
+
+              {selectedFile && !isAnalyzing && detectedData && (
+                <section className={`dashboard-receipt-detected ${detectedData.requiereRevisionManual ? 'manual' : ''}`}>
+                  <div className="dashboard-receipt-detected-title">
+                    {detectedData.requiereRevisionManual
+                      ? <AlertTriangle size={19} />
+                      : <CheckCircle2 size={19} />}
+                    <div>
+                      <strong>Datos detectados</strong>
+                      <span>
+                        {detectedData.requiereRevisionManual
+                          ? 'Requiere revision manual'
+                          : 'Pendiente de confirmacion'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="dashboard-receipt-detected-grid">
+                    <div><span>Monto detectado</span><strong>{formatMoney(detectedData.montoDetectado)}</strong></div>
+                    <div><span>Referencia detectada</span><strong>{detectedData.referenciaDetectada || 'No identificada'}</strong></div>
+                    <div><span>Fecha detectada</span><strong>{detectedData.fechaDetectada ? formatCalendarDate(detectedData.fechaDetectada) : 'No identificada'}</strong></div>
+                    <div><span>Banco o plataforma</span><strong>{detectedData.bancoDetectado || 'No identificado'}</strong></div>
+                  </div>
+                  <p>Los datos detectados seran revisados por PIXEL antes de confirmar el pago.</p>
+                </section>
+              )}
+
+              {selectedFile && !isAnalyzing && (
+                <label className="dashboard-receipt-observations">
+                  <span>Observaciones opcionales</span>
+                  <textarea
+                    rows={2}
+                    maxLength={500}
+                    value={observations}
+                    onChange={event => setObservations(event.target.value)}
+                    placeholder="Agrega una aclaracion para el equipo de PIXEL."
+                    disabled={isUploading}
+                  />
+                </label>
+              )}
+            </div>
 
             <div className="dashboard-receipt-upload-actions">
               <button type="button" onClick={() => closeUpload()} disabled={isUploading}>
@@ -253,9 +494,9 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
                 type="button"
                 className="primary"
                 onClick={handleUpload}
-                disabled={!selectedFile || isUploading}
+                disabled={!selectedFile || isAnalyzing || isUploading}
               >
-                {isUploading ? 'Analizando comprobante...' : 'Enviar comprobante'}
+                {isUploading ? 'Enviando comprobante...' : 'Enviar comprobante'}
               </button>
             </div>
           </div>

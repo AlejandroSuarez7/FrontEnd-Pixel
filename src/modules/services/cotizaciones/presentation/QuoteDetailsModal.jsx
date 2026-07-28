@@ -37,7 +37,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
 
   const details = useMemo(() => (
     Array.isArray(quote?.detalles) ? quote.detalles : []
-  ), [quote?.detalles]);
+  ), [quote]);
 
   const searchableDetails = useMemo(() => {
     const term = productSearch.trim().toLowerCase();
@@ -139,7 +139,9 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
             <div className={styles.quoteDetailsSummaryItem}>
               <span>Cliente</span>
               <strong>{quote.cliente?.nombre || 'Cliente no registrado'}</strong>
-              <small>{clienteContacto.join(' | ') || 'Sin contacto registrado'}</small>
+              <small title={clienteContacto.join(' | ') || undefined}>
+                {clienteContacto.join(' | ') || 'Sin contacto registrado'}
+              </small>
             </div>
             <div className={styles.quoteDetailsSummaryItem}>
               <span>Productos cotizados</span>

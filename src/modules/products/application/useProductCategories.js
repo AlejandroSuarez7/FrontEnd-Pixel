@@ -1,38 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPaginationMeta } from '../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../core/hooks/useLatestListRequest';
 import { categoryRepository } from '../infrastructure/category.repository';
 
 export const useProductCategories = (filters = {}) => {
-  const { page, limit, search, sortBy, order } = filters;
-  const listFilters = useMemo(() => ({
-    page,
-    limit,
-    search,
-    sortBy,
-    order,
-  }), [page, limit, search, sortBy, order]);
-  const [categories, setCategories] = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchCategories = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await categoryRepository.list(listFilters);
-      setCategories(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error('Error al listar categorias de producto:', error);
-      setCategories([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  }, [listFilters]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchCategories,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => categoryRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   const createCategory = async (payload) => {
     await categoryRepository.create(payload);
@@ -55,9 +37,11 @@ export const useProductCategories = (filters = {}) => {
   };
 
   return {
-    categories,
-    paginationMeta,
+    categories: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     createCategory,
     updateCategory,
     deactivateCategory,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toCalendarDateInput } from '../../../../core/utils/fechaFormato';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import styles from './pedidos.module.css';
@@ -8,7 +9,7 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido }) => {
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   useEffect(() => {
-    setFechaEntregaEstimada(pedido?.fechaEntregaEstimada?.slice(0, 10) || '');
+    setFechaEntregaEstimada(toCalendarDateInput(pedido?.fechaEntregaEstimada));
   }, [pedido, isOpen]);
 
   if (!isOpen || !pedido) return null;

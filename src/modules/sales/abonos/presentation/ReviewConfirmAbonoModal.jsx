@@ -3,14 +3,15 @@ import { Download, ExternalLink, FileText, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { createTemporaryObjectUrl } from '../../../../core/services/protectedFileService';
-import { formatDate } from '../../../../core/utils/fechaFormato';
+import { formatCalendarDate, toCalendarDateInput } from '../../../../core/utils/fechaFormato';
 import { notifications } from '../../../../core/utils/notifications';
+import { formatPaymentOrigin } from '../../../../core/utils/paymentOrigin';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { abonoRepository } from '../infrastructure/abono.repository';
 import './AbonosPage.css';
 
 const formatMoney = (value, fallback = 'No identificado') => (
-  value === null || value === undefined || value === ''
+  value === null || value === undefined || value === '' || !Number.isFinite(Number(value))
     ? fallback
     : new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -19,14 +20,13 @@ const formatMoney = (value, fallback = 'No identificado') => (
     }).format(Number(value))
 );
 
-const toInputDate = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
-  return date.toISOString().slice(0, 10);
-};
-
 const normalizeText = value => String(value || '').trim();
+const formatReadingQuality = (value) => {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue)
+    ? `${Math.round(Math.max(0, Math.min(100, numericValue)))}%`
+    : 'No especificada';
+};
 
 export const ReviewConfirmAbonoModal = ({
   isOpen,
@@ -44,18 +44,53 @@ export const ReviewConfirmAbonoModal = ({
   const [observaciones, setObservaciones] = useState('');
   const [preview, setPreview] = useState(null);
   const [previewError, setPreviewError] = useState('');
+  const [detailAbono, setDetailAbono] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [detailError, setDetailError] = useState('');
+  const [detailRequestKey, setDetailRequestKey] = useState(0);
+  const currentAbono = detailAbono || abono;
 
   useEffect(() => {
-    if (!isOpen || !abono) return;
-    setMonto(abono.monto ?? abono.montoDetectadoOcr ?? '');
-    setReferencia(abono.referencia || abono.referenciaDetectadaOcr || '');
-    setFechaPago(toInputDate(abono.fechaPago || abono.fechaDetectadaOcr));
-    setMetodoPago(abono.metodoPago || 'TRANSFERENCIA');
-    setObservaciones(abono.observaciones || '');
-  }, [abono, isOpen]);
+    if (!isOpen || !abono?.idAbono) {
+      setDetailAbono(null);
+      setDetailError('');
+      setLoadingDetail(false);
+      return undefined;
+    }
+
+    let active = true;
+    setDetailAbono(null);
+    setDetailError('');
+    setLoadingDetail(true);
+
+    abonoRepository.getById(abono.idAbono)
+      .then(detail => {
+        if (active) setDetailAbono(detail);
+      })
+      .catch(error => {
+        if (active) setDetailError(error.message || 'No se pudo cargar el detalle completo del abono.');
+      })
+      .finally(() => {
+        if (active) setLoadingDetail(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [abono?.idAbono, detailRequestKey, isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !abono?.comprobanteDisponible) {
+    if (!isOpen || !currentAbono) return;
+    setMonto(currentAbono.monto ?? currentAbono.montoDetectadoOcr ?? '');
+    setReferencia(currentAbono.referencia || currentAbono.referenciaDetectadaOcr || '');
+    setFechaPago(toCalendarDateInput(currentAbono.fechaPago || currentAbono.fechaDetectadaOcr));
+    setMetodoPago(currentAbono.metodoPago || 'TRANSFERENCIA');
+    setObservaciones(currentAbono.observaciones || '');
+  }, [currentAbono, isOpen]);
+
+  useEffect(() => {
+    const detailRequestResolved = Boolean(detailAbono || detailError);
+    if (!isOpen || !detailRequestResolved || !currentAbono?.comprobanteDisponible) {
       setPreview(null);
       setPreviewError('');
       return undefined;
@@ -66,7 +101,7 @@ export const ReviewConfirmAbonoModal = ({
     setPreview(null);
     setPreviewError('');
 
-    abonoRepository.getAdminReceipt(abono.idAbono)
+    abonoRepository.getAdminReceipt(currentAbono.idAbono)
       .then(({ blob, mimeType }) => {
         if (!active) return;
         const temporary = createTemporaryObjectUrl(blob);
@@ -74,7 +109,7 @@ export const ReviewConfirmAbonoModal = ({
         setPreview({
           url: temporary.objectUrl,
           mimeType,
-          fileName: abono.nombreOriginalComprobante || `comprobante-${abono.idAbono}`,
+          fileName: currentAbono.nombreOriginalComprobante || `comprobante-${currentAbono.idAbono}`,
         });
       })
       .catch(error => {
@@ -85,26 +120,33 @@ export const ReviewConfirmAbonoModal = ({
       active = false;
       releaseUrl?.();
     };
-  }, [abono, isOpen]);
+  }, [currentAbono, detailAbono, detailError, isOpen]);
 
   const updatePayload = useMemo(() => {
-    if (!abono) return null;
+    if (!currentAbono) return null;
     const payload = {};
     const amountNumber = Number(monto);
 
-    if (abono.monto == null || Number(abono.monto) !== amountNumber) payload.monto = amountNumber;
-    if (normalizeText(abono.referencia) !== normalizeText(referencia)) payload.referencia = referencia;
-    if (toInputDate(abono.fechaPago) !== fechaPago) payload.fechaPago = fechaPago;
-    if (normalizeText(abono.metodoPago) !== normalizeText(metodoPago)) payload.metodoPago = metodoPago;
-    if (normalizeText(abono.observaciones) !== normalizeText(observaciones)) payload.observaciones = observaciones;
+    if (currentAbono.monto == null || Number(currentAbono.monto) !== amountNumber) payload.monto = amountNumber;
+    if (normalizeText(currentAbono.referencia) !== normalizeText(referencia)) payload.referencia = referencia;
+    if (toCalendarDateInput(currentAbono.fechaPago) !== fechaPago) payload.fechaPago = fechaPago;
+    if (normalizeText(currentAbono.metodoPago) !== normalizeText(metodoPago)) payload.metodoPago = metodoPago;
+    if (normalizeText(currentAbono.observaciones) !== normalizeText(observaciones)) payload.observaciones = observaciones;
 
     return payload;
-  }, [abono, fechaPago, metodoPago, monto, observaciones, referencia]);
+  }, [currentAbono, fechaPago, metodoPago, monto, observaciones, referencia]);
 
   if (!isOpen || !abono) return null;
 
-  const pedido = abono.pedido || {};
+  const pedido = currentAbono.pedido || {};
   const cliente = pedido.cliente || {};
+  const definitiveData = currentAbono.datosDefinitivos || {};
+  const hasDefinitiveData = [
+    definitiveData.monto,
+    definitiveData.referencia,
+    definitiveData.fecha,
+  ].some(value => value !== null && value !== undefined && value !== '');
+  const canProcess = !loadingDetail && !detailError;
   const isImage = preview?.mimeType?.startsWith('image/');
   const isPdf = preview?.mimeType === 'application/pdf';
 
@@ -129,9 +171,9 @@ export const ReviewConfirmAbonoModal = ({
       try {
         const hasChanges = Object.keys(updatePayload || {}).length > 0;
         if (hasChanges) {
-          await abonoRepository.update(abono.idAbono, updatePayload);
+          await abonoRepository.update(currentAbono.idAbono, updatePayload);
         }
-        await abonoRepository.confirm(abono.idAbono, {
+        await abonoRepository.confirm(currentAbono.idAbono, {
           referencia,
           observaciones,
         });
@@ -147,7 +189,7 @@ export const ReviewConfirmAbonoModal = ({
         );
         onClose();
       } catch (error) {
-        notifications.error(error.message || 'No pudimos completar la confirmacion.');
+        if (!error.wasNotified) notifications.error(error.message || 'No pudimos completar la confirmacion.');
       }
     });
   };
@@ -155,7 +197,7 @@ export const ReviewConfirmAbonoModal = ({
   const handleReject = async () => {
     const result = await confirm({
       title: 'Rechazar abono',
-      message: `Indica el motivo para rechazar el abono #${abono.idAbono}.`,
+      message: `Indica el motivo para rechazar el abono #${currentAbono.idAbono}.`,
       confirmText: 'Rechazar',
       variant: 'danger',
       input: true,
@@ -166,12 +208,12 @@ export const ReviewConfirmAbonoModal = ({
 
     await runLocked(async () => {
       try {
-        await abonoRepository.reject(abono.idAbono, result.value);
+        await abonoRepository.reject(currentAbono.idAbono, result.value);
         await onCompleted?.();
         notifications.success('Abono rechazado.');
         onClose();
       } catch (error) {
-        notifications.error(error.message || 'No se pudo rechazar el abono.');
+        if (!error.wasNotified) notifications.error(error.message || 'No se pudo rechazar el abono.');
       }
     });
   };
@@ -181,7 +223,7 @@ export const ReviewConfirmAbonoModal = ({
       <div className="abonos-review-modal" role="dialog" aria-modal="true" aria-labelledby="review-payment-title">
         <header className="abonos-review-header">
           <div>
-            <span className="abonos-breadcrumb">Pedido #{abono.idPedido}</span>
+            <span className="abonos-breadcrumb">Pedido #{currentAbono.idPedido}</span>
             <h3 id="review-payment-title">Revisar y confirmar abono</h3>
             <p>Verifica que los datos del comprobante sean correctos antes de confirmar el pago.</p>
           </div>
@@ -191,11 +233,20 @@ export const ReviewConfirmAbonoModal = ({
         </header>
 
         <div className="abonos-review-body">
+          {loadingDetail && <p className="abonos-review-detail-state">Cargando informacion del abono...</p>}
+          {detailError && (
+            <div className="abonos-review-detail-state" role="alert">
+              <span>{detailError}</span>
+              <button type="button" onClick={() => setDetailRequestKey(current => current + 1)}>
+                Reintentar
+              </button>
+            </div>
+          )}
           <section className="abonos-review-summary">
-            <div><span>Pedido</span><strong>#{abono.idPedido}</strong></div>
+            <div><span>Pedido</span><strong>#{currentAbono.idPedido}</strong></div>
             <div><span>Cliente</span><strong>{cliente.nombre || 'Cliente no especificado'}</strong></div>
             <div><span>Total</span><strong>{formatMoney(pedido.total)}</strong></div>
-            <div><span>Confirmado</span><strong>{formatMoney(pedido.totalPagado, '$0')}</strong></div>
+            <div><span>Confirmado</span><strong>{formatMoney(pedido.totalPagadoConfirmado ?? pedido.totalPagado, '$0')}</strong></div>
             <div><span>Saldo pendiente</span><strong>{formatMoney(pedido.saldoPendiente)}</strong></div>
             <div><span>Estado de pago</span><strong>{pedido.estadoPago || 'PENDIENTE'}</strong></div>
           </section>
@@ -204,11 +255,11 @@ export const ReviewConfirmAbonoModal = ({
             <section className="abonos-review-receipt">
               <div className="abonos-review-section-title">
                 <div><span>Comprobante</span><h4>Archivo enviado</h4></div>
-                {abono.requiereRevisionManual && <strong>Revision manual</strong>}
+                {currentAbono.requiereRevisionManual && <strong>Revision manual</strong>}
               </div>
 
-              {!abono.comprobanteDisponible && <p>Comprobante no disponible.</p>}
-              {abono.comprobanteDisponible && !preview && !previewError && <p>Cargando comprobante...</p>}
+              {!currentAbono.comprobanteDisponible && <p>Comprobante no disponible.</p>}
+              {currentAbono.comprobanteDisponible && !preview && !previewError && <p>Cargando comprobante...</p>}
               {previewError && <p>{previewError}</p>}
               {isImage && <img src={preview.url} alt="Comprobante de pago" />}
               {isPdf && (
@@ -231,13 +282,40 @@ export const ReviewConfirmAbonoModal = ({
               <section className="abonos-detected-data">
                 <div className="abonos-review-section-title"><div><span>Referencia</span><h4>Datos detectados</h4></div></div>
                 <div className="abonos-detected-grid">
-                  <div><span>Monto detectado</span><strong>{formatMoney(abono.montoDetectadoOcr)}</strong></div>
-                  <div><span>Referencia detectada</span><strong>{abono.referenciaDetectadaOcr || 'No identificada'}</strong></div>
-                  <div><span>Fecha detectada</span><strong>{abono.fechaDetectadaOcr ? formatDate(abono.fechaDetectadaOcr) : 'No identificada'}</strong></div>
-                  <div><span>Banco o plataforma</span><strong>{abono.bancoDetectadoOcr || 'No identificado'}</strong></div>
+                  <div><span>Monto detectado</span><strong>{formatMoney(currentAbono.montoDetectadoOcr)}</strong></div>
+                  <div><span>Referencia detectada</span><strong>{currentAbono.referenciaDetectadaOcr || 'No identificada'}</strong></div>
+                  <div><span>Fecha detectada</span><strong>{currentAbono.fechaDetectadaOcr ? formatCalendarDate(currentAbono.fechaDetectadaOcr) : 'No identificada'}</strong></div>
+                  <div><span>Banco o plataforma</span><strong>{currentAbono.bancoDetectadoOcr || 'No identificado'}</strong></div>
+                  <div>
+                    <span>Calidad de lectura</span>
+                    <strong>
+                      {formatReadingQuality(currentAbono.calidadLectura ?? currentAbono.confianzaOcr)}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Estado de revision</span>
+                    <strong>{currentAbono.requiereRevisionManual ? 'Revision manual' : 'Pendiente de confirmacion'}</strong>
+                  </div>
+                  <div>
+                    <span>Origen</span>
+                    <strong>{formatPaymentOrigin(currentAbono)}</strong>
+                  </div>
                 </div>
-                {abono.requiereRevisionManual && <p>No pudimos leer completamente el comprobante. Revisa cada dato antes de confirmar.</p>}
+                {currentAbono.requiereRevisionManual && <p>No pudimos leer completamente el comprobante. Revisa cada dato antes de confirmar.</p>}
               </section>
+
+              {hasDefinitiveData && (
+                <section className="abonos-detected-data">
+                  <div className="abonos-review-section-title">
+                    <div><span>Registro</span><h4>Datos definitivos existentes</h4></div>
+                  </div>
+                  <div className="abonos-detected-grid">
+                    <div><span>Monto definitivo</span><strong>{formatMoney(definitiveData.monto)}</strong></div>
+                    <div><span>Referencia definitiva</span><strong>{definitiveData.referencia || 'No especificada'}</strong></div>
+                    <div><span>Fecha definitiva</span><strong>{definitiveData.fecha ? formatCalendarDate(definitiveData.fecha) : 'No especificada'}</strong></div>
+                  </div>
+                </section>
+              )}
 
               <section className="abonos-confirm-data">
                 <div className="abonos-review-section-title"><div><span>Confirmacion</span><h4>Datos que se confirmaran</h4></div></div>
@@ -259,8 +337,8 @@ export const ReviewConfirmAbonoModal = ({
 
         <footer className="abonos-review-footer">
           <button type="button" onClick={onClose} disabled={isSubmitting}>Cancelar</button>
-          {canReject && <button type="button" className="danger" onClick={handleReject} disabled={isSubmitting}>Rechazar</button>}
-          <button type="submit" form="review-payment-form" className="primary" disabled={isSubmitting}>
+          {canReject && <button type="button" className="danger" onClick={handleReject} disabled={isSubmitting || !canProcess}>Rechazar</button>}
+          <button type="submit" form="review-payment-form" className="primary" disabled={isSubmitting || !canProcess}>
             {isSubmitting ? 'Confirmando...' : 'Confirmar abono'}
           </button>
         </footer>

@@ -967,3 +967,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+.disenos-correction-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 10px 12px;
+  border: 1px solid #ffd8a8;
+  border-radius: 7px;
+  background: #fff8eb;
+  color: #7a4b00;
+  font-size: 12px;
+}
+
+.disenos-correction-version strong {
+  color: #b45f00;
+}
+
+.disenos-correction-version a {
+  color: #5b43d6;
+  font-weight: 700;
+}

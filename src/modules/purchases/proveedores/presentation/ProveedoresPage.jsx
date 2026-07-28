@@ -56,10 +56,9 @@ const styles = {
 };
 
 export const ProveedoresPage = () => {
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const confirm = useConfirm();
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const isAdmin = userRole === 'Admin';
 
   const [filters, setFilters] = useState({ search: '', estado: '' });
@@ -71,6 +70,8 @@ export const ProveedoresPage = () => {
   const {
     proveedores,
     loading,
+    error,
+    refetch,
     handleCreate,
     handleUpdate,
     handleDeactivate,
@@ -203,6 +204,11 @@ export const ProveedoresPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando proveedores...</p>
+        ) : error && proveedores.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>{error.message || 'No se pudieron cargar los proveedores.'}</p>
+            <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
+          </div>
         ) : proveedores.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron proveedores.</p>
         ) : (

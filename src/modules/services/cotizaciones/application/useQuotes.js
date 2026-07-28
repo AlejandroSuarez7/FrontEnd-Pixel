@@ -1,33 +1,22 @@
-// cotizaciones/application/useQuotes.js
-import { useState, useEffect, useCallback } from 'react';
 import { createPaginationMeta } from '../../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { QuoteApiRepository } from '../infrastructure/quote.repository';
 
 const quoteRepository = new QuoteApiRepository();
 
 export const useQuotes = (filters = {}) => {
-  const [quotes, setQuotes]   = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchQuotes = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await quoteRepository.list(filters);
-      setQuotes(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error('Error en useQuotes al listar:', error);
-      setQuotes([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  }, [JSON.stringify(filters)]);
-
-  useEffect(() => {
-    fetchQuotes();
-  }, [fetchQuotes]);
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchQuotes,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => quoteRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   // Crea una cotización nueva (cliente o staff)
   const handleCreate = async (quoteData, isStaff = false) => {
@@ -100,9 +89,11 @@ export const useQuotes = (filters = {}) => {
   };
 
   return {
-    quotes,
-    paginationMeta,
+    quotes: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     refetch:         fetchQuotes,
     handleCreate,
     handleUpdate,

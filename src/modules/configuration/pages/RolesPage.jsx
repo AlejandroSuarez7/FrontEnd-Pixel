@@ -1,6 +1,7 @@
 // presentation/pages/RolesPage.jsx
 import { useState } from 'react';
 import { Pagination } from '../../../core/components/Pagination';
+import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -15,17 +16,20 @@ const RolesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const confirm = useConfirm();
+  const debouncedSearch = useDebounce(searchTerm, 350);
   const {
     roles,
     paginationMeta,
     loading,
+    error,
     handleCreate,
     handleUpdate,
     handleHardDelete,
+    refreshRoles,
   } = useRoles({
     page: currentPage,
     limit: DEFAULT_PAGE_SIZE,
-    search: searchTerm,
+    search: debouncedSearch,
     sortBy: 'nombre',
     order: 'asc',
   });
@@ -125,6 +129,13 @@ const RolesPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Sincronizando roles del sistema...</p>
+        ) : error && roles.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar los roles.</p>
+            <button type="button" className={styles.primaryButton} onClick={refreshRoles}>
+              Reintentar
+            </button>
+          </div>
         ) : roles.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron roles registrados.</p>
         ) : (
