@@ -21,7 +21,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { notifications } from '../../../../core/utils/notifications';
 import { formatCalendarDate, formatDate } from '../../../../core/utils/fechaFormato';
-import { getDesignCoverageInfo } from '../../../../core/utils/designCoverage';
+import {
+  canRegisterDesignClientResponse,
+  getDesignCoverageInfo,
+} from '../../../../core/utils/designCoverage';
 import { formatPaymentOrigin } from '../../../../core/utils/paymentOrigin';
 import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
@@ -32,6 +35,7 @@ import { ReceiptPreviewModal } from '../../abonos/presentation/ReceiptPreviewMod
 import { ReviewConfirmAbonoModal } from '../../abonos/presentation/ReviewConfirmAbonoModal';
 import { disenoRepository } from '../../../production/disenos/infrastructure/diseno.repository';
 import { DisenoModal } from '../../../production/disenos/presentation/DisenoModal';
+import { DesignClientResponseModal } from '../../../production/disenos/presentation/DesignClientResponseModal';
 import { pedidoRepository } from '../infrastructure/pedido.repository';
 import { RegisterClientDesignModal } from './RegisterClientDesignModal';
 import './pedido-expediente.css';
@@ -111,9 +115,13 @@ const DesignCoverageCard = ({
   canRegisterClientFile,
   onCreate,
   onRegisterClientFile,
-  onReview,
+  canApproveByClient,
+  canRejectByClient,
+  onApproveByClient,
+  onRejectByClient,
 }) => {
   const coverage = getDesignCoverageInfo(detail);
+  const canRegisterResponse = canRegisterDesignClientResponse(coverage.design);
   return (
     <article className="expediente-design-card">
       <div className="expediente-design-card-heading">
@@ -138,7 +146,16 @@ const DesignCoverageCard = ({
             Registrar diseno recibido
           </button>
         )}
-        {canManage && coverage.canReview && !coverage.fileUrl && <button className="expediente-button secondary" type="button" onClick={onReview}>Revisar diseno</button>}
+        {canRegisterResponse && canApproveByClient && (
+          <button className="expediente-button success" type="button" onClick={onApproveByClient}>
+            Aprobar en nombre del cliente
+          </button>
+        )}
+        {canRegisterResponse && canRejectByClient && (
+          <button className="expediente-button danger" type="button" onClick={onRejectByClient}>
+            Solicitar correcciones
+          </button>
+        )}
       </div>
     </article>
   );
@@ -156,6 +173,11 @@ export const PedidoExpedientePage = () => {
   const [showAbonoModal, setShowAbonoModal] = useState(false);
   const [designModalContext, setDesignModalContext] = useState(null);
   const [clientDesignDetail, setClientDesignDetail] = useState(null);
+  const [designResponseModal, setDesignResponseModal] = useState({
+    open: false,
+    mode: 'approve',
+    diseno: null,
+  });
 
   const {
     data: expediente,
@@ -233,7 +255,58 @@ export const PedidoExpedientePage = () => {
       notifications.info(coverage?.message || 'Este producto no admite un nuevo diseno.');
       return;
     }
-    setDesignModalContext({ detailId: detail?.idDetallePedido || '' });
+    setDesignModalContext({
+      detailId: detail?.idDetallePedido == null ? '' : String(detail.idDetallePedido),
+      detail: detail || null,
+    });
+  };
+
+  const openDesignResponseModal = (mode, detail) => {
+    const design = getDesignCoverageInfo(detail).design;
+    if (!canRegisterDesignClientResponse(design)) {
+      notifications.info('Este diseno ya no esta pendiente de respuesta del cliente.');
+      return;
+    }
+    setDesignResponseModal({
+      open: true,
+      mode,
+      diseno: {
+        ...design,
+        idPedido: design.idPedido || pedido.idPedido,
+        pedido: {
+          ...pedido,
+          cliente: client,
+        },
+        detallePedido: design.detallePedido || detail,
+      },
+    });
+  };
+
+  const handleDesignClientResponse = async ({ medio, observaciones }) => {
+    const design = designResponseModal.diseno;
+    if (!design) return;
+
+    try {
+      const response = designResponseModal.mode === 'reject'
+        ? await disenoRepository.rejectByClientAdmin(design.idDiseno, {
+          medioRespuesta: medio,
+          observacionesCliente: observaciones,
+        })
+        : await disenoRepository.approveByClientAdmin(design.idDiseno, {
+          medioAprobacion: medio,
+          observaciones,
+        });
+
+      setDesignResponseModal({ open: false, mode: 'approve', diseno: null });
+      await loadExpediente();
+      notifications.success(response?.message || (
+        designResponseModal.mode === 'reject'
+          ? 'Correcciones registradas correctamente.'
+          : 'Aprobacion del cliente registrada correctamente.'
+      ));
+    } catch (requestError) {
+      notifications.error(requestError.message || 'No se pudo registrar la respuesta del cliente.');
+    }
   };
 
   const handleRejectPayment = async payment => {
@@ -463,9 +536,12 @@ export const PedidoExpedientePage = () => {
                 index={index}
                 canManage={hasPermission('disenos.crear') || hasPermission('disenos.editar')}
                 canRegisterClientFile={hasPermission('disenos.crear')}
+                canApproveByClient={hasPermission('disenos.aprobar_cliente')}
+                canRejectByClient={hasPermission('disenos.rechazar_cliente')}
                 onCreate={() => openDesignModal(detail)}
                 onRegisterClientFile={() => setClientDesignDetail(detail)}
-                onReview={() => navigate('/dashboard/production/designs')}
+                onApproveByClient={() => openDesignResponseModal('approve', detail)}
+                onRejectByClient={() => openDesignResponseModal('reject', detail)}
               />
             ))}
             {(expediente.detalles || []).length === 0 && <p className="expediente-empty">No hay productos para revisar.</p>}
@@ -540,6 +616,13 @@ export const PedidoExpedientePage = () => {
         detail={clientDesignDetail}
         onClose={() => setClientDesignDetail(null)}
         onSubmit={handleRegisterClientDesign}
+      />
+      <DesignClientResponseModal
+        isOpen={designResponseModal.open}
+        mode={designResponseModal.mode}
+        diseno={designResponseModal.diseno}
+        onClose={() => setDesignResponseModal({ open: false, mode: 'approve', diseno: null })}
+        onSubmit={handleDesignClientResponse}
       />
     </main>
   );

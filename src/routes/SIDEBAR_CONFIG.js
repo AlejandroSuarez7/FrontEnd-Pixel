@@ -1,4 +1,5 @@
 import { hasAnyPermission, isClientUser } from '../core/utils/permissions';
+import { LANDING_QUOTE_PATH } from '../core/utils/landingNavigation';
 import { PATHS } from './paths';
 
 export const ROUTE_PERMISSIONS = {
@@ -136,9 +137,10 @@ export const getDefaultProtectedPath = (permissions, user = null) => {
 export const filterSidebarByPermissions = (permissions, user = null) => {
   if (isClientUser(user, permissions)) {
     return [
-      { label: 'Mis pedidos', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
+      { label: 'Inicio', icon: 'home', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
+      { label: 'Mis pedidos', icon: 'dashboard', to: `${PATHS.DASHBOARD}#pedidos`, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
       { label: 'Mis disenos', icon: 'image', to: PATHS.CLIENT_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_DESIGNS] },
-      { label: 'Crear cotizacion', icon: 'add_circle', to: PATHS.HOME },
+      { label: 'Crear cotizacion', icon: 'add_circle', to: LANDING_QUOTE_PATH },
       { label: 'Mi Perfil', icon: 'account_circle', to: PATHS.PROFILE },
     ].filter((item) => !item.permissions || hasAnyPermission(permissions, item.permissions));
   }

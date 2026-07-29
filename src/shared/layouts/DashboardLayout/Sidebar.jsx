@@ -18,9 +18,18 @@ const Sidebar = () => {
   const avatarLetter = userName.charAt(0).toUpperCase();
   const menu = filterSidebarByPermissions(permissions, user);
 
-  const matchesPath = (path) => (
-    location.pathname === path || location.pathname.startsWith(`${path}/`)
-  );
+  const matchesPath = (target) => {
+    const [path, hash = ''] = target.split('#');
+    const pathnameMatches = location.pathname === path || location.pathname.startsWith(`${path}/`);
+    return pathnameMatches && (!hash || location.hash === `#${hash}`);
+  };
+
+  const getLinkClassName = (target, baseClass = 'nav-link') => {
+    const [path, hash = ''] = target.split('#');
+    const pathnameMatches = location.pathname === path;
+    const hashMatches = hash ? location.hash === `#${hash}` : !location.hash;
+    return pathnameMatches && hashMatches ? `${baseClass} active` : baseClass;
+  };
 
   const activeMatch = menu
     .flatMap((section) => {
@@ -119,7 +128,7 @@ const Sidebar = () => {
                       end
                       title={section.label}
                       onClick={closeMobileSidebar}
-                      className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                      className={() => getLinkClassName(section.to)}
                     >
                       <span className="sidebar-icon material-symbols-outlined">{section.icon}</span>
                       <span className="sidebar-label">{section.label}</span>
@@ -144,9 +153,7 @@ const Sidebar = () => {
                           to={item.to}
                           end
                           onClick={closeMobileSidebar}
-                          className={({ isActive }) =>
-                            isActive ? 'nav-link sublink active' : 'nav-link sublink'
-                          }
+                          className={() => getLinkClassName(item.to, 'nav-link sublink')}
                         >
                           <span className="sidebar-label">{item.label}</span>
                         </NavLink>

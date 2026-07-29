@@ -2,7 +2,7 @@ export const DESIGN_COVERAGE_LABELS = {
   NO_REQUIERE_DISENO: 'No requiere diseno',
   PENDIENTE_CREACION_PIXEL: 'Pendiente de creacion por PIXEL',
   PENDIENTE_ARCHIVO_CLIENTE: 'Pendiente de archivo del cliente',
-  DISENO_CLIENTE_PENDIENTE_VINCULACION: 'Diseno del cliente pendiente de revision',
+  DISENO_CLIENTE_PENDIENTE_VINCULACION: 'Diseno del cliente pendiente de registro',
   DISENO_ENTREGADO_POR_CLIENTE: 'Diseno recibido',
   DISENO_GENERAL_ENTREGADO_POR_CLIENTE: 'Diseno general entregado por el cliente',
   ENVIADO: 'Diseno recibido',
@@ -21,6 +21,14 @@ const CORRECTION_STATES = [
   'DISENO_GENERAL_RECHAZADO',
   'CORRECCIONES_SOLICITADAS',
   'DISENO_CORRECCIONES_SOLICITADAS',
+];
+
+const CLIENT_RESPONSE_STATES = [
+  'ENVIADO',
+  'PENDIENTE_APROBACION',
+  'PENDIENTE_DE_APROBACION',
+  'POR_APROBAR',
+  'EN_REVISION',
 ];
 
 export const getDesignCoverageState = (detail = {}) => {
@@ -47,11 +55,19 @@ export const getDesignCoverageInfo = (detail = {}) => {
   const state = getDesignCoverageState(detail);
   const design = detail.diseno || null;
   const designOrigin = String(detail.origenDiseno || design?.origenDiseno || '').toUpperCase();
+  const canRegisterClientFile = [
+    'PENDIENTE_ARCHIVO_CLIENTE',
+    'DISENO_CLIENTE_PENDIENTE_VINCULACION',
+  ].includes(state) && designOrigin === 'CLIENTE' && !design?.idDiseno;
 
   return {
     state,
     label: DESIGN_COVERAGE_LABELS[state] || state.replaceAll('_', ' ').toLowerCase(),
-    message: detail.mensajeEstadoDiseno || DESIGN_COVERAGE_LABELS[state] || '',
+    message: detail.mensajeEstadoDiseno || (
+      state === 'DISENO_CLIENTE_PENDIENTE_VINCULACION'
+        ? 'El cliente entrego un archivo. Registralo para revisarlo en Gestion de Disenos.'
+        : DESIGN_COVERAGE_LABELS[state] || ''
+    ),
     covered: detail.cubiertoPorDiseno === true || [
       'NO_REQUIERE_DISENO',
       'DISENO_APROBADO',
@@ -69,7 +85,7 @@ export const getDesignCoverageInfo = (detail = {}) => {
       'CUBIERTO_POR_DISENO_GENERAL',
     ].includes(state),
     waitingForClient: state === 'PENDIENTE_ARCHIVO_CLIENTE',
-    canRegisterClientFile: state === 'PENDIENTE_ARCHIVO_CLIENTE' && designOrigin === 'CLIENTE',
+    canRegisterClientFile,
     isCorrection: CORRECTION_STATES.includes(state),
     noDesignRequired: state === 'NO_REQUIERE_DISENO',
     isGeneral: Boolean(design?.esDisenoGeneral || detail.esDisenoGeneral),
@@ -79,3 +95,8 @@ export const getDesignCoverageInfo = (detail = {}) => {
 };
 
 export const canCreateDesignForDetail = detail => getDesignCoverageInfo(detail).canCreate;
+
+export const canRegisterDesignClientResponse = (design = {}) => (
+  Boolean(design?.idDiseno)
+  && CLIENT_RESPONSE_STATES.includes(String(design.estado || '').toUpperCase())
+);

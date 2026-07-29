@@ -8,7 +8,7 @@ vi.mock('../../../../core/services/apiService', () => ({
   },
 }));
 
-describe('pedidoRepository client design receipt', () => {
+describe('pedidoRepository', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -38,5 +38,21 @@ describe('pedidoRepository client design receipt', () => {
       },
     );
     expect(result.estado).toBe('ENVIADO');
+  });
+
+  it('uses the exact endpoint for finalizing an eligible order', async () => {
+    apiClient.patch.mockResolvedValueOnce({
+      data: {
+        data: {
+          idPedido: 36,
+          estadoPedido: 'FINALIZADO',
+        },
+      },
+    });
+
+    await pedidoRepository.finalizar(36);
+
+    expect(apiClient.patch).toHaveBeenCalledTimes(1);
+    expect(apiClient.patch).toHaveBeenCalledWith('api/pedidos/36/finalizar');
   });
 });

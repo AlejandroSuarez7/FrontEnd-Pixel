@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import './LandingPage.css';
 import { motion } from 'motion/react';
@@ -13,6 +13,7 @@ import {
   getQuoteSubtotalWithDiscount,
 } from '../../../core/utils/formatters';
 import { notifications } from '../../../core/utils/notifications';
+import { scrollToCurrentHash } from '../../../core/utils/landingNavigation';
 import { publicQuoteRepository } from '../infrastructure/publicQuote.repository';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import {
@@ -50,6 +51,7 @@ const LandingPage = () => {
   const { user, permissions, logout } = useAuth();
   const confirm = useConfirm();
   const navigate = useNavigate();
+  const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
   const [publicProducts, setPublicProducts] = useState([]);
   const [publicCategories, setPublicCategories] = useState([]);
@@ -82,6 +84,15 @@ const LandingPage = () => {
   const publicQuoteSubtotalWithDiscount = publicQuoteCalculation?.subtotalConDescuento
     ?? publicQuoteCalculation?.subtotalFinal
     ?? getQuoteSubtotalWithDiscount(publicQuoteCalculation || {});
+
+  useEffect(() => {
+    if (!location.hash) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      scrollToCurrentHash(location.hash);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [location.hash]);
 
   useEffect(() => {
     if (!isClient || !user) return;

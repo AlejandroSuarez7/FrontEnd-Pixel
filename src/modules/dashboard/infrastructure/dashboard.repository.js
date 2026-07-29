@@ -214,6 +214,10 @@ const hasConfirmedPayment = (pedido = {}) => {
 };
 
 const hasFinalPaymentPending = (pedido = {}) => {
+  const balanceStep = normalizeStatus(pedido.estadoPasoSaldoFinal);
+  if (['COMPLETADO', 'NO_APLICA'].includes(balanceStep)) return false;
+  if (['PENDIENTE', 'SOLICITADO'].includes(balanceStep)) return true;
+
   const estadoPago = normalizeStatus(pedido.estadoPago);
   const saldo = Number(pedido.saldoPendiente ?? pedido.saldo ?? 0);
 
@@ -234,7 +238,10 @@ const buildClientTrackingSteps = (pedido = {}) => {
   const designProgress = getDesignProgress(pedido);
   const firstPaymentConfirmed = hasConfirmedPayment(pedido);
   const hasPendingReceipt = (pedido.abonos || []).some(abono => normalizeStatus(abono.estado) === 'PENDIENTE');
-  const pendingFinalBalance = estadoPedido === 'PENDIENTE_SALDO_FINAL';
+  const finalBalanceStep = normalizeStatus(pedido.estadoPasoSaldoFinal);
+  const pendingFinalBalance = ['PENDIENTE', 'SOLICITADO'].includes(finalBalanceStep)
+    || (!finalBalanceStep && estadoPedido === 'PENDIENTE_SALDO_FINAL');
+  const finalBalanceCompleted = ['COMPLETADO', 'NO_APLICA'].includes(finalBalanceStep);
   const inProduction = ['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION', 'PENDIENTE_SALDO_FINAL', 'FINALIZADO', 'TERMINADO', 'ENTREGADO'].includes(estadoPedido);
   const finalized = isOrderFinalized(pedido);
   const finalPaymentPending = hasFinalPaymentPending(pedido);
@@ -283,10 +290,11 @@ const buildClientTrackingSteps = (pedido = {}) => {
     },
     { label: 'En produccion', completed: pendingFinalBalance || finalized, current: inProduction && !pendingFinalBalance && !finalized },
     {
-      label: 'Pendiente de saldo final',
-      completed: readyToDeliver,
+      label: finalBalanceStep === 'NO_APLICA' ? 'Pago completo / No aplica' : 'Pendiente de saldo final',
+      completed: finalBalanceCompleted || readyToDeliver,
       current: pendingFinalBalance || (finalized && finalPaymentPending),
-      visible: finalPaymentPending,
+      detail: finalBalanceStep === 'SOLICITADO' ? 'Saldo final solicitado' : undefined,
+      visible: Boolean(finalBalanceStep) || finalPaymentPending,
     },
     { label: 'Pedido listo para reclamar / entregar', completed: delivered, current: readyToDeliver && !delivered },
     { label: 'Producto entregado', completed: delivered },
@@ -318,13 +326,22 @@ const buildClientActiveOrder = (pedido = {}) => ({
   paid: toNumber(pedido.totalPagado),
   balance: toNumber(pedido.saldoPendiente ?? pedido.saldo),
   paymentStatus: pedido.estadoPago || 'PENDIENTE',
+  totalPaidConfirmed: toNumber(pedido.totalPagadoConfirmado ?? pedido.totalPagado),
+  canRequestFinalBalance: pedido.puedeSolicitarSaldoFinal === true,
+  canFinalize: pedido.puedeFinalizar === true,
+  finalizationBlockReason: pedido.motivoBloqueoFinalizacion || null,
+  finalBalanceStep: pedido.estadoPasoSaldoFinal || null,
+  requiredDesigns: toNumber(pedido.totalDisenosRequeridos),
+  approvedDesigns: toNumber(pedido.totalDisenosAprobados),
+  pendingDesigns: toNumber(pedido.totalDisenosPendientes),
   estimatedDelivery: pedido.fechaEntregaEstimada ?? pedido.fecha_estimada_entrega ?? null,
   details: Array.isArray(pedido.detalles)
     ? pedido.detalles
     : Array.isArray(pedido.detallesPedido)
       ? pedido.detallesPedido
       : [],
-  isPendingFinalBalance: normalizeStatus(pedido.estadoPedido) === 'PENDIENTE_SALDO_FINAL',
+  isPendingFinalBalance: ['PENDIENTE', 'SOLICITADO'].includes(normalizeStatus(pedido.estadoPasoSaldoFinal))
+    || (!pedido.estadoPasoSaldoFinal && normalizeStatus(pedido.estadoPedido) === 'PENDIENTE_SALDO_FINAL'),
   isReadyToDeliver: ['FINALIZADO', 'TERMINADO'].includes(normalizeStatus(pedido.estadoPedido)) &&
     Number(pedido.saldoPendiente ?? pedido.saldo ?? 0) <= 0,
   tracking: buildClientTrackingSteps(pedido),

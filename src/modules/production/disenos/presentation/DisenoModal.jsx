@@ -126,12 +126,21 @@ export const DisenoModal = ({
 
   useEffect(() => {
     if (!isOpen || isEditing || esDisenoGeneral) return;
+    if (
+      presetDetailId
+      && detallesPedido.some(detalle => String(detalle.idDetallePedido) === String(presetDetailId))
+    ) {
+      if (String(idDetallePedido) !== String(presetDetailId)) {
+        setIdDetallePedido(presetDetailId);
+      }
+      return;
+    }
     if (detallesPendientesPixel.length === 1) {
       setIdDetallePedido(detallesPendientesPixel[0].idDetallePedido || '');
     } else if (detallesPendientesPixel.length > 1 && !detallesPendientesPixel.some((detalle) => String(detalle.idDetallePedido) === String(idDetallePedido))) {
       setIdDetallePedido('');
     }
-  }, [detallesPendientesPixel, esDisenoGeneral, idDetallePedido, isEditing, isOpen]);
+  }, [detallesPedido, detallesPendientesPixel, esDisenoGeneral, idDetallePedido, isEditing, isOpen, presetDetailId]);
 
   useEffect(() => {
     if (!isOpen || isEditing || !getPedidos || lockPedido) return;
@@ -197,7 +206,9 @@ export const DisenoModal = ({
       }
       await onSubmit({
         idPedido,
-        idDetallePedido: esDisenoGeneral ? undefined : idDetallePedido,
+        idDetallePedido: esDisenoGeneral || !idDetallePedido
+          ? undefined
+          : Number(idDetallePedido),
         esDisenoGeneral,
         idDisenador,
         archivoUrl,

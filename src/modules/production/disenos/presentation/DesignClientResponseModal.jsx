@@ -54,15 +54,21 @@ export const DesignClientResponseModal = ({ isOpen, mode, diseno, onClose, onSub
         <div className={styles.modalHeader}>
           <div>
             <h3 className={styles.modalTitle}>
-              {isReject ? 'Rechazar por cliente' : 'Aprobar por cliente'}
+              {isReject ? 'Solicitar correcciones al diseno' : 'Aprobar diseno en nombre del cliente'}
             </h3>
-            <p className={styles.modalSubtitle}>Diseno #{diseno.idDiseno} | Pedido #{diseno.idPedido}</p>
+            <p className={styles.modalSubtitle}>
+              Diseno #{diseno.idDiseno} | Pedido #{diseno.idPedido}
+            </p>
           </div>
           <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.detailsInfoBox}>
+            <strong>{diseno.pedido?.cliente?.nombre || diseno.cliente?.nombre || 'Cliente no especificado'}</strong>
+            {' | '}
+            {diseno.detallePedido?.producto?.nombre || diseno.producto?.nombre || diseno.descripcion || 'Producto no especificado'}
+            <br />
             {isReject
               ? 'Registra los cambios solicitados por el cliente.'
               : 'Usa esta opcion si el cliente aprobo el diseno por fuera del sistema.'}

@@ -44,7 +44,7 @@ describe('permission helpers', () => {
     const permissions = ['dashboard.cliente', 'pedidos.cliente.ver', 'perfil.ver'];
     const labels = filterSidebarByPermissions(permissions, user).map((item) => item.label);
 
-    expect(labels).toEqual(['Mis pedidos', 'Crear cotizacion', 'Mi Perfil']);
+    expect(labels).toEqual(['Inicio', 'Mis pedidos', 'Crear cotizacion', 'Mi Perfil']);
     expect(labels).not.toContain('Usuarios');
     expect(labels).not.toContain('Compras');
     expect(labels).not.toContain('Ventas');

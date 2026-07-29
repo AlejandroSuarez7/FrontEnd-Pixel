@@ -565,6 +565,12 @@
   color: #5b43d6;
 }
 
+.expediente-button.success {
+  border-color: #b7eadf;
+  background: #eafaf6;
+  color: #008f72;
+}
+
 .expediente-button.danger {
   border-color: #ffd5d5;
   background: #fff5f5;

@@ -40,6 +40,7 @@ import { notifications } from '../../../core/utils/notifications';
 import { getDesignCoverageInfo } from '../../../core/utils/designCoverage';
 import { pedidoRepository } from '../../sales/pedidos/infrastructure/pedido.repository';
 import { formatCalendarDate } from '../../../core/utils/fechaFormato';
+import { navigateToLandingQuote } from '../../../core/utils/landingNavigation';
 import './DashboardPage.css';
 
 const kpiIcons = {
@@ -531,11 +532,10 @@ const TrackingPanel = ({ order }) => (
 
 const QuickActions = () => {
   const navigate = useNavigate();
-  const { hasAnyPermission } = useAuth();
   const actions = [
-    hasAnyPermission(['cotizaciones.crear_cliente', 'cotizaciones.crear_presencial']) && { label: 'Crear cotizacion', icon: FileText, onClick: () => navigate(PATHS.SERVICES_QUOTES) },
+    { label: 'Crear cotizacion', icon: FileText, onClick: () => navigateToLandingQuote(navigate) },
     { label: 'Actualizar perfil', icon: UserRound, onClick: () => navigate(PATHS.PROFILE) },
-  ].filter(Boolean);
+  ];
 
   return (
     <section className="dashboard-panel">
@@ -746,7 +746,7 @@ const ClientDashboard = ({ userName, data, onRefresh }) => {
         {data.kpis.map((item) => <KpiCard item={item} key={item.label} />)}
       </section>
 
-      <div className="dashboard-grid dashboard-client-grid">
+      <div id="pedidos" className="dashboard-grid dashboard-client-grid">
         <ActiveOrdersPanel
           orders={activeOrders}
           selectedOrderId={selectedOrder?.id || ''}

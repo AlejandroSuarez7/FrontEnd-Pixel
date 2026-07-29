@@ -11,6 +11,7 @@ import { DisenoViewModal } from './DisenoViewModal';
 import { DesignClientResponseModal } from './DesignClientResponseModal';
 import { formatDate } from '../../../../core/utils/fechaFormato';
 import { getProductCategoryName } from '../../../../core/utils/productCategory';
+import { canRegisterDesignClientResponse } from '../../../../core/utils/designCoverage';
 import './DisenosPage.css';
 
 const styles = {
@@ -91,13 +92,6 @@ const getDesignTechniqueName = (diseno) => {
   return detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : '');
 };
 const getDesignQuantity = (diseno) => getDesignDetail(diseno)?.cantidad;
-const canRegisterClientResponse = (estado) => [
-  'ENVIADO',
-  'PENDIENTE_APROBACION',
-  'PENDIENTE_DE_APROBACION',
-  'POR_APROBAR',
-  'EN_REVISION',
-].includes(normalizeStatus(estado));
 const getApprovalMessage = (response) => {
   const pedidoEstado = normalizeStatus(response?.data?.pedido?.estadoPedido || response?.pedido?.estadoPedido || response?.data?.estadoPedido);
   if (pedidoEstado === 'EN_PROCESO') {
@@ -204,13 +198,13 @@ export const DisenosPage = () => {
   const canApproveByClient = (diseno) => (
     hasPermission('disenos.aprobar_cliente') &&
     isStaff &&
-    canRegisterClientResponse(diseno.estado)
+    canRegisterDesignClientResponse(diseno)
   );
 
   const canRejectByClient = (diseno) => (
     hasPermission('disenos.rechazar_cliente') &&
     isStaff &&
-    canRegisterClientResponse(diseno.estado)
+    canRegisterDesignClientResponse(diseno)
   );
 
   const onApproveClick = async (diseno) => {

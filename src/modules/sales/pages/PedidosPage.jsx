@@ -74,11 +74,7 @@ const PedidosPage = () => {
     pedido.estadoPedido === 'FINALIZADO' &&
     (pedido.estadoPago === 'COMPLETO' || Number(pedido.saldoPendiente || 0) <= 0)
   );
-  const canFinalizePedido = (pedido) => (
-    pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' &&
-    pedido.estadoPago === 'COMPLETO' &&
-    Number(pedido.saldoPendiente || 0) <= 0
-  );
+  const canFinalizePedido = (pedido) => pedido.puedeFinalizar === true;
 
   const onEnProcesoClick = async (id) => {
     const accepted = await confirm({
@@ -352,7 +348,7 @@ const PedidosPage = () => {
                         actions={[
                           hasPermission('pedidos.ver') && isStaff && { label: 'Ver expediente', onClick: () => navigate(`/dashboard/orders/${pedido.idPedido}/expediente`), variant: 'accent' },
                           hasPermission('pedidos.pasar_proceso') && isStaff && pedido.estadoPedido === 'PENDIENTE' && { label: 'En proceso', onClick: () => onEnProcesoClick(pedido.idPedido), variant: 'info' },
-                          hasPermission('pedidos.finalizar') && isStaff && pedido.estadoPedido === 'EN_PROCESO' && { label: 'Solicitar saldo final', onClick: () => onPendienteSaldoClick(pedido.idPedido), variant: 'warning' },
+                          hasPermission('pedidos.finalizar') && isStaff && pedido.puedeSolicitarSaldoFinal === true && { label: 'Solicitar saldo final', onClick: () => onPendienteSaldoClick(pedido.idPedido), variant: 'warning' },
                           hasPermission('pedidos.finalizar') && isStaff && canFinalizePedido(pedido) && { label: 'Finalizar pedido', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },
                           hasPermission('pedidos.finalizar') && isStaff && canConfirmDelivery(pedido) && { label: 'Confirmar entrega', onClick: () => onConfirmarEntregaClick(pedido.idPedido), variant: 'success' },
                           hasPermission('pedidos.anular') && isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ENTREGADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },

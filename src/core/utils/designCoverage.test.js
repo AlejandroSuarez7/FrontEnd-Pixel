@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { canCreateDesignForDetail, getDesignCoverageInfo } from './designCoverage';
+import {
+  canCreateDesignForDetail,
+  canRegisterDesignClientResponse,
+  getDesignCoverageInfo,
+} from './designCoverage';
 
 describe('design coverage helpers', () => {
   it('prevents design creation for products that do not require it', () => {
@@ -42,8 +46,18 @@ describe('design coverage helpers', () => {
       origenDiseno: 'CLIENTE',
     }).canRegisterClientFile).toBe(true);
     expect(getDesignCoverageInfo({
+      estadoCoberturaDiseno: 'DISENO_CLIENTE_PENDIENTE_VINCULACION',
+      origenDiseno: 'CLIENTE',
+      archivoDisenoInicialUrl: 'https://example.com/diseno-cliente.png',
+    })).toMatchObject({
+      canRegisterClientFile: true,
+      label: 'Diseno del cliente pendiente de registro',
+      message: 'El cliente entrego un archivo. Registralo para revisarlo en Gestion de Disenos.',
+    });
+    expect(getDesignCoverageInfo({
       estadoCoberturaDiseno: 'DISENO_ENTREGADO_POR_CLIENTE',
       origenDiseno: 'CLIENTE',
+      diseno: { idDiseno: 20, estado: 'ENVIADO' },
     }).canRegisterClientFile).toBe(false);
   });
 
@@ -57,5 +71,24 @@ describe('design coverage helpers', () => {
     expect(info.covered).toBe(true);
     expect(info.isGeneral).toBe(true);
     expect(info.label).toBe('Cubierto por diseno general');
+  });
+
+  it('allows a client response only while the design is pending review', () => {
+    expect(canRegisterDesignClientResponse({
+      idDiseno: 30,
+      estado: 'ENVIADO',
+    })).toBe(true);
+    expect(canRegisterDesignClientResponse({
+      idDiseno: 31,
+      estado: 'PENDIENTE_DE_APROBACION',
+    })).toBe(true);
+    expect(canRegisterDesignClientResponse({
+      idDiseno: 32,
+      estado: 'APROBADO',
+    })).toBe(false);
+    expect(canRegisterDesignClientResponse({
+      idDiseno: 33,
+      estado: 'RECHAZADO',
+    })).toBe(false);
   });
 });
