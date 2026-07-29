@@ -811,6 +811,24 @@
   color: var(--color-success);
 }
 
+.dashboard-progress-alert-info {
+  border-color: #b9dcf8;
+  background: #eff8ff;
+}
+
+.dashboard-progress-alert-info strong {
+  color: #0877bd;
+}
+
+.dashboard-progress-alert-success {
+  border-color: #bdeee4;
+  background: var(--color-success-bg);
+}
+
+.dashboard-progress-alert-success strong {
+  color: var(--color-success);
+}
+
 .dashboard-estimated-delivery {
   margin-bottom: 14px;
   color: var(--color-text-secondary);

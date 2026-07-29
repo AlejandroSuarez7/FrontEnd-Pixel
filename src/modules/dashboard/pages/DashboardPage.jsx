@@ -489,18 +489,13 @@ const TrackingPanel = ({ order }) => (
       </div>
     ) : (
       <>
-      {order.isPendingFinalBalance && (
-        <div className="dashboard-final-balance-alert">
-          <strong>Tu pedido ya termino produccion.</strong>
-          <span>Falta confirmar el saldo final para coordinar la entrega.</span>
-          <small>Saldo pendiente: {formatCopFull(order.balance)}</small>
-          <p>Un asesor se comunicara contigo para coordinar el segundo abono y la entrega.</p>
-        </div>
-      )}
-      {order.isReadyToDeliver && (
-        <div className="dashboard-final-balance-alert dashboard-ready-alert">
-          <strong>Tu pedido esta listo.</strong>
-          <span>Coordina la entrega o reclamacion con PIXEL.</span>
+      {order.progressNotice && (
+        <div className={`dashboard-final-balance-alert dashboard-progress-alert-${order.progressNotice.tone}`}>
+          <strong>{order.progressNotice.title}</strong>
+          {order.progressNotice.detail && <span>{order.progressNotice.detail}</span>}
+          {order.progressNotice.balance != null && (
+            <small>Saldo pendiente: {formatCopFull(order.progressNotice.balance)}</small>
+          )}
         </div>
       )}
       {order.estimatedDelivery && (

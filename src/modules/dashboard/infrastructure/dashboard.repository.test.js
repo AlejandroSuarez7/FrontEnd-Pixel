@@ -296,7 +296,7 @@ describe('dashboardRepository', () => {
     expect(order.tracking.map(step => step.label)).not.toContain('Pendiente de saldo final');
   });
 
-  it('marks the backend requested final balance as the current step', async () => {
+  it('keeps a requested final balance pending when backend does not enable the client action', async () => {
     apiClient.get.mockResolvedValueOnce({
       data: {
         data: {
@@ -324,7 +324,243 @@ describe('dashboardRepository', () => {
     const step = result.client.activeOrders[0].tracking
       .find(item => item.label === 'Pendiente de saldo final');
 
-    expect(step.state).toBe('current');
+    expect(step.state).toBe('pending');
     expect(step.detail).toBe('Saldo final solicitado');
+  });
+
+  it('keeps production pending for a pending order with only one of two designs approved', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 50,
+            estadoPedido: 'PENDIENTE',
+            estadoPago: 'PARCIAL',
+            saldoPendiente: 500000,
+            puedeSolicitarSaldoFinal: false,
+            puedeFinalizar: false,
+            estadoPasoSaldoFinal: 'PENDIENTE',
+            totalDisenosRequeridos: 2,
+            totalDisenosAprobados: 1,
+            totalDisenosPendientes: 1,
+            detalles: [{
+              idDetallePedido: 50,
+              requiereDiseno: true,
+              estadoCoberturaDiseno: 'DISENO_APROBADO',
+            }, {
+              idDetallePedido: 51,
+              requiereDiseno: true,
+              estadoCoberturaDiseno: 'DISENO_ENVIADO',
+            }],
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+    const order = result.client.activeOrders[0];
+    const production = order.tracking.find(step => step.label === 'En produccion');
+    const designApproved = order.tracking.find(step => step.label === 'Diseno aprobado');
+
+    expect(production.state).toBe('pending');
+    expect(designApproved.state).toBe('pending');
+    expect(designApproved.detail).toBe('1 de 2 disenos aprobados');
+    expect(order.isPendingFinalBalance).toBe(false);
+    expect(order.progressNotice).toEqual({
+      tone: 'warning',
+      title: 'Tu pedido esta esperando la aprobacion de los disenos.',
+      detail: 'Actualmente hay 1 de 2 disenos aprobados.',
+    });
+    expect(order.progressNotice.title).not.toContain('termino produccion');
+  });
+
+  it('marks production as current only when the backend order is in process', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 51,
+            estadoPedido: 'EN_PROCESO',
+            estadoPago: 'PARCIAL',
+            puedeSolicitarSaldoFinal: false,
+            puedeFinalizar: false,
+            totalDisenosRequeridos: 2,
+            totalDisenosAprobados: 2,
+            totalDisenosPendientes: 0,
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+    const order = result.client.activeOrders[0];
+
+    expect(order.tracking.find(step => step.label === 'En produccion')?.state).toBe('current');
+    expect(order.progressNotice?.title).toBe('Tu pedido se encuentra en produccion.');
+  });
+
+  it('completes production and shows the final balance notice only when backend enables it', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 52,
+            estadoPedido: 'PENDIENTE_SALDO_FINAL',
+            estadoPago: 'PARCIAL',
+            saldoPendiente: 250000,
+            puedeSolicitarSaldoFinal: true,
+            puedeFinalizar: false,
+            estadoPasoSaldoFinal: 'PENDIENTE',
+            totalDisenosRequeridos: 1,
+            totalDisenosAprobados: 1,
+            totalDisenosPendientes: 0,
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+    const order = result.client.activeOrders[0];
+
+    expect(order.tracking.find(step => step.label === 'En produccion')?.state).toBe('completed');
+    expect(order.isPendingFinalBalance).toBe(true);
+    expect(order.progressNotice).toMatchObject({
+      title: 'Tu pedido ya termino produccion.',
+      balance: 250000,
+    });
+  });
+
+  it('does not show a final balance notice when backend disables the request', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 53,
+            estadoPedido: 'PENDIENTE',
+            estadoPago: 'PARCIAL',
+            saldoPendiente: 250000,
+            puedeSolicitarSaldoFinal: false,
+            puedeFinalizar: false,
+            estadoPasoSaldoFinal: 'PENDIENTE',
+            totalDisenosRequeridos: 0,
+            totalDisenosAprobados: 0,
+            totalDisenosPendientes: 0,
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+    const order = result.client.activeOrders[0];
+
+    expect(order.isPendingFinalBalance).toBe(false);
+    expect(order.progressNotice).toBeNull();
+    expect(order.tracking.find(step => step.label === 'En produccion')?.state).toBe('pending');
+  });
+
+  it('shows payment complete and final delivery messages from backend states', async () => {
+    apiClient.get
+      .mockResolvedValueOnce({
+        data: {
+          data: {
+            kpis: {},
+            pedidosActivos: [{
+              idPedido: 54,
+              estadoPedido: 'PENDIENTE_SALDO_FINAL',
+              estadoPago: 'COMPLETO',
+              saldoPendiente: 0,
+              puedeSolicitarSaldoFinal: false,
+              puedeFinalizar: true,
+              estadoPasoSaldoFinal: 'NO_APLICA',
+              totalDisenosRequeridos: 0,
+              totalDisenosAprobados: 0,
+              totalDisenosPendientes: 0,
+            }],
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          data: {
+            kpis: {},
+            pedidosActivos: [{
+              idPedido: 55,
+              estadoPedido: 'FINALIZADO',
+              estadoPago: 'COMPLETO',
+              saldoPendiente: 0,
+              puedeSolicitarSaldoFinal: false,
+              puedeFinalizar: false,
+              estadoPasoSaldoFinal: 'NO_APLICA',
+              totalDisenosRequeridos: 0,
+              totalDisenosAprobados: 0,
+              totalDisenosPendientes: 0,
+            }],
+          },
+        },
+      });
+
+    const paidResult = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+    const finalizedResult = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+
+    expect(paidResult.client.activeOrders[0].progressNotice?.title)
+      .toBe('Tu pedido esta completamente pagado y esta proximo a quedar listo.');
+    expect(paidResult.client.activeOrders[0].tracking.map(step => step.label))
+      .toContain('Pago completo / No aplica');
+    expect(finalizedResult.client.activeOrders[0].progressNotice?.title)
+      .toBe('Tu pedido esta listo para reclamar o coordinar la entrega.');
+  });
+
+  it('completes the delivered step for delivered orders', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          kpis: {},
+          pedidosActivos: [{
+            idPedido: 56,
+            estadoPedido: 'ENTREGADO',
+            estadoPago: 'COMPLETO',
+            saldoPendiente: 0,
+            puedeSolicitarSaldoFinal: false,
+            puedeFinalizar: false,
+            estadoPasoSaldoFinal: 'NO_APLICA',
+            totalDisenosRequeridos: 0,
+            totalDisenosAprobados: 0,
+            totalDisenosPendientes: 0,
+          }],
+        },
+      },
+    });
+
+    const result = await dashboardRepository.getDashboardData(
+      { rol: { nombre: 'Cliente' } },
+      ['dashboard.cliente'],
+    );
+    const order = result.client.activeOrders[0];
+
+    expect(order.tracking.find(step => step.label === 'Producto entregado')?.state)
+      .toBe('completed');
+    expect(order.progressNotice?.title).toBe('Tu pedido fue entregado.');
   });
 });

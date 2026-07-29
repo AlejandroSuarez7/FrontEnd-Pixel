@@ -41,10 +41,26 @@ describe('permission helpers', () => {
 
   it('returns only client sidebar options for client users', () => {
     const user = { rol: { nombre: 'Cliente' } };
-    const permissions = ['dashboard.cliente', 'pedidos.cliente.ver', 'perfil.ver'];
-    const labels = filterSidebarByPermissions(permissions, user).map((item) => item.label);
+    const permissions = [
+      'dashboard.cliente',
+      'pedidos.cliente.ver',
+      'disenos.cliente.ver',
+      'perfil.ver',
+    ];
+    const items = filterSidebarByPermissions(permissions, user);
+    const labels = items.map((item) => item.label);
 
-    expect(labels).toEqual(['Inicio', 'Mis pedidos', 'Crear cotizacion', 'Mi Perfil']);
+    expect(labels).toEqual([
+      'Inicio',
+      'Dashboard',
+      'Mis pedidos',
+      'Mis disenos',
+      'Crear cotizacion',
+      'Mi Perfil',
+    ]);
+    expect(items.find(item => item.label === 'Inicio')?.to).toBe('/');
+    expect(items.find(item => item.label === 'Dashboard')?.to).toBe('/dashboard');
+    expect(items.find(item => item.label === 'Crear cotizacion')?.to).toBe('/#contacto');
     expect(labels).not.toContain('Usuarios');
     expect(labels).not.toContain('Compras');
     expect(labels).not.toContain('Ventas');

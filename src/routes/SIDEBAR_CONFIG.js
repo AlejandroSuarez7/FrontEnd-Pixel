@@ -137,7 +137,8 @@ export const getDefaultProtectedPath = (permissions, user = null) => {
 export const filterSidebarByPermissions = (permissions, user = null) => {
   if (isClientUser(user, permissions)) {
     return [
-      { label: 'Inicio', icon: 'home', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
+      { label: 'Inicio', icon: 'home', to: PATHS.HOME },
+      { label: 'Dashboard', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
       { label: 'Mis pedidos', icon: 'dashboard', to: `${PATHS.DASHBOARD}#pedidos`, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
       { label: 'Mis disenos', icon: 'image', to: PATHS.CLIENT_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_DESIGNS] },
       { label: 'Crear cotizacion', icon: 'add_circle', to: LANDING_QUOTE_PATH },
