@@ -677,6 +677,32 @@
   color: #7f8aa3;
 }
 
+.expediente-requirement-covered {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #e7e1fa;
+  border-radius: 8px;
+  background: #fbfaff;
+}
+
+.expediente-requirement-covered strong {
+  color: #4f3cc9;
+  font-size: 12px;
+}
+
+.expediente-requirement-covered small {
+  overflow-wrap: anywhere;
+  color: #68748b;
+}
+
+.expediente-action-note {
+  flex: 1 1 100%;
+  color: #9a6200;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .expediente-general-badge {
   width: fit-content;
   padding: 5px 8px;

@@ -4,18 +4,7 @@ import './LandingPage.css';
 import { motion } from 'motion/react';
 import { useAuth } from '../../../store/AuthContext';
 import { isClientUser } from '../../../core/utils/permissions';
-import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
-import {
-  formatMoneyCOP,
-  formatPercentage,
-  getQuoteDiscountTotal,
-  getQuoteSubtotalBruto,
-  getQuoteSubtotalWithDiscount,
-} from '../../../core/utils/formatters';
-import { notifications } from '../../../core/utils/notifications';
 import { scrollToCurrentHash } from '../../../core/utils/landingNavigation';
-import { publicQuoteRepository } from '../infrastructure/publicQuote.repository';
-import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
 import {
   Upload,
   Palette,
@@ -35,55 +24,21 @@ import {
   FaYoutube,
 } from "react-icons/fa";
 
-const createPublicQuoteItem = () => ({
-  idCategoriaProducto: '',
-  idProducto: '',
-  idTecnica: '',
-  cantidad: 1,
-  detalleProducto: '',
-  requiereDiseno: true,
-  origenDiseno: 'PIXEL',
-  esDisenoGeneral: false,
-  archivoDisenoInicialUrl: '',
-});
-
 const LandingPage = () => {
   const { user, permissions, logout } = useAuth();
-  const confirm = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [publicProducts, setPublicProducts] = useState([]);
-  const [publicCategories, setPublicCategories] = useState([]);
-  const [publicTechniques, setPublicTechniques] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [productsError, setProductsError] = useState('');
-  const [calculatingQuote, setCalculatingQuote] = useState(false);
-  const [sendingQuote, setSendingQuote] = useState(false);
-  const [publicQuoteForm, setPublicQuoteForm] = useState({
+  const [contactForm, setContactForm] = useState({
     nombre: '',
     correo: '',
     telefono: '',
-    items: [createPublicQuoteItem()],
-    observaciones: '',
+    mensaje: '',
   });
-  const [publicQuoteCalculation, setPublicQuoteCalculation] = useState(null);
-  const [activePublicQuoteIndex, setActivePublicQuoteIndex] = useState(0);
-  const [quoteLoginRequired, setQuoteLoginRequired] = useState(false);
-  const { isLocked: isQuoteSubmitting, runLocked: runQuoteLocked } = useAsyncLock();
   const isLoggedIn = Boolean(user);
   const isClient = isClientUser(user, permissions);
-  const isLoggedNonClient = isLoggedIn && !isClient;
-  const contactFieldsDisabled = isClient || isLoggedNonClient;
   const userName = user?.nombre || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
-  const publicQuoteItems = publicQuoteForm.items;
-  const calculationItems = publicQuoteCalculation?.items || publicQuoteCalculation?.detalles || [];
-  const publicQuoteSubtotalBruto = publicQuoteCalculation?.subtotalBruto ?? getQuoteSubtotalBruto(publicQuoteCalculation || {});
-  const publicQuoteDiscountTotal = publicQuoteCalculation?.descuentoTotal ?? getQuoteDiscountTotal(publicQuoteCalculation || {});
-  const publicQuoteSubtotalWithDiscount = publicQuoteCalculation?.subtotalConDescuento
-    ?? publicQuoteCalculation?.subtotalFinal
-    ?? getQuoteSubtotalWithDiscount(publicQuoteCalculation || {});
 
   useEffect(() => {
     if (!location.hash) return undefined;
@@ -93,233 +48,6 @@ const LandingPage = () => {
     });
     return () => window.cancelAnimationFrame(frameId);
   }, [location.hash]);
-
-  useEffect(() => {
-    if (!isClient || !user) return;
-    setPublicQuoteForm(prev => ({
-      ...prev,
-      nombre: user.nombre || prev.nombre,
-      correo: user.correo || prev.correo,
-      telefono: user.telefono || prev.telefono,
-    }));
-    setQuoteLoginRequired(false);
-  }, [isClient, user]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      Promise.all([
-        publicQuoteRepository.listCategories({ signal: controller.signal }),
-        publicQuoteRepository.listTechniques({ signal: controller.signal }),
-        publicQuoteRepository.listProductsByCategory(undefined, { signal: controller.signal }),
-      ])
-      .then(([categories, techniques, products]) => {
-        if (controller.signal.aborted) return;
-        setPublicCategories(categories);
-        setPublicTechniques(techniques);
-        setPublicProducts(products);
-        setProductsError('');
-      })
-      .catch((error) => {
-        if (controller.signal.aborted || error?.code === 'ERR_CANCELED') return;
-        const message = error.message || 'No se pudieron cargar los productos.';
-        setProductsError(message);
-        notifications.error(message);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoadingProducts(false);
-      });
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    const validItems = publicQuoteItems
-      .filter(item => item.idProducto && Number(item.cantidad) > 0)
-      .map(item => ({
-        idProducto: Number(item.idProducto),
-        ...(item.idTecnica && { idTecnica: Number(item.idTecnica) }),
-        cantidad: Number(item.cantidad),
-        observaciones: item.detalleProducto?.trim() || null,
-      }));
-
-    if (validItems.length === 0) {
-      setPublicQuoteCalculation(null);
-      setCalculatingQuote(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setCalculatingQuote(true);
-      publicQuoteRepository.calculate(validItems, { signal: controller.signal })
-        .then((calculation) => {
-          if (!controller.signal.aborted) {
-            setPublicQuoteCalculation(calculation);
-          }
-        })
-        .catch((error) => {
-          if (controller.signal.aborted || error?.code === 'ERR_CANCELED') return;
-          setPublicQuoteCalculation(null);
-          notifications.error(error.message || 'No se pudo calcular la cotizacion.');
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setCalculatingQuote(false);
-        });
-    }, 450);
-
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [publicQuoteItems]);
-
-  const updatePublicQuoteField = (field, value) => {
-    if (field === 'correo') setQuoteLoginRequired(false);
-    setPublicQuoteForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const updatePublicQuoteItem = (index, field, value) => {
-    setPublicQuoteForm(prev => ({
-      ...prev,
-      items: prev.items.map((item, itemIndex) => (
-        itemIndex === index ? { ...item, [field]: value } : item
-      )),
-    }));
-  };
-
-  const addPublicQuoteItem = () => {
-    setPublicQuoteForm(prev => ({
-      ...prev,
-      items: [...prev.items, createPublicQuoteItem()],
-    }));
-    setActivePublicQuoteIndex(publicQuoteItems.length);
-  };
-
-  const removePublicQuoteItem = (index) => {
-    setPublicQuoteForm(prev => ({
-      ...prev,
-      items: prev.items.length > 1
-        ? prev.items.filter((_, itemIndex) => itemIndex !== index)
-        : prev.items,
-    }));
-    setActivePublicQuoteIndex(current => Math.max(0, Math.min(current >= index ? current - 1 : current, publicQuoteItems.length - 2)));
-  };
-
-  const resetPublicQuoteForm = () => {
-    setPublicQuoteForm({
-      nombre: isClient ? user?.nombre || '' : '',
-      correo: isClient ? user?.correo || '' : '',
-      telefono: isClient ? user?.telefono || '' : '',
-      items: [createPublicQuoteItem()],
-      observaciones: '',
-    });
-    setPublicQuoteCalculation(null);
-    setActivePublicQuoteIndex(0);
-  };
-
-  const validatePublicQuote = () => {
-    const telefonoLimpio = publicQuoteForm.telefono.trim();
-
-    if (isLoggedNonClient) return 'Para cotizar como cliente, usa una cuenta de cliente o crea una cotizacion presencial desde el panel.';
-
-    if (!isClient) {
-      if (!publicQuoteForm.nombre.trim()) return 'El nombre completo es obligatorio.';
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicQuoteForm.correo.trim())) return 'Ingresa un email valido con @.';
-      if (!/^\d{10}$/.test(telefonoLimpio)) return 'El telefono debe tener exactamente 10 digitos numericos.';
-    }
-
-    if (!publicQuoteItems.length) return 'Agrega al menos un producto para cotizar.';
-    const invalidItemIndex = publicQuoteItems.findIndex(item => !item.idProducto || Number(item.cantidad) <= 0);
-    if (invalidItemIndex >= 0) {
-      setActivePublicQuoteIndex(invalidItemIndex);
-      return `Completa el producto y la cantidad del item ${invalidItemIndex + 1}.`;
-    }
-    const missingTechniqueIndex = publicQuoteItems.findIndex(item => !item.idTecnica);
-    if (missingTechniqueIndex >= 0) {
-      setActivePublicQuoteIndex(missingTechniqueIndex);
-      return `Selecciona la tecnica de estampacion del item ${missingTechniqueIndex + 1}.`;
-    }
-    return null;
-  };
-
-  const handlePublicQuoteSubmit = async (event) => {
-    event.preventDefault();
-    await runQuoteLocked(async () => {
-
-    const validationError = validatePublicQuote();
-    if (validationError) {
-      notifications.warning(validationError);
-      return;
-    }
-
-    setSendingQuote(true);
-    try {
-      const accepted = await confirm({
-        title: 'Enviar solicitud',
-        message: 'Tu solicitud sera enviada al equipo de PIXEL. Tambien enviaremos una copia a tu correo como constancia de cotizacion. Si no la encuentras, revisa SPAM o correo no deseado.',
-        confirmText: 'Enviar solicitud',
-        cancelText: 'Cancelar',
-        variant: 'success',
-      });
-
-      if (!accepted) return;
-
-      await publicQuoteRepository.create({
-        cliente: {
-          nombre: (isClient ? user?.nombre : publicQuoteForm.nombre)?.trim?.() || '',
-          correo: ((isClient ? user?.correo : publicQuoteForm.correo) || '').trim().toLowerCase(),
-          telefono: ((isClient ? user?.telefono : publicQuoteForm.telefono) || '').trim(),
-        },
-        items: publicQuoteItems.map(item => ({
-          idProducto: Number(item.idProducto),
-          idTecnica: Number(item.idTecnica),
-          cantidad: Number(item.cantidad),
-          observaciones: item.detalleProducto.trim() || null,
-          requiereDiseno: item.requiereDiseno !== false,
-          origenDiseno: item.origenDiseno === 'CLIENTE' ? 'CLIENTE' : 'PIXEL',
-          esDisenoGeneral: Boolean(item.esDisenoGeneral),
-          archivoDisenoInicialUrl: item.archivoDisenoInicialUrl.trim() || null,
-        })),
-        observaciones: publicQuoteForm.observaciones.trim() || null,
-      });
-      notifications.success('Solicitud enviada correctamente. Revisa tu correo para ver la constancia. Si no lo encuentras, revisa la carpeta de SPAM o correo no deseado.');
-      resetPublicQuoteForm();
-    } catch (error) {
-      const errorCode = error.payload?.code || error.response?.data?.code;
-      if (error.status === 409 && errorCode === 'EMAIL_REQUIRES_LOGIN') {
-        setQuoteLoginRequired(true);
-        notifications.warning('Este correo ya esta registrado. Inicia sesion para realizar una cotizacion con tu cuenta.', {
-          duration: 8000,
-          action: {
-            label: 'Iniciar sesion',
-            onClick: () => navigate('/login', { state: { redirectTo: '/#contacto' } }),
-          },
-        });
-        return;
-      }
-
-      if (error.status === 401) {
-        notifications.error('Tu sesion no es valida. Inicia sesion nuevamente.');
-        logout();
-        navigate('/login', { state: { redirectTo: '/#contacto' } });
-        return;
-      }
-
-      notifications.error(error.message || 'No se pudo enviar la solicitud.');
-    } finally {
-      setSendingQuote(false);
-    }
-    });
-  };
-
-  const handleQuoteLoginRedirect = () => {
-    navigate('/login', { state: { redirectTo: '/#contacto' } });
-  };
 
   const handleGoDashboard = () => {
     setProfileOpen(false);
@@ -339,6 +67,23 @@ const LandingPage = () => {
     });
   };
 
+  const updateContactForm = (field, value) => {
+    setContactForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleContactSubmit = (event) => {
+    event.preventDefault();
+    const subject = encodeURIComponent(`Consulta general de ${contactForm.nombre.trim()}`);
+    const body = encodeURIComponent([
+      `Nombre: ${contactForm.nombre.trim()}`,
+      `Correo: ${contactForm.correo.trim()}`,
+      `Telefono: ${contactForm.telefono.trim()}`,
+      '',
+      contactForm.mensaje.trim(),
+    ].join('\n'));
+    window.location.assign(`mailto:contacto@pixel.com?subject=${subject}&body=${body}`);
+  };
+
   return (
     <div>
       <header className="landing-header">
@@ -355,7 +100,8 @@ const LandingPage = () => {
               <a className="landing-nav-link" href="#servicios">Servicios</a>
               <a className="landing-nav-link" href="#comparativo">Comparativo</a>
               <a className="landing-nav-link" href="#productos">Productos</a>
-              <a className="landing-nav-link" href="#contacto">Cotizar</a>
+              <Link className="landing-nav-link" to="/cotizar">Cotizar</Link>
+              <a className="landing-nav-link" href="#contacto">Contacto</a>
             </nav>
 
             {/* Acciones (Login + Botón móvil) */}
@@ -453,7 +199,7 @@ const LandingPage = () => {
             <button
               type="button"
               className="hero-btn-secondary"
-              onClick={() => scrollToSection('contacto')}
+              onClick={() => navigate('/cotizar')}
             >
               Solicitar Cotización
             </button>
@@ -1356,10 +1102,9 @@ const LandingPage = () => {
             para diseños vibrantes y duraderos.
           </p>
 
-          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
-            <FaInstagram className="footer-social-icon" />
-            Cotizar en Instagram
-          </a>
+          <Link to="/cotizar" className="product-btn">
+            Solicitar cotización
+          </Link>
 
         </div>
 
@@ -1399,10 +1144,9 @@ const LandingPage = () => {
             con acabados profesionales y colores sólidos.
           </p>
 
-          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
-            <FaInstagram className="footer-social-icon" />
-            Cotizar en Instagram
-          </a>
+          <Link to="/cotizar" className="product-btn">
+            Solicitar cotización
+          </Link>
 
         </div>
 
@@ -1442,10 +1186,9 @@ const LandingPage = () => {
             madera, plástico, vidrio y más.
           </p>
 
-          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
-            <FaInstagram className="footer-social-icon" />
-            Cotizar en Instagram
-          </a>
+          <Link to="/cotizar" className="product-btn">
+            Solicitar cotización
+          </Link>
 
         </div>
 
@@ -1485,10 +1228,9 @@ const LandingPage = () => {
             personalizados como mugs, termos y más.
           </p>
 
-          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
-            <FaInstagram className="footer-social-icon" />
-            Cotizar en Instagram
-          </a>
+          <Link to="/cotizar" className="product-btn">
+            Solicitar cotización
+          </Link>
 
         </div>
 
@@ -1499,10 +1241,9 @@ const LandingPage = () => {
     {/* BUTTON */}
     <div className="products-action">
 
-      <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="products-main-btn">
-        <FaInstagram className="footer-social-icon" />
-        Solicitar Cotización en Instagram
-      </a>
+      <Link to="/cotizar" className="products-main-btn">
+        Solicitar cotización
+      </Link>
 
     </div>
 
@@ -1602,344 +1343,85 @@ const LandingPage = () => {
 
       </div>
 
-      {/* Form */}
+      {/* General contact */}
       <div className="contact-form-card">
 
         <h3 className="contact-form-title">
-          Solicita tu cotización
+          Escríbenos
         </h3>
 
-        <form className="contact-form" onSubmit={handlePublicQuoteSubmit}>
+        <p className="contact-form-copy">
+          Este espacio es para preguntas generales. Si ya tienes claro lo que
+          necesitas, usa el cotizador para configurar productos, estampados y diseños.
+        </p>
 
+        <form className="contact-form" onSubmit={handleContactSubmit}>
           <div className="quote-contact-grid">
-          {/* Nombre */}
-          <div className="contact-field quote-name-field">
-
-            <label className="contact-field-label">
-              Nombre completo
+            <label className="contact-field quote-name-field">
+              <span className="contact-field-label">Nombre completo</span>
+              <input
+                className="contact-input"
+                type="text"
+                value={contactForm.nombre}
+                onChange={(event) => updateContactForm('nombre', event.target.value)}
+                placeholder="Tu nombre completo"
+                required
+              />
             </label>
-
-            <input
-              type="text"
-              placeholder="Nombre completo"
-              className="contact-input"
-              value={publicQuoteForm.nombre}
-              onChange={(event) => updatePublicQuoteField('nombre', event.target.value)}
-              disabled={contactFieldsDisabled}
-              readOnly={contactFieldsDisabled}
-            />
-
-          </div>
-
-          {/* Email */}
-          <div className="contact-field">
-
-            <label className="contact-field-label">
-              Email
+            <label className="contact-field">
+              <span className="contact-field-label">Correo</span>
+              <input
+                className="contact-input"
+                type="email"
+                value={contactForm.correo}
+                onChange={(event) => updateContactForm('correo', event.target.value)}
+                placeholder="tu@email.com"
+                required
+              />
             </label>
-
-            <input
-              type="email"
-              placeholder="tu@email.com"
-              className="contact-input"
-              value={publicQuoteForm.correo}
-              onChange={(event) => updatePublicQuoteField('correo', event.target.value)}
-              disabled={contactFieldsDisabled}
-              readOnly={contactFieldsDisabled}
-            />
-
-          </div>
-
-          {/* Teléfono */}
-          <div className="contact-field">
-
-            <label className="contact-field-label">
-              Teléfono
+            <label className="contact-field">
+              <span className="contact-field-label">Teléfono</span>
+              <input
+                className="contact-input"
+                type="tel"
+                inputMode="numeric"
+                value={contactForm.telefono}
+                onChange={(event) => updateContactForm('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="3000000000"
+                minLength={10}
+                maxLength={10}
+                required
+              />
             </label>
-
-            <input
-              type="tel"
-              placeholder="3000000000"
-              className="contact-input"
-              inputMode="numeric"
-              maxLength={10}
-              value={publicQuoteForm.telefono}
-              onChange={(event) => updatePublicQuoteField('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))}
-              disabled={contactFieldsDisabled}
-              readOnly={contactFieldsDisabled}
-            />
-
           </div>
-
-          {isClient && (
-            <div className="quote-account-notice">
-              Cotizando con los datos de tu cuenta.
-            </div>
-          )}
-
-          {isLoggedNonClient && (
-            <div className="quote-account-notice warning">
-              Para cotizar como cliente, usa una cuenta de cliente o crea una cotizacion presencial desde el panel.
-            </div>
-          )}
-
-          {quoteLoginRequired && !isLoggedIn && (
-            <div className="quote-login-required">
-              <span>Este correo ya esta registrado. Inicia sesion para cotizar con tu cuenta.</span>
-              <button type="button" onClick={handleQuoteLoginRedirect}>
-                Iniciar sesion
-              </button>
-            </div>
-          )}
-
-          </div>
-
-          <div className="quote-products-panel">
-            <div className="quote-products-header">
-              <label className="contact-field-label">Productos a cotizar</label>
-              <button
-                type="button"
-                className="quote-add-product-btn"
-                onClick={addPublicQuoteItem}
-              >
-                Agregar producto
-              </button>
-            </div>
-
-            {loadingProducts ? (
-              <p className="quote-helper-text">Cargando productos...</p>
-            ) : productsError ? (
-              <p className="quote-error-text">{productsError}</p>
-            ) : publicProducts.length === 0 ? (
-              <p className="quote-helper-text">No hay productos activos para cotizar por ahora.</p>
-            ) : (
-              <div className="quote-items-list">
-                {publicQuoteItems.map((item, index) => {
-                  const availableProducts = item.idCategoriaProducto
-                    ? publicProducts.filter(product => Number(product.idCategoriaProducto || product.categoriaProducto?.idCategoriaProducto) === Number(item.idCategoriaProducto))
-                    : publicProducts;
-                  const calculationItem = calculationItems[index] || null;
-                  const itemSubtotalBruto = getQuoteSubtotalBruto(calculationItem || {});
-                  const itemDiscountTotal = getQuoteDiscountTotal(calculationItem || {});
-                  const itemSubtotalWithDiscount = getQuoteSubtotalWithDiscount(calculationItem || {});
-                  const selectedProduct = publicProducts.find(product => Number(product.idProducto) === Number(item.idProducto));
-                  const selectedTechnique = publicTechniques.find(technique => Number(technique.idTecnica) === Number(item.idTecnica));
-                  const isComplete = Boolean(item.idProducto && item.idTecnica && Number(item.cantidad || 0) > 0);
-                  const isOpen = activePublicQuoteIndex === index;
-                  const itemTitle = selectedProduct?.nombre || 'Falta seleccionar producto';
-
-                  return (
-                    <div className={`quote-item-card ${!isComplete ? 'quote-item-card-incomplete' : ''}`} key={`public-quote-item-${index}`}>
-                      <div className="quote-item-card-header">
-                        <button
-                          type="button"
-                          className="quote-item-summary-btn"
-                          onClick={() => setActivePublicQuoteIndex(index)}
-                          aria-expanded={isOpen}
-                        >
-                          <span>Producto {index + 1} - {itemTitle}</span>
-                          <small>
-                            Cant. {Number(item.cantidad || 0).toLocaleString('es-CO')} - {selectedTechnique?.nombre || 'Sin tecnica'} - {itemSubtotalWithDiscount > 0 ? formatMoneyCOP(itemSubtotalWithDiscount) : 'Por cotizar'}
-                          </small>
-                        </button>
-                        <span className={`quote-item-status ${isComplete ? 'complete' : 'pending'}`}>
-                          {isComplete ? 'Completo' : 'Falta informacion'}
-                        </span>
-                        <button
-                          type="button"
-                          className="quote-edit-product-btn"
-                          onClick={() => setActivePublicQuoteIndex(index)}
-                        >
-                          {isOpen ? 'Editando' : 'Editar'}
-                        </button>
-                        {publicQuoteItems.length > 1 && (
-                          <button
-                            type="button"
-                            className="quote-remove-product-btn"
-                            onClick={() => removePublicQuoteItem(index)}
-                          >
-                            Quitar
-                          </button>
-                        )}
-                      </div>
-
-                      {isOpen && (
-                        <div className="quote-item-card-body">
-                      <div className="quote-select-grid">
-                        {publicCategories.length > 0 && (
-                          <select
-                            className="contact-input quote-category-select"
-                            value={item.idCategoriaProducto}
-                            onChange={(event) => {
-                              updatePublicQuoteItem(index, 'idCategoriaProducto', event.target.value);
-                              updatePublicQuoteItem(index, 'idProducto', '');
-                            }}
-                          >
-                            <option value="">Todas las categorias</option>
-                            {publicCategories.map(category => (
-                              <option key={category.idCategoriaProducto} value={category.idCategoriaProducto}>
-                                {category.nombre}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                        <select
-                          className="contact-input quote-technique-select"
-                          value={item.idTecnica}
-                          onChange={(event) => updatePublicQuoteItem(index, 'idTecnica', event.target.value)}
-                          required
-                          disabled={publicTechniques.length === 0}
-                        >
-                          <option value="">
-                            {publicTechniques.length === 0 ? 'Sin tecnicas disponibles' : 'Tecnica de estampacion'}
-                          </option>
-                          {publicTechniques.map(technique => (
-                            <option key={technique.idTecnica} value={technique.idTecnica}>
-                              {technique.nombre}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="quote-product-row">
-                        <select
-                          className="contact-input quote-product-select"
-                          value={item.idProducto}
-                          onChange={(event) => updatePublicQuoteItem(index, 'idProducto', event.target.value)}
-                          required
-                        >
-                          <option value="">Selecciona un producto</option>
-                          {availableProducts.map(product => (
-                            <option key={product.idProducto} value={product.idProducto}>
-                              {product.categoriaProducto?.nombre ? `${product.categoriaProducto.nombre} - ${product.nombre}` : product.nombre}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="number"
-                          min="1"
-                          className="contact-input quote-quantity-input"
-                          value={item.cantidad}
-                          onChange={(event) => updatePublicQuoteItem(index, 'cantidad', event.target.value)}
-                          placeholder="Cantidad"
-                          required
-                        />
-                        <input
-                          type="text"
-                          className="contact-input quote-item-note"
-                          value={item.detalleProducto}
-                          onChange={(event) => updatePublicQuoteItem(index, 'detalleProducto', event.target.value)}
-                          placeholder="Color, talla o ubicacion del estampado"
-                        />
-                      </div>
-
-                      <div className="quote-design-config">
-                        <label>
-                          <span>Como se manejara el diseno?</span>
-                          <select
-                            className="contact-input"
-                            value={item.requiereDiseno === false ? 'NO_REQUIERE' : item.origenDiseno === 'CLIENTE' ? 'CLIENTE' : 'PIXEL'}
-                            onChange={(event) => {
-                              const mode = event.target.value;
-                              updatePublicQuoteItem(index, 'requiereDiseno', mode !== 'NO_REQUIERE');
-                              updatePublicQuoteItem(index, 'origenDiseno', mode === 'CLIENTE' ? 'CLIENTE' : 'PIXEL');
-                              if (mode !== 'CLIENTE') updatePublicQuoteItem(index, 'archivoDisenoInicialUrl', '');
-                            }}
-                          >
-                            <option value="CLIENTE">Ya tengo el diseno</option>
-                            <option value="PIXEL">Quiero que PIXEL cree el diseno</option>
-                            <option value="NO_REQUIERE">Este producto no requiere diseno</option>
-                          </select>
-                        </label>
-                        {item.requiereDiseno !== false && item.origenDiseno === 'CLIENTE' && (
-                          <label>
-                            <span>Enlace del diseno (opcional)</span>
-                            <input
-                              type="url"
-                              className="contact-input"
-                              value={item.archivoDisenoInicialUrl}
-                              onChange={event => updatePublicQuoteItem(index, 'archivoDisenoInicialUrl', event.target.value)}
-                              placeholder="https://..."
-                            />
-                          </label>
-                        )}
-                        {item.requiereDiseno !== false && (
-                          <label className="quote-general-design">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(item.esDisenoGeneral)}
-                              onChange={event => updatePublicQuoteItem(index, 'esDisenoGeneral', event.target.checked)}
-                            />
-                            Este diseno aplica para todos los productos
-                          </label>
-                        )}
-                      </div>
-
-                      {calculationItem && (
-                        <div className="quote-line-summary">
-                          <span>Unitario: {formatMoneyCOP(calculationItem.precioUnitario ?? calculationItem.precioBase)}</span>
-                          <span className="quote-discount-chip">
-                            -{formatPercentage(calculationItem.descuentoPorcentaje, '0%')}
-                          </span>
-                          <span>Subtotal: {formatMoneyCOP(itemSubtotalBruto)}</span>
-                          {itemDiscountTotal > 0 && <span>Descuento: -{formatMoneyCOP(itemDiscountTotal)}</span>}
-                          <strong>Con descuento: {formatMoneyCOP(itemSubtotalWithDiscount)}</strong>
-                        </div>
-                      )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Proyecto */}
-          <div className="contact-field">
-
-            <label className="contact-field-label">
-              Cuéntanos sobre tu proyecto
-            </label>
-
+          <label className="contact-field">
+            <span className="contact-field-label">Mensaje</span>
             <textarea
-              placeholder="Describe tu idea, referencias, colores, tallas o fecha deseada..."
               className="contact-textarea"
-              value={publicQuoteForm.observaciones}
-              onChange={(event) => updatePublicQuoteField('observaciones', event.target.value)}
-            ></textarea>
-
-          </div>
-
-          <div className="quote-total-card">
-            <div>
-              <span className="quote-total-label">Total estimado</span>
-              <strong className="quote-total-value">
-                {formatMoneyCOP(publicQuoteCalculation?.total ?? 0)}
-              </strong>
-              {publicQuoteCalculation && (
-                <small className="quote-total-breakdown">
-                  Subtotal: {formatMoneyCOP(publicQuoteSubtotalBruto)} - Descuento: -{formatMoneyCOP(publicQuoteDiscountTotal)} - Con descuento: {formatMoneyCOP(publicQuoteSubtotalWithDiscount)}
-                </small>
-              )}
-            </div>
-            <span className="quote-helper-text">
-              {calculatingQuote
-                ? 'Calculando con precios reales...'
-                : 'El valor final sera confirmado por nuestro equipo.'}
-            </span>
-          </div>
-
-          {/* Button */}
-          <button
-            type="submit"
-            className="contact-submit-btn"
-            disabled={isLoggedNonClient || sendingQuote || isQuoteSubmitting || loadingProducts || publicProducts.length === 0}
-          >
-            {sendingQuote || isQuoteSubmitting ? 'Enviando...' : 'Enviar solicitud'}
+              value={contactForm.mensaje}
+              onChange={(event) => updateContactForm('mensaje', event.target.value)}
+              placeholder="Cuéntanos cómo podemos ayudarte"
+              maxLength={1000}
+              required
+            />
+          </label>
+          <button type="submit" className="contact-submit-btn">
+            Enviar mensaje
           </button>
-
         </form>
+
+        <div className="contact-direct-actions contact-secondary-actions">
+          <a
+            className="contact-email-link"
+            href="mailto:contacto@pixel.com?subject=Consulta%20general%20PIXEL"
+          >
+            <Mail size={18} aria-hidden="true" />
+            Enviar consulta por correo directamente
+          </a>
+          <Link className="contact-quote-link" to="/cotizar">
+            Crear solicitud de cotización
+          </Link>
+        </div>
 
       </div>
 
@@ -2138,7 +1620,8 @@ const LandingPage = () => {
           <a className="mobile-nav-link" href="#servicios">Servicios</a>
           <a className="mobile-nav-link" href="#comparativo">Comparativo</a>
           <a className="mobile-nav-link" href="#productos">Productos</a>
-          <a className="mobile-nav-link" href="#contacto">Cotizar</a>
+          <Link className="mobile-nav-link" to="/cotizar">Cotizar</Link>
+          <a className="mobile-nav-link" href="#contacto">Contacto</a>
         </nav>
 
         <div className="mobile-user-section">

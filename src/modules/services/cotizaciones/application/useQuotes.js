@@ -88,6 +88,30 @@ export const useQuotes = (filters = {}) => {
     }
   };
 
+  const updateRequest = async (idCotizacion, quoteData) => {
+    const result = await quoteRepository.updateRequest(idCotizacion, quoteData);
+    await fetchQuotes();
+    return result;
+  };
+
+  const sendProposal = async (idCotizacion, payload) => {
+    const result = await quoteRepository.sendProposal(idCotizacion, payload);
+    await fetchQuotes();
+    return result;
+  };
+
+  const respondAsClient = async (idCotizacion, payload) => {
+    const result = await quoteRepository.respondAsClient(idCotizacion, payload);
+    await fetchQuotes();
+    return result;
+  };
+
+  const respondAsStaff = async (idCotizacion, payload) => {
+    const result = await quoteRepository.respondAsStaff(idCotizacion, payload);
+    await fetchQuotes();
+    return result;
+  };
+
   return {
     quotes: data.items,
     paginationMeta: data.meta,
@@ -97,9 +121,13 @@ export const useQuotes = (filters = {}) => {
     refetch:         fetchQuotes,
     handleCreate,
     handleUpdate,
+    updateRequest,
     handleApprove,
     handleReject,
     handleCancel,
     handleHardDelete,
+    sendProposal,
+    respondAsClient,
+    respondAsStaff,
   };
 };

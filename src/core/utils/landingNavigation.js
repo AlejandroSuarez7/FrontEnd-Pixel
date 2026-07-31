@@ -1,4 +1,4 @@
-export const LANDING_QUOTE_PATH = '/#contacto';
+export const LANDING_QUOTE_PATH = '/cotizar';
 
 export const navigateToLandingQuote = (navigate) => {
   navigate(LANDING_QUOTE_PATH);

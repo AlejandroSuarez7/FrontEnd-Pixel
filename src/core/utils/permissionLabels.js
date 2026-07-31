@@ -14,6 +14,7 @@ const MODULE_NAMES = {
   permisos: 'Permisos',
   clientes: 'Clientes',
   dashboard: 'Dashboard',
+  tarifas_tecnicas: 'Tarifas por técnica',
   general: 'General',
 };
 
@@ -66,6 +67,14 @@ const LABEL_OVERRIDES = {
   'dashboard.admin': 'Ver dashboard administrador',
   'dashboard.cliente': 'Ver dashboard cliente',
   'productos.precios': 'Gestionar precios de productos',
+  'tarifas.tecnicas.ver': 'Ver tarifas por técnica',
+  'tarifas.tecnicas.crear': 'Crear tarifas por técnica',
+  'tarifas.tecnicas.editar': 'Editar tarifas y descuentos por técnica',
+  'tarifas.tecnicas.eliminar': 'Eliminar tarifas por técnica',
+  'cotizaciones.propuesta.enviar': 'Enviar propuestas de cotización',
+  'cotizaciones.respuesta_cliente.registrar': 'Registrar respuestas de clientes',
+  'cotizaciones.versiones.ver': 'Ver versiones de cotizaciones',
+  'cotizaciones.cliente.responder': 'Responder propuestas de cotización',
   'disenos.produccion': 'Enviar diseños a producción',
   'cotizaciones.crear_cliente': 'Crear cotizaciones de clientes',
   'cotizaciones.editar_cliente': 'Editar cotizaciones de clientes',

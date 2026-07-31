@@ -17,13 +17,15 @@ export const useTecnicas = (filters = {}) => {
   });
 
   const handleCreate = async (tecnicaData) => {
-    await tecnicasRepository.create(tecnicaData);
+    const created = await tecnicasRepository.create(tecnicaData);
     await fetchTecnicas();
+    return created;
   };
 
   const handleUpdate = async (id, updatedData) => {
-    await tecnicasRepository.update(id, updatedData);
+    const updated = await tecnicasRepository.update(id, updatedData);
     await fetchTecnicas();
+    return updated;
   };
 
   const handleDelete = async (id) => {

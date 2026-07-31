@@ -23,14 +23,14 @@ describe('pedidoRepository', () => {
       },
     });
 
-    const result = await pedidoRepository.registrarDisenoRecibidoCliente(36, 102, {
+    const result = await pedidoRepository.registrarDisenoRecibidoCliente(36, 'STAMP-102', {
       archivoDisenoInicialUrl: ' https://example.com/diseno-cliente.png ',
       medioRecepcion: 'WHATSAPP',
       observaciones: ' Recibido por WhatsApp. ',
     });
 
     expect(apiClient.patch).toHaveBeenCalledWith(
-      'api/pedidos/36/detalles/102/diseno-recibido-cliente',
+      'api/pedidos/36/requerimientos-diseno/STAMP-102/diseno-recibido-cliente',
       {
         archivoDisenoInicialUrl: 'https://example.com/diseno-cliente.png',
         medioRecepcion: 'WHATSAPP',

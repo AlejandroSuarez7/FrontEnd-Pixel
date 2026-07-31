@@ -684,6 +684,42 @@ textarea.inputField {
   padding: 0 2px;
 }
 
+.rangeRow > label {
+  min-width: 0;
+}
+
+.rangeMobileLabel {
+  display: none;
+}
+
+.rangeFieldError {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-danger);
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.rangeRemoveButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 38px;
+  border: 1px solid #ffd5d5;
+  border-radius: var(--radius-sm);
+  background: #fff7f7;
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rangeRemoveButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 @media (max-width: 560px) {
   .rangeTitleRow,
   .rangeHeader,
@@ -698,5 +734,14 @@ textarea.inputField {
 
   .rangeHeader {
     display: none;
+  }
+
+  .rangeMobileLabel {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
   }
 }

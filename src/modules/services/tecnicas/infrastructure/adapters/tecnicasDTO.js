@@ -14,6 +14,7 @@ export const tecnicasDTO = {
       nombre: apiData.nombre,
       descripcion: apiData.descripcion || '', // Fallback por si es null en la BD
       estado: apiData.estado ?? true, // Manejo del booleano por defecto
+      requiereMedidas: apiData.requiereMedidas ?? true,
       fechaCreacion: apiData.fechaCreacion,
       fechaActualizacion: apiData.fechaActualizacion,
       detalles: apiData.detallesCotizacion || [] // Mapeamos detallesCotizacion -> detalles
@@ -38,7 +39,8 @@ export const tecnicasDTO = {
     return {
       nombre: domainData.nombre?.trim(),
       descripcion: domainData.descripcion?.trim(),
-      estado: domainData.estado
+      estado: domainData.estado,
+      requiereMedidas: domainData.requiereMedidas ?? true,
     };
   }
 };

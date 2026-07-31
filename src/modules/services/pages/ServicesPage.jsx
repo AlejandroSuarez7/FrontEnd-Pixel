@@ -16,7 +16,7 @@ const ServicesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const confirm = useConfirm();
-  const { hasPermission } = useAuth();
+  const { hasAnyPermission, hasPermission } = useAuth();
   const debouncedSearch = useDebounce(searchTerm, 350);
   const {
     tecnicas,
@@ -42,6 +42,17 @@ const ServicesPage = () => {
   const totalServices    = paginationMeta.total;
   const activeServices   = tecnicas.filter(s => s.estado === true).length;
   const inactiveServices = tecnicas.filter(s => s.estado === false).length;
+  const tariffPermissions = {
+    canView: hasAnyPermission([
+      'tarifas.tecnicas.ver',
+      'tarifas.tecnicas.crear',
+      'tarifas.tecnicas.editar',
+      'tarifas.tecnicas.eliminar',
+    ]),
+    canCreate: hasPermission('tarifas.tecnicas.crear'),
+    canEdit: hasPermission('tarifas.tecnicas.editar'),
+    canDelete: hasPermission('tarifas.tecnicas.eliminar'),
+  };
 
   const handleOpenCreate = () => {
     setSelectedService(null);
@@ -193,12 +204,20 @@ const ServicesPage = () => {
       </div>
 
       {/* MODALES */}
-      <ServiceFormModal
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={selectedService ? handleUpdate : handleCreate}
-        service={selectedService}
-      />
+      {isFormOpen && (
+        <ServiceFormModal
+          key={selectedService?.id || 'new-service'}
+          isOpen
+          onClose={() => {
+            setIsFormOpen(false);
+            setSelectedService(null);
+          }}
+          onCreate={handleCreate}
+          onUpdate={handleUpdate}
+          service={selectedService}
+          tariffPermissions={tariffPermissions}
+        />
+      )}
 
       <ServiceDetailsModal
         isOpen={isDetailsOpen}

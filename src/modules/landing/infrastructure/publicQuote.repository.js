@@ -33,8 +33,9 @@ export const publicQuoteRepository = {
     return data.data || [];
   },
 
-  async calculate(items, options = {}) {
-    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones/calcular`, { items }, {
+  async calculate(payload, options = {}) {
+    const body = Array.isArray(payload) ? { items: payload } : payload;
+    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones/calcular`, body, {
       skipAuthRedirect: true,
       signal: options.signal,
     });
@@ -44,5 +45,20 @@ export const publicQuoteRepository = {
   async create(payload) {
     const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones`, payload, { skipAuthRedirect: true });
     return data;
+  },
+
+  async getClientQuote(idCotizacion, options = {}) {
+    const { data } = await apiClient.get(`/api/cotizaciones/${idCotizacion}`, {
+      signal: options.signal,
+    });
+    return data.data;
+  },
+
+  async updateClientQuote(idCotizacion, payload) {
+    const { data } = await apiClient.patch(`/api/cotizaciones/${idCotizacion}/cliente`, {
+      items: payload.items,
+      observaciones: payload.observaciones ?? null,
+    });
+    return data.data;
   },
 };

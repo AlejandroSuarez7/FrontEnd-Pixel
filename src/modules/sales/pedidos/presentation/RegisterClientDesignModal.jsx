@@ -32,7 +32,7 @@ export const RegisterClientDesignModal = ({
     setArchivoDisenoInicialUrl(detail?.archivoDisenoInicialUrl || '');
     setMedioRecepcion('WHATSAPP');
     setObservaciones('');
-  }, [detail?.archivoDisenoInicialUrl, detail?.idDetallePedido, isOpen]);
+  }, [detail?.archivoDisenoInicialUrl, detail?.idRequerimientoDiseno, isOpen]);
 
   if (!isOpen || !detail) return null;
 

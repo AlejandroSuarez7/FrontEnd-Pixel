@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useContextualBack } from '../../../../core/hooks/useContextualBack';
 import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { notifications } from '../../../../core/utils/notifications';
 import { formatCalendarDate, formatDate } from '../../../../core/utils/fechaFormato';
@@ -27,6 +28,8 @@ import {
 } from '../../../../core/utils/designCoverage';
 import { formatPaymentOrigin } from '../../../../core/utils/paymentOrigin';
 import { getProductCategoryName } from '../../../../core/utils/productCategory';
+import { isClientUser } from '../../../../core/utils/permissions';
+import { PATHS } from '../../../../routes/paths';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
 import { useAuth } from '../../../../store/AuthContext';
 import { abonoRepository } from '../../abonos/infrastructure/abono.repository';
@@ -34,7 +37,16 @@ import { AbonoModal } from '../../abonos/presentation/AbonoModal';
 import { ReceiptPreviewModal } from '../../abonos/presentation/ReceiptPreviewModal';
 import { ReviewConfirmAbonoModal } from '../../abonos/presentation/ReviewConfirmAbonoModal';
 import { disenoRepository } from '../../../production/disenos/infrastructure/diseno.repository';
+import {
+  formatDesignRequirementStatus,
+  getPreviousDesignVersion,
+  getRequirementLocation,
+  getRequirementMeasures,
+  getRequirementProductName,
+  getRequirementTechnique,
+} from '../../../production/disenos/domain/designRequirement';
 import { DisenoModal } from '../../../production/disenos/presentation/DisenoModal';
+import { DesignOriginModal } from '../../../production/disenos/presentation/DesignOriginModal';
 import { DesignClientResponseModal } from '../../../production/disenos/presentation/DesignClientResponseModal';
 import { pedidoRepository } from '../infrastructure/pedido.repository';
 import { RegisterClientDesignModal } from './RegisterClientDesignModal';
@@ -108,45 +120,82 @@ const tabs = [
   { id: 'historial', label: 'Historial', icon: FileText },
 ];
 
-const DesignCoverageCard = ({
-  detail,
+const DesignRequirementCard = ({
+  requirement,
   index,
   canManage,
   canRegisterClientFile,
+  canDefineOrigin,
   onCreate,
   onRegisterClientFile,
+  onDefineOrigin,
   canApproveByClient,
   canRejectByClient,
   onApproveByClient,
   onRejectByClient,
 }) => {
-  const coverage = getDesignCoverageInfo(detail);
-  const canRegisterResponse = canRegisterDesignClientResponse(coverage.design);
+  const currentDesign = requirement.disenoVigente || null;
+  const previousVersion = getPreviousDesignVersion(requirement);
+  const canRegisterResponse = canRegisterDesignClientResponse(currentDesign);
+  const canUseClientFileEndpoint = Boolean(requirement.idRequerimientoDiseno);
+  const fileUrl = currentDesign?.archivoUrl || previousVersion?.archivoUrl || '';
   return (
     <article className="expediente-design-card">
       <div className="expediente-design-card-heading">
-        <span className="expediente-item-index">Producto {index + 1}</span>
-        <strong>{detail.producto?.nombre || detail.descripcion || 'Producto no especificado'}</strong>
-        <small>Categoria: {getProductCategoryName(detail)}</small>
-        <small>{detail.tecnica?.nombre || 'Tecnica no especificada'} · Cantidad {Number(detail.cantidad || 0).toLocaleString('es-CO')}</small>
+        <span className="expediente-item-index">Diseno {index + 1}</span>
+        <strong>{getRequirementProductName(requirement)}</strong>
+        <small>{requirement.tipo === 'GRUPO_COMPARTIDO' ? 'Diseno compartido' : 'Objetivo de diseno del pedido'}</small>
       </div>
-      <span className={`expediente-status-badge ${getStatusTone(coverage.state)}`}>{coverage.label}</span>
-      <small className="expediente-design-message">{coverage.message}</small>
-      <small>Origen: {detail.origenDiseno === 'CLIENTE' ? 'Cliente' : 'PIXEL'} · Costo: {formatMoney(detail.costoDiseno)}</small>
-      {coverage.isGeneral && <strong className="expediente-general-badge">Diseno general del pedido</strong>}
+      <span className={`expediente-status-badge ${getStatusTone(requirement.estadoCoberturaDiseno)}`}>
+        {formatDesignRequirementStatus(requirement)}
+      </span>
+      <small className="expediente-design-message">
+        {requirement.tipo === 'ESTAMPADO'
+          ? `${getRequirementLocation(requirement)} · ${getRequirementTechnique(requirement)} · ${getRequirementMeasures(requirement)}`
+          : `Origen: ${requirement.origenDiseno === 'CLIENTE' ? 'Cliente' : requirement.origenDiseno === 'PIXEL' ? 'PIXEL' : 'Por definir'}`}
+      </small>
+      {requirement.tipo === 'GRUPO_COMPARTIDO' && (
+        <div className="expediente-requirement-covered">
+          <strong>Cubre {requirement.estampadosCubiertos.length} estampado(s)</strong>
+          {requirement.estampadosCubiertos.map((stamp, coveredIndex) => (
+            <small key={stamp.idEstampadoPedido || stamp.idDetalleEstampadoPedido || coveredIndex}>
+              {stamp.producto?.nombre || stamp.nombreProducto || 'Producto'} · {stamp.ubicacion || 'Ubicacion por definir'} · {stamp.tecnica?.nombre || stamp.nombreTecnica || 'Servicio por definir'}
+            </small>
+          ))}
+        </div>
+      )}
+      {['PEDIDO_GENERAL', 'PRODUCTO_GENERAL'].includes(requirement.tipo) && (
+        <strong className="expediente-general-badge">
+          {requirement.tipo === 'PEDIDO_GENERAL' ? 'Diseno general del pedido' : 'Diseno general del producto'}
+        </strong>
+      )}
+      {requirement.versiones.length > 0 && <small>Historial: {requirement.versiones.length} version(es)</small>}
       <div className="expediente-card-actions">
-        {coverage.fileUrl && <a className="expediente-button secondary" href={coverage.fileUrl} target="_blank" rel="noreferrer">Ver diseno <ExternalLink size={14} /></a>}
-        {canManage && coverage.canCreate && (
+        {fileUrl && <a className="expediente-button secondary" href={fileUrl} target="_blank" rel="noreferrer">Ver diseno <ExternalLink size={14} /></a>}
+        {canManage && requirement.puedeCrearDiseno && requirement.origenDiseno === 'PIXEL' && (
           <button className="expediente-button primary" type="button" onClick={onCreate}>
-            {coverage.isCorrection ? 'Cargar diseno corregido' : 'Crear o asignar diseno'}
+            Crear diseno
           </button>
         )}
-        {canRegisterClientFile && coverage.canRegisterClientFile && (
+        {canManage && requirement.puedeCargarCorreccion && requirement.origenDiseno === 'PIXEL' && (
+          <button className="expediente-button primary" type="button" onClick={onCreate}>
+            Cargar diseno corregido
+          </button>
+        )}
+        {canRegisterClientFile && requirement.puedeRegistrarDisenoCliente && canUseClientFileEndpoint && (
           <button className="expediente-button primary" type="button" onClick={onRegisterClientFile}>
             Registrar diseno recibido
           </button>
         )}
-        {canRegisterResponse && canApproveByClient && (
+        {canDefineOrigin && (
+          requirement.puedeDefinirOrigen
+          || requirement.origenDiseno === 'PENDIENTE_DEFINIR'
+        ) && (
+          <button className="expediente-button primary" type="button" onClick={onDefineOrigin}>
+            Definir quien entrega el diseno
+          </button>
+        )}
+        {requirement.puedeAprobar && canRegisterResponse && canApproveByClient && (
           <button className="expediente-button success" type="button" onClick={onApproveByClient}>
             Aprobar en nombre del cliente
           </button>
@@ -165,13 +214,16 @@ export const PedidoExpedientePage = () => {
   const { idPedido } = useParams();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const { hasPermission } = useAuth();
+  const { user, permissions, hasPermission } = useAuth();
+  const isClient = isClientUser(user, permissions);
+  const goBack = useContextualBack(isClient ? PATHS.DASHBOARD : PATHS.ORDERS);
   const [activeTab, setActiveTab] = useState('resumen');
   const [receiptPayment, setReceiptPayment] = useState(null);
   const [reviewPayment, setReviewPayment] = useState(null);
   const [pendingActionId, setPendingActionId] = useState(null);
   const [showAbonoModal, setShowAbonoModal] = useState(false);
   const [designModalContext, setDesignModalContext] = useState(null);
+  const [originRequirement, setOriginRequirement] = useState(null);
   const [clientDesignDetail, setClientDesignDetail] = useState(null);
   const [designResponseModal, setDesignResponseModal] = useState({
     open: false,
@@ -190,6 +242,30 @@ export const PedidoExpedientePage = () => {
     initialData: null,
   });
 
+  const getDesignRequirements = useCallback(
+    (pedidoId, options) => disenoRepository.getRequerimientosDiseno(pedidoId, options),
+    [],
+  );
+  const getDesignOrders = useCallback(
+    filters => disenoRepository.listPedidos(filters),
+    [],
+  );
+
+  const {
+    data: designRequirementsData,
+    loading: loadingDesignRequirements,
+    error: designRequirementsError,
+    refetch: loadDesignRequirements,
+  } = useLatestListRequest({
+    queryKey: `${idPedido}:${hasPermission('disenos.ver') ? 'allowed' : 'denied'}`,
+    load: signal => (
+      hasPermission('disenos.ver')
+        ? getDesignRequirements(idPedido, { signal })
+        : Promise.resolve({ requerimientos: [], resumen: null })
+    ),
+    initialData: { requerimientos: [], resumen: null },
+  });
+
   const loadReceipt = useCallback(
     () => abonoRepository.getAdminReceipt(receiptPayment?.idAbono),
     [receiptPayment?.idAbono],
@@ -200,7 +276,7 @@ export const PedidoExpedientePage = () => {
   const client = useMemo(() => expediente?.cliente || {}, [expediente?.cliente]);
   const tabCounts = {
     abonos: expediente?.abonos?.length || 0,
-    disenos: expediente?.detalles?.length || 0,
+    disenos: designRequirementsData?.requerimientos?.length || 0,
     historial: expediente?.historial?.length || 0,
   };
   const paymentById = useMemo(
@@ -234,35 +310,53 @@ export const PedidoExpedientePage = () => {
   const handleCreateDesign = async payload => {
     await disenoRepository.create(payload);
     setDesignModalContext(null);
-    await loadExpediente();
+    await Promise.all([loadExpediente(), loadDesignRequirements()]);
     notifications.success('Diseno registrado correctamente.');
   };
 
   const handleRegisterClientDesign = async payload => {
     await pedidoRepository.registrarDisenoRecibidoCliente(
-      pedido.idPedido,
-      clientDesignDetail.idDetallePedido,
+      clientDesignDetail.idPedido || pedido.idPedido,
+      clientDesignDetail.idRequerimientoDiseno,
       payload,
     );
-    await loadExpediente();
     setClientDesignDetail(null);
     notifications.success('Diseno recibido. Quedo pendiente de revision.');
+    await loadDesignRequirements();
   };
 
-  const openDesignModal = detail => {
-    const coverage = detail ? getDesignCoverageInfo(detail) : null;
-    if (detail && !coverage?.canCreate) {
-      notifications.info(coverage?.message || 'Este producto no admite un nuevo diseno.');
+  const handleDefineDesignOrigin = async origin => {
+    await disenoRepository.definirOrigenRequerimiento(
+      originRequirement.idPedido || pedido.idPedido,
+      originRequirement.idRequerimientoDiseno,
+      origin,
+    );
+    setOriginRequirement(null);
+    notifications.success(
+      origin === 'CLIENTE'
+        ? 'El diseno quedo pendiente de recibir el archivo del cliente.'
+        : 'El diseno quedo a cargo del equipo PIXEL.',
+    );
+    await loadDesignRequirements();
+  };
+
+  const openDesignModal = requirement => {
+    if (
+      requirement
+      && !requirement.puedeCrearDiseno
+      && !requirement.puedeCargarCorreccion
+    ) {
+      notifications.info('Este requerimiento no admite un nuevo diseno.');
       return;
     }
     setDesignModalContext({
-      detailId: detail?.idDetallePedido == null ? '' : String(detail.idDetallePedido),
-      detail: detail || null,
+      requirementId: requirement?.idRequerimientoDiseno || '',
+      requirement: requirement || null,
     });
   };
 
-  const openDesignResponseModal = (mode, detail) => {
-    const design = getDesignCoverageInfo(detail).design;
+  const openDesignResponseModal = (mode, requirement) => {
+    const design = requirement.disenoVigente;
     if (!canRegisterDesignClientResponse(design)) {
       notifications.info('Este diseno ya no esta pendiente de respuesta del cliente.');
       return;
@@ -277,7 +371,10 @@ export const PedidoExpedientePage = () => {
           ...pedido,
           cliente: client,
         },
-        detallePedido: design.detallePedido || detail,
+        detallePedido: design.detallePedido || {
+          idDetallePedido: requirement.idDetallePedido,
+          producto: requirement.producto,
+        },
       },
     });
   };
@@ -298,7 +395,7 @@ export const PedidoExpedientePage = () => {
         });
 
       setDesignResponseModal({ open: false, mode: 'approve', diseno: null });
-      await loadExpediente();
+      await Promise.all([loadExpediente(), loadDesignRequirements()]);
       notifications.success(response?.message || (
         designResponseModal.mode === 'reject'
           ? 'Correcciones registradas correctamente.'
@@ -347,7 +444,7 @@ export const PedidoExpedientePage = () => {
 
   return (
     <main className="expediente-page">
-      <button type="button" className="expediente-back" onClick={() => navigate(-1)}>
+      <button type="button" className="expediente-back" onClick={goBack}>
         <ArrowLeft size={18} /> Volver a pedidos
       </button>
 
@@ -432,7 +529,9 @@ export const PedidoExpedientePage = () => {
                         {coverage.isCorrection ? 'Cargar diseno corregido' : 'Crear o asignar diseno'}
                       </button>
                     )}
-                    {hasPermission('disenos.crear') && coverage.canRegisterClientFile && (
+                    {hasPermission('disenos.crear')
+                      && coverage.canRegisterClientFile
+                      && detail.idRequerimientoDiseno && (
                       <button className="expediente-button primary" type="button" onClick={() => setClientDesignDetail(detail)}>
                         Registrar diseno recibido
                       </button>
@@ -520,7 +619,7 @@ export const PedidoExpedientePage = () => {
       {activeTab === 'disenos' && (
         <section className="expediente-content">
           <div className="expediente-section-heading">
-            <div><span>Disenos</span><h2>Disenos por producto</h2></div>
+            <div><span>Disenos</span><h2>Requerimientos de diseno</h2></div>
             {hasPermission('disenos.ver') && (
               <div className="expediente-heading-actions">
                 {hasPermission('disenos.crear') && <button type="button" onClick={() => openDesignModal(null)}>Nuevo diseno</button>}
@@ -528,24 +627,39 @@ export const PedidoExpedientePage = () => {
               </div>
             )}
           </div>
+          {loadingDesignRequirements ? (
+            <p className="expediente-empty">Consultando disenos pendientes...</p>
+          ) : designRequirementsError ? (
+            <div className="expediente-empty">
+              <p>No pudimos cargar los disenos pendientes.</p>
+              <button type="button" className="expediente-button secondary" onClick={loadDesignRequirements}>
+                Reintentar
+              </button>
+            </div>
+          ) : (
           <div className="expediente-design-grid">
-            {(expediente.detalles || []).map((detail, index) => (
-              <DesignCoverageCard
-                key={detail.idDetallePedido || index}
-                detail={detail}
+            {(designRequirementsData?.requerimientos || []).map((requirement, index) => (
+              <DesignRequirementCard
+                key={requirement.idRequerimientoDiseno}
+                requirement={requirement}
                 index={index}
                 canManage={hasPermission('disenos.crear') || hasPermission('disenos.editar')}
                 canRegisterClientFile={hasPermission('disenos.crear')}
+                canDefineOrigin={hasPermission('disenos.crear')}
                 canApproveByClient={hasPermission('disenos.aprobar_cliente')}
                 canRejectByClient={hasPermission('disenos.rechazar_cliente')}
-                onCreate={() => openDesignModal(detail)}
-                onRegisterClientFile={() => setClientDesignDetail(detail)}
-                onApproveByClient={() => openDesignResponseModal('approve', detail)}
-                onRejectByClient={() => openDesignResponseModal('reject', detail)}
+                onCreate={() => openDesignModal(requirement)}
+                onRegisterClientFile={() => setClientDesignDetail(requirement)}
+                onDefineOrigin={() => setOriginRequirement(requirement)}
+                onApproveByClient={() => openDesignResponseModal('approve', requirement)}
+                onRejectByClient={() => openDesignResponseModal('reject', requirement)}
               />
             ))}
-            {(expediente.detalles || []).length === 0 && <p className="expediente-empty">No hay productos para revisar.</p>}
+            {(designRequirementsData?.requerimientos || []).length === 0 && (
+              <p className="expediente-empty">Este pedido no tiene requerimientos de diseno.</p>
+            )}
           </div>
+          )}
         </section>
       )}
 
@@ -605,9 +719,11 @@ export const PedidoExpedientePage = () => {
         onClose={() => setDesignModalContext(null)}
         onSubmit={handleCreateDesign}
         isStaff
-        getPedidos={disenoRepository.listPedidos.bind(disenoRepository)}
+        getPedidos={getDesignOrders}
         presetPedido={presetPedido}
-        presetDetailId={designModalContext?.detailId || ''}
+        getRequerimientosDiseno={getDesignRequirements}
+        presetRequirement={designModalContext?.requirement || null}
+        presetRequirementId={designModalContext?.requirementId || ''}
         lockPedido
       />
       <RegisterClientDesignModal
@@ -623,6 +739,13 @@ export const PedidoExpedientePage = () => {
         diseno={designResponseModal.diseno}
         onClose={() => setDesignResponseModal({ open: false, mode: 'approve', diseno: null })}
         onSubmit={handleDesignClientResponse}
+      />
+      <DesignOriginModal
+        isOpen={Boolean(originRequirement)}
+        requirement={originRequirement}
+        pedido={pedido}
+        onClose={() => setOriginRequirement(null)}
+        onSubmit={handleDefineDesignOrigin}
       />
     </main>
   );

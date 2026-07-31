@@ -123,10 +123,11 @@ export class PedidoApiRepository {
     }
   }
 
-  async registrarDisenoRecibidoCliente(idPedido, idDetallePedido, payload) {
+  async registrarDisenoRecibidoCliente(idPedido, idRequerimientoDiseno, payload) {
     try {
+      const requirementId = encodeURIComponent(String(idRequerimientoDiseno));
       const { data } = await apiClient.patch(
-        `${ENDPOINT}/${idPedido}/detalles/${idDetallePedido}/diseno-recibido-cliente`,
+        `${ENDPOINT}/${idPedido}/requerimientos-diseno/${requirementId}/diseno-recibido-cliente`,
         {
           archivoDisenoInicialUrl: payload.archivoDisenoInicialUrl.trim(),
           medioRecepcion: payload.medioRecepcion,

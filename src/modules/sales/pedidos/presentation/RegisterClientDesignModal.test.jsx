@@ -11,7 +11,8 @@ vi.mock('../../../../core/utils/notifications', () => ({
 }));
 
 const detail = {
-  idDetallePedido: 102,
+  idRequerimientoDiseno: 'STAMP-102',
+  idPedido: 36,
   cantidad: 12,
   producto: { nombre: 'Camiseta estampada' },
 };
@@ -79,5 +80,28 @@ describe('RegisterClientDesignModal', () => {
     await waitFor(() => expect(submit).toBeDisabled());
     expect(onSubmit).toHaveBeenCalledTimes(1);
     resolveRequest({});
+  });
+
+  it('keeps the modal open when the request fails', async () => {
+    const onSubmit = vi.fn().mockRejectedValue(new Error('No se pudo registrar el diseno recibido.'));
+    render(
+      <RegisterClientDesignModal
+        isOpen
+        pedido={{ idPedido: 36 }}
+        detail={detail}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/url del diseno/i), {
+      target: { value: 'https://example.com/diseno.png' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar diseno recibido' }));
+
+    await waitFor(() => {
+      expect(notifications.error).toHaveBeenCalledWith('No se pudo registrar el diseno recibido.');
+    });
+    expect(screen.getByRole('dialog', { name: 'Registrar diseno recibido' })).toBeInTheDocument();
   });
 });

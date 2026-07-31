@@ -11,8 +11,8 @@ describe('landing navigation helpers', () => {
 
     navigateToLandingQuote(navigate);
 
-    expect(LANDING_QUOTE_PATH).toBe('/#contacto');
-    expect(navigate).toHaveBeenCalledWith('/#contacto');
+    expect(LANDING_QUOTE_PATH).toBe('/cotizar');
+    expect(navigate).toHaveBeenCalledWith('/cotizar');
   });
 
   it('scrolls to the section represented by the current hash', () => {

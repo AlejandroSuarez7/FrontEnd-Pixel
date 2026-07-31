@@ -1,4 +1,5 @@
 import { createDiseno } from '../../domain/diseno.model';
+import { buildDesignTargetPayload } from '../../domain/designRequirement';
 
 export const disenoDTO = {
   fromApi(apiData) {
@@ -8,6 +9,9 @@ export const disenoDTO = {
       idDiseno: apiData.idDiseno,
       idPedido: apiData.idPedido,
       idDetallePedido: apiData.idDetallePedido ?? null,
+      idEstampadoPedido: apiData.idEstampadoPedido ?? apiData.idDetalleEstampadoPedido ?? null,
+      grupoDisenoCompartido: apiData.grupoDisenoCompartido ?? null,
+      tipoObjetivo: apiData.tipoObjetivo ?? null,
       esDisenoGeneral: apiData.esDisenoGeneral ?? false,
       idDisenador: apiData.idDisenador,
       archivoUrl: apiData.archivoUrl,
@@ -41,6 +45,10 @@ export const disenoDTO = {
   },
 
   toApi(domainData) {
+    if (domainData.requirement) {
+      return buildDesignTargetPayload(domainData.requirement, domainData);
+    }
+
     return {
       idPedido: Number(domainData.idPedido),
       ...(domainData.esDisenoGeneral && { esDisenoGeneral: true }),

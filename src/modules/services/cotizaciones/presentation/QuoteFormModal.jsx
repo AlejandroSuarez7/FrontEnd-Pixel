@@ -1,754 +1,1061 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
-import {
-  formatMoneyCOP,
-  formatPercentage,
-  getQuoteDiscountTotal,
-  getQuoteSubtotalBruto,
-  getQuoteSubtotalWithDiscount,
-  getQuoteTotal,
-} from '../../../../core/utils/formatters';
+import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { notifications } from '../../../../core/utils/notifications';
-import { publicQuoteRepository } from '../../../landing/infrastructure/publicQuote.repository.js';
+import { publicQuoteRepository } from '../../../landing/infrastructure/publicQuote.repository';
+import { clientRepository } from '../../../users/infrastructure/client.repository';
 import styles from './quotes.module.css';
 
-const initialDetail = {
-  idCategoriaProducto: '',
-  idProducto: '',
-  idTecnica: '',
-  descripcion: '',
-  cantidad: 1,
-  observaciones: '',
-  requiereDiseno: true,
-  origenDiseno: 'PIXEL',
-  esDisenoGeneral: false,
-  archivoDisenoInicialUrl: '',
+const LOCATION_OPTIONS = [
+  ['FRENTE', 'Frente'],
+  ['ESPALDA', 'Espalda'],
+  ['MANGA_DERECHA', 'Manga derecha'],
+  ['MANGA_IZQUIERDA', 'Manga izquierda'],
+  ['PECHO', 'Pecho'],
+  ['OTRO', 'Otra ubicacion'],
+];
+
+const DESIGN_OPTIONS = [
+  ['CLIENTE', 'El cliente aporta el diseno'],
+  ['PIXEL', 'PIXEL crea el diseno'],
+  ['PENDIENTE_DEFINIR', 'Se definira despues'],
+  ['NO_REQUIERE', 'No requiere diseno'],
+];
+
+const STEPS = [
+  { id: 1, label: 'Cliente' },
+  { id: 2, label: 'Productos y estampados' },
+  { id: 3, label: 'Revision' },
+];
+
+let localSequence = 0;
+const localId = (prefix) => `${prefix}-${Date.now()}-${localSequence += 1}`;
+
+const createStamp = (source = {}) => ({
+  localId: localId('stamp'),
+  idDetalleEstampadoCotizacion: source.idDetalleEstampadoCotizacion,
+  idTecnica: source.idTecnica || source.tecnica?.idTecnica || '',
+  ubicacion: source.ubicacion || 'FRENTE',
+  anchoCm: source.anchoCm ?? '',
+  altoCm: source.altoCm ?? '',
+  origenDiseno: source.origenDiseno || 'PENDIENTE_DEFINIR',
+  grupoDisenoCompartido: source.grupoDisenoCompartido || '',
+  descripcion: source.descripcion || '',
+  observaciones: source.observaciones || '',
+  tecnica: source.tecnica || null,
+});
+
+const createItem = (source = {}) => {
+  const legacyStamp = source.idTecnica
+    ? createStamp({
+        idTecnica: source.idTecnica,
+        tecnica: source.tecnica,
+        origenDiseno: source.origenDiseno,
+      })
+    : null;
+  const stamps = Array.isArray(source.estampados) && source.estampados.length > 0
+    ? source.estampados.map(createStamp)
+    : [legacyStamp || createStamp()];
+
+  return {
+    localId: localId('item'),
+    idDetalleCotizacion: source.idDetalleCotizacion,
+    tipoProducto: source.tipoProducto || (source.idProducto ? 'CATALOGO' : 'OTRO'),
+    idCategoriaProducto: source.idCategoriaProducto
+      || source.producto?.idCategoriaProducto
+      || source.producto?.categoriaProducto?.idCategoriaProducto
+      || '',
+    idProducto: source.idProducto || source.producto?.idProducto || '',
+    nombrePersonalizado: source.nombrePersonalizado || (!source.idProducto ? source.descripcion : '') || '',
+    descripcionPersonalizada: source.descripcionPersonalizada || '',
+    materialReferencia: source.materialReferencia || '',
+    cantidad: source.cantidad || 1,
+    suministradoPor: source.suministradoPor || 'PIXEL',
+    observaciones: source.observaciones || '',
+    producto: source.producto || null,
+    estampados: stamps,
+  };
 };
 
-const getCalculationItems = (calculation) => {
-  if (!calculation) return [];
-  if (Array.isArray(calculation.items)) return calculation.items;
-  if (Array.isArray(calculation.detalles)) return calculation.detalles;
-  const singleItem = calculation.item || calculation.detalle;
-  return singleItem ? [singleItem] : [];
+const getItemName = (item, products) => {
+  if (item.tipoProducto === 'OTRO') {
+    return item.nombrePersonalizado.trim() || 'Falta indicar el producto';
+  }
+  return products.find((product) => Number(product.idProducto) === Number(item.idProducto))?.nombre
+    || item.producto?.nombre
+    || 'Falta seleccionar producto';
 };
 
-const createEmptyDetail = () => ({ ...initialDetail });
+const getSharedDesignGroups = (items = []) => (
+  [...new Set(
+    items.flatMap((item) => item.estampados || [])
+      .map((stamp) => String(stamp.grupoDisenoCompartido || '').trim())
+      .filter(Boolean),
+  )]
+);
 
-export const QuoteFormModal = ({ isOpen, onClose, onSubmit, quote, isStaff }) => {
-  const [observaciones, setObservaciones] = useState('');
-  const [motivoCambio, setMotivoCambio] = useState('');
-  const [costosAdicionales, setCostosAdicionales] = useState(0);
-  const [cliente, setCliente] = useState({ nombre: '', correo: '', telefono: '' });
-  const [detalles, setDetalles] = useState([]);
-  const [activeDetailIndex, setActiveDetailIndex] = useState(0);
+const nextSharedDesignGroup = (items = []) => {
+  const groups = new Set(getSharedDesignGroups(items));
+  let number = 1;
+  while (groups.has(`GRUPO-DISENO-${number}`)) number += 1;
+  return `GRUPO-DISENO-${number}`;
+};
 
-  const [tecnicas, setTecnicas] = useState([]);
-  const [loadingTecnicas, setLoadingTecnicas] = useState(false);
-  const [categorias, setCategorias] = useState([]);
-  const [productos, setProductos] = useState([]);
-  const [loadingProductos, setLoadingProductos] = useState(false);
-  const [calculo, setCalculo] = useState(null);
-  const [calculando, setCalculando] = useState(false);
+const getStampSummary = (stamp, techniques) => {
+  const technique = techniques.find(
+    (item) => Number(item.idTecnica) === Number(stamp.idTecnica),
+  )?.nombre || 'Servicio por definir';
+  const measures = stamp.anchoCm && stamp.altoCm
+    ? `${stamp.anchoCm} x ${stamp.altoCm} cm`
+    : 'Medidas por definir';
+  return `${stamp.ubicacion || 'Ubicacion por definir'} - ${technique} - ${measures}`;
+};
+
+const validateItem = (item, index) => {
+  const number = index + 1;
+  if (item.tipoProducto === 'CATALOGO' && !item.idProducto) {
+    return `Selecciona el producto ${number}.`;
+  }
+  if (item.tipoProducto === 'OTRO' && !item.nombrePersonalizado.trim()) {
+    return `Escribe el nombre del producto ${number}.`;
+  }
+  if (!Number.isInteger(Number(item.cantidad)) || Number(item.cantidad) <= 0) {
+    return `La cantidad del producto ${number} debe ser un entero mayor a 0.`;
+  }
+  if (
+    item.tipoProducto !== 'OTRO'
+    && (!Array.isArray(item.estampados) || item.estampados.length === 0)
+  ) {
+    return `Agrega al menos un estampado al producto ${number}.`;
+  }
+
+  for (let stampIndex = 0; stampIndex < item.estampados.length; stampIndex += 1) {
+    const stamp = item.estampados[stampIndex];
+    const hasWidth = stamp.anchoCm !== '';
+    const hasHeight = stamp.altoCm !== '';
+    if (hasWidth !== hasHeight) {
+      return `Completa ancho y alto juntos en el estampado ${stampIndex + 1}.`;
+    }
+    if (
+      (hasWidth && (Number(stamp.anchoCm) <= 0 || Number(stamp.anchoCm) > 500))
+      || (hasHeight && (Number(stamp.altoCm) <= 0 || Number(stamp.altoCm) > 500))
+    ) {
+      return 'Las medidas deben ser mayores a 0 y maximo 500 cm.';
+    }
+  }
+  return null;
+};
+
+export const QuoteFormModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  quote,
+  isStaff,
+}) => {
+  const isEditing = Boolean(quote);
+  const [cliente, setCliente] = useState(() => ({
+    nombre: quote?.cliente?.nombre || '',
+    correo: quote?.cliente?.correo || '',
+    telefono: quote?.cliente?.telefono || '',
+  }));
+  const [clientMode, setClientMode] = useState('NEW');
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientResults, setClientResults] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const debouncedClientSearch = useDebounce(clientSearch, 350);
+  const [observaciones, setObservaciones] = useState(() => quote?.observaciones || '');
+  const [items, setItems] = useState(() => (
+    quote?.detalles?.length ? quote.detalles.map(createItem) : [createItem()]
+  ));
+  const [activeItemIndex, setActiveItemIndex] = useState(0);
+  const [activeStampId, setActiveStampId] = useState(() => items[0]?.estampados?.[0]?.localId || null);
+  const [step, setStep] = useState(isEditing ? 2 : 1);
+  const [catalogs, setCatalogs] = useState({ categories: [], products: [], techniques: [] });
+  const [loadingCatalogs, setLoadingCatalogs] = useState(true);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
-  const isEditing = !!quote;
-  const isPricing = isStaff && isEditing;
-  const hasExistingValues = Number(quote?.total || 0) > 0
-    || Number(quote?.subtotal || 0) > 0
-    || detalles.some(det => Number(det.precioUnitario || 0) > 0);
-  const shouldShowChangeReason = isPricing && hasExistingValues;
-  const calculationItems = getCalculationItems(calculo);
-  const additionalCosts = Number(costosAdicionales || 0);
-  const finalTotal = getQuoteTotal({
-    ...calculo,
-    costosAdicionales: additionalCosts,
-  });
-  const quoteNumber = quote?.idCotizacion ? `#${quote.idCotizacion}` : '';
-
   useEffect(() => {
-    if (!isOpen) return;
-
+    if (!isOpen) return undefined;
     const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setLoadingTecnicas(true);
-      publicQuoteRepository
-        .listTechniques({ signal: controller.signal })
-        .then((items) => {
-          if (!controller.signal.aborted) {
-            setTecnicas((items || []).filter(item => item.estado === true));
-          }
-        })
-        .catch((err) => {
-          if (controller.signal.aborted || err?.code === 'ERR_CANCELED') return;
-          setTecnicas([]);
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoadingTecnicas(false);
+    Promise.all([
+      publicQuoteRepository.listCategories({ signal: controller.signal }),
+      publicQuoteRepository.listProducts({ signal: controller.signal }),
+      publicQuoteRepository.listTechniques({ signal: controller.signal }),
+    ])
+      .then(([categories, products, techniques]) => {
+        if (controller.signal.aborted) return;
+        setCatalogs({
+          categories: categories || [],
+          products: products || [],
+          techniques: (techniques || []).filter((technique) => technique.estado !== false),
         });
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setLoadingProductos(true);
-      Promise.all([
-        publicQuoteRepository.listCategories({ signal: controller.signal }),
-        publicQuoteRepository.listProducts({ signal: controller.signal }),
-      ])
-        .then(([categories, products]) => {
-          if (controller.signal.aborted) return;
-          setCategorias(categories || []);
-          setProductos(products || []);
-        })
-        .catch((err) => {
-          if (controller.signal.aborted || err?.code === 'ERR_CANCELED') return;
-          notifications.error('No se pudieron cargar los productos cotizables.');
-          setCategorias([]);
-          setProductos([]);
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoadingProductos(false);
-        });
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (quote) {
-      setObservaciones(quote.observaciones || '');
-      setMotivoCambio('');
-      setCostosAdicionales(quote.costosAdicionales || 0);
-      setCliente({
-        nombre: quote.cliente?.nombre || '',
-        correo: quote.cliente?.correo || '',
-        telefono: quote.cliente?.telefono || '',
+      })
+      .catch((error) => {
+        if (controller.signal.aborted || error?.code === 'ERR_CANCELED') return;
+        notifications.error(error.message || 'No se pudo cargar el catalogo para cotizar.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingCatalogs(false);
       });
-      setDetalles(quote.detalles?.length ? quote.detalles : [createEmptyDetail()]);
-      setActiveDetailIndex(0);
-    } else {
-      setObservaciones('');
-      setMotivoCambio('');
-      setCostosAdicionales(0);
-      setCliente({ nombre: '', correo: '', telefono: '' });
-      setCalculo(null);
-      setDetalles([createEmptyDetail()]);
-      setActiveDetailIndex(0);
-    }
-  }, [quote, isOpen]);
+    return () => controller.abort();
+  }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    const calculableDetails = detalles
-      .filter(det => det.idProducto && Number(det.cantidad) > 0)
-      .map(det => ({
-        idProducto: Number(det.idProducto),
-        ...(det.idTecnica && { idTecnica: Number(det.idTecnica) }),
-        cantidad: Number(det.cantidad),
-        observaciones: det.observaciones?.trim() || null,
-      }));
-
-    if (calculableDetails.length === 0) {
-      setCalculo(null);
-      setCalculando(false);
-      return;
-    }
-
+    if (!isOpen || !isStaff || isEditing || clientMode !== 'EXISTING') return undefined;
     const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setCalculando(true);
-      publicQuoteRepository
-        .calculate(calculableDetails, { signal: controller.signal })
-        .then((calculation) => {
-          if (!controller.signal.aborted) {
-            setCalculo(calculation);
-          }
-        })
-        .catch((err) => {
-          if (controller.signal.aborted || err?.code === 'ERR_CANCELED') return;
-          setCalculo(null);
-          notifications.error(err.message || 'No se pudo calcular el valor estimado.');
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setCalculando(false);
-        });
-    }, 350);
+    clientRepository.list({
+      page: 1,
+      limit: 8,
+      search: debouncedClientSearch,
+      sortBy: 'nombre',
+      order: 'asc',
+    }, { signal: controller.signal })
+      .then((result) => {
+        if (!controller.signal.aborted) setClientResults(result.items || []);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted || error?.code === 'ERR_CANCELED') return;
+        setClientResults([]);
+        notifications.error(error.message || 'No se pudieron buscar los clientes.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingClients(false);
+      });
+    return () => controller.abort();
+  }, [clientMode, debouncedClientSearch, isEditing, isOpen, isStaff]);
 
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [isOpen, detalles]);
-
+  const completeItems = useMemo(
+    () => items.filter((item, index) => !validateItem(item, index)).length,
+    [items],
+  );
   if (!isOpen) return null;
 
-  const updateDetail = (index, field, value) => {
-    setDetalles(prev => {
-      const next = [...prev];
-      next[index] = { ...(next[index] || initialDetail), [field]: value };
-      return next;
+  const updateClient = (field, value) => {
+    setCliente((current) => ({ ...current, [field]: value }));
+  };
+
+  const chooseClient = (client) => {
+    setSelectedClient(client);
+    setCliente({
+      nombre: client.nombre || '',
+      correo: client.correo || '',
+      telefono: client.telefono || '',
     });
   };
 
-  const addDetail = () => {
-    setDetalles(prev => {
-      const next = [...prev, createEmptyDetail()];
-      setActiveDetailIndex(next.length - 1);
-      return next;
-    });
+  const changeClientMode = (mode) => {
+    setClientMode(mode);
+    setSelectedClient(null);
+    setClientSearch('');
+    setClientResults([]);
+    setLoadingClients(mode === 'EXISTING');
+    if (mode === 'NEW') {
+      setCliente({ nombre: '', correo: '', telefono: '' });
+    }
   };
 
-  const removeDetail = (index) => {
-    setDetalles(prev => {
-      if (prev.length <= 1) return prev;
-      const next = prev.filter((_, itemIndex) => itemIndex !== index);
-      setActiveDetailIndex(current => Math.max(0, Math.min(current >= index ? current - 1 : current, next.length - 1)));
-      return next;
-    });
+  const updateItem = (index, field, value) => {
+    setItems((current) => current.map((item, itemIndex) => {
+      if (itemIndex !== index) return item;
+      if (field === 'tipoProducto') {
+        return {
+          ...item,
+          tipoProducto: value,
+          idProducto: '',
+          idCategoriaProducto: '',
+          nombrePersonalizado: '',
+        };
+      }
+      if (field === 'idCategoriaProducto') {
+        return { ...item, idCategoriaProducto: value, idProducto: '' };
+      }
+      return { ...item, [field]: value };
+    }));
   };
 
-  const updateCliente = (field, value) => {
-    setCliente(prev => ({ ...prev, [field]: value }));
+  const updateStamp = (itemIndex, stampId, field, value) => {
+    const selectedTechnique = field === 'idTecnica'
+      ? catalogs.techniques.find(
+          (technique) => Number(technique.idTecnica) === Number(value),
+        )
+      : null;
+    setItems((current) => current.map((item, index) => (
+      index === itemIndex
+        ? {
+            ...item,
+            estampados: item.estampados.map((stamp) => (
+              stamp.localId === stampId
+                ? {
+                    ...stamp,
+                    [field]: value,
+                    ...(field === 'idTecnica' && (!value || selectedTechnique?.requiereMedidas === false)
+                      ? { anchoCm: '', altoCm: '' }
+                      : {}),
+                  }
+                : stamp
+            )),
+          }
+        : item
+    )));
   };
 
-  const handleCategoryChange = (index, value) => {
-    setDetalles(prev => {
-      const next = [...prev];
-      next[index] = {
-        ...(next[index] || initialDetail),
-        idCategoriaProducto: value,
-        idProducto: '',
-        descripcion: '',
-      };
-      return next;
-    });
-    setCalculo(null);
-  };
-
-  const handleProductChange = (index, value) => {
-    const product = productos.find(item => Number(item.idProducto) === Number(value));
-    setDetalles(prev => {
-      const next = [...prev];
-      next[index] = {
-        ...(next[index] || initialDetail),
-        idProducto: value,
-        descripcion: product?.nombre || '',
-      };
-      return next;
-    });
-    setCalculo(null);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    await runLocked(async () => {
-
-    try {
-      if (isStaff && !isEditing) {
-        if (!cliente.nombre.trim()) {
-          notifications.warning('El nombre del cliente es obligatorio.');
-          return;
-        }
-        if (!cliente.telefono.trim()) {
-          notifications.warning('El telefono del cliente es obligatorio para cotizaciones presenciales.');
-          return;
-        }
-        if (!/^\d{10}$/.test(cliente.telefono.trim())) {
-          notifications.warning('El telefono debe tener exactamente 10 numeros.');
-          return;
-        }
-        if (cliente.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo.trim())) {
-          notifications.warning('Ingresa un correo valido para el cliente.');
-          return;
-        }
-        const invalidProductIndex = detalles.findIndex(det => !det.idProducto);
-        if (invalidProductIndex >= 0) {
-          setActiveDetailIndex(invalidProductIndex);
-          notifications.warning(`Selecciona un producto para el item ${invalidProductIndex + 1}.`);
-          return;
-        }
-        const invalidQuantityIndex = detalles.findIndex(det => Number(det.cantidad || 0) <= 0);
-        if (invalidQuantityIndex >= 0) {
-          setActiveDetailIndex(invalidQuantityIndex);
-          notifications.warning(`La cantidad del item ${invalidQuantityIndex + 1} debe ser mayor a 0.`);
-          return;
-        }
-        const invalidTechniqueIndex = detalles.findIndex(det => !det.idTecnica);
-        if (invalidTechniqueIndex >= 0) {
-          setActiveDetailIndex(invalidTechniqueIndex);
-          notifications.warning(`Selecciona una tecnica para el item ${invalidTechniqueIndex + 1}.`);
-          return;
-        }
+  const shareDesignWithStamp = (itemIndex, stampId, targetStampId) => {
+    setItems((current) => {
+      if (!targetStampId) {
+        return current.map((item, index) => (index === itemIndex
+          ? {
+              ...item,
+              estampados: item.estampados.map((stamp) => (
+                stamp.localId === stampId ? { ...stamp, grupoDisenoCompartido: '' } : stamp
+              )),
+            }
+          : item));
       }
 
-      const pricedDetails = isPricing
-        ? detalles.map((det, index) => {
-          const itemCalculation = calculationItems[index] || {};
-          return {
-          ...det,
-          precioUnitario: det.precioUnitario || itemCalculation.precioUnitario || det.precioBase || 0,
-          costoDiseno: det.costoDiseno || 0,
-        };
-        })
-        : detalles;
-
-      const payload = {
-        observaciones: observaciones.trim() || null,
-        detalles: pricedDetails,
-        ...(isPricing && { costosAdicionales: Number(costosAdicionales || 0) }),
-        ...(shouldShowChangeReason && motivoCambio.trim() && {
-          motivoCambio: motivoCambio.trim(),
-        }),
-        ...(isStaff && !isEditing && {
-          cliente: {
-            nombre: cliente.nombre.trim(),
-            correo: cliente.correo.trim().toLowerCase() || null,
-            telefono: cliente.telefono.trim() || null,
-          },
-        }),
-      };
-
-      await onSubmit(payload);
-    } catch (err) {
-      notifications.error(err.message || 'Ocurrio un error al procesar el formulario.');
-    }
+      const targetStamp = current.flatMap((item) => item.estampados)
+        .find((stamp) => stamp.localId === targetStampId);
+      const group = targetStamp?.grupoDisenoCompartido || nextSharedDesignGroup(current);
+      return current.map((item) => ({
+        ...item,
+        estampados: item.estampados.map((stamp) => (
+          stamp.localId === stampId || stamp.localId === targetStampId
+            ? { ...stamp, grupoDisenoCompartido: group }
+            : stamp
+        )),
+      }));
     });
   };
 
-  const modalTitle = isPricing
-    ? `Cotizar solicitud ${quoteNumber}`
-    : isEditing
-      ? `Editar cotizacion ${quoteNumber}`
-      : 'Nueva solicitud de cotizacion';
+  const applyOneDesignForProduct = (itemIndex, enabled) => {
+    setItems((current) => {
+      const group = enabled ? nextSharedDesignGroup(current) : '';
+      return current.map((item, index) => index === itemIndex
+        ? {
+            ...item,
+            estampados: item.estampados.map((stamp) => ({
+              ...stamp,
+              grupoDisenoCompartido: group,
+            })),
+          }
+        : item);
+    });
+  };
+
+  const addItem = () => {
+    const nextIndex = items.length;
+    const item = createItem();
+    setItems((current) => [...current, item]);
+    setActiveItemIndex(nextIndex);
+    setActiveStampId(item.estampados[0]?.localId || null);
+  };
+
+  const duplicateItem = (index) => {
+    const copy = createItem({
+      ...items[index],
+      idDetalleCotizacion: undefined,
+      estampados: items[index].estampados.map((stamp) => ({
+        ...stamp,
+        idDetalleEstampadoCotizacion: undefined,
+        grupoDisenoCompartido: '',
+      })),
+    });
+    setItems((current) => [...current, copy]);
+    setActiveItemIndex(items.length);
+    setActiveStampId(copy.estampados[0]?.localId || null);
+  };
+
+  const removeItem = (index) => {
+    if (items.length <= 1) return;
+    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    setActiveItemIndex((current) => Math.max(0, Math.min(current >= index ? current - 1 : current, items.length - 2)));
+  };
+
+  const addStamp = (itemIndex) => {
+    const stamp = createStamp();
+    setItems((current) => current.map((item, index) => (
+      index === itemIndex
+        ? { ...item, estampados: [...item.estampados, stamp] }
+        : item
+    )));
+    setActiveStampId(stamp.localId);
+  };
+
+  const duplicateStamp = (itemIndex, stampId) => {
+    const source = items[itemIndex].estampados.find((stamp) => stamp.localId === stampId);
+    if (!source) return;
+    const copy = createStamp({ ...source, grupoDisenoCompartido: '' });
+    setItems((current) => current.map((item, index) => index === itemIndex
+      ? { ...item, estampados: [...item.estampados, copy] }
+      : item));
+    setActiveStampId(copy.localId);
+  };
+
+  const removeStamp = (itemIndex, stampId) => {
+    setItems((current) => current.map((item, index) => (
+      index === itemIndex && (item.estampados.length > 1 || item.tipoProducto === 'OTRO')
+        ? { ...item, estampados: item.estampados.filter((stamp) => stamp.localId !== stampId) }
+        : item
+    )));
+    if (activeStampId === stampId) setActiveStampId(null);
+  };
+
+  const validateClient = () => {
+    if (!isStaff || isEditing) return null;
+    if (clientMode === 'EXISTING') {
+      return selectedClient ? null : 'Selecciona un cliente existente.';
+    }
+    if (cliente.nombre.trim().length < 2) return 'El nombre completo del cliente es obligatorio.';
+    if (!/^\d{10}$/.test(cliente.telefono.trim())) return 'El telefono debe tener exactamente 10 digitos.';
+    if (cliente.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo.trim())) {
+      return 'Ingresa un correo valido.';
+    }
+    return null;
+  };
+
+  const validateProducts = () => {
+    if (items.length === 0) return { message: 'Agrega al menos un producto.', index: 0 };
+    for (let index = 0; index < items.length; index += 1) {
+      const message = validateItem(items[index], index);
+      if (message) return { message, index };
+    }
+    return null;
+  };
+
+  const goToNextStep = () => {
+    if (step === 1) {
+      const error = validateClient();
+      if (error) {
+        notifications.warning(error);
+        return;
+      }
+      setStep(2);
+      return;
+    }
+    const error = validateProducts();
+    if (error) {
+      setActiveItemIndex(error.index);
+      setStep(2);
+      notifications.warning(error.message);
+      return;
+    }
+    setStep(3);
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    await runLocked(async () => {
+      const clientError = validateClient();
+      if (clientError) {
+        setStep(1);
+        notifications.warning(clientError);
+        return;
+      }
+      const productsError = validateProducts();
+      if (productsError) {
+        setActiveItemIndex(productsError.index);
+        setStep(2);
+        notifications.warning(productsError.message);
+        return;
+      }
+
+      try {
+        await onSubmit({
+          observaciones: observaciones.trim() || null,
+          items,
+          ...(isStaff && !isEditing
+            ? selectedClient
+              ? { idCliente: selectedClient.idCliente }
+              : {
+                cliente: {
+                  nombre: cliente.nombre.trim(),
+                  correo: cliente.correo.trim().toLowerCase() || null,
+                  telefono: cliente.telefono.trim(),
+                },
+              }
+            : {}),
+        });
+      } catch (error) {
+        notifications.error(error.message || 'No se pudo guardar la solicitud.');
+      }
+    });
+  };
 
   return (
     <div className={styles.overlay}>
-      <div className={`${styles.modalContainer} ${isPricing ? styles.modalQuotePricing : styles.modalSm}`}>
-        <div className={styles.modalHeader}>
+      <section className={`${styles.modalContainer} ${styles.quoteRequestModal}`} role="dialog" aria-modal="true">
+        <header className={styles.modalHeader}>
           <div>
-            <h3 className={styles.modalTitle}>{modalTitle}</h3>
-            {isPricing && (
-              <p className={styles.modalSubtitle}>
-                Revisa el producto, aplica costos necesarios y envia el precio final al cliente.
-              </p>
-            )}
+            <span className={styles.breadcrumb}>{isEditing ? 'Editar solicitud' : 'Cotizacion presencial'}</span>
+            <h3 className={styles.modalTitle}>
+              {isEditing ? `Editar cotizacion #${quote.idCotizacion}` : 'Nueva solicitud de cotizacion'}
+            </h3>
           </div>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
-        </div>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting} aria-label="Cerrar">x</button>
+        </header>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {isStaff && !isEditing && (
-            <div className={styles.quoteClientGrid}>
-              <div className={`${styles.inputGroup} ${styles.quoteClientName}`}>
-                <label className={styles.inputLabel}>Nombre completo *</label>
-                <input
-                  type="text"
-                  value={cliente.nombre}
-                  onChange={event => updateCliente('nombre', event.target.value)}
-                  className={styles.inputField}
-                  placeholder="Nombre del cliente"
-                  required
-                />
-              </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Correo</label>
-                <input
-                  type="email"
-                  value={cliente.correo}
-                  onChange={event => updateCliente('correo', event.target.value)}
-                  className={styles.inputField}
-                  placeholder="cliente@email.com"
-                />
-              </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Telefono</label>
-                <input
-                  type="tel"
-                  value={cliente.telefono}
-                  onChange={event => updateCliente('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))}
-                  className={styles.inputField}
-                  placeholder="3000000000"
-                  inputMode="numeric"
-                  maxLength={10}
-                  required
-                />
-              </div>
-            </div>
-          )}
+        <nav className={styles.quoteRequestSteps} aria-label="Pasos de la solicitud">
+          {STEPS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={step === item.id ? styles.quoteRequestStepActive : ''}
+              onClick={() => item.id < step && !(isEditing && item.id === 1) && setStep(item.id)}
+              disabled={item.id > step || isSubmitting || (isEditing && item.id === 1)}
+              aria-current={step === item.id ? 'step' : undefined}
+            >
+              <span>{item.id}</span>
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
-          {isPricing && (
-            <div className={styles.quoteSummaryCard}>
-              <div className={styles.quoteSummaryItem}>
-                <span>Cliente</span>
-                <strong>{quote?.cliente?.nombre || 'Cliente sin nombre'}</strong>
-                <small
-                  title={[quote?.cliente?.correo, quote?.cliente?.telefono].filter(Boolean).join(' | ') || undefined}
-                >
-                  {[quote?.cliente?.correo, quote?.cliente?.telefono].filter(Boolean).join(' | ') || 'Sin contacto registrado'}
-                </small>
-              </div>
-              <div className={styles.quoteSummaryItem}>
-                <span>Productos</span>
-                <strong>{detalles.length}</strong>
-                <small>{quote?.productosResumen || 'Productos de la solicitud'}</small>
-              </div>
-              <div className={styles.quoteSummaryItem}>
-                <span>Estado</span>
-                <strong>{quote?.estado || 'PENDIENTE'}</strong>
-                <small>{quote?.tipoCotizacion || 'Cotizacion'}</small>
-              </div>
-            </div>
-          )}
+        <form onSubmit={submit} className={styles.quoteRequestForm}>
+          <div className={styles.quoteRequestBody}>
+            {step === 1 && isStaff && !isEditing && (
+              <section className={styles.quoteRequestSection}>
+                <div className={styles.quoteRequestSectionTitle}>
+                  <span>Cliente</span>
+                  <strong>Selecciona un cliente o registra una atencion presencial</strong>
+                </div>
+                <div className={styles.quoteClientMode}>
+                  <button type="button" className={clientMode === 'EXISTING' ? styles.quoteTypeActive : ''} onClick={() => changeClientMode('EXISTING')}>
+                    Buscar cliente existente
+                  </button>
+                  <button type="button" className={clientMode === 'NEW' ? styles.quoteTypeActive : ''} onClick={() => changeClientMode('NEW')}>
+                    Registrar cotizacion sin acceso al portal
+                  </button>
+                </div>
 
-          <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>
-              {isPricing ? 'Observaciones internas del administrador' : 'Observaciones generales'}
-            </label>
-            <textarea
-              value={observaciones}
-              onChange={event => setObservaciones(event.target.value)}
-              className={styles.inputField}
-              rows={2}
-              placeholder="Entrega, urgencia, empaque u otra aclaracion..."
-            />
-          </div>
-
-          <div className={styles.pricingPanel}>
-            <div className={styles.pricingPanelHeader}>
-              <div>
-                <p className={styles.detailsSectionLabel}>Productos a cotizar</p>
-                <p className={styles.pricingHelpText}>
-                  Agrega uno o varios productos. El backend recalcula precios, descuentos y totales.
-                </p>
-              </div>
-              <div className={styles.quotePanelActions}>
-                {calculando && <span className={styles.pricingBadge}>Calculando...</span>}
-                <button type="button" className={styles.btnSecondary} onClick={addDetail} disabled={isSubmitting}>
-                  Agregar producto
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.detailRowsWrapper}>
-              {detalles.map((item, index) => {
-                const availableProducts = item.idCategoriaProducto
-                  ? productos.filter(product => Number(product.idCategoriaProducto || product.categoriaProducto?.idCategoriaProducto) === Number(item.idCategoriaProducto))
-                  : productos;
-                const calculationItem = calculationItems[index] || item;
-                const unitBase = Number(calculationItem?.precioBase ?? item.precioBase ?? item.producto?.precioBase ?? 0);
-                const suggestedUnitPrice = Number(calculationItem?.precioUnitario ?? item.precioUnitario ?? unitBase ?? 0);
-                const discountPercent = calculationItem?.descuentoPorcentaje ?? item.descuentoPorcentaje ?? null;
-                const discountAmount = getQuoteDiscountTotal(calculationItem || {});
-                const subtotalBruto = getQuoteSubtotalBruto(calculationItem || {}) || (unitBase * Number(item.cantidad || 1));
-                const subtotalWithDiscount = getQuoteSubtotalWithDiscount(calculationItem || {});
-                const selectedProduct = productos.find(product => Number(product.idProducto) === Number(item.idProducto));
-                const selectedTechnique = tecnicas.find(tecnica => Number(tecnica.idTecnica) === Number(item.idTecnica));
-                const itemTitle = selectedProduct?.nombre || item.producto?.nombre || item.descripcion || 'Falta seleccionar producto';
-                const isComplete = Boolean(item.idProducto && item.idTecnica && Number(item.cantidad || 0) > 0);
-                const isOpen = activeDetailIndex === index;
-
-                return (
-                  <div
-                    className={`${styles.quoteProductBlock} ${!isComplete ? styles.quoteProductIncomplete : ''}`}
-                    key={item.idDetalleCotizacion || `detail-${index}`}
-                  >
-                    <div className={styles.quoteItemAccordionHeader}>
-                      <button
-                        type="button"
-                        className={styles.quoteItemSummaryButton}
-                        onClick={() => setActiveDetailIndex(index)}
-                        aria-expanded={isOpen}
-                      >
-                        <span className={styles.quoteItemTitle}>
-                          Producto {index + 1} - {itemTitle}
-                        </span>
-                        <span className={styles.quoteItemSummaryMeta}>
-                          Cant. {Number(item.cantidad || 0).toLocaleString('es-CO')} - {selectedTechnique?.nombre || item.tecnica?.nombre || 'Sin tecnica'} - {subtotalWithDiscount > 0 ? formatMoneyCOP(subtotalWithDiscount) : 'Por cotizar'}
-                        </span>
-                      </button>
-                      <span className={`${styles.quoteItemStatus} ${isComplete ? styles.quoteItemStatusComplete : styles.quoteItemStatusPending}`}>
-                        {isComplete ? 'Completo' : 'Falta informacion'}
-                      </span>
-                      <button
-                        type="button"
-                        className={styles.quoteItemTinyBtn}
-                        onClick={() => setActiveDetailIndex(index)}
-                        disabled={isSubmitting}
-                      >
-                        {isOpen ? 'Editando' : 'Editar'}
-                      </button>
-                      {detalles.length > 1 && (
-                        <button type="button" className={styles.quoteItemTinyBtnDanger} onClick={() => removeDetail(index)} disabled={isSubmitting}>
-                          Quitar
-                        </button>
-                      )}
-                    </div>
-
-                    {isOpen && (
-                      <div className={styles.quoteItemAccordionBody}>
-                    <div className={styles.quoteProductGrid}>
-                      {categorias.length > 0 && !isPricing && (
-                        <div className={styles.inputGroup}>
-                          <label className={styles.inputLabel}>Categoria</label>
-                          <select
-                            value={item.idCategoriaProducto || ''}
-                            onChange={event => handleCategoryChange(index, event.target.value)}
-                            className={styles.selectField}
-                          >
-                            <option value="">Todas las categorias</option>
-                            {categorias.map(category => (
-                              <option key={category.idCategoriaProducto} value={category.idCategoriaProducto}>
-                                {category.nombre}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      <div className={styles.inputGroup}>
-                        <label className={styles.inputLabel}>Tecnica *</label>
-                        {loadingTecnicas ? (
-                          <p className={styles.inlineLoadingText}>Cargando tecnicas...</p>
-                        ) : tecnicas.length === 0 && !isPricing ? (
-                          <p className={styles.inlineErrorText}>No hay tecnicas activas disponibles.</p>
-                        ) : (
-                          <select
-                            value={item.idTecnica || ''}
-                            onChange={event => updateDetail(index, 'idTecnica', event.target.value)}
-                            className={styles.selectField}
-                            required
-                          >
-                            <option value="">{item.tecnica?.nombre || 'Seleccione una tecnica'}</option>
-                            {tecnicas.map(tecnica => (
-                              <option key={tecnica.idTecnica} value={tecnica.idTecnica}>
-                                {tecnica.nombre}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className={styles.quoteItemGrid}>
-                      <div className={styles.inputGroup}>
-                        <label className={styles.inputLabel}>Producto *</label>
-                        {loadingProductos ? (
-                          <p className={styles.inlineLoadingText}>Cargando productos...</p>
-                        ) : productos.length === 0 && !isPricing ? (
-                          <p className={styles.inlineErrorText}>No hay productos activos disponibles.</p>
-                        ) : (
-                          <select
-                            value={item.idProducto || ''}
-                            onChange={event => handleProductChange(index, event.target.value)}
-                            className={styles.selectField}
-                            required
-                          >
-                            <option value="">{item.producto?.nombre || 'Seleccione un producto'}</option>
-                            {availableProducts.map(product => (
-                              <option key={product.idProducto} value={product.idProducto}>
-                                {product.categoriaProducto?.nombre ? `${product.categoriaProducto.nombre} - ${product.nombre}` : product.nombre}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-
-                      <div className={styles.inputGroup}>
-                        <label className={styles.inputLabel}>Cantidad *</label>
-                        <input
-                          type="number"
-                          value={item.cantidad || 1}
-                          onChange={event => updateDetail(index, 'cantidad', event.target.value)}
-                          className={styles.detailRowInputSm}
-                          min="1"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <input
-                      type="text"
-                      placeholder="Detalle opcional: color, talla o ubicacion del estampado"
-                      value={item.observaciones || ''}
-                      onChange={event => updateDetail(index, 'observaciones', event.target.value)}
-                      className={styles.detailRowInputFlex}
-                    />
-
-                    <div className={styles.inputGroup}>
-                      <label className={styles.inputLabel}>Como se manejara el diseno?</label>
-                      <select
-                        value={item.requiereDiseno === false ? 'NO_REQUIERE' : item.origenDiseno === 'CLIENTE' ? 'CLIENTE' : 'PIXEL'}
+                {clientMode === 'EXISTING' ? (
+                  <div className={styles.quoteClientSearchPanel}>
+                    <label className={styles.inputGroup}>
+                      <span className={styles.inputLabel}>Buscar por nombre, documento, correo o telefono</span>
+                      <input
+                        type="search"
+                        value={clientSearch}
                         onChange={(event) => {
-                          const mode = event.target.value;
-                          updateDetail(index, 'requiereDiseno', mode !== 'NO_REQUIERE');
-                          updateDetail(index, 'origenDiseno', mode === 'CLIENTE' ? 'CLIENTE' : 'PIXEL');
-                          if (mode !== 'CLIENTE') updateDetail(index, 'archivoDisenoInicialUrl', '');
+                          setClientSearch(event.target.value);
+                          setLoadingClients(true);
                         }}
-                        className={styles.selectField}
-                      >
-                        <option value="CLIENTE">Ya tengo el diseno</option>
-                        <option value="PIXEL">Quiero que PIXEL cree el diseno</option>
-                        <option value="NO_REQUIERE">Este producto no requiere diseno</option>
-                      </select>
+                        className={styles.inputField}
+                        placeholder="Buscar cliente..."
+                      />
+                    </label>
+                    <div className={styles.quoteClientResults}>
+                      {loadingClients && <p>Buscando clientes...</p>}
+                      {!loadingClients && clientResults.map((client) => (
+                        <button
+                          type="button"
+                          key={client.idCliente}
+                          className={selectedClient?.idCliente === client.idCliente ? styles.quoteClientSelected : ''}
+                          onClick={() => chooseClient(client)}
+                        >
+                          <strong>{client.nombre}</strong>
+                          <span>{[client.documento, client.telefono, client.correo].filter(Boolean).join(' - ')}</span>
+                        </button>
+                      ))}
+                      {!loadingClients && clientResults.length === 0 && <p>No encontramos clientes con esta busqueda.</p>}
                     </div>
-
-                    {item.requiereDiseno !== false && item.origenDiseno === 'CLIENTE' && (
-                      <div className={styles.inputGroup}>
-                        <label className={styles.inputLabel}>Enlace del diseno</label>
-                        <input
-                          type="url"
-                          value={item.archivoDisenoInicialUrl || ''}
-                          onChange={event => updateDetail(index, 'archivoDisenoInicialUrl', event.target.value)}
-                          className={styles.detailRowInputFlex}
-                          placeholder="https://... (opcional)"
-                        />
-                        <small>El backend actual acepta un enlace. No hay endpoint de carga local de diseno en esta cotizacion.</small>
+                    {selectedClient && (
+                      <div className={styles.quoteSelectedClient}>
+                        <span>Cliente seleccionado</span>
+                        <strong>{selectedClient.nombre}</strong>
+                        <small>{[selectedClient.telefono, selectedClient.correo].filter(Boolean).join(' - ')}</small>
                       </div>
-                    )}
-
-                    {isStaff && !isEditing && item.requiereDiseno !== false && item.origenDiseno === 'PIXEL' && (
-                      <div className={styles.inputGroup}>
-                        <label className={styles.inputLabel}>Costo de diseno</label>
-                        <input
-                          type="number"
-                          value={item.costoDiseno || ''}
-                          onChange={event => updateDetail(index, 'costoDiseno', event.target.value)}
-                          className={styles.inputFieldStaff}
-                          min="0"
-                          step="0.01"
-                          placeholder="0"
-                        />
-                      </div>
-                    )}
-
-                    {item.requiereDiseno !== false && (
-                      <label className={styles.detailsInfoBox}>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(item.esDisenoGeneral)}
-                          onChange={event => updateDetail(index, 'esDisenoGeneral', event.target.checked)}
-                        />
-                        Este diseno aplica para todos los productos
-                      </label>
-                    )}
-
-                    {isPricing && (
-                      <div className={styles.pricingInputsGrid}>
-                        <div className={styles.inputGroup}>
-                          <label className={styles.inputLabel}>Precio unitario aplicado</label>
-                          <input
-                            type="number"
-                            value={item.precioUnitario ?? (suggestedUnitPrice > 0 ? suggestedUnitPrice : '')}
-                            onChange={event => updateDetail(index, 'precioUnitario', event.target.value)}
-                            className={styles.inputFieldStaff}
-                            min="0"
-                            step="0.01"
-                          />
-                        </div>
-                        <div className={styles.inputGroup}>
-                          <label className={styles.inputLabel}>Costo de diseno</label>
-                          <input
-                            type="number"
-                            value={item.costoDiseno || ''}
-                            onChange={event => updateDetail(index, 'costoDiseno', event.target.value)}
-                            className={styles.inputFieldStaff}
-                            min="0"
-                            step="0.01"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className={styles.pricingGrid}>
-                      <div className={styles.priceMetric}>
-                        <span>Precio base</span>
-                        <strong>{unitBase > 0 ? formatMoneyCOP(unitBase) : 'Por cotizar'}</strong>
-                      </div>
-                      <div className={styles.priceMetric}>
-                        <span>Descuento</span>
-                        <strong>{formatPercentage(discountPercent, '0%')}</strong>
-                      </div>
-                      <div className={styles.priceMetric}>
-                        <span>Valor descontado</span>
-                        <strong>{discountAmount > 0 ? `-${formatMoneyCOP(discountAmount)}` : 'Sin descuento'}</strong>
-                      </div>
-                      <div className={styles.priceMetric}>
-                        <span>Subtotal bruto</span>
-                        <strong>{subtotalBruto > 0 ? formatMoneyCOP(subtotalBruto) : 'Por cotizar'}</strong>
-                      </div>
-                      <div className={styles.priceMetric}>
-                        <span>Subtotal final</span>
-                        <strong>{subtotalWithDiscount > 0 ? formatMoneyCOP(subtotalWithDiscount) : 'Por cotizar'}</strong>
-                      </div>
-                    </div>
-                    </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
-
-            {isPricing && (
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Costos adicionales</label>
-                <input
-                  type="number"
-                  value={costosAdicionales}
-                  onChange={event => setCostosAdicionales(event.target.value)}
-                  className={styles.inputFieldStaff}
-                  min="0"
-                  step="0.01"
-                />
-                <span className={styles.fieldHint}>Ej: diseno extra, urgencia, domicilio, personalizacion especial.</span>
-              </div>
+                ) : (
+                  <>
+                    <div className={styles.quoteClientGrid}>
+                      <label className={`${styles.inputGroup} ${styles.quoteClientName}`}>
+                        <span className={styles.inputLabel}>Nombre completo *</span>
+                        <input value={cliente.nombre} onChange={(event) => updateClient('nombre', event.target.value)} className={styles.inputField} maxLength={150} />
+                      </label>
+                      <label className={styles.inputGroup}>
+                        <span className={styles.inputLabel}>Correo opcional</span>
+                        <input type="email" value={cliente.correo} onChange={(event) => updateClient('correo', event.target.value)} className={styles.inputField} />
+                      </label>
+                      <label className={styles.inputGroup}>
+                        <span className={styles.inputLabel}>Telefono *</span>
+                        <input type="tel" value={cliente.telefono} onChange={(event) => updateClient('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))} className={styles.inputField} maxLength={10} inputMode="numeric" />
+                      </label>
+                    </div>
+                    <p className={styles.quoteCompatibilityNotice}>No se creara un Usuario ni se solicitara contrasena para registrar esta cotizacion.</p>
+                  </>
+                )}
+              </section>
             )}
 
-            <div className={styles.quoteTotalCard}>
-              <span>Total final</span>
-              <strong>{finalTotal > 0 ? formatMoneyCOP(finalTotal) : formatMoneyCOP(calculo?.total ?? 0)}</strong>
-              <small>{calculando ? 'Calculando con precios reales...' : 'Total general de la cotizacion.'}</small>
-            </div>
-          </div>
+            {step === 2 && (
+            <>
+            <section className={styles.quoteRequestSection}>
+              <div className={styles.quoteRequestProductsHeader}>
+                <div className={styles.quoteRequestSectionTitle}>
+                  <span>Productos</span>
+                  <strong>{items.length} producto(s) - {completeItems} completo(s)</strong>
+                </div>
+                <button type="button" className={styles.btnSecondary} onClick={addItem} disabled={isSubmitting}>
+                  Agregar otro producto
+                </button>
+              </div>
 
-          {shouldShowChangeReason && (
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Motivo del cambio</label>
+              <div className={styles.quoteRequestItems}>
+                {items.map((item, itemIndex) => {
+                  const isOpen = activeItemIndex === itemIndex;
+                  const error = validateItem(item, itemIndex);
+                  const availableProducts = item.idCategoriaProducto
+                    ? catalogs.products.filter((product) => (
+                        Number(product.idCategoriaProducto || product.categoriaProducto?.idCategoriaProducto)
+                        === Number(item.idCategoriaProducto)
+                      ))
+                    : catalogs.products;
+
+                  return (
+                    <article className={`${styles.quoteRequestItem} ${error ? styles.quoteProductIncomplete : ''}`} key={item.localId}>
+                      <div className={styles.quoteRequestItemHeader}>
+                        <button type="button" onClick={() => setActiveItemIndex(itemIndex)} className={styles.quoteItemSummaryButton}>
+                          <strong>Producto {itemIndex + 1}: {getItemName(item, catalogs.products)}</strong>
+                          <small>
+                            Cant. {Number(item.cantidad || 0).toLocaleString('es-CO')} - {item.estampados.length} estampado(s)
+                          </small>
+                        </button>
+                        <span className={`${styles.quoteItemStatus} ${error ? styles.quoteItemStatusPending : styles.quoteItemStatusComplete}`}>
+                          {error ? 'Falta informacion' : 'Completo'}
+                        </span>
+                        <button type="button" className={styles.quoteItemTinyBtn} onClick={() => setActiveItemIndex(itemIndex)}>
+                          {isOpen ? 'Editando' : 'Editar'}
+                        </button>
+                        <button type="button" className={styles.quoteItemTinyBtn} onClick={() => duplicateItem(itemIndex)}>
+                          Duplicar
+                        </button>
+                        {items.length > 1 && (
+                          <button type="button" className={styles.quoteItemTinyBtnDanger} onClick={() => removeItem(itemIndex)}>
+                            Quitar
+                          </button>
+                        )}
+                      </div>
+
+                      {isOpen && (
+                        <div className={styles.quoteRequestItemBody}>
+                          <div className={styles.quoteProductTypeControl}>
+                            <button
+                              type="button"
+                              className={item.tipoProducto === 'CATALOGO' ? styles.quoteTypeActive : ''}
+                              onClick={() => updateItem(itemIndex, 'tipoProducto', 'CATALOGO')}
+                            >
+                              Producto del catalogo
+                            </button>
+                            <button
+                              type="button"
+                              className={item.tipoProducto === 'OTRO' ? styles.quoteTypeActive : ''}
+                              onClick={() => updateItem(itemIndex, 'tipoProducto', 'OTRO')}
+                            >
+                              Otro producto
+                            </button>
+                          </div>
+
+                          {item.tipoProducto === 'CATALOGO' ? (
+                            <div className={styles.quoteRequestGrid}>
+                              <label className={styles.inputGroup}>
+                                <span className={styles.inputLabel}>Categoria</span>
+                                <select
+                                  value={item.idCategoriaProducto}
+                                  onChange={(event) => updateItem(itemIndex, 'idCategoriaProducto', event.target.value)}
+                                  className={styles.selectField}
+                                  disabled={loadingCatalogs}
+                                >
+                                  <option value="">Todas las categorias</option>
+                                  {catalogs.categories.map((category) => (
+                                    <option key={category.idCategoriaProducto} value={category.idCategoriaProducto}>{category.nombre}</option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label className={styles.inputGroup}>
+                                <span className={styles.inputLabel}>Producto *</span>
+                                <select
+                                  value={item.idProducto}
+                                  onChange={(event) => updateItem(itemIndex, 'idProducto', event.target.value)}
+                                  className={styles.selectField}
+                                  disabled={loadingCatalogs}
+                                >
+                                  <option value="">Selecciona un producto</option>
+                                  {availableProducts.map((product) => (
+                                    <option key={product.idProducto} value={product.idProducto}>{product.nombre}</option>
+                                  ))}
+                                </select>
+                              </label>
+                            </div>
+                          ) : (
+                            <div className={styles.quoteRequestGrid}>
+                              <label className={styles.inputGroup}>
+                                <span className={styles.inputLabel}>Nombre del producto *</span>
+                                <input
+                                  value={item.nombrePersonalizado}
+                                  onChange={(event) => updateItem(itemIndex, 'nombrePersonalizado', event.target.value)}
+                                  className={styles.inputField}
+                                  maxLength={150}
+                                  placeholder="Ej: Chaqueta impermeable"
+                                />
+                              </label>
+                              <label className={styles.inputGroup}>
+                                <span className={styles.inputLabel}>Material o referencia</span>
+                                <input
+                                  value={item.materialReferencia}
+                                  onChange={(event) => updateItem(itemIndex, 'materialReferencia', event.target.value)}
+                                  className={styles.inputField}
+                                  maxLength={255}
+                                />
+                              </label>
+                              <label className={`${styles.inputGroup} ${styles.quoteRequestWide}`}>
+                                <span className={styles.inputLabel}>Descripcion</span>
+                                <textarea
+                                  value={item.descripcionPersonalizada}
+                                  onChange={(event) => updateItem(itemIndex, 'descripcionPersonalizada', event.target.value)}
+                                  className={styles.inputField}
+                                  maxLength={500}
+                                  rows={2}
+                                />
+                              </label>
+                              <p className={styles.quoteCompatibilityNotice}>
+                                PIXEL revisara la compatibilidad del producto antes de enviar la propuesta final.
+                              </p>
+                            </div>
+                          )}
+
+                          <div className={styles.quoteRequestGrid}>
+                            <label className={styles.inputGroup}>
+                              <span className={styles.inputLabel}>Cantidad *</span>
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={item.cantidad}
+                                onChange={(event) => updateItem(itemIndex, 'cantidad', event.target.value)}
+                                className={styles.inputField}
+                              />
+                            </label>
+                            <label className={styles.inputGroup}>
+                              <span className={styles.inputLabel}>Quien suministra el producto *</span>
+                              <select
+                                value={item.suministradoPor}
+                                onChange={(event) => updateItem(itemIndex, 'suministradoPor', event.target.value)}
+                                className={styles.selectField}
+                              >
+                                <option value="PIXEL">PIXEL</option>
+                                <option value="CLIENTE">Cliente</option>
+                              </select>
+                            </label>
+                            <label className={`${styles.inputGroup} ${styles.quoteRequestWide}`}>
+                              <span className={styles.inputLabel}>Observaciones del producto</span>
+                              <input
+                                value={item.observaciones}
+                                onChange={(event) => updateItem(itemIndex, 'observaciones', event.target.value)}
+                                className={styles.inputField}
+                                maxLength={255}
+                                placeholder="Color, talla u otra aclaracion"
+                              />
+                            </label>
+                          </div>
+
+                          <div className={styles.quoteStampsEditorHeader}>
+                            <div>
+                              <span>Servicios de estampacion</span>
+                              <strong>{item.estampados.length} configurado(s)</strong>
+                            </div>
+                            <button type="button" className={styles.btnSecondary} onClick={() => addStamp(itemIndex)}>
+                              Agregar estampado
+                            </button>
+                          </div>
+
+                          {item.estampados.length > 1 && (
+                            <label className={styles.quoteUseOneDesign}>
+                              <input
+                                type="checkbox"
+                                checked={item.estampados.every((stamp) => (
+                                  stamp.grupoDisenoCompartido
+                                  && stamp.grupoDisenoCompartido === item.estampados[0].grupoDisenoCompartido
+                                ))}
+                                onChange={(event) => applyOneDesignForProduct(itemIndex, event.target.checked)}
+                              />
+                              Usar el mismo diseno en todos los estampados de este producto
+                            </label>
+                          )}
+
+                          <div className={styles.quoteStampsEditor}>
+                            {item.estampados.map((stamp, stampIndex) => {
+                              const isStampOpen = activeStampId === stamp.localId;
+                              const selectedTechnique = catalogs.techniques.find(
+                                (technique) => Number(technique.idTecnica) === Number(stamp.idTecnica),
+                              );
+                              const sharedTarget = items.flatMap((sourceItem) => sourceItem.estampados)
+                                .find((candidate) => (
+                                  candidate.localId !== stamp.localId
+                                  && candidate.grupoDisenoCompartido
+                                  && candidate.grupoDisenoCompartido === stamp.grupoDisenoCompartido
+                                ));
+                              const availableDesigns = items.flatMap((sourceItem, sourceItemIndex) => (
+                                sourceItem.estampados.map((candidate, candidateIndex) => ({
+                                  ...candidate,
+                                  itemIndex: sourceItemIndex,
+                                  stampIndex: candidateIndex,
+                                }))
+                              )).filter((candidate) => candidate.localId !== stamp.localId);
+                              return (
+                              <section key={stamp.localId} className={styles.quoteStampEditor}>
+                                <header>
+                                  <button type="button" className={styles.quoteStampSummary} onClick={() => setActiveStampId(isStampOpen ? null : stamp.localId)}>
+                                    <strong>Estampado {stampIndex + 1}</strong>
+                                    <small>{getStampSummary(stamp, catalogs.techniques)}</small>
+                                  </button>
+                                  <div>
+                                    <button type="button" onClick={() => duplicateStamp(itemIndex, stamp.localId)}>Duplicar</button>
+                                    {(item.estampados.length > 1 || item.tipoProducto === 'OTRO') && (
+                                      <button type="button" onClick={() => removeStamp(itemIndex, stamp.localId)}>Quitar</button>
+                                    )}
+                                  </div>
+                                </header>
+                                {isStampOpen && (
+                                <div className={styles.quoteRequestGrid}>
+                                  <label className={styles.inputGroup}>
+                                    <span className={styles.inputLabel}>Servicio o tecnica</span>
+                                    <select
+                                      value={stamp.idTecnica}
+                                      onChange={(event) => updateStamp(itemIndex, stamp.localId, 'idTecnica', event.target.value)}
+                                      className={styles.selectField}
+                                      disabled={loadingCatalogs}
+                                    >
+                                      <option value="">No se ha definido el servicio</option>
+                                      {catalogs.techniques.map((technique) => (
+                                        <option key={technique.idTecnica} value={technique.idTecnica}>{technique.nombre}</option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <label className={styles.inputGroup}>
+                                    <span className={styles.inputLabel}>Ubicacion</span>
+                                    <select
+                                      value={stamp.ubicacion}
+                                      onChange={(event) => updateStamp(itemIndex, stamp.localId, 'ubicacion', event.target.value)}
+                                      className={styles.selectField}
+                                    >
+                                      {LOCATION_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                    </select>
+                                  </label>
+                                  {selectedTechnique?.requiereMedidas === true && (
+                                    <>
+                                      <label className={styles.inputGroup}>
+                                        <span className={styles.inputLabel}>Ancho (cm)</span>
+                                        <input
+                                          type="number"
+                                          min="0.01"
+                                          max="500"
+                                          step="0.01"
+                                          value={stamp.anchoCm}
+                                          onChange={(event) => updateStamp(itemIndex, stamp.localId, 'anchoCm', event.target.value)}
+                                          className={styles.inputField}
+                                          placeholder="Por definir"
+                                        />
+                                      </label>
+                                      <label className={styles.inputGroup}>
+                                        <span className={styles.inputLabel}>Alto (cm)</span>
+                                        <input
+                                          type="number"
+                                          min="0.01"
+                                          max="500"
+                                          step="0.01"
+                                          value={stamp.altoCm}
+                                          onChange={(event) => updateStamp(itemIndex, stamp.localId, 'altoCm', event.target.value)}
+                                          className={styles.inputField}
+                                          placeholder="Por definir"
+                                        />
+                                      </label>
+                                      <label className={`${styles.quoteMeasuresPending} ${styles.quoteRequestWide}`}>
+                                        <input
+                                          type="checkbox"
+                                          checked={!stamp.anchoCm && !stamp.altoCm}
+                                          onChange={(event) => {
+                                            if (event.target.checked) {
+                                              updateStamp(itemIndex, stamp.localId, 'anchoCm', '');
+                                              updateStamp(itemIndex, stamp.localId, 'altoCm', '');
+                                            }
+                                          }}
+                                        />
+                                        No se conocen las medidas. Se definiran despues.
+                                      </label>
+                                    </>
+                                  )}
+                                  <label className={styles.inputGroup}>
+                                    <span className={styles.inputLabel}>Origen del diseno</span>
+                                    <select
+                                      value={stamp.origenDiseno}
+                                      onChange={(event) => updateStamp(itemIndex, stamp.localId, 'origenDiseno', event.target.value)}
+                                      className={styles.selectField}
+                                    >
+                                      {DESIGN_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                    </select>
+                                  </label>
+                                  <label className={styles.inputGroup}>
+                                    <span className={styles.inputLabel}>Que diseno utilizara este estampado?</span>
+                                    <select
+                                      value={sharedTarget?.localId || ''}
+                                      onChange={(event) => shareDesignWithStamp(itemIndex, stamp.localId, event.target.value)}
+                                      className={styles.selectField}
+                                    >
+                                      <option value="">Diseno diferente</option>
+                                      {availableDesigns.map((candidate) => (
+                                        <option key={candidate.localId} value={candidate.localId}>
+                                          Usar el mismo diseno de Producto {candidate.itemIndex + 1} - {candidate.ubicacion || `Estampado ${candidate.stampIndex + 1}`}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <label className={`${styles.inputGroup} ${styles.quoteRequestWide}`}>
+                                    <span className={styles.inputLabel}>Descripcion del estampado</span>
+                                    <input
+                                      value={stamp.descripcion}
+                                      onChange={(event) => updateStamp(itemIndex, stamp.localId, 'descripcion', event.target.value)}
+                                      className={styles.inputField}
+                                      maxLength={500}
+                                    />
+                                  </label>
+                                  <label className={`${styles.inputGroup} ${styles.quoteRequestWide}`}>
+                                    <span className={styles.inputLabel}>Observaciones del estampado</span>
+                                    <textarea
+                                      value={stamp.observaciones}
+                                      onChange={(event) => updateStamp(itemIndex, stamp.localId, 'observaciones', event.target.value)}
+                                      className={styles.inputField}
+                                      maxLength={500}
+                                      rows={2}
+                                    />
+                                  </label>
+                                  {(
+                                    !stamp.idTecnica
+                                    || (selectedTechnique?.requiereMedidas === true && (!stamp.anchoCm || !stamp.altoCm))
+                                  ) && (
+                                    <p className={`${styles.quoteCompatibilityNotice} ${styles.quoteRequestWide}`}>
+                                      PIXEL completara estos datos durante la revision.
+                                    </p>
+                                  )}
+                                </div>
+                                )}
+                              </section>
+                              );
+                            })}
+                          </div>
+                          <div className={styles.quoteSaveProductRow}>
+                            <button type="button" className={styles.btnPrimary} onClick={() => setActiveItemIndex(-1)}>
+                              Guardar producto
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+
+            <label className={`${styles.inputGroup} ${styles.quoteRequestGeneralNotes}`}>
+              <span className={styles.inputLabel}>Observaciones generales</span>
               <textarea
-                value={motivoCambio}
-                onChange={event => setMotivoCambio(event.target.value)}
+                value={observaciones}
+                onChange={(event) => setObservaciones(event.target.value)}
                 className={styles.inputField}
                 rows={2}
-                placeholder="Ej: Se agrego costo de diseno, se ajusto la cantidad, se modifico el valor del producto..."
+                placeholder="Entrega, urgencia, empaque u otra aclaracion..."
               />
-              <span className={styles.fieldHint}>
-                Este motivo sera enviado al cliente por correo si la cotizacion ya habia sido enviada o valorizada.
-              </span>
-            </div>
-          )}
+            </label>
 
-          <div className={styles.modalFooter}>
+            <div className={styles.quotePendingPriceNotice}>
+              <strong>Precio pendiente de confirmacion</strong>
+              <span>PIXEL completara durante la revision los servicios, medidas o disenos que esten pendientes.</span>
+            </div>
+            </>
+            )}
+
+            {step === 3 && (
+              <section className={`${styles.quoteRequestSection} ${styles.quoteReviewStep}`}>
+                <div className={styles.quoteRequestSectionTitle}>
+                  <span>Revision</span>
+                  <strong>Confirma la informacion antes de crear la solicitud</strong>
+                </div>
+
+                <div className={styles.quoteReviewClient}>
+                  <span>Cliente presencial</span>
+                  <strong>{selectedClient?.nombre || cliente.nombre}</strong>
+                  <small>{[selectedClient?.telefono || cliente.telefono, selectedClient?.correo || cliente.correo].filter(Boolean).join(' - ') || 'Sin datos adicionales'}</small>
+                  <small>{selectedClient ? 'Cliente existente' : 'Sin acceso al portal'}</small>
+                </div>
+
+                <div className={styles.quoteReviewProducts}>
+                  {items.map((item, itemIndex) => (
+                    <article key={item.localId}>
+                      <header>
+                        <div>
+                          <span>Producto {itemIndex + 1}</span>
+                          <strong>{getItemName(item, catalogs.products)}</strong>
+                        </div>
+                        <button type="button" onClick={() => { setActiveItemIndex(itemIndex); setStep(2); }}>
+                          Volver a editar
+                        </button>
+                      </header>
+                      <div>
+                        <span>Cantidad: {Number(item.cantidad).toLocaleString('es-CO')}</span>
+                        <span>Suministrado por: {item.suministradoPor === 'CLIENTE' ? 'Cliente' : 'PIXEL'}</span>
+                        <span>{item.estampados.length} estampado(s)</span>
+                      </div>
+                      {item.estampados.length > 0 ? (
+                        <ul>
+                          {item.estampados.map((stamp) => (
+                            <li key={stamp.localId}>
+                              {getStampSummary(stamp, catalogs.techniques)} - {DESIGN_OPTIONS.find(([value]) => value === stamp.origenDiseno)?.[1] || 'Diseno por definir'}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <p>Producto especial sin estampados definidos. PIXEL lo revisara manualmente.</p>}
+                    </article>
+                  ))}
+                </div>
+
+                {observaciones.trim() && (
+                  <div className={styles.quoteReviewNotes}>
+                    <span>Observaciones generales</span>
+                    <p>{observaciones}</p>
+                  </div>
+                )}
+
+                <div className={styles.quotePendingPriceNotice}>
+                  <strong>Precio pendiente de confirmacion</strong>
+                  <span>El equipo de PIXEL revisara servicios, medidas, descuentos y disenos antes de enviar la propuesta.</span>
+                </div>
+              </section>
+            )}
+          </div>
+
+          <footer className={styles.modalFooter}>
             <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : isPricing ? 'Enviar precio al cliente' : 'Procesar solicitud'}
-            </button>
-          </div>
+            <div className={styles.quoteRequestFooterActions}>
+              {step > (isEditing ? 2 : 1) && (
+                <button type="button" className={styles.btnSecondary} onClick={() => setStep((current) => current - 1)} disabled={isSubmitting}>
+                  Volver
+                </button>
+              )}
+              {step < 3 ? (
+                <button type="button" className={styles.btnPrimary} onClick={goToNextStep} disabled={isSubmitting || loadingCatalogs}>
+                  Continuar
+                </button>
+              ) : (
+                <button type="submit" className={styles.btnPrimary} disabled={isSubmitting || loadingCatalogs}>
+                  {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar solicitud' : 'Crear solicitud'}
+                </button>
+              )}
+            </div>
+          </footer>
         </form>
-      </div>
+      </section>
     </div>
   );
 };

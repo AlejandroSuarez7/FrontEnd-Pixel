@@ -1,6 +1,7 @@
 import { apiClient } from '../../../../core/services/apiService.js';
 import { createRequestError } from '../../../../core/utils/requestError.js';
 import { disenoDTO } from './adapters/diseno.dto.js';
+import { normalizeDesignRequirementsResponse } from '../domain/designRequirement.js';
 
 const ENDPOINT = 'api/disenos';
 
@@ -25,6 +26,51 @@ export class DisenoApiRepository {
       return disenoDTO.fromApiList(data.data || []);
     } catch (error) {
       throw createRequestError(error, 'No se pudieron consultar los disenos del pedido');
+    }
+  }
+
+  async getRequerimientosDiseno(idPedido, options = {}) {
+    try {
+      const response = await apiClient.get(
+        `api/pedidos/${idPedido}/requerimientos-diseno`,
+        { signal: options.signal },
+      );
+      return normalizeDesignRequirementsResponse(response);
+    } catch (error) {
+      throw createRequestError(error, 'No pudimos cargar los disenos pendientes');
+    }
+  }
+
+  async definirOrigenRequerimiento(idPedido, idRequerimientoDiseno, origenDiseno) {
+    try {
+      const requirementId = encodeURIComponent(String(idRequerimientoDiseno));
+      const { data } = await apiClient.patch(
+        `api/pedidos/${idPedido}/requerimientos-diseno/${requirementId}/origen`,
+        { origenDiseno },
+      );
+      return data;
+    } catch (error) {
+      const status = error?.response?.status;
+      let message = error?.response?.data?.message;
+
+      if (status === 403) {
+        message = 'No tienes permiso para definir el origen del diseno.';
+      } else if (status === 409) {
+        message = 'El origen de este diseno ya fue definido.';
+      } else if (!error?.response) {
+        message = 'No pudimos guardar el cambio. Intenta nuevamente.';
+      }
+
+      throw createRequestError({
+        ...error,
+        response: error?.response
+          ? {
+            ...error.response,
+            data: { ...error.response.data, message },
+          }
+          : undefined,
+        message,
+      }, 'No pudimos guardar el cambio. Intenta nuevamente.');
     }
   }
 
@@ -55,6 +101,29 @@ export class DisenoApiRepository {
       const { data } = await apiClient.post(ENDPOINT, payload);
       return disenoDTO.fromApi(data.data);
     } catch (error) {
+      const errorCode = error?.response?.data?.code;
+      if (errorCode === 'ACTIVE_DESIGN_ALREADY_EXISTS') {
+        throw createRequestError({
+          response: {
+            ...error.response,
+            data: {
+              ...error.response.data,
+              message: 'Ya existe un diseno activo para este objetivo.',
+            },
+          },
+        });
+      }
+      if (errorCode === 'DESIGN_TARGET_ALREADY_COVERED') {
+        throw createRequestError({
+          response: {
+            ...error.response,
+            data: {
+              ...error.response.data,
+              message: 'Este diseno ya esta cubierto por un diseno general.',
+            },
+          },
+        });
+      }
       throw createRequestError(error, 'No se pudo crear el diseno');
     }
   }

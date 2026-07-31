@@ -125,6 +125,7 @@ export const DisenosPage = () => {
     handleRejectByClientAdmin,
     handleDelete,
     getPedidos,
+    getRequerimientosDiseno,
   } = useDisenos({
     idPedido: filters.idPedido,
     estado: filters.estado,
@@ -431,6 +432,7 @@ export const DisenosPage = () => {
         diseno={selectedDiseno}
         isStaff={isStaff}
         getPedidos={getPedidos}
+        getRequerimientosDiseno={getRequerimientosDiseno}
       />
 
       <DisenoViewModal

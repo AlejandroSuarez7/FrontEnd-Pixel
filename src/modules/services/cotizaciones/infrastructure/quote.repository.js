@@ -3,6 +3,7 @@ import { apiClient } from '../../../../core/services/apiService.js';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
 import { createRequestError } from '../../../../core/utils/requestError.js';
 import { quotesDTO } from './adapters/cotizacionDTO.js';
+import { proposalDTO } from './adapters/proposalDTO.js';
 
 const ENDPOINT = 'api/cotizaciones';
 
@@ -17,6 +18,13 @@ export class QuoteApiRepository {
     return normalizePaginatedResponse(data, quotesDTO.fromApiList.bind(quotesDTO));
   }
 
+  async getById(idCotizacion, options = {}) {
+    const { data } = await apiClient.get(`${ENDPOINT}/${idCotizacion}`, {
+      signal: options.signal,
+    });
+    return quotesDTO.fromApi(data.data);
+  }
+
   async createAsClient(quoteData) {
     const payload = quotesDTO.toApi(quoteData);
     const { data } = await apiClient.post(`${ENDPOINT}/cliente`, payload);
@@ -25,10 +33,6 @@ export class QuoteApiRepository {
 
   async createAsStaff(quoteData) {
     const payload = quotesDTO.toApi(quoteData);
-    payload.detalles = payload.detalles.map((detail, index) => ({
-      ...detail,
-      costoDiseno: Number(quoteData.detalles?.[index]?.costoDiseno || 0),
-    }));
     const { data } = await apiClient.post(`${ENDPOINT}`, payload);
     return quotesDTO.fromApi(data.data);
   }
@@ -37,6 +41,48 @@ export class QuoteApiRepository {
     const payload = quotesDTO.toApi(quoteData);
     const { data } = await apiClient.patch(`${ENDPOINT}/${idCotizacion}/cliente`, payload);
     return quotesDTO.fromApi(data.data);
+  }
+
+  async updateRequest(idCotizacion, quoteData) {
+    const request = quotesDTO.toApi(quoteData);
+    const payload = {
+      items: request.items,
+      observaciones: request.observaciones,
+    };
+    const { data } = await apiClient.patch(`${ENDPOINT}/${idCotizacion}`, payload);
+    return quotesDTO.fromApi(data.data);
+  }
+
+  async sendProposal(idCotizacion, proposal) {
+    const payload = proposalDTO.toApi(proposal);
+    const { data } = await apiClient.post(`${ENDPOINT}/${idCotizacion}/propuestas`, payload);
+    return data.data;
+  }
+
+  async listVersions(idCotizacion, options = {}) {
+    const { data } = await apiClient.get(`${ENDPOINT}/${idCotizacion}/versiones`, {
+      signal: options.signal,
+    });
+    return Array.isArray(data.data) ? data.data : [];
+  }
+
+  async respondAsClient(idCotizacion, response) {
+    const { data } = await apiClient.post(`${ENDPOINT}/${idCotizacion}/responder`, {
+      idVersion: Number(response.idVersion),
+      decision: response.decision,
+      observaciones: response.observaciones?.trim() || '',
+    });
+    return data.data;
+  }
+
+  async respondAsStaff(idCotizacion, response) {
+    const { data } = await apiClient.post(`${ENDPOINT}/${idCotizacion}/respuesta-cliente`, {
+      idVersion: Number(response.idVersion),
+      decision: response.decision,
+      medio: response.medio,
+      observaciones: response.observaciones?.trim() || '',
+    });
+    return data.data;
   }
 
   // Ahora procesa el arreglo completo enviado desde el formulario para Staff

@@ -1,16 +1,23 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '../../../../core/services/apiService';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
-import { canCreateDesignForDetail, getDesignCoverageInfo } from '../../../../core/utils/designCoverage';
 import { notifications } from '../../../../core/utils/notifications';
-import { getProductCategoryName } from '../../../../core/utils/productCategory';
+import {
+  canCreatePixelDesign,
+  formatDesignRequirementLabel,
+  formatDesignRequirementStatus,
+  getPreviousDesignVersion,
+  getRequirementLocation,
+  getRequirementMeasures,
+  getRequirementProductName,
+  getRequirementTechnique,
+  normalizeDesignRequirement,
+} from '../domain/designRequirement';
 import './DisenosPage.css';
 
 const styles = {
   overlay: 'disenos-overlay',
   modalContainer: 'disenos-modal-container',
-  modalSm: 'disenos-modal-sm',
   modalCompact: 'disenos-modal-compact',
   modalHeader: 'disenos-modal-header',
   modalTitle: 'disenos-modal-title',
@@ -19,7 +26,6 @@ const styles = {
   inputGroup: 'disenos-input-group',
   inputLabel: 'disenos-input-label',
   inputField: 'disenos-input-field',
-  loadingText: 'disenos-loading-text',
   detailsInfoBox: 'disenos-details-info-box',
   imagePreview: 'disenos-image-preview',
   imagePreviewMedia: 'disenos-image-preview-media',
@@ -29,527 +35,573 @@ const styles = {
   btnPrimary: 'disenos-btn-primary',
 };
 
-const getDetailProductName = (detalle) => (
-  detalle?.producto?.nombre
-  || detalle?.nombreProducto
-  || detalle?.descripcion
-  || 'Producto no especificado'
-);
+const isHttpUrl = value => {
+  if (!value) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
 
-const getDetailTechniqueName = (detalle) => (
-  detalle?.tecnica?.nombre
-  || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : 'Sin tecnica')
-);
+const getCoveredStampLabel = stamp => {
+  const product = stamp?.producto?.nombre || stamp?.nombreProducto || 'Producto';
+  const location = stamp?.ubicacion || 'Ubicacion por definir';
+  const technique = stamp?.tecnica?.nombre || stamp?.nombreTecnica || 'Servicio por definir';
+  return `${product} - ${location} - ${technique}`;
+};
 
-const formatDetailOption = (detalle, index) => (
-  `Producto ${index + 1} - ${getDetailProductName(detalle)} - Cant. ${detalle?.cantidad || 0}`
-);
-
-export const DisenoModal = ({
-  isOpen,
+const DisenoModalContent = ({
   onClose,
   onSubmit,
   diseno,
   isStaff,
   getPedidos,
+  getRequerimientosDiseno,
   presetPedido = null,
-  presetDetailId = '',
+  presetRequirement = null,
+  presetRequirementId = '',
   lockPedido = false,
 }) => {
-  const [idPedido, setIdPedido] = useState('');
-  const [idDetallePedido, setIdDetallePedido] = useState('');
-  const [esDisenoGeneral, setEsDisenoGeneral] = useState(false);
-  const [idDisenador, setIdDisenador] = useState('');
-  const [archivoUrl, setArchivoUrl] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [observaciones, setObservaciones] = useState('');
-  const [origenDiseno, setOrigenDiseno] = useState('DISENADOR');
-  const [medioRecepcion, setMedioRecepcion] = useState('WHATSAPP');
-  const [observacionesCliente, setObservacionesCliente] = useState('');
-  const [marcarAprobado, setMarcarAprobado] = useState(false);
+  const initialPresetRequirement = useMemo(
+    () => (presetRequirement ? normalizeDesignRequirement(presetRequirement) : null),
+    [presetRequirement],
+  );
+  const initialPedidoId = String(
+    diseno?.idPedido || presetPedido?.idPedido || initialPresetRequirement?.idPedido || '',
+  );
+  const initialRequirementId = String(
+    presetRequirementId || initialPresetRequirement?.idRequerimientoDiseno || '',
+  );
+  const isEditing = Boolean(diseno);
+  const [idPedido, setIdPedido] = useState(initialPedidoId);
+  const [idRequirement, setIdRequirement] = useState(initialRequirementId);
+  const [requirements, setRequirements] = useState(
+    initialPresetRequirement ? [initialPresetRequirement] : [],
+  );
+  const [requirementsSummary, setRequirementsSummary] = useState(null);
+  const [loadingRequirements, setLoadingRequirements] = useState(
+    Boolean(!isEditing && initialPedidoId && getRequerimientosDiseno),
+  );
+  const [requirementsError, setRequirementsError] = useState('');
+  const [requirementsRetry, setRequirementsRetry] = useState(0);
+  const [idDisenador, setIdDisenador] = useState(diseno?.idDisenador || '');
+  const [archivoUrl, setArchivoUrl] = useState(diseno?.archivoUrl || '');
+  const [descripcion, setDescripcion] = useState(diseno?.descripcion || '');
+  const [observaciones, setObservaciones] = useState(diseno?.observaciones || '');
   const [disenadores, setDisenadores] = useState([]);
-  const [pedidosDisponibles, setPedidosDisponibles] = useState([]);
-  const [loadingPedidos, setLoadingPedidos] = useState(false);
-  const [loadingDisenadores, setLoadingDisenadores] = useState(false);
+  const [pedidosDisponibles, setPedidosDisponibles] = useState(
+    presetPedido ? [presetPedido] : [],
+  );
+  const [loadingPedidos, setLoadingPedidos] = useState(
+    Boolean(!isEditing && getPedidos && !lockPedido),
+  );
+  const [loadingDisenadores, setLoadingDisenadores] = useState(
+    Boolean(isStaff && !isEditing),
+  );
   const [pedidosError, setPedidosError] = useState('');
   const [previewError, setPreviewError] = useState(false);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
-  const isEditing = Boolean(diseno);
+  const normalizedPreset = initialPresetRequirement;
+  const availableRequirements = useMemo(
+    () => requirements.filter(canCreatePixelDesign),
+    [requirements],
+  );
+  const selectedRequirement = useMemo(() => (
+    requirements.find(item => item.idRequerimientoDiseno === idRequirement)
+    || (
+      normalizedPreset?.idRequerimientoDiseno === idRequirement
+        ? normalizedPreset
+        : null
+    )
+  ), [idRequirement, normalizedPreset, requirements]);
+  const previousVersion = selectedRequirement
+    ? getPreviousDesignVersion(selectedRequirement)
+    : null;
+  const isCorrectionVersion = Boolean(selectedRequirement?.puedeCargarCorreccion);
   const selectedPedido = presetPedido
-    || pedidosDisponibles.find((item) => String(item.idPedido) === String(idPedido))
+    || pedidosDisponibles.find(item => String(item.idPedido) === String(idPedido))
     || diseno?.pedido
     || null;
-  const detallesPedido = useMemo(
-    () => (Array.isArray(selectedPedido?.detalles) ? selectedPedido.detalles : []),
-    [selectedPedido],
-  );
-  const detallesPendientesPixel = useMemo(
-    () => detallesPedido.filter(canCreateDesignForDetail),
-    [detallesPedido],
-  );
-  const hasMultipleDetails = detallesPendientesPixel.length > 1;
-  const selectedDetail = detallesPedido.find(detalle => String(detalle.idDetallePedido) === String(idDetallePedido)) || null;
-  const selectedCoverage = getDesignCoverageInfo(selectedDetail || {});
-  const isCorrectionVersion = !isEditing && selectedCoverage.isCorrection;
 
   useEffect(() => {
-    if (diseno) {
-      setIdPedido(diseno.idPedido || '');
-      setIdDetallePedido(diseno.idDetallePedido || '');
-      setEsDisenoGeneral(Boolean(diseno.esDisenoGeneral));
-      setIdDisenador(diseno.idDisenador || '');
-      setArchivoUrl(diseno.archivoUrl || '');
-      setDescripcion(diseno.descripcion || '');
-      setObservaciones(diseno.observaciones || '');
-      setOrigenDiseno(diseno.origenDiseno || 'DISENADOR');
-      setMedioRecepcion(diseno.medioRecepcion || 'WHATSAPP');
-      setObservacionesCliente(diseno.observacionesCliente || '');
-      setMarcarAprobado(diseno.estado === 'APROBADO');
-    } else {
-      setIdPedido(presetPedido?.idPedido || '');
-      setIdDetallePedido(presetDetailId || '');
-      setEsDisenoGeneral(false);
-      setIdDisenador('');
-      setArchivoUrl('');
-      setDescripcion('');
-      setObservaciones('');
-      setOrigenDiseno('DISENADOR');
-      setMedioRecepcion('WHATSAPP');
-      setObservacionesCliente('');
-      setMarcarAprobado(false);
-    }
-    setPedidosError('');
-    setPreviewError(false);
-    if (presetPedido) setPedidosDisponibles([presetPedido]);
-  }, [diseno, isOpen, presetPedido, presetDetailId]);
+    if (isEditing || !getPedidos || lockPedido) return undefined;
 
-  useEffect(() => {
-    if (!isOpen || isEditing || esDisenoGeneral) return;
-    if (
-      presetDetailId
-      && detallesPedido.some(detalle => String(detalle.idDetallePedido) === String(presetDetailId))
-    ) {
-      if (String(idDetallePedido) !== String(presetDetailId)) {
-        setIdDetallePedido(presetDetailId);
-      }
-      return;
-    }
-    if (detallesPendientesPixel.length === 1) {
-      setIdDetallePedido(detallesPendientesPixel[0].idDetallePedido || '');
-    } else if (detallesPendientesPixel.length > 1 && !detallesPendientesPixel.some((detalle) => String(detalle.idDetallePedido) === String(idDetallePedido))) {
-      setIdDetallePedido('');
-    }
-  }, [detallesPedido, detallesPendientesPixel, esDisenoGeneral, idDetallePedido, isEditing, isOpen, presetDetailId]);
-
-  useEffect(() => {
-    if (!isOpen || isEditing || !getPedidos || lockPedido) return;
-
-    let cancelled = false;
-    setLoadingPedidos(true);
-    setPedidosError('');
+    let active = true;
 
     getPedidos()
-      .then((data) => {
-        if (cancelled) return;
-        const pedidosActivos = (data || []).filter(item =>
-          item.estadoPedido !== 'FINALIZADO' &&
-          item.estadoPedido !== 'ANULADO'
-        );
-        setPedidosDisponibles(pedidosActivos);
+      .then(data => {
+        if (!active) return;
+        setPedidosDisponibles((data || []).filter(item => (
+          item.estadoPedido !== 'FINALIZADO' && item.estadoPedido !== 'ANULADO'
+        )));
       })
-      .catch((error) => {
-        if (cancelled) return;
+      .catch(error => {
+        if (!active) return;
         setPedidosDisponibles([]);
         setPedidosError(error.message || 'No se pudieron consultar los pedidos disponibles.');
       })
       .finally(() => {
-        if (!cancelled) setLoadingPedidos(false);
+        if (active) setLoadingPedidos(false);
       });
 
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [isOpen, isEditing, getPedidos, lockPedido]);
+  }, [getPedidos, isEditing, lockPedido]);
 
   useEffect(() => {
-    if (!isOpen || !isStaff || isEditing) return;
+    if (isEditing || !idPedido || !getRequerimientosDiseno) return undefined;
 
-    setLoadingDisenadores(true);
+    const controller = new AbortController();
+
+    getRequerimientosDiseno(idPedido, { signal: controller.signal })
+      .then(result => {
+        if (controller.signal.aborted) return;
+        const nextRequirements = result?.requerimientos || [];
+        const mergedRequirements = normalizedPreset
+          && !nextRequirements.some(item => (
+            item.idRequerimientoDiseno === normalizedPreset.idRequerimientoDiseno
+          ))
+          ? [normalizedPreset, ...nextRequirements]
+          : nextRequirements;
+        const eligibleRequirements = mergedRequirements.filter(canCreatePixelDesign);
+
+        setRequirements(mergedRequirements);
+        setRequirementsSummary(result?.resumen || null);
+        setIdRequirement(previousId => {
+          const preferredId = String(
+            presetRequirementId
+            || normalizedPreset?.idRequerimientoDiseno
+            || previousId,
+          );
+          if (eligibleRequirements.some(item => item.idRequerimientoDiseno === preferredId)) {
+            return preferredId;
+          }
+          return eligibleRequirements.length === 1
+            ? eligibleRequirements[0].idRequerimientoDiseno
+            : '';
+        });
+      })
+      .catch(error => {
+        if (controller.signal.aborted) return;
+        setRequirements(normalizedPreset ? [normalizedPreset] : []);
+        setRequirementsError(error.message || 'No pudimos cargar los disenos pendientes.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingRequirements(false);
+      });
+
+    return () => controller.abort();
+  }, [
+    getRequerimientosDiseno,
+    idPedido,
+    isEditing,
+    normalizedPreset,
+    presetRequirementId,
+    requirementsRetry,
+  ]);
+
+  useEffect(() => {
+    if (!isStaff || isEditing) return undefined;
+
+    let active = true;
     apiClient.get('api/usuarios')
       .then(({ data }) => {
-        const items = (data.data || []).filter(user =>
+        if (!active) return;
+        setDisenadores((data.data || []).filter(user => (
           user.estado === true && user.rol?.nombre?.toLowerCase().includes('dise')
-        );
-        setDisenadores(items);
+        )));
       })
-      .catch(() => setDisenadores([]))
-      .finally(() => setLoadingDisenadores(false));
-  }, [isOpen, isStaff, isEditing]);
+      .catch(() => {
+        if (active) setDisenadores([]);
+      })
+      .finally(() => {
+        if (active) setLoadingDisenadores(false);
+      });
 
-  if (!isOpen) return null;
+    return () => {
+      active = false;
+    };
+  }, [isEditing, isStaff]);
 
-  const archivoUrlLimpio = archivoUrl.trim();
-  const isClientOrigin = origenDiseno === 'CLIENTE';
+  const handlePedidoChange = event => {
+    const nextPedidoId = event.target.value;
+    setIdPedido(nextPedidoId);
+    setIdRequirement('');
+    setRequirements([]);
+    setRequirementsSummary(null);
+    setRequirementsError('');
+    setLoadingRequirements(Boolean(nextPedidoId));
+  };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async event => {
     event.preventDefault();
     await runLocked(async () => {
-    try {
-      if (!isEditing && !esDisenoGeneral && hasMultipleDetails && !idDetallePedido) {
-        notifications.error('Selecciona el producto del pedido o marca que el diseno aplica para todo el pedido.');
-        return;
+      try {
+        if (!isEditing && !selectedRequirement) {
+          notifications.error('Selecciona el diseno pendiente que vas a registrar.');
+          return;
+        }
+        if (!isEditing && !canCreatePixelDesign(selectedRequirement)) {
+          notifications.error('Este requerimiento no permite crear un diseno del equipo PIXEL.');
+          return;
+        }
+        if (!isHttpUrl(archivoUrl.trim())) {
+          notifications.error('Ingresa un enlace http o https valido.');
+          return;
+        }
+
+        await onSubmit({
+          ...(isEditing
+            ? {
+              idPedido,
+              archivoUrl,
+              descripcion,
+              observaciones,
+            }
+            : {
+              requirement: selectedRequirement,
+              idPedido: selectedRequirement.idPedido,
+              idDisenador,
+              archivoUrl,
+              descripcion,
+              observaciones,
+            }),
+        });
+      } catch (error) {
+        notifications.error(error.message || 'No se pudo procesar el diseno.');
       }
-      if (!isEditing && !esDisenoGeneral && (!selectedDetail || !canCreateDesignForDetail(selectedDetail))) {
-        notifications.error('Este producto ya tiene una version activa o no requiere un nuevo diseno.');
-        return;
-      }
-      await onSubmit({
-        idPedido,
-        idDetallePedido: esDisenoGeneral || !idDetallePedido
-          ? undefined
-          : Number(idDetallePedido),
-        esDisenoGeneral,
-        idDisenador,
-        archivoUrl,
-        descripcion,
-        observaciones,
-        origenDiseno,
-        medioRecepcion: isClientOrigin ? medioRecepcion : undefined,
-        observacionesCliente: isClientOrigin ? observacionesCliente : undefined,
-        estado: isClientOrigin && marcarAprobado ? 'APROBADO' : undefined,
-      });
-    } catch (error) {
-      notifications.error(error.message || 'No se pudo procesar el diseno.');
-    }
     });
   };
 
+  const submitLabel = isSubmitting
+    ? 'Guardando...'
+    : isEditing
+      ? 'Guardar cambios'
+      : isCorrectionVersion
+        ? 'Cargar diseno corregido'
+        : 'Registrar diseno';
+
   return (
     <div className={styles.overlay}>
-      <div className={`${styles.modalContainer} ${styles.modalSm} ${styles.modalCompact}`}>
+      <div className={`${styles.modalContainer} ${styles.modalCompact}`}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>
-            {isEditing
-              ? `Editar diseno #${diseno.idDiseno}`
-              : isCorrectionVersion
-                ? 'Cargar diseno corregido'
-                : 'Registrar diseno'}
-          </h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
+          <div>
+            <h3 className={styles.modalTitle}>
+              {isEditing
+                ? `Editar diseno #${diseno.idDiseno}`
+                : isCorrectionVersion
+                  ? 'Cargar diseno corregido'
+                  : 'Registrar diseno'}
+            </h3>
+            {!isEditing && (
+              <p className="disenos-modal-subtitle">
+                Selecciona el objetivo indicado por el pedido y registra una sola version.
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className={styles.modalCloseBtn}
+            disabled={isSubmitting}
+            aria-label="Cerrar"
+          >
+            x
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <section className="disenos-modal-section">
-            <span className="disenos-modal-section-title">A. Pedido y producto</span>
-          {lockPedido && presetPedido ? (
-            <>
-            <div className="disenos-locked-context">
-              <div><span>Pedido</span><strong>#{presetPedido.idPedido}</strong></div>
-              <div><span>Cliente</span><strong>{presetPedido.cliente?.nombre || 'Cliente no especificado'}</strong></div>
-              {selectedDetail && (
-                <>
-                  <div><span>Producto</span><strong>{getDetailProductName(selectedDetail)}</strong></div>
-                  <div><span>Categoria</span><strong>{getProductCategoryName(selectedDetail)}</strong></div>
-                  <div><span>Tecnica</span><strong>{getDetailTechniqueName(selectedDetail)}</strong></div>
-                  <div><span>Cantidad</span><strong>{selectedDetail.cantidad || 0}</strong></div>
-                  <div><span>Estado</span><strong>{getDesignCoverageInfo(selectedDetail).label}</strong></div>
-                  <div><span>Costo de diseno</span><strong>${Number(selectedDetail.costoDiseno || 0).toLocaleString('es-CO')}</strong></div>
-                </>
-              )}
-            </div>
-            {isCorrectionVersion && (
-              <div className="disenos-correction-version">
-                <strong>Nueva version para revision</strong>
-                <span>El diseno rechazado se conserva en el historial.</span>
-                {selectedCoverage.fileUrl && (
-                  <a href={selectedCoverage.fileUrl} target="_blank" rel="noreferrer">
-                    Ver version anterior
-                  </a>
+            <span className="disenos-modal-section-title">A. Pedido y diseno pendiente</span>
+
+            {lockPedido && selectedPedido ? (
+              <div className="disenos-locked-context">
+                <div><span>Pedido</span><strong>#{selectedPedido.idPedido}</strong></div>
+                <div><span>Cliente</span><strong>{selectedPedido.cliente?.nombre || 'Cliente no especificado'}</strong></div>
+              </div>
+            ) : (
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel} htmlFor="diseno-pedido">Pedido *</label>
+                <select
+                  id="diseno-pedido"
+                  value={idPedido}
+                  onChange={handlePedidoChange}
+                  className={styles.inputField}
+                  disabled={isSubmitting || isEditing || loadingPedidos}
+                  required={!isEditing}
+                >
+                  <option value="">
+                    {loadingPedidos ? 'Cargando pedidos...' : 'Selecciona un pedido'}
+                  </option>
+                  {isEditing && idPedido ? <option value={idPedido}>Pedido #{idPedido}</option> : null}
+                  {pedidosDisponibles.map(item => (
+                    <option key={item.idPedido} value={item.idPedido}>
+                      Pedido #{item.idPedido} - {item.cliente?.nombre || 'Cliente no especificado'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {pedidosError && <p className={styles.detailsInfoBox}>{pedidosError}</p>}
+
+            {!isEditing && idPedido && (
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel} htmlFor="diseno-requirement">
+                  ¿Que diseno vas a registrar? *
+                </label>
+                <select
+                  id="diseno-requirement"
+                  value={idRequirement}
+                  onChange={event => setIdRequirement(event.target.value)}
+                  className={styles.inputField}
+                  disabled={
+                    isSubmitting
+                    || loadingRequirements
+                    || lockPedido
+                    || availableRequirements.length === 1
+                  }
+                  required
+                >
+                  <option value="">
+                    {loadingRequirements
+                      ? 'Consultando disenos pendientes...'
+                      : 'Selecciona un diseno pendiente'}
+                  </option>
+                  {availableRequirements.map(requirement => (
+                    <option
+                      key={requirement.idRequerimientoDiseno}
+                      value={requirement.idRequerimientoDiseno}
+                    >
+                      {formatDesignRequirementLabel(requirement)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {!isEditing && loadingRequirements && (
+              <p className={styles.detailsInfoBox}>Consultando disenos pendientes...</p>
+            )}
+            {!isEditing && requirementsError && (
+              <div className="disenos-requirement-error">
+                <p>No pudimos cargar los disenos pendientes.</p>
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={() => {
+                    setRequirementsError('');
+                    setLoadingRequirements(true);
+                    setRequirementsRetry(value => value + 1);
+                  }}
+                >
+                  Reintentar
+                </button>
+              </div>
+            )}
+            {!isEditing
+              && idPedido
+              && !loadingRequirements
+              && !requirementsError
+              && availableRequirements.length === 0 && (
+              <p className={styles.detailsInfoBox}>
+                Este pedido no tiene disenos pendientes de creacion o correccion.
+              </p>
+            )}
+
+            {selectedRequirement && (
+              <div className="disenos-requirement-context">
+                <strong>{formatDesignRequirementLabel(selectedRequirement)}</strong>
+                <div className="disenos-locked-context">
+                  <div><span>Producto</span><strong>{getRequirementProductName(selectedRequirement)}</strong></div>
+                  <div><span>Tipo</span><strong>{formatDesignRequirementLabel(selectedRequirement)}</strong></div>
+                  {selectedRequirement.tipo === 'ESTAMPADO' && (
+                    <>
+                      <div><span>Ubicacion</span><strong>{getRequirementLocation(selectedRequirement)}</strong></div>
+                      <div><span>Tecnica</span><strong>{getRequirementTechnique(selectedRequirement)}</strong></div>
+                      <div><span>Medidas</span><strong>{getRequirementMeasures(selectedRequirement)}</strong></div>
+                    </>
+                  )}
+                  <div><span>Origen</span><strong>Equipo PIXEL</strong></div>
+                  <div><span>Estado</span><strong>{formatDesignRequirementStatus(selectedRequirement)}</strong></div>
+                </div>
+
+                {selectedRequirement.tipo === 'GRUPO_COMPARTIDO'
+                  && selectedRequirement.estampadosCubiertos.length > 0 && (
+                  <div className="disenos-covered-list">
+                    <span>Este diseno cubrira:</span>
+                    <ul>
+                      {selectedRequirement.estampadosCubiertos.map((stamp, index) => (
+                        <li key={stamp.idEstampadoPedido || stamp.idDetalleEstampadoPedido || index}>
+                          {getCoveredStampLabel(stamp)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {isCorrectionVersion && (
+                  <div className="disenos-correction-version">
+                    <strong>Nueva version para revision</strong>
+                    <span>La version rechazada se conserva en el historial.</span>
+                    {(previousVersion?.archivoUrl || previousVersion?.fileUrl) && (
+                      <a
+                        href={previousVersion.archivoUrl || previousVersion.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Ver version anterior
+                      </a>
+                    )}
+                    {(previousVersion?.observacionesCliente || previousVersion?.observaciones) && (
+                      <span>
+                        Cambios solicitados: {previousVersion.observacionesCliente || previousVersion.observaciones}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             )}
-            </>
-          ) : (
-          <div className={styles.inputGroup}>
-            <label className={styles.inputLabel} htmlFor="diseno-pedido">Pedido *</label>
-            <select
-              id="diseno-pedido"
-              value={idPedido}
-              onChange={event => setIdPedido(event.target.value)}
-              className={styles.inputField}
-              disabled={isSubmitting || isEditing || loadingPedidos}
-              required
-            >
-              <option value="">
-                {loadingPedidos ? 'Cargando pedidos...' : 'Selecciona un pedido'}
-              </option>
-              {isEditing && idPedido ? (
-                <option value={idPedido}>Pedido #{idPedido}</option>
-              ) : null}
-              {pedidosDisponibles.map(item => (
-                <option key={item.idPedido} value={item.idPedido}>
-                  Pedido #{item.idPedido} - {item.cliente?.nombre || 'Cliente no especificado'} - {item.estadoPago}
-                </option>
-              ))}
-            </select>
-          </div>
-          )}
 
-          {pedidosError && <p className={styles.detailsInfoBox}>{pedidosError}</p>}
-          {!isEditing && !loadingPedidos && pedidosDisponibles.length === 0 && !pedidosError && (
-            <p className={styles.detailsInfoBox}>
-              No hay pedidos activos disponibles para registrar disenos.
-            </p>
-          )}
-
-          {!isEditing && idPedido && !presetDetailId && (
-            <div className={styles.inputGroup}>
-              <label className="disenos-checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={esDisenoGeneral}
-                  onChange={event => {
-                    setEsDisenoGeneral(event.target.checked);
-                    if (event.target.checked) setIdDetallePedido('');
-                  }}
-                  disabled={isSubmitting || detallesPendientesPixel.length === 0}
-                />
-                <span>Este diseno aplica para todo el pedido</span>
-              </label>
-            </div>
-          )}
-
-          {!isEditing && idPedido && !esDisenoGeneral && (
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel} htmlFor="diseno-producto">Producto del pedido *</label>
-              <select
-                id="diseno-producto"
-                value={idDetallePedido}
-                onChange={event => setIdDetallePedido(event.target.value)}
-                className={styles.inputField}
-                disabled={isSubmitting || detallesPendientesPixel.length === 1 || Boolean(presetDetailId)}
-                required={hasMultipleDetails}
-              >
-                <option value="">
-                  {detallesPedido.length === 0 ? 'El pedido no tiene productos cargados' : 'Selecciona un producto'}
-                </option>
-                {detallesPedido.map((detalle, index) => {
-                  const coverage = getDesignCoverageInfo(detalle);
-                  return (
-                    <option
-                      key={detalle.idDetallePedido || index}
-                      value={detalle.idDetallePedido || ''}
-                      disabled={!coverage.canCreate}
-                    >
-                      {formatDetailOption(detalle, index)} - {coverage.label}
-                    </option>
-                  );
-                })}
-              </select>
-              {detallesPendientesPixel.length === 0 && (
-                <p className={styles.detailsInfoBox}>
-                  Este pedido no tiene productos disponibles para crear o corregir un diseno.
-                </p>
-              )}
-              {idDetallePedido && (
-                <p className={styles.detailsInfoBox}>
-                  {getDetailTechniqueName(detallesPedido.find((detalle) => String(detalle.idDetallePedido) === String(idDetallePedido)))}.
-                </p>
-              )}
-            </div>
-          )}
+            {requirementsSummary && (
+              <small className="disenos-requirement-summary">
+                {requirementsSummary.totalDisenosAprobados || 0} de {requirementsSummary.totalDisenosRequeridos || 0} disenos aprobados
+              </small>
+            )}
           </section>
 
           <section className="disenos-modal-section">
-            <span className="disenos-modal-section-title">B. Origen y responsable</span>
-          <div className={styles.inputGroup}>
-            <label className={styles.inputLabel} htmlFor="diseno-origen">Origen del diseno *</label>
-            <select
-              id="diseno-origen"
-              value={origenDiseno}
-              onChange={event => setOrigenDiseno(event.target.value)}
-              className={styles.inputField}
-              disabled
-              required
-            >
-              <option value="DISENADOR">Equipo PIXEL / Disenador</option>
-              {isEditing && <option value="CLIENTE">Cliente ya tiene diseno</option>}
-              {isEditing && <option value="OTRO">Otro</option>}
-            </select>
+            <span className="disenos-modal-section-title">B. Archivo y responsable</span>
             {!isEditing && (
-              <p className={styles.detailsInfoBox}>
-                Los disenos aportados por el cliente ya existen en el pedido y deben revisarse desde Gestion de Disenos.
-              </p>
+              <p className={styles.detailsInfoBox}>Diseno a cargo del equipo PIXEL.</p>
             )}
-          </div>
 
-          {isClientOrigin && (
-            <div className={styles.detailsInfoBox}>
-              Usa esta opcion cuando el cliente ya tenga el diseno y lo haya enviado por WhatsApp, correo u otro medio.
-            </div>
-          )}
-
-          {isStaff && !isEditing && !isClientOrigin && (
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Disenador asignado</label>
-              <select
-                value={idDisenador}
-                onChange={event => setIdDisenador(event.target.value)}
-                className={styles.inputField}
-                disabled={isSubmitting || loadingDisenadores}
-              >
-                <option value="">
-                  {loadingDisenadores ? 'Cargando disenadores...' : 'Sin asignar'}
-                </option>
-                {disenadores.map(user => (
-                  <option key={user.idUsuario} value={user.idUsuario}>
-                    {user.nombre} ({user.correo})
+            {isStaff && !isEditing && (
+              <div className={styles.inputGroup}>
+                <label className={styles.inputLabel} htmlFor="diseno-disenador">Disenador asignado</label>
+                <select
+                  id="diseno-disenador"
+                  value={idDisenador}
+                  onChange={event => setIdDisenador(event.target.value)}
+                  className={styles.inputField}
+                  disabled={isSubmitting || loadingDisenadores}
+                >
+                  <option value="">
+                    {loadingDisenadores ? 'Cargando disenadores...' : 'Sin asignar'}
                   </option>
-                ))}
-              </select>
-            </div>
-          )}
-          </section>
-
-          <section className="disenos-modal-section">
-            <span className="disenos-modal-section-title">C. Archivo y descripcion</span>
-          {isClientOrigin && (
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Medio de recepcion *</label>
-              <select
-                value={medioRecepcion}
-                onChange={event => setMedioRecepcion(event.target.value)}
-                className={styles.inputField}
-                disabled={isSubmitting}
-                required
-              >
-                <option value="WHATSAPP">WHATSAPP</option>
-                <option value="CORREO">CORREO</option>
-                <option value="PRESENCIAL">PRESENCIAL</option>
-                <option value="OTRO">OTRO</option>
-              </select>
-            </div>
-          )}
-
-          <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>
-              {isClientOrigin ? 'URL o enlace del diseno enviado por el cliente' : 'Archivo URL'}
-            </label>
-            <input
-              type="url"
-              value={archivoUrl}
-              onChange={event => {
-                setArchivoUrl(event.target.value);
-                setPreviewError(false);
-              }}
-              className={styles.inputField}
-              maxLength={500}
-              placeholder="https://archivo.com/diseno.png"
-              required={isClientOrigin}
-            />
-          </div>
-
-          {archivoUrlLimpio && (
-            <div className={styles.imagePreview}>
-              {!previewError ? (
-                <img
-                  src={archivoUrlLimpio}
-                  alt="Vista previa del diseno"
-                  className={styles.imagePreviewMedia}
-                  onError={() => setPreviewError(true)}
-                />
-              ) : (
-                <div className={styles.detailsInfoBox}>
-                  No se pudo previsualizar la imagen. Revisa que el enlace sea una imagen publica.
-                </div>
-              )}
-              <a href={archivoUrlLimpio} target="_blank" rel="noreferrer" className={styles.imagePreviewLink}>
-                Abrir archivo
-              </a>
-            </div>
-          )}
-
-          {!isClientOrigin && (
-            <>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Descripcion</label>
-                <textarea
-                  value={descripcion}
-                  onChange={event => setDescripcion(event.target.value)}
-                  className={styles.inputField}
-                  rows={3}
-                  maxLength={500}
-                  placeholder="Montaje frontal camiseta..."
-                />
+                  {disenadores.map(user => (
+                    <option key={user.idUsuario} value={user.idUsuario}>
+                      {user.nombre} ({user.correo})
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Observaciones</label>
-                <textarea
-                  value={observaciones}
-                  onChange={event => setObservaciones(event.target.value)}
-                  className={styles.inputField}
-                  rows={2}
-                  maxLength={500}
-                  placeholder="Notas internas del diseno..."
-                />
-              </div>
-            </>
-          )}
-          </section>
-
-          <section className="disenos-modal-section">
-            <span className="disenos-modal-section-title">D. Observaciones</span>
-            {isClientOrigin ? (
-              <>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Observaciones del cliente</label>
-                <textarea
-                  value={observacionesCliente}
-                  onChange={event => setObservacionesCliente(event.target.value)}
-                  className={styles.inputField}
-                  rows={3}
-                  maxLength={700}
-                  placeholder="Ej: El cliente envio el diseno por WhatsApp."
-                />
-              </div>
-
-              <label className="disenos-checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={marcarAprobado}
-                  onChange={event => setMarcarAprobado(event.target.checked)}
-                  disabled={isSubmitting}
-                />
-                <span>Marcar como aprobado al crear</span>
-              </label>
-              </>
-            ) : (
-              <p className={styles.detailsInfoBox}>Agrega en la seccion anterior las notas necesarias para el equipo.</p>
             )}
 
-            <div className={styles.detailsInfoBox}>
-              Se verificara que el pedido ya tenga el primer abono.
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel} htmlFor="diseno-url">Enlace del diseno</label>
+              <input
+                id="diseno-url"
+                type="url"
+                value={archivoUrl}
+                onChange={event => {
+                  setArchivoUrl(event.target.value);
+                  setPreviewError(false);
+                }}
+                className={styles.inputField}
+                maxLength={500}
+                placeholder="https://drive.google.com/... o enlace accesible"
+              />
+            </div>
+
+            {archivoUrl.trim() && (
+              <div className={styles.imagePreview}>
+                {!previewError ? (
+                  <img
+                    src={archivoUrl.trim()}
+                    alt="Vista previa del diseno"
+                    className={styles.imagePreviewMedia}
+                    onError={() => setPreviewError(true)}
+                  />
+                ) : (
+                  <div className={styles.detailsInfoBox}>
+                    No se pudo previsualizar la imagen. El enlace seguira disponible.
+                  </div>
+                )}
+                <a
+                  href={archivoUrl.trim()}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.imagePreviewLink}
+                >
+                  Abrir enlace
+                </a>
+              </div>
+            )}
+          </section>
+
+          <section className="disenos-modal-section">
+            <span className="disenos-modal-section-title">C. Informacion del diseno</span>
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel} htmlFor="diseno-descripcion">Descripcion</label>
+              <textarea
+                id="diseno-descripcion"
+                value={descripcion}
+                onChange={event => setDescripcion(event.target.value)}
+                className={styles.inputField}
+                rows={3}
+                maxLength={500}
+                placeholder="Describe el montaje o la version que se entrega."
+              />
+            </div>
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel} htmlFor="diseno-observaciones">Observaciones</label>
+              <textarea
+                id="diseno-observaciones"
+                value={observaciones}
+                onChange={event => setObservaciones(event.target.value)}
+                className={styles.inputField}
+                rows={3}
+                maxLength={500}
+                placeholder="Notas internas para el equipo."
+              />
             </div>
           </section>
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.btnSecondary}
+              disabled={isSubmitting}
+            >
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting || loadingPedidos || loadingDisenadores}>
-              {isSubmitting
-                ? 'Guardando...'
-                : isEditing
-                  ? 'Guardar cambios'
-                  : isCorrectionVersion
-                    ? 'Cargar diseno corregido'
-                    : 'Registrar'}
+            <button
+              type="submit"
+              className={styles.btnPrimary}
+              disabled={
+                isSubmitting
+                || loadingPedidos
+                || loadingDisenadores
+                || loadingRequirements
+                || (!isEditing && !selectedRequirement)
+              }
+            >
+              {submitLabel}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+};
+
+export const DisenoModal = props => {
+  if (!props.isOpen) return null;
+  return <DisenoModalContent {...props} />;
 };

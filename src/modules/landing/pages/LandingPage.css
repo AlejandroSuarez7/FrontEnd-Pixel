@@ -1921,6 +1921,56 @@
   margin-bottom: 14px;
 }
 
+.contact-form-copy {
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0 0 24px;
+}
+
+.contact-direct-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.contact-email-link,
+.contact-quote-link {
+  align-items: center;
+  box-sizing: border-box;
+  display: inline-flex;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+
+.contact-email-link {
+  gap: 9px;
+  min-height: 42px;
+  color: #6b21a8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contact-quote-link {
+  border: 1px solid #d8b4fe;
+  border-radius: 14px;
+  color: #7e22ce;
+  font-size: 15px;
+  font-weight: 700;
+  min-height: 46px;
+  padding: 11px 16px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.contact-quote-link:hover {
+  background: #faf5ff;
+  border-color: #a855f7;
+}
+
+.contact-secondary-actions {
+  margin-top: 12px;
+}
+
 /* ========================================
    FORM
 ======================================== */

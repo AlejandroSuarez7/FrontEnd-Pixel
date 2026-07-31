@@ -5,6 +5,7 @@ import DashboardLayout from '../shared/layouts/DashboardLayout/DashboardLayout';
 
 // Pages
 import LandingPage from '../modules/landing/pages/LandingPage';
+import PublicQuotePage from '../modules/landing/pages/PublicQuotePage';
 import LoginPage from '../modules/auth/pages/LoginPage';
 import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
 import CreateClientPasswordPage from '../modules/auth/pages/CreateClientPasswordPage';
@@ -33,6 +34,7 @@ import ServicesPage from '../modules/services/pages/ServicesPage';
 import QuotesPage from '../modules/services/pages/QuotesPage';
 import { ProductsPage } from '../modules/products/pages/ProductsPage';
 import { ProductCategoriesPage } from '../modules/products/pages/ProductCategoriesPage';
+import { TechniqueRatesPage } from '../modules/services/tarifas/pages/TechniqueRatesPage';
 import SettingsPage from '../modules/settings/pages/SettingsPage';
 
 const AppRouter = () => {
@@ -41,6 +43,7 @@ const AppRouter = () => {
       <Routes>
         {/* Public Routes */}
         <Route path={PATHS.HOME} element={<LandingPage />} />
+        <Route path={PATHS.PUBLIC_QUOTE} element={<PublicQuotePage />} />
         <Route path={PATHS.LOGIN} element={<LoginPage />} />
         <Route path={PATHS.REGISTER} element={<Navigate to={PATHS.LOGIN} replace />} />
         <Route path={PATHS.RESET_PASSWORD} element={<ResetPasswordPage />} />
@@ -57,6 +60,7 @@ const AppRouter = () => {
         >
           <Route index element={<DashboardPage />} />
           <Route path={PATHS.CLIENT_DESIGNS} element={<ClientDisenosPage />} />
+          <Route path={PATHS.CLIENT_QUOTES} element={<QuotesPage />} />
           <Route path={PATHS.ROLES} element={<RolesPage />} />
           <Route path={PATHS.USERS} element={<UsersPage />} />
           <Route path={PATHS.USERS_EMPLOYEES} element={<EmployeesPage />} />
@@ -81,6 +85,7 @@ const AppRouter = () => {
           <Route path={PATHS.SERVICES_QUOTES} element={<QuotesPage />} />
           <Route path={PATHS.SERVICES_PRODUCTS} element={<ProductsPage />} />
           <Route path={PATHS.SERVICES_PRODUCT_CATEGORIES} element={<ProductCategoriesPage />} />
+          <Route path={PATHS.SERVICES_TECHNIQUE_RATES} element={<TechniqueRatesPage />} />
           <Route path={PATHS.SETTINGS} element={<SettingsPage />} />
         </Route>
       </Routes>

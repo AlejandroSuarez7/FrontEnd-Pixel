@@ -1,5 +1,9 @@
 import { apiClient } from '../../../core/services/apiService';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../core/utils/serverPagination';
+import {
+  normalizeDiscountRanges,
+  toDiscountRangePayload,
+} from '../domain/productDiscountRanges';
 
 const ENDPOINT = 'api/productos';
 
@@ -8,11 +12,12 @@ const fromApi = (product) => ({
   idCategoriaProducto: product.idCategoriaProducto,
   nombre: product.nombre,
   descripcion: product.descripcion || '',
-  precioBase: Number(product.precioBase || 0),
+  precioBase: product.precioBase == null ? null : Number(product.precioBase),
+  requiereDiseno: product.requiereDiseno ?? true,
   estado: Boolean(product.estado),
   fechaCreacion: product.fechaCreacion,
   categoriaProducto: product.categoriaProducto || null,
-  rangos: product.rangos || [],
+  rangos: normalizeDiscountRanges(product.rangosDescuento || product.rangos || []),
 });
 
 const fromApiList = (products) => (Array.isArray(products) ? products.map(fromApi) : []);
@@ -35,7 +40,7 @@ export const productRepository = {
       nombre: product.nombre.trim(),
       idCategoriaProducto: Number(product.idCategoriaProducto),
       descripcion: product.descripcion?.trim() || null,
-      precioBase: Number(product.precioBase),
+      requiereDiseno: Boolean(product.requiereDiseno),
       estado: Boolean(product.estado),
     });
     return fromApi(data.data);
@@ -46,7 +51,7 @@ export const productRepository = {
       nombre: product.nombre.trim(),
       idCategoriaProducto: Number(product.idCategoriaProducto),
       descripcion: product.descripcion?.trim() || null,
-      precioBase: Number(product.precioBase),
+      requiereDiseno: Boolean(product.requiereDiseno),
       estado: Boolean(product.estado),
     });
     return fromApi(data.data);
@@ -62,19 +67,18 @@ export const productRepository = {
     return data;
   },
 
-  async listRanges(idProducto) {
-    const { data } = await apiClient.get(`${ENDPOINT}/${idProducto}/rangos`);
-    return data.data || [];
+  async listRanges(idProducto, options = {}) {
+    const { data } = await apiClient.get(`${ENDPOINT}/${idProducto}/rangos`, {
+      signal: options.signal,
+    });
+    const ranges = data.data?.rangos ?? data.data ?? [];
+    return normalizeDiscountRanges(ranges);
   },
 
   async replaceRanges(idProducto, rangos) {
     const { data } = await apiClient.patch(`${ENDPOINT}/${idProducto}/rangos`, {
-      rangos: rangos.map(rango => ({
-        cantidadMin: Number(rango.cantidadMin),
-        descuentoPorcentaje: Number(rango.descuentoPorcentaje),
-        estado: Boolean(rango.estado),
-      })),
+      rangos: toDiscountRangePayload(rangos),
     });
-    return fromApi(data.data);
+    return data.data;
   },
 };

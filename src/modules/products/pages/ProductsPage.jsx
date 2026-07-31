@@ -11,10 +11,8 @@ import { categoryRepository } from '../infrastructure/category.repository';
 import { ProductModal } from '../presentation/ProductModal';
 import styles from '../../users/presentation/users.module.css';
 
-const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
-
 export const ProductsPage = () => {
-  const { hasPermission } = useAuth();
+  const { hasAnyPermission, hasPermission } = useAuth();
   const confirm = useConfirm();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -34,6 +32,7 @@ export const ProductsPage = () => {
     updateProduct,
     deactivateProduct,
     deleteProduct,
+    loadRanges,
     saveRanges,
   } = useProducts({
     page: currentPage,
@@ -74,23 +73,38 @@ export const ProductsPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (payload) => {
-    if (selectedProduct) {
-      const product = await updateProduct(selectedProduct.idProducto, payload);
-      notifications.success('Producto actualizado correctamente.');
-      return product;
-    } else {
-      const product = await createProduct(payload);
-      notifications.success('Producto creado correctamente.');
-      return product;
-    }
-  };
+  const canManageDiscounts = hasAnyPermission([
+    'productos.descuentos.gestionar',
+    'productos.precios',
+  ]);
 
-  const handleSaveRanges = async (idProducto, rangos) => {
-    await saveRanges(idProducto, rangos);
-    notifications.success('Rangos de descuento actualizados.');
-    setIsModalOpen(false);
-    setSelectedProduct(null);
+  const handleSubmit = async ({ product: payload, ranges, persistedProductId }) => {
+    const idProducto = selectedProduct?.idProducto || persistedProductId;
+    const savedProduct = idProducto
+      ? await updateProduct(idProducto, payload, { refresh: !canManageDiscounts })
+      : await createProduct(payload, { refresh: !canManageDiscounts });
+
+    if (canManageDiscounts) {
+      try {
+        await saveRanges(savedProduct.idProducto, ranges);
+      } catch (error) {
+        await refreshProducts().catch(() => undefined);
+        const partialError = new Error(
+          'El producto se guardó, pero sus rangos no. Corrige el error y vuelve a guardar; no se creará otro producto.',
+        );
+        partialError.partial = true;
+        partialError.persistedProductId = savedProduct.idProducto;
+        partialError.cause = error;
+        throw partialError;
+      }
+    }
+
+    notifications.success(
+      selectedProduct || persistedProductId
+        ? 'Producto actualizado correctamente.'
+        : 'Producto creado correctamente.',
+    );
+    return savedProduct;
   };
 
   const handleDeactivate = async (product) => {
@@ -133,7 +147,7 @@ export const ProductsPage = () => {
         <div>
           <span className={styles.breadcrumb}>Servicios / Productos</span>
           <h1 className={styles.pageTitle}>Productos cotizables</h1>
-          <p className={styles.pageSubtitle}>Administra productos, precios base y rangos usados por el cotizador publico.</p>
+          <p className={styles.pageSubtitle}>Administra el catálogo visible en solicitudes. Los precios viven en Técnicas.</p>
         </div>
         {hasPermission('productos.crear') && (
           <button className={styles.primaryButton} onClick={openCreate}>Nuevo producto</button>
@@ -186,8 +200,7 @@ export const ProductsPage = () => {
                 <tr className={styles.tableHeadRow}>
                   <th className={styles.tableHeader}>Producto</th>
                   <th className={styles.tableHeader}>Categoria</th>
-                  <th className={styles.tableHeader}>Precio base</th>
-                  <th className={styles.tableHeader}>Rangos</th>
+                  <th className={styles.tableHeader}>Diseño</th>
                   <th className={styles.tableHeader}>Estado</th>
                   <th className={styles.tableHeader}>Acciones</th>
                 </tr>
@@ -202,8 +215,7 @@ export const ProductsPage = () => {
                       </span>
                     </td>
                     <td className={styles.tableCell}>{product.categoriaProducto?.nombre || 'Sin categoria'}</td>
-                    <td className={styles.tableCell}>{fmt(product.precioBase)}</td>
-                    <td className={styles.tableCell}>{product.rangos?.length || 0}</td>
+                    <td className={styles.tableCell}>{product.requiereDiseno ? 'Requerido' : 'No requerido'}</td>
                     <td className={styles.tableCell}>
                       <span className={`${styles.statusBadge} ${product.estado ? styles.statusActive : styles.statusInactive}`}>
                         {product.estado ? 'Activo' : 'Inactivo'}
@@ -236,15 +248,18 @@ export const ProductsPage = () => {
         />
       </div>
 
-      <ProductModal
-        isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setSelectedProduct(null); }}
-        onSubmit={handleSubmit}
-        onSaveRanges={handleSaveRanges}
-        product={selectedProduct}
-        canManagePrices={hasPermission('productos.precios')}
-        categories={categoryOptions}
-      />
+      {isModalOpen && (
+        <ProductModal
+          key={selectedProduct?.idProducto || 'new-product'}
+          isOpen
+          onClose={() => { setIsModalOpen(false); setSelectedProduct(null); }}
+          onSubmit={handleSubmit}
+          onLoadRanges={loadRanges}
+          product={selectedProduct}
+          categories={categoryOptions}
+          canManageDiscounts={canManageDiscounts}
+        />
+      )}
     </div>
   );
 };

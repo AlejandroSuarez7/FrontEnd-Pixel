@@ -44,6 +44,7 @@ describe('permission helpers', () => {
     const permissions = [
       'dashboard.cliente',
       'pedidos.cliente.ver',
+      'cotizaciones.cliente.ver',
       'disenos.cliente.ver',
       'perfil.ver',
     ];
@@ -52,19 +53,20 @@ describe('permission helpers', () => {
 
     expect(labels).toEqual([
       'Inicio',
-      'Dashboard',
       'Mis pedidos',
+      'Mis cotizaciones',
       'Mis disenos',
       'Crear cotizacion',
-      'Mi Perfil',
+      'Mi perfil',
     ]);
     expect(items.find(item => item.label === 'Inicio')?.to).toBe('/');
-    expect(items.find(item => item.label === 'Dashboard')?.to).toBe('/dashboard');
-    expect(items.find(item => item.label === 'Crear cotizacion')?.to).toBe('/#contacto');
+    expect(items.find(item => item.label === 'Mis pedidos')?.to).toBe('/dashboard');
+    expect(items.find(item => item.label === 'Crear cotizacion')?.to).toBe('/cotizar');
     expect(labels).not.toContain('Usuarios');
     expect(labels).not.toContain('Compras');
     expect(labels).not.toContain('Ventas');
     expect(labels).not.toContain('Catalogo');
+    expect(labels).not.toContain('Dashboard');
   });
 
   it('shows administrative sections according to permissions', () => {

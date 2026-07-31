@@ -5,6 +5,7 @@ import { PATHS } from './paths';
 export const ROUTE_PERMISSIONS = {
   [PATHS.DASHBOARD]: ['dashboard.admin', 'dashboard.cliente'],
   [PATHS.CLIENT_DESIGNS]: ['disenos.cliente.ver'],
+  [PATHS.CLIENT_QUOTES]: ['cotizaciones.cliente.ver'],
   [PATHS.ROLES]: ['roles.ver'],
   [PATHS.USERS]: ['usuarios.ver'],
   [PATHS.USERS_EMPLOYEES]: ['usuarios.ver'],
@@ -28,6 +29,7 @@ export const ROUTE_PERMISSIONS = {
   [PATHS.SERVICES_QUOTES]: ['cotizaciones.ver'],
   [PATHS.SERVICES_PRODUCTS]: ['productos.ver'],
   [PATHS.SERVICES_PRODUCT_CATEGORIES]: ['categorias_producto.ver'],
+  [PATHS.SERVICES_TECHNIQUE_RATES]: ['tarifas.tecnicas.ver'],
   [PATHS.SETTINGS]: ['roles.ver', 'usuarios.ver', 'permisos.ver'],
 };
 
@@ -120,6 +122,7 @@ export const getDefaultProtectedPath = (permissions, user = null) => {
     PATHS.SERVICES_PRODUCT_CATEGORIES,
     PATHS.SERVICES_PRODUCTS,
     PATHS.SERVICES,
+    PATHS.SERVICES_TECHNIQUE_RATES,
     PATHS.SERVICES_QUOTES,
     PATHS.ORDERS,
     PATHS.SALES_PAYMENTS,
@@ -138,11 +141,11 @@ export const filterSidebarByPermissions = (permissions, user = null) => {
   if (isClientUser(user, permissions)) {
     return [
       { label: 'Inicio', icon: 'home', to: PATHS.HOME },
-      { label: 'Dashboard', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
-      { label: 'Mis pedidos', icon: 'dashboard', to: `${PATHS.DASHBOARD}#pedidos`, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
+      { label: 'Mis pedidos', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
+      { label: 'Mis cotizaciones', icon: 'description', to: PATHS.CLIENT_QUOTES, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_QUOTES] },
       { label: 'Mis disenos', icon: 'image', to: PATHS.CLIENT_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_DESIGNS] },
       { label: 'Crear cotizacion', icon: 'add_circle', to: LANDING_QUOTE_PATH },
-      { label: 'Mi Perfil', icon: 'account_circle', to: PATHS.PROFILE },
+      { label: 'Mi perfil', icon: 'account_circle', to: PATHS.PROFILE },
     ].filter((item) => !item.permissions || hasAnyPermission(permissions, item.permissions));
   }
 

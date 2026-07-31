@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { quotesDTO } from './cotizacionDTO.js';
 
 describe('quotesDTO', () => {
-  it('preserva la configuracion de diseno sin enviar precios administrativos', () => {
+  it('envia items y estampados sin precios administrativos', () => {
     const payload = quotesDTO.toApi({
       cliente: {
         nombre: 'Cliente Pixel',
@@ -10,27 +10,38 @@ describe('quotesDTO', () => {
         telefono: '3000000000',
       },
       detalles: [{
+        tipoProducto: 'CATALOGO',
         idProducto: 4,
-        idTecnica: 2,
         cantidad: 12,
         costoDiseno: 45000,
-        requiereDiseno: true,
-        origenDiseno: 'CLIENTE',
-        esDisenoGeneral: true,
-        archivoDisenoInicialUrl: 'https://example.com/diseno.png',
+        suministradoPor: 'PIXEL',
+        estampados: [{
+          idTecnica: 2,
+          ubicacion: 'FRENTE',
+          anchoCm: 10,
+          altoCm: 12,
+          origenDiseno: 'CLIENTE',
+          grupoDisenoCompartido: 'GRUPO-DISENO-1',
+        }],
       }],
     });
 
-    expect(payload.detalles[0]).toMatchObject({
+    expect(payload.items[0]).toMatchObject({
+      tipoProducto: 'CATALOGO',
       idProducto: 4,
-      idTecnica: 2,
       cantidad: 12,
-      requiereDiseno: true,
-      origenDiseno: 'CLIENTE',
-      esDisenoGeneral: true,
-      archivoDisenoInicialUrl: 'https://example.com/diseno.png',
+      suministradoPor: 'PIXEL',
     });
-    expect(payload.detalles[0]).not.toHaveProperty('costoDiseno');
+    expect(payload.items[0].estampados[0]).toEqual({
+      idTecnica: 2,
+      ubicacion: 'FRENTE',
+      anchoCm: 10,
+      altoCm: 12,
+      origenDiseno: 'CLIENTE',
+      grupoDisenoCompartido: 'GRUPO-DISENO-1',
+    });
+    expect(payload.items[0]).not.toHaveProperty('costoDiseno');
+    expect(payload).not.toHaveProperty('detalles');
   });
 
   it('mantiene los snapshots OCR y de diseno recibidos del backend', () => {
@@ -51,5 +62,30 @@ describe('quotesDTO', () => {
       requiereDiseno: false,
       origenDiseno: 'PIXEL',
     });
+  });
+
+  it('conserva una tecnica pendiente como null y omite medidas vacias', () => {
+    const payload = quotesDTO.toApi({
+      detalles: [{
+        tipoProducto: 'CATALOGO',
+        idProducto: 4,
+        cantidad: 12,
+        estampados: [{
+          idTecnica: null,
+          ubicacion: 'FRENTE',
+          anchoCm: '',
+          altoCm: '',
+          origenDiseno: 'PIXEL',
+        }],
+      }],
+    });
+
+    expect(payload.items[0].estampados[0]).toMatchObject({
+      idTecnica: null,
+      ubicacion: 'FRENTE',
+      origenDiseno: 'PIXEL',
+    });
+    expect(payload.items[0].estampados[0]).not.toHaveProperty('anchoCm');
+    expect(payload.items[0].estampados[0]).not.toHaveProperty('altoCm');
   });
 });

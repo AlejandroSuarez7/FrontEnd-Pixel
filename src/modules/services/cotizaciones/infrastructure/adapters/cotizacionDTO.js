@@ -31,6 +31,31 @@ export const quotesDTO = {
       observaciones:       det.observaciones ?? '',
       producto:            det.producto ?? null,
       tecnica:             det.tecnica ?? null,
+      tipoProducto:        det.tipoProducto ?? (det.idProducto ? 'CATALOGO' : 'OTRO'),
+      nombrePersonalizado: det.nombrePersonalizado ?? null,
+      descripcionPersonalizada: det.descripcionPersonalizada ?? '',
+      materialReferencia:  det.materialReferencia ?? '',
+      suministradoPor:     det.suministradoPor ?? 'PIXEL',
+      estampados:          Array.isArray(det.estampados) ? det.estampados.map((stamp) => ({
+        ...stamp,
+        idTecnica: stamp.idTecnica == null ? null : Number(stamp.idTecnica),
+        anchoCm: stamp.anchoCm == null ? null : Number(stamp.anchoCm),
+        altoCm: stamp.altoCm == null ? null : Number(stamp.altoCm),
+        precioUnitarioSugerido: stamp.precioUnitarioSugerido == null ? null : Number(stamp.precioUnitarioSugerido),
+        subtotalSugerido: stamp.subtotalSugerido == null ? null : Number(stamp.subtotalSugerido),
+        requiereRevisionPrecio: Boolean(stamp.requiereRevisionPrecio),
+      })) : [],
+      requiereRevisionPrecio: det.requiereRevisionPrecio ?? false,
+      calculoCompleto: det.calculoCompleto ?? null,
+      estadoMedidas: det.estadoMedidas ?? null,
+      motivosRevision: Array.isArray(det.motivosRevision) ? det.motivosRevision : [],
+      rangoProductoAplicado: det.rangoProductoAplicado ?? det.rangoDescuentoAplicado ?? null,
+      precioSugeridoInterno: det.precioSugeridoInterno ?? null,
+      subtotalSugeridoInterno: det.subtotalSugeridoInterno ?? null,
+      subtotalServiciosOficial: det.subtotalServiciosOficial ?? null,
+      costoProducto: det.costoProducto ?? 0,
+      otrosCostosItem: det.otrosCostosItem ?? 0,
+      subtotalOficial: det.subtotalOficial ?? null,
     }));
 
     return createQuote({
@@ -50,6 +75,17 @@ export const quotesDTO = {
       cantidadItems:     apiData.cantidadItems ?? detalles.length,
       productosResumen:  apiData.productosResumen ?? '',
       observaciones:     apiData.observaciones ?? '',
+      observacionesInternas: apiData.observacionesInternas ?? '',
+      precioSugeridoInterno: apiData.precioSugeridoInterno ?? null,
+      precioSugeridoSistema: apiData.precioSugeridoSistema ?? null,
+      calculoCompleto: apiData.calculoCompleto ?? null,
+      requiereRevisionPrecio: apiData.requiereRevisionPrecio ?? false,
+      advertenciasInternas: apiData.advertenciasInternas ?? [],
+      disenosPropuesta: apiData.disenosPropuesta ?? apiData.disenosCotizables ?? apiData.disenos ?? [],
+      conceptosAdicionales: apiData.conceptosAdicionales ?? [],
+      estadoPrecio: apiData.estadoPrecio ?? null,
+      propuesta: apiData.propuesta ?? null,
+      versiones: apiData.versiones ?? [],
       fechaCreacion:     apiData.fechaCreacion
         ?? apiData.fecha_creacion
         ?? apiData.createdAt
@@ -68,6 +104,59 @@ export const quotesDTO = {
   toApi(domainData) {
     if (!domainData) return null;
 
+    const sourceItems = domainData.items ?? domainData.detalles ?? [];
+    const items = sourceItems.map((item) => {
+      const tipoProducto = String(
+        item.tipoProducto ?? (item.idProducto ? 'CATALOGO' : 'OTRO')
+      ).toUpperCase();
+      const sourceStamps = Array.isArray(item.estampados) && item.estampados.length > 0
+        ? item.estampados
+        : item.idTecnica
+          ? [{
+              idTecnica: item.idTecnica,
+              ubicacion: item.ubicacion || 'FRENTE',
+              anchoCm: item.anchoCm,
+              altoCm: item.altoCm,
+              origenDiseno: item.origenDiseno,
+              grupoDisenoCompartido: item.grupoDisenoCompartido,
+            }]
+          : [];
+
+      return {
+        ...(item.idDetalleCotizacion && {
+          idDetalleCotizacion: Number(item.idDetalleCotizacion),
+        }),
+        tipoProducto,
+        ...(tipoProducto === 'CATALOGO' && item.idProducto
+          ? { idProducto: Number(item.idProducto) }
+          : {}),
+        ...(tipoProducto === 'OTRO'
+          ? {
+              nombrePersonalizado: item.nombrePersonalizado?.trim()
+                || item.descripcion?.trim()
+                || '',
+              descripcionPersonalizada: item.descripcionPersonalizada?.trim() || null,
+              materialReferencia: item.materialReferencia?.trim() || null,
+            }
+          : {}),
+        cantidad: Number(item.cantidad || 1),
+        suministradoPor: String(item.suministradoPor || 'PIXEL').toUpperCase(),
+        estampados: sourceStamps.map((stamp) => ({
+          idTecnica: stamp.idTecnica ? Number(stamp.idTecnica) : null,
+          ubicacion: stamp.ubicacion?.trim() || 'FRENTE',
+          ...(stamp.anchoCm !== '' && stamp.anchoCm != null ? { anchoCm: Number(stamp.anchoCm) } : {}),
+          ...(stamp.altoCm !== '' && stamp.altoCm != null ? { altoCm: Number(stamp.altoCm) } : {}),
+          origenDiseno: String(stamp.origenDiseno || 'PENDIENTE_DEFINIR').toUpperCase(),
+          ...(stamp.grupoDisenoCompartido?.trim()
+            ? { grupoDisenoCompartido: stamp.grupoDisenoCompartido.trim() }
+            : {}),
+          ...(stamp.descripcion?.trim() ? { descripcion: stamp.descripcion.trim() } : {}),
+          ...(stamp.observaciones?.trim() ? { observaciones: stamp.observaciones.trim() } : {}),
+        })),
+        observaciones: item.observaciones?.trim() || null,
+      };
+    });
+
     return {
       idCliente:    domainData.idCliente ? Number(domainData.idCliente) : undefined,
       ...(domainData.cliente && {
@@ -78,21 +167,7 @@ export const quotesDTO = {
         },
       }),
       observaciones: domainData.observaciones?.trim() || null,
-      ...(domainData.costosAdicionales !== undefined && {
-        costosAdicionales: Number(domainData.costosAdicionales),
-      }),
-      detalles: domainData.detalles?.map(d => ({
-        idDetalleCotizacion: d.idDetalleCotizacion ? Number(d.idDetalleCotizacion) : undefined,
-        idProducto:  d.idProducto && !isNaN(d.idProducto) ? Number(d.idProducto) : undefined,
-        idTecnica:   d.idTecnica && !isNaN(d.idTecnica) ? Number(d.idTecnica) : 0,
-        descripcion: d.descripcion?.trim() || '',
-        cantidad:    Number(d.cantidad || 1),
-        observaciones: d.observaciones?.trim() || null,
-        requiereDiseno: d.requiereDiseno !== false,
-        origenDiseno: d.origenDiseno === 'CLIENTE' ? 'CLIENTE' : 'PIXEL',
-        esDisenoGeneral: Boolean(d.esDisenoGeneral),
-        archivoDisenoInicialUrl: d.archivoDisenoInicialUrl?.trim() || null,
-      })),
+      items,
     };
   },
 

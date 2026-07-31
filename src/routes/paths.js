@@ -1,5 +1,6 @@
 export const PATHS = {
   HOME: '/',
+  PUBLIC_QUOTE: '/cotizar',
   LOGIN: '/login',
   REGISTER: '/register',
   RESET_PASSWORD: '/reset-password/:token',
@@ -7,6 +8,7 @@ export const PATHS = {
 
   DASHBOARD: '/dashboard',
   CLIENT_DESIGNS: '/dashboard/cliente/disenos',
+  CLIENT_QUOTES: '/dashboard/cliente/cotizaciones',
   PROFILE: '/dashboard/profile',
 
   ROLES: '/dashboard/roles',
@@ -32,6 +34,7 @@ export const PATHS = {
   SERVICES_QUOTES: '/dashboard/services/quotes',
   SERVICES_PRODUCTS: '/dashboard/services/products',
   SERVICES_PRODUCT_CATEGORIES: '/dashboard/services/product-categories',
+  SERVICES_TECHNIQUE_RATES: '/dashboard/services/technique-rates',
 
   PRODUCTION: '/dashboard/production',
   PRODUCTION_DESIGNS: '/dashboard/production/designs',

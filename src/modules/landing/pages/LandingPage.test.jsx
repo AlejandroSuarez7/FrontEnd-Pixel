@@ -1,30 +1,25 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import LandingPage from './LandingPage';
-import { publicQuoteRepository } from '../infrastructure/publicQuote.repository';
 
 const navigateMock = vi.fn();
-const confirmMock = vi.fn();
 
-vi.mock('motion/react', async () => {
-  return {
-    motion: {
-      div: ({ children, ...props }) => {
-        const cleanProps = { ...props };
-        delete cleanProps.initial;
-        delete cleanProps.whileInView;
-        delete cleanProps.viewport;
-        delete cleanProps.transition;
-        return <div {...cleanProps}>{children}</div>;
-      },
+vi.mock('motion/react', () => ({
+  motion: {
+    div: ({ children, ...props }) => {
+      const cleanProps = { ...props };
+      delete cleanProps.initial;
+      delete cleanProps.whileInView;
+      delete cleanProps.viewport;
+      delete cleanProps.transition;
+      return <div {...cleanProps}>{children}</div>;
     },
-  };
-});
+  },
+}));
 
 vi.mock('react-router-dom', () => ({
   Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a>,
-  useLocation: () => ({ state: null }),
+  useLocation: () => ({ hash: '', state: null }),
   useNavigate: () => navigateMock,
 }));
 
@@ -36,122 +31,46 @@ vi.mock('../../../store/AuthContext', () => ({
   }),
 }));
 
-vi.mock('../../../shared/components/ConfirmDialog/ConfirmProvider', () => ({
-  useConfirm: () => confirmMock,
-}));
-
-vi.mock('../infrastructure/publicQuote.repository', () => ({
-  publicQuoteRepository: {
-    listCategories: vi.fn(),
-    listTechniques: vi.fn(),
-    listProductsByCategory: vi.fn(),
-    calculate: vi.fn(),
-    create: vi.fn(),
-  },
-}));
-
-vi.mock('../../../core/utils/notifications', () => ({
-  notifications: {
-    success: vi.fn(),
-    error: vi.fn(),
-    warning: vi.fn(),
-  },
-}));
-
-describe('LandingPage public quote form', () => {
+describe('LandingPage', () => {
   beforeEach(() => {
     navigateMock.mockReset();
-    confirmMock.mockReset();
-    publicQuoteRepository.listCategories.mockResolvedValue([
-      { idCategoriaProducto: 1, nombre: 'Camisetas' },
-    ]);
-    publicQuoteRepository.listTechniques.mockResolvedValue([
-      { idTecnica: 2, nombre: 'Sublimacion', estado: true },
-    ]);
-    publicQuoteRepository.listProductsByCategory.mockResolvedValue([
-      {
-        idProducto: 10,
-        nombre: 'Camiseta',
-        precioBase: 20000,
-        categoriaProducto: { nombre: 'Camisetas' },
-      },
-    ]);
-    publicQuoteRepository.calculate.mockResolvedValue({
-      total: 40000,
-      items: [{ precioUnitario: 20000, descuentoAplicado: 0, subtotal: 40000 }],
-    });
-    publicQuoteRepository.create.mockResolvedValue({ data: {} });
-    confirmMock.mockResolvedValue(true);
   });
 
-  it('renders a multiproduct quote form with add product control', async () => {
+  it('keeps general contact separate from the quote builder', () => {
     render(<LandingPage />);
 
-    expect(await screen.findByText(/solicita tu cotizaci/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/nombre completo/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/tu@email.com/i)).toBeInTheDocument();
-    expect(screen.getByText(/selecciona un producto/i)).toBeInTheDocument();
-    expect(screen.getByText(/agregar producto/i)).toBeInTheDocument();
-    expect(screen.queryByText(/^quitar$/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /escríbenos/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/nombre completo/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^correo$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/teléfono/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/mensaje/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /enviar consulta por correo/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('mailto:contacto@pixel.com'),
+    );
+    expect(screen.queryByText(/agregar producto/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/total estimado/i)).not.toBeInTheDocument();
   });
 
-  it('submits one quoted product after confirmation', async () => {
-    const user = userEvent.setup();
+  it('routes quote links and the hero action to the public builder', () => {
+    render(<LandingPage />);
 
-    const { container } = render(<LandingPage />);
+    expect(screen.getAllByRole('link', { name: /^cotizar$/i })[0]).toHaveAttribute('href', '/cotizar');
+    expect(screen.getByRole('link', { name: /crear solicitud de cotización/i })).toHaveAttribute(
+      'href',
+      '/cotizar',
+    );
 
-    await user.type(screen.getByPlaceholderText(/nombre completo/i), 'Cliente Pixel');
-    await user.type(screen.getByPlaceholderText(/tu@email.com/i), 'cliente@pixel.com');
-    await user.type(screen.getByPlaceholderText('3000000000'), '3001234567');
-
-    await waitFor(() => expect(publicQuoteRepository.listProductsByCategory).toHaveBeenCalled());
-
-    const selects = container.querySelectorAll('select.contact-input');
-    const quantityInput = container.querySelector('input[type="number"]');
-
-    await user.selectOptions(selects[1], '2');
-    await user.selectOptions(selects[2], '10');
-    await user.clear(quantityInput);
-    await user.type(quantityInput, '2');
-
-    await user.click(screen.getByRole('button', { name: /enviar solicitud/i }));
-
-    await waitFor(() => expect(confirmMock).toHaveBeenCalled());
-    await waitFor(() => expect(publicQuoteRepository.create).toHaveBeenCalledTimes(1));
-
-    const payload = publicQuoteRepository.create.mock.calls[0][0];
-    expect(payload.items).toHaveLength(1);
-    expect(payload.items[0]).toMatchObject({
-      idProducto: 10,
-      idTecnica: 2,
-      cantidad: 2,
-    });
+    fireEvent.click(screen.getByRole('button', { name: /solicitar cotización/i }));
+    expect(navigateMock).toHaveBeenCalledWith('/cotizar');
   });
 
-  it('can submit multiple quoted products', async () => {
-    const user = userEvent.setup();
-    const { container } = render(<LandingPage />);
+  it('keeps the explicit Contact links pointing to the landing section', () => {
+    render(<LandingPage />);
 
-    await user.type(screen.getByPlaceholderText(/nombre completo/i), 'Cliente Pixel');
-    await user.type(screen.getByPlaceholderText(/tu@email.com/i), 'cliente@pixel.com');
-    await user.type(screen.getByPlaceholderText('3000000000'), '3001234567');
-    await waitFor(() => expect(publicQuoteRepository.listProductsByCategory).toHaveBeenCalled());
-
-    let selects = container.querySelectorAll('select.contact-input');
-    await user.selectOptions(selects[1], '2');
-    await user.selectOptions(selects[2], '10');
-
-    await user.click(screen.getByText(/agregar producto/i));
-
-    selects = container.querySelectorAll('select.contact-input');
-    await user.selectOptions(selects[1], '2');
-    await user.selectOptions(selects[2], '10');
-
-    await user.click(screen.getByRole('button', { name: /enviar solicitud/i }));
-
-    await waitFor(() => expect(publicQuoteRepository.create).toHaveBeenCalledTimes(1));
-    const payload = publicQuoteRepository.create.mock.calls[0][0];
-    expect(payload.items).toHaveLength(2);
-    expect(payload.items.every(item => item.idProducto === 10 && item.idTecnica === 2)).toBe(true);
+    expect(screen.getAllByRole('link', { name: /^contacto$/i })[0]).toHaveAttribute(
+      'href',
+      '#contacto',
+    );
   });
 });

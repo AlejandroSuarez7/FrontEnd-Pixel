@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { createPaginationMeta } from '../../../core/utils/serverPagination';
 import { useLatestListRequest } from '../../../core/hooks/useLatestListRequest';
 import { productRepository } from '../infrastructure/product.repository';
@@ -16,15 +17,15 @@ export const useProducts = (filters = {}) => {
     initialData: { items: [], meta: createPaginationMeta() },
   });
 
-  const createProduct = async (payload) => {
+  const createProduct = async (payload, options = {}) => {
     const product = await productRepository.create(payload);
-    await fetchProducts();
+    if (options.refresh !== false) await fetchProducts();
     return product;
   };
 
-  const updateProduct = async (idProducto, payload) => {
+  const updateProduct = async (idProducto, payload, options = {}) => {
     const product = await productRepository.update(idProducto, payload);
-    await fetchProducts();
+    if (options.refresh !== false) await fetchProducts();
     return product;
   };
 
@@ -43,6 +44,10 @@ export const useProducts = (filters = {}) => {
     await fetchProducts();
   };
 
+  const loadRanges = useCallback((idProducto, options = {}) => (
+    productRepository.listRanges(idProducto, options)
+  ), []);
+
   return {
     products: data.items,
     paginationMeta: data.meta,
@@ -53,6 +58,7 @@ export const useProducts = (filters = {}) => {
     updateProduct,
     deactivateProduct,
     deleteProduct,
+    loadRanges,
     saveRanges,
     refreshProducts: fetchProducts,
   };
