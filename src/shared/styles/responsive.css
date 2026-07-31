@@ -1,25 +1,5 @@
 /* Tablet */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 200px;
-    padding: 15px;
-  }
-
-  .sidebar h2 {
-    font-size: 20px;
-    margin-bottom: 20px;
-  }
-
-  .sidebar a,
-  .sidebar button {
-    padding: 10px 12px;
-    font-size: 13px;
-  }
-
-  .main-content {
-    margin-left: 200px;
-  }
-
   .header-content {
     flex-direction: column;
     gap: 15px;
@@ -44,32 +24,6 @@
 
 /* Mobile */
 @media (max-width: 480px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    border-right: none;
-    border-bottom: 1px solid #34495e;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 10px;
-  }
-
-  .sidebar h2 {
-    font-size: 18px;
-    margin-bottom: 10px;
-  }
-
-  .sidebar nav {
-    gap: 5px;
-  }
-
-  .sidebar a,
-  .sidebar button {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
   .main-content {
     margin-left: 0;
     flex-direction: column;
@@ -119,5 +73,26 @@
   .form-group select {
     padding: 10px;
     font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  .content {
+    min-width: 0;
+    width: 100%;
   }
 }

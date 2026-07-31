@@ -1,0 +1,41 @@
+export const createDetalleCompra = ({
+  idDetalleCompra,
+  descripcionInsumo = '',
+  cantidad = 1,
+  costoUnitario,
+  subtotal,
+} = {}) => ({
+  idDetalleCompra,
+  descripcionInsumo,
+  cantidad,
+  costoUnitario,
+  subtotal,
+});
+
+export const createCompra = ({
+  idCompra,
+  idPedido,
+  idProveedor,
+  compradoPorId,
+  estado = 'PENDIENTE',
+  total = 0,
+  fechaCompra = null,
+  observaciones = '',
+  proveedor = null,
+  compradoPor = null,
+  detalles = [],
+  pedido = null,
+} = {}) => ({
+  idCompra,
+  idPedido,
+  idProveedor,
+  compradoPorId,
+  estado,
+  total,
+  fechaCompra,
+  observaciones: observaciones || '',
+  proveedor,
+  compradoPor,
+  detalles,
+  pedido,
+});
