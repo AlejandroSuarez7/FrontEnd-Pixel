@@ -46,6 +46,7 @@ vi.mock('../infrastructure/publicQuote.repository', () => ({
   publicQuoteRepository: {
     listCategories: vi.fn(),
     listTechniques: vi.fn(),
+    listTechniqueTariffs: vi.fn(),
     listProducts: vi.fn(),
     calculate: vi.fn(),
     create: vi.fn(),
@@ -73,8 +74,7 @@ const configureCatalogProduct = async (user, { quantity = '12' } = {}) => {
   await user.selectOptions(screen.getByLabelText(/producto \*/i), '10');
   fireEvent.change(screen.getByLabelText(/cantidad \*/i), { target: { value: quantity } });
   await user.selectOptions(screen.getByLabelText(/técnica estampado 1/i), '2');
-  fireEvent.change(screen.getByLabelText(/ancho/i), { target: { value: '10' } });
-  fireEvent.change(screen.getByLabelText(/alto/i), { target: { value: '12' } });
+  await user.selectOptions(await screen.findByLabelText(/tamaño del estampado/i), '1');
 };
 
 describe('PublicQuotePage', () => {
@@ -96,6 +96,15 @@ describe('PublicQuotePage', () => {
       { idTecnica: 3, nombre: 'Bordado', requiereMedidas: false },
     ]);
     publicQuoteRepository.listProducts.mockResolvedValue([catalogProduct]);
+    publicQuoteRepository.listTechniqueTariffs.mockResolvedValue([
+      {
+        idTarifaTecnica: 1,
+        nombre: 'Punto corazón',
+        anchoHastaCm: 10,
+        altoHastaCm: 12,
+        esGeneral: false,
+      },
+    ]);
     publicQuoteRepository.calculate.mockResolvedValue({
       estado: 'EN_REVISION',
       estadoPrecio: 'PENDIENTE_CONFIRMACION',
@@ -146,6 +155,7 @@ describe('PublicQuotePage', () => {
         requiereDiseno: true,
         estampados: [expect.objectContaining({
           idTecnica: 2,
+          idTarifaTecnica: 1,
           ubicacion: 'FRENTE',
           anchoCm: 10,
           altoCm: 12,
@@ -214,8 +224,7 @@ describe('PublicQuotePage', () => {
     await waitFor(() => expect(publicQuoteRepository.create).toHaveBeenCalledTimes(1));
     const stamp = publicQuoteRepository.create.mock.calls[0][0].items[0].estampados[0];
     expect(stamp.idTecnica).toBeNull();
-    expect(stamp).not.toHaveProperty('anchoCm');
-    expect(stamp).not.toHaveProperty('altoCm');
+    expect(stamp).toMatchObject({ idTarifaTecnica: null, anchoCm: null, altoCm: null });
     expect(screen.queryByText(/crear grupo|grupo de diseño|grupoDisenoCompartido/i))
       .not.toBeInTheDocument();
   });
@@ -227,16 +236,15 @@ describe('PublicQuotePage', () => {
     await screen.findByRole('heading', { name: /configura un producto/i });
     await fillContact(user);
     await configureCatalogProduct(user);
-    await user.click(screen.getByRole('checkbox', { name: /no conozco las medidas/i }));
+    await user.selectOptions(screen.getByLabelText(/tamaño del estampado/i), 'PENDING');
     await user.click(screen.getByRole('button', { name: /añadir a la cotización/i }));
-    expect(screen.getByText('DTF · Frente · Medidas por definir')).toBeInTheDocument();
+    expect(screen.getByText('DTF · Frente · Tamaño por definir')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /enviar solicitud de cotización/i }));
 
     await waitFor(() => expect(publicQuoteRepository.create).toHaveBeenCalledTimes(1));
     const stamp = publicQuoteRepository.create.mock.calls[0][0].items[0].estampados[0];
     expect(stamp.idTecnica).toBe(2);
-    expect(stamp).not.toHaveProperty('anchoCm');
-    expect(stamp).not.toHaveProperty('altoCm');
+    expect(stamp).toMatchObject({ idTarifaTecnica: null, anchoCm: null, altoCm: null });
   });
 
   it('shares a design through a human reference while keeping the internal group stable', async () => {

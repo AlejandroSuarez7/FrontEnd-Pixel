@@ -33,6 +33,7 @@ describe('tariffRepository contracts', () => {
   it('creates a dimensional tariff using the current backend contract', async () => {
     await tariffRepository.create({
       idTecnica: '2',
+      nombre: 'Punto corazón',
       anchoHastaCm: '10,5',
       altoHastaCm: '12,75',
       precioUnitario: '8500,25',
@@ -42,6 +43,7 @@ describe('tariffRepository contracts', () => {
 
     expect(apiClient.post).toHaveBeenCalledWith('/api/tarifas-tecnicas', {
       idTecnica: 2,
+      nombre: 'Punto corazón',
       anchoHastaCm: 10.5,
       altoHastaCm: 12.75,
       esGeneral: false,
@@ -53,6 +55,7 @@ describe('tariffRepository contracts', () => {
   it('creates a general tariff without fake zero dimensions', async () => {
     await tariffRepository.create({
       idTecnica: 2,
+      nombre: 'Tarifa general',
       anchoHastaCm: null,
       altoHastaCm: null,
       precioUnitario: 7000,
@@ -62,6 +65,7 @@ describe('tariffRepository contracts', () => {
 
     expect(apiClient.post).toHaveBeenCalledWith('/api/tarifas-tecnicas', {
       idTecnica: 2,
+      nombre: 'Tarifa general',
       anchoHastaCm: null,
       altoHastaCm: null,
       esGeneral: true,
@@ -73,6 +77,7 @@ describe('tariffRepository contracts', () => {
   it('updates and deletes tariffs through the existing endpoints', async () => {
     await tariffRepository.update(8, {
       idTecnica: 2,
+      nombre: 'Carta',
       anchoHastaCm: 20,
       altoHastaCm: 20,
       precioUnitario: 9000,
@@ -82,6 +87,7 @@ describe('tariffRepository contracts', () => {
     await tariffRepository.remove(8);
 
     expect(apiClient.patch).toHaveBeenCalledWith('/api/tarifas-tecnicas/8', {
+      nombre: 'Carta',
       anchoHastaCm: 20,
       altoHastaCm: 20,
       esGeneral: false,

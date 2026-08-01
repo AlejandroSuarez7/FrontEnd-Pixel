@@ -33,6 +33,13 @@ export const publicQuoteRepository = {
     return data.data || [];
   },
 
+  async listTechniqueTariffs(idTecnica, options = {}) {
+    const { data } = await apiClient.get(`${PUBLIC_ENDPOINT}/tecnicas/${idTecnica}/tarifas`, {
+      signal: options.signal,
+    });
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
   async calculate(payload, options = {}) {
     const body = Array.isArray(payload) ? { items: payload } : payload;
     const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones/calcular`, body, {

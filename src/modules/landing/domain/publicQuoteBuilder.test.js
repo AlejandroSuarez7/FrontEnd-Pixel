@@ -23,6 +23,7 @@ describe('publicQuoteBuilder', () => {
       esDisenoGeneral: false,
       estampados: [createStamp({
         idTecnica: '2',
+        idTarifaTecnica: 1,
         ubicacion: 'FRENTE',
         anchoCm: '10',
         altoCm: '12',
@@ -43,6 +44,7 @@ describe('publicQuoteBuilder', () => {
       esDisenoGeneral: false,
       estampados: [{
         idTecnica: 2,
+        idTarifaTecnica: 1,
         ubicacion: 'FRENTE',
         anchoCm: 10,
         altoCm: 12,
@@ -93,8 +95,7 @@ describe('publicQuoteBuilder', () => {
     const payload = buildPublicQuoteItemPayload(item, techniques);
 
     expect(payload.estampados[0]).toMatchObject({ anchoCm: 10, altoCm: 12 });
-    expect(payload.estampados[1]).not.toHaveProperty('anchoCm');
-    expect(payload.estampados[1]).not.toHaveProperty('altoCm');
+    expect(payload.estampados[1]).toMatchObject({ anchoCm: null, altoCm: null });
   });
 
   it('allows pending dimensions and rejects values above 500 cm', () => {
@@ -131,7 +132,7 @@ describe('publicQuoteBuilder', () => {
       ubicacion: 'FRENTE',
     });
     expect(buildPublicQuoteItemPayload(item, techniques).estampados[0])
-      .not.toHaveProperty('anchoCm');
+      .toMatchObject({ idTarifaTecnica: null, anchoCm: null, altoCm: null });
   });
 
   it('duplicates local structure without sharing old design groups', () => {
@@ -244,6 +245,6 @@ describe('publicQuoteBuilder', () => {
     expect(validateQuoteItem(missingHeight, [], techniques)).toMatch(/ancho y alto/i);
     expect(validateQuoteItem(noMeasuresRequired, [], techniques)).toBeNull();
     expect(buildPublicQuoteItemPayload(noMeasuresRequired, techniques).estampados[0])
-      .not.toHaveProperty('anchoCm');
+      .toMatchObject({ anchoCm: null, altoCm: null });
   });
 });

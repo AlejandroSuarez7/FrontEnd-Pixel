@@ -3,6 +3,8 @@ import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { notifications } from '../../../../core/utils/notifications';
 import { publicQuoteRepository } from '../../../landing/infrastructure/publicQuote.repository';
+import { StampTariffSelector } from '../../../landing/components/StampTariffSelector';
+import { getStampSizeSummary } from '../../../landing/domain/stampTariffs';
 import { clientRepository } from '../../../users/infrastructure/client.repository';
 import styles from './quotes.module.css';
 
@@ -35,6 +37,11 @@ const createStamp = (source = {}) => ({
   localId: localId('stamp'),
   idDetalleEstampadoCotizacion: source.idDetalleEstampadoCotizacion,
   idTecnica: source.idTecnica || source.tecnica?.idTecnica || '',
+  idTarifaTecnica: source.idTarifaTecnica ?? null,
+  nombreTarifa: source.tarifaTecnica?.nombre || source.tarifa?.nombre || source.nombreTarifa || '',
+  tarifaEsGeneral: Boolean(
+    source.tarifaTecnica?.esGeneral || source.tarifa?.esGeneral || source.tarifaEsGeneral
+  ),
   ubicacion: source.ubicacion || 'FRENTE',
   anchoCm: source.anchoCm ?? '',
   altoCm: source.altoCm ?? '',
@@ -105,10 +112,10 @@ const getStampSummary = (stamp, techniques) => {
   const technique = techniques.find(
     (item) => Number(item.idTecnica) === Number(stamp.idTecnica),
   )?.nombre || 'Servicio por definir';
-  const measures = stamp.anchoCm && stamp.altoCm
-    ? `${stamp.anchoCm} x ${stamp.altoCm} cm`
-    : 'Medidas por definir';
-  return `${stamp.ubicacion || 'Ubicacion por definir'} - ${technique} - ${measures}`;
+  const location = LOCATION_OPTIONS.find(([value]) => value === stamp.ubicacion)?.[1]
+    || stamp.ubicacion
+    || 'Ubicacion por definir';
+  return `${technique} · ${location} · ${getStampSizeSummary(stamp)}`;
 };
 
 const validateItem = (item, index) => {
@@ -131,8 +138,8 @@ const validateItem = (item, index) => {
 
   for (let stampIndex = 0; stampIndex < item.estampados.length; stampIndex += 1) {
     const stamp = item.estampados[stampIndex];
-    const hasWidth = stamp.anchoCm !== '';
-    const hasHeight = stamp.altoCm !== '';
+    const hasWidth = stamp.anchoCm !== '' && stamp.anchoCm != null;
+    const hasHeight = stamp.altoCm !== '' && stamp.altoCm != null;
     if (hasWidth !== hasHeight) {
       return `Completa ancho y alto juntos en el estampado ${stampIndex + 1}.`;
     }
@@ -276,11 +283,6 @@ export const QuoteFormModal = ({
   };
 
   const updateStamp = (itemIndex, stampId, field, value) => {
-    const selectedTechnique = field === 'idTecnica'
-      ? catalogs.techniques.find(
-          (technique) => Number(technique.idTecnica) === Number(value),
-        )
-      : null;
     setItems((current) => current.map((item, index) => (
       index === itemIndex
         ? {
@@ -290,11 +292,30 @@ export const QuoteFormModal = ({
                 ? {
                     ...stamp,
                     [field]: value,
-                    ...(field === 'idTecnica' && (!value || selectedTechnique?.requiereMedidas === false)
-                      ? { anchoCm: '', altoCm: '' }
+                    ...(field === 'idTecnica'
+                      ? {
+                          idTarifaTecnica: null,
+                          nombreTarifa: '',
+                          tarifaEsGeneral: false,
+                          anchoCm: null,
+                          altoCm: null,
+                        }
                       : {}),
                   }
                 : stamp
+            )),
+          }
+        : item
+    )));
+  };
+
+  const patchStamp = (itemIndex, stampId, patch) => {
+    setItems((current) => current.map((item, index) => (
+      index === itemIndex
+        ? {
+            ...item,
+            estampados: item.estampados.map((stamp) => (
+              stamp.localId === stampId ? { ...stamp, ...patch } : stamp
             )),
           }
         : item
@@ -842,49 +863,16 @@ export const QuoteFormModal = ({
                                       {LOCATION_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                     </select>
                                   </label>
-                                  {selectedTechnique?.requiereMedidas === true && (
-                                    <>
-                                      <label className={styles.inputGroup}>
-                                        <span className={styles.inputLabel}>Ancho (cm)</span>
-                                        <input
-                                          type="number"
-                                          min="0.01"
-                                          max="500"
-                                          step="0.01"
-                                          value={stamp.anchoCm}
-                                          onChange={(event) => updateStamp(itemIndex, stamp.localId, 'anchoCm', event.target.value)}
-                                          className={styles.inputField}
-                                          placeholder="Por definir"
-                                        />
-                                      </label>
-                                      <label className={styles.inputGroup}>
-                                        <span className={styles.inputLabel}>Alto (cm)</span>
-                                        <input
-                                          type="number"
-                                          min="0.01"
-                                          max="500"
-                                          step="0.01"
-                                          value={stamp.altoCm}
-                                          onChange={(event) => updateStamp(itemIndex, stamp.localId, 'altoCm', event.target.value)}
-                                          className={styles.inputField}
-                                          placeholder="Por definir"
-                                        />
-                                      </label>
-                                      <label className={`${styles.quoteMeasuresPending} ${styles.quoteRequestWide}`}>
-                                        <input
-                                          type="checkbox"
-                                          checked={!stamp.anchoCm && !stamp.altoCm}
-                                          onChange={(event) => {
-                                            if (event.target.checked) {
-                                              updateStamp(itemIndex, stamp.localId, 'anchoCm', '');
-                                              updateStamp(itemIndex, stamp.localId, 'altoCm', '');
-                                            }
-                                          }}
-                                        />
-                                        No se conocen las medidas. Se definiran despues.
-                                      </label>
-                                    </>
-                                  )}
+                                  <StampTariffSelector
+                                    stamp={stamp}
+                                    technique={selectedTechnique}
+                                    onPatch={(patch) => patchStamp(itemIndex, stamp.localId, patch)}
+                                    disabled={loadingCatalogs || isSubmitting}
+                                    labelClassName={styles.inputGroup}
+                                    selectClassName={styles.selectField}
+                                    wideClassName={styles.quoteRequestWide}
+                                    messageClassName={styles.quoteCompatibilityNotice}
+                                  />
                                   <label className={styles.inputGroup}>
                                     <span className={styles.inputLabel}>Origen del diseno</span>
                                     <select

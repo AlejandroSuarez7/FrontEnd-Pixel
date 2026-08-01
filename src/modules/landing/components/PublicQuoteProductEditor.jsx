@@ -7,6 +7,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { getStampSizeSummary } from '../domain/stampTariffs';
 import {
   DESIGN_OPTIONS,
   MAX_ITEM_STAMPS,
@@ -16,6 +17,7 @@ import {
   getProduct,
   getTechnique,
 } from '../domain/publicQuoteBuilder';
+import { StampTariffSelector } from './StampTariffSelector';
 
 const LOCATION_SUGGESTIONS = [
   'Frente',
@@ -118,12 +120,14 @@ export const PublicQuoteProductEditor = ({
   };
 
   const selectTechnique = (stamp, idTecnica) => {
-    const technique = getTechnique(techniques, idTecnica);
     onStampPatch(stamp.localId, {
       idTecnica,
-      ...(!idTecnica || technique?.requiereMedidas === false
-        ? { anchoCm: '', altoCm: '', medidasDesconocidas: false }
-        : {}),
+      idTarifaTecnica: null,
+      nombreTarifa: '',
+      tarifaEsGeneral: false,
+      anchoCm: null,
+      altoCm: null,
+      medidasDesconocidas: Boolean(idTecnica),
     });
   };
 
@@ -353,9 +357,7 @@ export const PublicQuoteProductEditor = ({
                   (reference) => reference.groupId === stamp.grupoDisenoCompartido,
                 )
               : null;
-            const measures = stamp.anchoCm && stamp.altoCm
-              ? `${stamp.anchoCm} × ${stamp.altoCm} cm`
-              : 'Medidas por definir';
+            const sizeSummary = getStampSizeSummary(stamp);
 
             return (
               <article className={`public-quote-stamp-card ${isOpen ? 'open' : ''}`} key={stamp.localId}>
@@ -370,7 +372,7 @@ export const PublicQuoteProductEditor = ({
                     <strong>Estampado {index + 1}</strong>
                     <small>
                       {stamp.ubicacion || 'Ubicación pendiente'} · {technique?.nombre || 'Servicio por definir'}
-                      {technique?.requiereMedidas ? ` · ${measures}` : ''}
+                      {stamp.idTecnica ? ` · ${sizeSummary}` : ''}
                     </small>
                   </span>
                   <ChevronDown size={18} />
@@ -406,56 +408,14 @@ export const PublicQuoteProductEditor = ({
                           disabled={disabled}
                         />
                       </label>
-                      {technique?.requiereMedidas === true && (
-                        <>
-                          {!stamp.medidasDesconocidas && (
-                            <>
-                              <label>
-                                <span>Ancho (cm)</span>
-                                <input
-                                  type="number"
-                                  min="0.01"
-                                  max="500"
-                                  step="0.01"
-                                  value={stamp.anchoCm}
-                                  onChange={(event) => onStampPatch(stamp.localId, { anchoCm: event.target.value })}
-                                  disabled={disabled}
-                                />
-                              </label>
-                              <label>
-                                <span>Alto (cm)</span>
-                                <input
-                                  type="number"
-                                  min="0.01"
-                                  max="500"
-                                  step="0.01"
-                                  value={stamp.altoCm}
-                                  onChange={(event) => onStampPatch(stamp.localId, { altoCm: event.target.value })}
-                                  disabled={disabled}
-                                />
-                              </label>
-                            </>
-                          )}
-                          <label className="public-quote-checkbox-row wide compact">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(stamp.medidasDesconocidas)}
-                              onChange={(event) => onStampPatch(stamp.localId, {
-                                medidasDesconocidas: event.target.checked,
-                                ...(event.target.checked ? { anchoCm: '', altoCm: '' } : {}),
-                              })}
-                              disabled={disabled}
-                            />
-                            <span>
-                              <strong>No conozco las medidas</strong>
-                              <small>PIXEL las confirmará antes de preparar la propuesta.</small>
-                            </span>
-                          </label>
-                          <p className="public-quote-measure-note wide">
-                            No te preocupes. El equipo de PIXEL te ayudará a definir el tamaño adecuado.
-                          </p>
-                        </>
-                      )}
+                      <StampTariffSelector
+                        stamp={stamp}
+                        technique={technique}
+                        onPatch={(patch) => onStampPatch(stamp.localId, patch)}
+                        disabled={disabled}
+                        wideClassName="wide"
+                        messageClassName="public-quote-measure-note"
+                      />
                       {!stamp.idTecnica && (
                         <p className="public-quote-measure-note wide">
                           PIXEL te recomendará la técnica más adecuada.

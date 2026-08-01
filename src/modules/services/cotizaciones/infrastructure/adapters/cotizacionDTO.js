@@ -39,6 +39,7 @@ export const quotesDTO = {
       estampados:          Array.isArray(det.estampados) ? det.estampados.map((stamp) => ({
         ...stamp,
         idTecnica: stamp.idTecnica == null ? null : Number(stamp.idTecnica),
+        idTarifaTecnica: stamp.idTarifaTecnica == null ? null : Number(stamp.idTarifaTecnica),
         anchoCm: stamp.anchoCm == null ? null : Number(stamp.anchoCm),
         altoCm: stamp.altoCm == null ? null : Number(stamp.altoCm),
         precioUnitarioSugerido: stamp.precioUnitarioSugerido == null ? null : Number(stamp.precioUnitarioSugerido),
@@ -114,6 +115,7 @@ export const quotesDTO = {
         : item.idTecnica
           ? [{
               idTecnica: item.idTecnica,
+              idTarifaTecnica: item.idTarifaTecnica,
               ubicacion: item.ubicacion || 'FRENTE',
               anchoCm: item.anchoCm,
               altoCm: item.altoCm,
@@ -143,9 +145,10 @@ export const quotesDTO = {
         suministradoPor: String(item.suministradoPor || 'PIXEL').toUpperCase(),
         estampados: sourceStamps.map((stamp) => ({
           idTecnica: stamp.idTecnica ? Number(stamp.idTecnica) : null,
+          idTarifaTecnica: stamp.idTarifaTecnica ? Number(stamp.idTarifaTecnica) : null,
           ubicacion: stamp.ubicacion?.trim() || 'FRENTE',
-          ...(stamp.anchoCm !== '' && stamp.anchoCm != null ? { anchoCm: Number(stamp.anchoCm) } : {}),
-          ...(stamp.altoCm !== '' && stamp.altoCm != null ? { altoCm: Number(stamp.altoCm) } : {}),
+          anchoCm: stamp.anchoCm !== '' && stamp.anchoCm != null ? Number(stamp.anchoCm) : null,
+          altoCm: stamp.altoCm !== '' && stamp.altoCm != null ? Number(stamp.altoCm) : null,
           origenDiseno: String(stamp.origenDiseno || 'PENDIENTE_DEFINIR').toUpperCase(),
           ...(stamp.grupoDisenoCompartido?.trim()
             ? { grupoDisenoCompartido: stamp.grupoDisenoCompartido.trim() }

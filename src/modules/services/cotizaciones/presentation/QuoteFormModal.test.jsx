@@ -23,6 +23,7 @@ vi.mock('../../../landing/infrastructure/publicQuote.repository', () => ({
     listCategories: vi.fn(),
     listProducts: vi.fn(),
     listTechniques: vi.fn(),
+    listTechniqueTariffs: vi.fn(),
   },
 }));
 
@@ -74,6 +75,17 @@ describe('QuoteFormModal presencial', () => {
     publicQuoteRepository.listCategories.mockResolvedValue(catalogs.categories);
     publicQuoteRepository.listProducts.mockResolvedValue(catalogs.products);
     publicQuoteRepository.listTechniques.mockResolvedValue(catalogs.techniques);
+    publicQuoteRepository.listTechniqueTariffs.mockImplementation(async (idTecnica) => (
+      Number(idTecnica) === 4
+        ? [{ idTarifaTecnica: 4, nombre: 'Tarifa general', esGeneral: true }]
+        : [{
+            idTarifaTecnica: 1,
+            nombre: 'Punto corazón',
+            anchoHastaCm: 10,
+            altoHastaCm: 10,
+            esGeneral: false,
+          }]
+    ));
     clientRepository.list.mockResolvedValue({ items: [] });
   });
 
@@ -177,6 +189,28 @@ describe('QuoteFormModal presencial', () => {
     expect(stamps[0].grupoDisenoCompartido).toBeTruthy();
     expect(stamps[1].grupoDisenoCompartido).toBe(stamps[0].grupoDisenoCompartido);
     expect(screen.queryByText(/GRUPO-DISENO/i)).not.toBeInTheDocument();
+  });
+
+  it('selecciona un tamaño nombrado en la cotizacion presencial y conserva su id', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue({});
+    renderModal({ onSubmit });
+
+    await completeWalkInClient(user);
+    selectCatalogProduct();
+    await user.selectOptions(screen.getByLabelText('Servicio o tecnica'), '2');
+    await user.selectOptions(await screen.findByLabelText('Tamaño del estampado'), '1');
+    await goToReview(user);
+
+    expect(screen.getByText(/DTF · Frente · Punto corazón · 10 × 10 cm/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Crear solicitud' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0].items[0].estampados[0]).toMatchObject({
+      idTecnica: '2',
+      idTarifaTecnica: 1,
+      anchoCm: 10,
+      altoCm: 10,
+    });
   });
 
   it('evita el doble envio y conserva el modal cuando guardar falla', async () => {

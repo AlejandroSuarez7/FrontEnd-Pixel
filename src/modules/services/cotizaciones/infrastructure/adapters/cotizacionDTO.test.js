@@ -17,6 +17,7 @@ describe('quotesDTO', () => {
         suministradoPor: 'PIXEL',
         estampados: [{
           idTecnica: 2,
+          idTarifaTecnica: 5,
           ubicacion: 'FRENTE',
           anchoCm: 10,
           altoCm: 12,
@@ -34,6 +35,7 @@ describe('quotesDTO', () => {
     });
     expect(payload.items[0].estampados[0]).toEqual({
       idTecnica: 2,
+      idTarifaTecnica: 5,
       ubicacion: 'FRENTE',
       anchoCm: 10,
       altoCm: 12,
@@ -85,7 +87,10 @@ describe('quotesDTO', () => {
       ubicacion: 'FRENTE',
       origenDiseno: 'PIXEL',
     });
-    expect(payload.items[0].estampados[0]).not.toHaveProperty('anchoCm');
-    expect(payload.items[0].estampados[0]).not.toHaveProperty('altoCm');
+    expect(payload.items[0].estampados[0]).toMatchObject({
+      idTarifaTecnica: null,
+      anchoCm: null,
+      altoCm: null,
+    });
   });
 });

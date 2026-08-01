@@ -20,6 +20,9 @@ export const nextLocalId = (prefix) => `${prefix}-${Date.now()}-${localSequence 
 export const createStamp = (overrides = {}) => ({
   localId: nextLocalId('stamp'),
   idTecnica: '',
+  idTarifaTecnica: null,
+  nombreTarifa: '',
+  tarifaEsGeneral: false,
   ubicacion: 'FRENTE',
   anchoCm: '',
   altoCm: '',
@@ -126,13 +129,14 @@ const buildStampPayload = (stamp, item, techniques) => {
 
   return {
     idTecnica: stamp.idTecnica ? Number(stamp.idTecnica) : null,
+    idTarifaTecnica: stamp.idTarifaTecnica ? Number(stamp.idTarifaTecnica) : null,
     ubicacion: cleanOptionalText(stamp.ubicacion) || 'FRENTE',
-    ...(requiresMeasures && stamp.anchoCm !== '' && stamp.altoCm !== ''
-      ? {
-          anchoCm: Number(stamp.anchoCm),
-          altoCm: Number(stamp.altoCm),
-        }
-      : {}),
+    anchoCm: requiresMeasures && stamp.anchoCm !== '' && stamp.anchoCm != null
+      ? Number(stamp.anchoCm)
+      : null,
+    altoCm: requiresMeasures && stamp.altoCm !== '' && stamp.altoCm != null
+      ? Number(stamp.altoCm)
+      : null,
     ...(cleanOptionalText(stamp.descripcion)
       ? { descripcion: cleanOptionalText(stamp.descripcion) }
       : {}),
@@ -274,8 +278,8 @@ export const validateQuoteItem = (item, products = [], techniques = []) => {
     if (technique?.requiereMedidas === true) {
       const width = Number(stamp.anchoCm);
       const height = Number(stamp.altoCm);
-      const hasWidth = stamp.anchoCm !== '';
-      const hasHeight = stamp.altoCm !== '';
+      const hasWidth = stamp.anchoCm !== '' && stamp.anchoCm != null;
+      const hasHeight = stamp.altoCm !== '' && stamp.altoCm != null;
       if (hasWidth !== hasHeight) {
         return `Completa ancho y alto del estampado ${number}.`;
       }
@@ -327,7 +331,12 @@ export const hydrateQuoteItem = (detail = {}) => ({
   descripcion: detail.descripcion || '',
   estampados: Array.isArray(detail.estampados)
     ? detail.estampados.map((stamp) => createStamp({
-        idTecnica: stamp.idTecnica || '',
+      idTecnica: stamp.idTecnica || '',
+        idTarifaTecnica: stamp.idTarifaTecnica ?? null,
+        nombreTarifa: stamp.tarifaTecnica?.nombre || stamp.tarifa?.nombre || stamp.nombreTarifa || '',
+        tarifaEsGeneral: Boolean(
+          stamp.tarifaTecnica?.esGeneral || stamp.tarifa?.esGeneral || stamp.tarifaEsGeneral
+        ),
         ubicacion: stamp.ubicacion || 'FRENTE',
         anchoCm: stamp.anchoCm ?? '',
         altoCm: stamp.altoCm ?? '',

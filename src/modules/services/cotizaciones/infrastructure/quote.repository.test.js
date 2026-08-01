@@ -135,7 +135,10 @@ describe('QuoteApiRepository workflow contracts', () => {
         suministradoPor: 'CLIENTE',
         estampados: [{
           idTecnica: 3,
+          idTarifaTecnica: null,
           ubicacion: 'FRENTE',
+          anchoCm: null,
+          altoCm: null,
           origenDiseno: 'PENDIENTE_DEFINIR',
         }],
       }],
@@ -153,7 +156,10 @@ describe('QuoteApiRepository workflow contracts', () => {
         suministradoPor: 'CLIENTE',
         estampados: [{
           idTecnica: 3,
+          idTarifaTecnica: null,
           ubicacion: 'FRENTE',
+          anchoCm: null,
+          altoCm: null,
           origenDiseno: 'PENDIENTE_DEFINIR',
         }],
         observaciones: null,

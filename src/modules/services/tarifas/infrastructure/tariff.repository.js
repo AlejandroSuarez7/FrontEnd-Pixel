@@ -6,7 +6,7 @@ const ENDPOINT = '/api/tarifas-tecnicas';
 
 const normalizeTariff = (tariff = {}) => ({
   ...tariff,
-  idTarifa: Number(tariff.idTarifa),
+  idTarifa: Number(tariff.idTarifa ?? tariff.idTarifaTecnica),
   idTecnica: Number(tariff.idTecnica),
   anchoHastaCm: tariff.anchoHastaCm == null ? null : Number(tariff.anchoHastaCm),
   altoHastaCm: tariff.altoHastaCm == null ? null : Number(tariff.altoHastaCm),

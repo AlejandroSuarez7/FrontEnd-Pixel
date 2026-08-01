@@ -503,7 +503,7 @@
 
 .serviceTariffRow {
   display: grid;
-  grid-template-columns: repeat(4, minmax(110px, 1fr)) auto;
+  grid-template-columns: minmax(150px, 1.3fr) repeat(4, minmax(105px, 1fr)) auto;
   gap: 8px;
   align-items: start;
   padding: 10px;
@@ -513,7 +513,7 @@
 }
 
 .serviceTariffRow.general {
-  grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.5fr) auto;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(140px, 0.5fr) auto;
 }
 
 .serviceTariffRow label {

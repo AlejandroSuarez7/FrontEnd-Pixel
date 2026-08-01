@@ -13,6 +13,7 @@ import {
   getItemName,
   getTechnique,
 } from '../domain/publicQuoteBuilder';
+import { getStampSizeSummary } from '../domain/stampTariffs';
 
 const labelFor = (options, value, fallback) => (
   options.find(([key]) => key === value)?.[1] || fallback
@@ -30,13 +31,7 @@ const stampSummary = (stamp, techniques) => {
   if (!technique) return 'Servicio y medidas por definir';
 
   const location = formatLocation(stamp.ubicacion);
-  if (technique.requiereMedidas !== true) {
-    return `${technique.nombre} · ${location}`;
-  }
-  if (!stamp.anchoCm || !stamp.altoCm) {
-    return `${technique.nombre} · ${location} · Medidas por definir`;
-  }
-  return `${technique.nombre} · ${location} · ${stamp.anchoCm} × ${stamp.altoCm} cm`;
+  return `${technique.nombre} · ${location} · ${getStampSizeSummary(stamp)}`;
 };
 
 export const PublicQuoteSummary = ({

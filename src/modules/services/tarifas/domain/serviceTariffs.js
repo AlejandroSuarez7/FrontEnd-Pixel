@@ -2,7 +2,16 @@ let tariffSequence = 0;
 
 export const createServiceTariff = (source = {}, requiresMeasures = true) => ({
   localId: source.localId || `tariff-${Date.now()}-${tariffSequence += 1}`,
-  idTarifa: source.idTarifa ? Number(source.idTarifa) : null,
+  idTarifa: source.idTarifa || source.idTarifaTecnica
+    ? Number(source.idTarifa ?? source.idTarifaTecnica)
+    : null,
+  nombre: source.nombre ?? (
+    requiresMeasures
+      ? (source.anchoHastaCm && source.altoHastaCm
+          ? `Hasta ${source.anchoHastaCm} × ${source.altoHastaCm} cm`
+          : '')
+      : 'Tarifa general'
+  ),
   anchoHastaCm: requiresMeasures ? source.anchoHastaCm ?? '' : '',
   altoHastaCm: requiresMeasures ? source.altoHastaCm ?? '' : '',
   esGeneral: requiresMeasures ? false : source.esGeneral !== false,
@@ -49,6 +58,9 @@ export const validateServiceTariffs = (tariffs = [], requiresMeasures = true) =>
   const dimensions = new Map();
   activeRows.forEach((tariff) => {
     const rowErrors = { ...(errors[tariff.localId] || {}) };
+    const name = String(tariff.nombre ?? '').trim();
+    if (!name) rowErrors.nombre = 'El nombre del tamaño es obligatorio.';
+    else if (name.length > 100) rowErrors.nombre = 'El nombre admite máximo 100 caracteres.';
     if (!positiveDecimal(tariff.precioUnitario)) {
       rowErrors.precioUnitario = 'El precio debe ser mayor a 0.';
     }
@@ -86,6 +98,7 @@ export const hasServiceTariffErrors = (errors = {}) => Object.keys(errors).lengt
 
 export const toServiceTariffPayload = (tariff, idTecnica, requiresMeasures) => ({
   idTecnica: Number(idTecnica),
+  nombre: String(tariff.nombre ?? '').trim(),
   anchoHastaCm: requiresMeasures
     ? Number(String(tariff.anchoHastaCm).replace(',', '.'))
     : null,

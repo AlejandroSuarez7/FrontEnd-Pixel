@@ -331,6 +331,23 @@ export const ServiceFormModal = ({
                         className={`${styles.serviceTariffRow} ${form.requiereMedidas ? '' : styles.general}`}
                         key={tariff.localId}
                       >
+                        <label>
+                          <span>Nombre del tamaño</span>
+                          <input
+                            value={tariff.nombre}
+                            maxLength={100}
+                            onChange={(event) => updateTariff(
+                              tariff.localId,
+                              'nombre',
+                              event.target.value,
+                            )}
+                            disabled={!canEdit || isSubmitting}
+                            aria-label={`Nombre del tamaño tarifa ${index + 1}`}
+                          />
+                          {tariffErrors[tariff.localId]?.nombre && (
+                            <small>{tariffErrors[tariff.localId].nombre}</small>
+                          )}
+                        </label>
                         {form.requiereMedidas && (
                           <>
                             <label>

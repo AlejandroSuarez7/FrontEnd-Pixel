@@ -62,4 +62,14 @@ describe('publicQuoteRepository final contracts', () => {
       },
     );
   });
+
+  it('loads named sizes for the selected technique and forwards cancellation', async () => {
+    const signal = new AbortController().signal;
+    apiClient.get.mockResolvedValue({ data: { data: [{ idTarifaTecnica: 1, nombre: 'Punto corazón' }] } });
+
+    await expect(publicQuoteRepository.listTechniqueTariffs(2, { signal })).resolves.toEqual([
+      { idTarifaTecnica: 1, nombre: 'Punto corazón' },
+    ]);
+    expect(apiClient.get).toHaveBeenCalledWith('/api/public/tecnicas/2/tarifas', { signal });
+  });
 });
