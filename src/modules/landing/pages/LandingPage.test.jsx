@@ -70,7 +70,20 @@ describe('LandingPage', () => {
 
     expect(screen.getAllByRole('link', { name: /^contacto$/i })[0]).toHaveAttribute(
       'href',
-      '#contacto',
+      '/#contacto',
     );
+  });
+
+  it('uses the shared public navbar', () => {
+    render(<LandingPage />);
+
+    expect(screen.getByTestId('public-navbar')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /^inicio$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /¿cómo funciona\?/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /^servicios$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /^comparativo$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /^productos$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /^cotizar$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /^contacto$/i }).length).toBeGreaterThan(0);
   });
 });

@@ -124,6 +124,9 @@ describe('PublicQuotePage', () => {
     render(<PublicQuotePage />);
 
     expect(await screen.findByRole('heading', { name: /cuéntanos qué quieres estampar/i })).toBeInTheDocument();
+    expect(screen.getByTestId('public-navbar')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /^cotizar$/i })[0]).toHaveAttribute('aria-current', 'page');
+    expect(screen.getAllByRole('link', { name: /^servicios$/i })[0]).toHaveAttribute('href', '/#servicios');
     expect(screen.getByTestId('public-quote-builder')).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: /0 productos agregados/i })).toBeInTheDocument();
     expect(screen.getByText(/agrega el primer producto para comenzar/i)).toBeInTheDocument();

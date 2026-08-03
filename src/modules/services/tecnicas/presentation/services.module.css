@@ -823,6 +823,193 @@
   color: var(--color-text-muted);
 }
 
+.serviceDetailsModal {
+  display: flex;
+  width: calc(100% - 32px);
+  max-width: 680px;
+  max-height: 90vh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.serviceDetailsModal > .modalHeader {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 20px 22px 15px;
+}
+
+.serviceDetailsBody {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 22px 20px;
+}
+
+.serviceDetailsModal > .modalFooter {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 13px 22px 17px;
+  background: #fff;
+  box-shadow: 0 -8px 22px rgba(26, 32, 56, 0.04);
+}
+
+.servicePricesSection {
+  min-width: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.servicePricesHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.servicePricesHeading span,
+.servicePricesHeading h4 {
+  display: block;
+}
+
+.servicePricesHeading span {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.servicePricesHeading h4 {
+  margin: 3px 0 0;
+  color: var(--color-text-primary);
+  font-size: 16px;
+}
+
+.servicePricesHeading > strong {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  font-size: 11px;
+}
+
+.servicePricesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.servicePriceCard {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fbfcff;
+}
+
+.servicePriceCard > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.servicePriceCard > header > div {
+  min-width: 0;
+}
+
+.servicePriceCard > header span:first-child {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+.servicePriceCard h5 {
+  margin: 3px 0 0;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.servicePriceCard dl {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+
+.servicePriceCard dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.servicePriceCard dt {
+  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.servicePriceCard dd {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 12.5px;
+  font-weight: 750;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.servicePricesState {
+  display: flex;
+  min-height: 100px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fafbfc;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.servicePricesState p {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.servicePricesError {
+  border-color: #fecaca;
+  background: #fff7f7;
+  color: #b91c1c;
+}
+
+.servicePricesLoader {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #ddd6fe;
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: servicePricesSpin 0.7s linear infinite;
+}
+
+@keyframes servicePricesSpin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Botón eliminar permanente ── */
 .actionBtnDelete {
   color: var(--color-danger);
@@ -1010,5 +1197,31 @@
   .serviceForm .modalFooter {
     margin: 0 -14px;
     padding: 12px 14px;
+  }
+
+  .serviceDetailsModal {
+    width: calc(100% - 20px);
+    max-height: 92vh;
+  }
+
+  .serviceDetailsModal > .modalHeader,
+  .serviceDetailsBody,
+  .serviceDetailsModal > .modalFooter {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .servicePricesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .servicePriceCard dl > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .servicePriceCard dd {
+    text-align: left;
   }
 }

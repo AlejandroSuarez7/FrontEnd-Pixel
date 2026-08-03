@@ -1,17 +1,30 @@
+html:has(.public-quote-page),
+body:has(.public-quote-page),
+#root:has(.public-quote-page) {
+  min-height: 100%;
+  background-color: #f8f6fb;
+  background-image: linear-gradient(180deg, #fdfbff 0%, #f8f6fb 42%, #f7f8fb 100%);
+  background-attachment: fixed;
+}
+
 .public-quote-page {
-  --quote-purple: #6d28d9;
-  --quote-purple-dark: #5520af;
-  --quote-purple-soft: #f5f1ff;
-  --quote-ink: #182235;
-  --quote-muted: #68758a;
-  --quote-line: #e3e8f1;
+  --quote-purple: #9333ea;
+  --quote-purple-dark: #7e22ce;
+  --quote-purple-soft: #faf5ff;
+  --quote-ink: #1f2937;
+  --quote-muted: #64748b;
+  --quote-line: #eadff4;
   --quote-surface: #ffffff;
-  --quote-background: #f4f6fa;
+  --quote-background: #f8f6fb;
   --quote-danger: #d92d40;
   box-sizing: border-box;
   min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: 80px;
   color: var(--quote-ink);
-  background: var(--quote-background);
+  background-color: var(--quote-background);
+  background-image: linear-gradient(180deg, #fdfbff 0%, var(--quote-background) 42%, #f7f8fb 100%);
+  background-attachment: fixed;
 }
 
 .public-quote-page *,
@@ -37,7 +50,7 @@
 .public-quote-page input:focus-visible,
 .public-quote-page select:focus-visible,
 .public-quote-page textarea:focus-visible {
-  outline: 3px solid rgba(109, 40, 217, 0.22);
+  outline: 3px solid rgba(147, 51, 234, 0.24);
   outline-offset: 2px;
 }
 
@@ -50,13 +63,18 @@
   justify-content: space-between;
   min-height: 58px;
   padding: 0 5vw;
-  border-bottom: 1px solid var(--quote-line);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.1);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 1px 8px rgba(68, 31, 91, 0.06);
+  backdrop-filter: blur(14px);
 }
 
 .public-quote-brand {
   color: var(--quote-purple);
+  background: linear-gradient(135deg, #9333ea, #ec4899);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-size: 1.45rem;
   font-weight: 900;
   letter-spacing: 0;
@@ -69,13 +87,14 @@
   font-size: 0.88rem;
   font-weight: 700;
   text-decoration: none;
+  transition: color 180ms ease, transform 180ms ease;
 }
 
 .public-quote-back {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.85rem;
   padding: 0;
   border: 0;
   background: transparent;
@@ -87,6 +106,10 @@
   color: var(--quote-purple);
 }
 
+.public-quote-back:hover {
+  transform: translateX(-2px);
+}
+
 .public-quote-intro {
   display: flex;
   align-items: flex-end;
@@ -94,20 +117,25 @@
   gap: 1.25rem;
   width: min(1320px, calc(100% - 40px));
   margin: 0 auto;
-  padding: 1.15rem 0 0.9rem;
+  padding: 1.55rem 0 1.05rem;
 }
 
 .public-quote-intro h1 {
-  margin: 0.15rem 0 0.25rem;
-  font-size: clamp(1.65rem, 2.5vw, 2.35rem);
-  line-height: 1.12;
+  max-width: 760px;
+  margin: 0.42rem 0 0.48rem;
+  font-size: clamp(1.65rem, 2.4vw, 2.2rem);
+  line-height: 1.18;
   letter-spacing: 0;
+  color: #24172f;
+  font-weight: 800;
 }
 
 .public-quote-intro > div > p:last-child {
+  max-width: 720px;
   margin: 0;
   color: var(--quote-muted);
   font-size: 0.94rem;
+  line-height: 1.55;
 }
 
 .public-quote-eyebrow {
@@ -128,14 +156,18 @@
   padding: 0.55rem 0.75rem;
   color: #5f6b7c;
   border: 1px solid var(--quote-line);
-  border-radius: 7px;
+  border-radius: 11px;
   background: var(--quote-surface);
+  box-shadow: 0 4px 12px rgba(49, 32, 62, 0.05);
   cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .public-quote-discard-button:hover {
   color: var(--quote-purple);
   border-color: #c8b5f3;
+  box-shadow: 0 8px 18px rgba(147, 51, 234, 0.1);
+  transform: translateY(-1px);
 }
 
 .public-quote-access-message {
@@ -192,10 +224,10 @@
 .public-quote-error-card,
 .public-quote-auth-loading {
   min-width: 0;
-  border: 1px solid var(--quote-line);
-  border-radius: 8px;
+  border: 1px solid rgba(147, 51, 234, 0.13);
+  border-radius: 18px;
   background: var(--quote-surface);
-  box-shadow: 0 9px 28px rgba(35, 45, 70, 0.06);
+  box-shadow: 0 14px 34px rgba(53, 31, 68, 0.08);
 }
 
 .public-quote-auth-loading {
@@ -214,7 +246,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding-bottom: 0.8rem;
-  border-bottom: 1px solid var(--quote-line);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.1);
 }
 
 .public-quote-card-heading.compact {
@@ -231,7 +263,7 @@
 .public-quote-card-heading span,
 .public-quote-summary-heading span,
 .public-quote-subsection-heading span {
-  color: #8490a3;
+  color: #8b6aa3;
   font-size: 0.69rem;
   font-weight: 850;
   letter-spacing: 0;
@@ -245,6 +277,8 @@
   line-height: 1.25;
   letter-spacing: 0;
   overflow-wrap: anywhere;
+  color: #2a1937;
+  font-weight: 800;
 }
 
 .public-quote-editing-badge,
@@ -253,7 +287,8 @@
   padding: 0.27rem 0.48rem;
   color: var(--quote-purple);
   border-radius: 999px;
-  background: var(--quote-purple-soft);
+  border: 1px solid #ead8fb;
+  background: linear-gradient(135deg, #faf5ff, #fdf2f8);
   font-size: 0.68rem;
   font-weight: 850;
 }
@@ -277,7 +312,7 @@
   min-width: 0;
   align-content: start;
   gap: 0.34rem;
-  color: #354156;
+  color: #3f3348;
   font-size: 0.78rem;
   font-weight: 750;
 }
@@ -293,10 +328,11 @@
   width: 100%;
   min-width: 0;
   color: var(--quote-ink);
-  border: 1px solid #d7deea;
-  border-radius: 7px;
+  border: 1px solid #ddd4e5;
+  border-radius: 11px;
   background: #fff;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 1px 2px rgba(31, 20, 40, 0.02);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 
 .public-quote-page input,
@@ -315,14 +351,14 @@
 .public-quote-page input:hover,
 .public-quote-page select:hover,
 .public-quote-page textarea:hover {
-  border-color: #b9c3d3;
+  border-color: #cbb8d9;
 }
 
 .public-quote-page input:focus,
 .public-quote-page select:focus,
 .public-quote-page textarea:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+  border-color: #9333ea;
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.13);
 }
 
 .public-quote-page input:read-only,
@@ -330,7 +366,7 @@
 .public-quote-page select:disabled,
 .public-quote-page textarea:disabled {
   color: #6c7789;
-  background: #f6f7fa;
+  background: #f8f6fa;
   cursor: not-allowed;
 }
 
@@ -388,8 +424,9 @@
   gap: 0.25rem;
   margin: 0.85rem 0;
   padding: 0.25rem;
-  border-radius: 8px;
-  background: #f1f3f7;
+  border: 1px solid #eee3f6;
+  border-radius: 12px;
+  background: #f8f3fc;
 }
 
 .public-quote-mode-switch button {
@@ -397,17 +434,18 @@
   padding: 0.45rem 0.65rem;
   color: #626e80;
   border: 0;
-  border-radius: 6px;
+  border-radius: 9px;
   background: transparent;
   font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
+  transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
 
 .public-quote-mode-switch button.active {
   color: var(--quote-purple);
   background: #fff;
-  box-shadow: 0 2px 8px rgba(33, 41, 66, 0.08);
+  box-shadow: 0 4px 12px rgba(75, 34, 101, 0.1);
 }
 
 .public-quote-field-grid {
@@ -439,8 +477,9 @@
   gap: 0.75rem;
   padding: 0.72rem;
   border-left: 3px solid #14b8a6;
-  border-radius: 6px;
-  background: #f4fbfa;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #f2fbfa, #f8fffe);
+  box-shadow: 0 5px 14px rgba(20, 184, 166, 0.06);
 }
 
 .public-quote-product-info > div {
@@ -475,9 +514,11 @@
 }
 
 .public-quote-core-fields {
-  padding: 0.9rem 0;
-  border-top: 1px solid var(--quote-line);
-  border-bottom: 1px solid var(--quote-line);
+  margin: 0.9rem 0 0.2rem;
+  padding: 0.9rem;
+  border: 1px solid #eee4f5;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdfbff, #ffffff);
 }
 
 .public-quote-quantity-input {
@@ -499,7 +540,7 @@
 }
 
 .public-quote-subsection-heading strong {
-  color: #49566b;
+  color: #46314f;
   font-size: 0.78rem;
 }
 
@@ -513,11 +554,21 @@
   padding: 0.45rem 0.65rem;
   color: var(--quote-purple);
   border: 1px solid #d9cbfb;
-  border-radius: 7px;
+  border-radius: 10px;
   background: #fff;
+  box-shadow: 0 3px 10px rgba(78, 42, 98, 0.05);
   font-size: 0.75rem;
   font-weight: 800;
   cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.public-quote-small-button:hover:not(:disabled),
+.public-quote-new-group-row button:hover:not(:disabled) {
+  border-color: #bfa3ee;
+  background: #faf5ff;
+  box-shadow: 0 6px 14px rgba(147, 51, 234, 0.1);
+  transform: translateY(-1px);
 }
 
 .public-quote-stamp-list {
@@ -527,20 +578,22 @@
   padding-right: 0.3rem;
   overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-color: #bca5f5 #f3f0fb;
+  scrollbar-color: #c49bea #f5effa;
   scrollbar-width: thin;
 }
 
 .public-quote-stamp-card {
   min-width: 0;
-  border: 1px solid var(--quote-line);
-  border-radius: 7px;
+  border: 1px solid #e9e0f0;
+  border-radius: 12px;
   background: #fff;
+  box-shadow: 0 4px 14px rgba(56, 37, 69, 0.045);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .public-quote-stamp-card.open {
-  border-color: #c9b4f7;
-  box-shadow: 0 0 0 2px rgba(109, 40, 217, 0.05);
+  border-color: #c9a8ec;
+  box-shadow: 0 8px 22px rgba(147, 51, 234, 0.09);
 }
 
 .public-quote-stamp-summary {
@@ -555,6 +608,11 @@
   border: 0;
   background: transparent;
   cursor: pointer;
+  transition: background-color 180ms ease;
+}
+
+.public-quote-stamp-summary:hover {
+  background: #fdf9ff;
 }
 
 .public-quote-stamp-summary > span:nth-child(2) {
@@ -595,8 +653,9 @@
   width: 28px;
   height: 28px;
   color: var(--quote-purple);
-  border-radius: 6px;
-  background: var(--quote-purple-soft);
+  border: 1px solid #ead7fb;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f6edff, #fdf2f8);
   font-size: 0.74rem;
   font-weight: 900;
 }
@@ -604,7 +663,7 @@
 .public-quote-stamp-body {
   padding: 0.8rem;
   border-top: 1px solid var(--quote-line);
-  background: #fbfbfd;
+  background: linear-gradient(180deg, #fdfbff, #fbfbfd);
 }
 
 .public-quote-stamp-design {
@@ -622,8 +681,8 @@
   padding: 0.62rem 0.7rem;
   color: #5b3cab;
   border: 1px solid #ded3f8;
-  border-radius: 7px;
-  background: #f7f3ff;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8f2ff, #fdf7ff);
   font-size: 0.74rem;
   line-height: 1.4;
 }
@@ -653,17 +712,22 @@
   padding: 0.35rem 0.52rem;
   color: #59667a;
   border: 1px solid #dce2eb;
-  border-radius: 6px;
+  border-radius: 9px;
   background: #fff;
+  box-shadow: 0 2px 8px rgba(62, 39, 76, 0.04);
   font-size: 0.7rem;
   font-weight: 800;
   cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .public-quote-stamp-actions button:hover,
 .public-quote-summary-actions button:hover {
   color: var(--quote-purple);
   border-color: #cbb8f5;
+  background: #faf5ff;
+  box-shadow: 0 5px 12px rgba(147, 51, 234, 0.08);
+  transform: translateY(-1px);
 }
 
 .public-quote-stamp-actions button.danger,
@@ -678,7 +742,7 @@
   padding: 0.8rem;
   color: #7a5220;
   border: 1px dashed #fdba74;
-  border-radius: 7px;
+  border-radius: 11px;
   background: #fffaf4;
 }
 
@@ -699,8 +763,9 @@
   margin-top: 0.9rem;
   padding: 0.75rem;
   border: 1px solid #e1d9f6;
-  border-radius: 7px;
-  background: #faf8ff;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #faf5ff, #fffafd);
+  box-shadow: 0 6px 16px rgba(92, 45, 118, 0.045);
 }
 
 .public-quote-design-box .public-quote-subsection-heading {
@@ -752,17 +817,19 @@
   margin-top: 0.9rem;
   color: #fff;
   border: 0;
-  border-radius: 7px;
-  background: var(--quote-purple);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #9333ea, #c026d3);
+  box-shadow: 0 9px 20px rgba(147, 51, 234, 0.22);
   font-size: 0.83rem;
   font-weight: 850;
   cursor: pointer;
-  transition: background 160ms ease, transform 160ms ease;
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .public-quote-add-item-button:hover:not(:disabled),
 .public-quote-submit-button:hover:not(:disabled) {
-  background: var(--quote-purple-dark);
+  background: linear-gradient(135deg, #7e22ce, #be185d);
+  box-shadow: 0 12px 26px rgba(147, 51, 234, 0.3);
   transform: translateY(-1px);
 }
 
@@ -779,11 +846,14 @@
   max-height: calc(100vh - 92px);
   flex-direction: column;
   overflow: hidden;
+  border-color: rgba(147, 51, 234, 0.2);
+  box-shadow: 0 20px 46px rgba(70, 34, 91, 0.12);
 }
 
 .public-quote-summary-heading {
   flex: 0 0 auto;
   padding: 0.9rem 1rem 0.8rem;
+  background: linear-gradient(135deg, #fdf9ff, #fff);
 }
 
 .public-quote-count {
@@ -795,7 +865,8 @@
   padding: 0.25rem 0.45rem;
   color: var(--quote-purple) !important;
   border-radius: 999px;
-  background: var(--quote-purple-soft);
+  border: 1px solid #ead8fb;
+  background: linear-gradient(135deg, #f7edff, #fdf2f8);
   font-size: 0.72rem !important;
 }
 
@@ -809,7 +880,8 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-color: #baa5ef #f3f0fb;
+  background: #fdfcff;
+  scrollbar-color: #c49bea #f5effa;
   scrollbar-width: thin;
 }
 
@@ -823,8 +895,8 @@
   color: #7b8798;
   text-align: center;
   border: 1px dashed #d7ddea;
-  border-radius: 7px;
-  background: #fafbfd;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdfbff, #f9fafc);
 }
 
 .public-quote-summary-empty svg {
@@ -845,15 +917,17 @@
 .public-quote-summary-item {
   min-width: 0;
   padding: 0.72rem;
-  border: 1px solid var(--quote-line);
-  border-radius: 7px;
+  border: 1px solid #e9e0f0;
+  border-radius: 12px;
   background: #fff;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 4px 14px rgba(56, 37, 69, 0.045);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .public-quote-summary-item:hover {
   border-color: #cbbaf0;
-  box-shadow: 0 5px 14px rgba(52, 43, 87, 0.07);
+  box-shadow: 0 9px 22px rgba(100, 53, 127, 0.1);
+  transform: translateY(-1px);
 }
 
 .public-quote-summary-item-head {
@@ -917,8 +991,9 @@
   margin: 0.58rem 0 0;
   padding: 0.48rem 0.58rem;
   color: #657185;
-  border-radius: 6px;
-  background: #f6f7fa;
+  border: 1px solid #f0e8f5;
+  border-radius: 9px;
+  background: #faf8fc;
   font-size: 0.68rem;
   line-height: 1.4;
   list-style: none;
@@ -950,7 +1025,7 @@
   flex: 0 0 auto;
   padding: 0.65rem 0.9rem;
   border-top: 1px solid var(--quote-line);
-  background: #faf8ff;
+  background: linear-gradient(135deg, #faf5ff, #fffafd);
 }
 
 .public-quote-shared-summary > strong {
@@ -969,7 +1044,8 @@
   padding: 0.24rem 0.42rem;
   color: #6342ad;
   border-radius: 999px;
-  background: #eee8fd;
+  border: 1px solid #e6d8f8;
+  background: #f3eafd;
   font-size: 0.64rem;
   font-weight: 750;
 }
@@ -990,7 +1066,7 @@
   padding: 0.55rem 0.65rem;
   color: #765328;
   border: 1px solid #fed7aa;
-  border-radius: 6px;
+  border-radius: 10px;
   background: #fff7ed;
   font-size: 0.71rem;
   line-height: 1.4;
@@ -1000,8 +1076,8 @@
   flex: 0 0 auto;
   padding: 0.75rem 0.9rem 0.9rem;
   border-top: 1px solid var(--quote-line);
-  background: #fff;
-  box-shadow: 0 -8px 20px rgba(30, 39, 60, 0.04);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 -10px 24px rgba(62, 34, 79, 0.06);
 }
 
 .public-quote-price-pending {
@@ -1010,8 +1086,10 @@
   gap: 0.55rem;
   padding: 0.65rem;
   color: #fff;
-  border-radius: 7px;
-  background: #5b25bd;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7e22ce, #c026d3);
+  box-shadow: 0 10px 24px rgba(126, 34, 206, 0.22);
 }
 
 .public-quote-price-pending > div {
@@ -1041,11 +1119,13 @@
   padding: 0.55rem 0.7rem;
   color: #fff;
   border: 0;
-  border-radius: 7px;
-  background: var(--quote-purple);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #9333ea, #c026d3);
+  box-shadow: 0 9px 20px rgba(147, 51, 234, 0.22);
   font-size: 0.79rem;
   font-weight: 850;
   cursor: pointer;
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .public-quote-loading-card,
@@ -1065,8 +1145,9 @@
   padding: 0.45rem 0.8rem;
   color: #fff;
   border: 0;
-  border-radius: 7px;
-  background: var(--quote-purple);
+  border-radius: 11px;
+  background: linear-gradient(135deg, #9333ea, #c026d3);
+  box-shadow: 0 8px 18px rgba(147, 51, 234, 0.2);
   font-weight: 800;
   cursor: pointer;
 }
@@ -1093,9 +1174,9 @@
   padding: 2rem;
   text-align: center;
   border: 1px solid var(--quote-line);
-  border-radius: 8px;
+  border-radius: 20px;
   background: #fff;
-  box-shadow: 0 18px 50px rgba(34, 43, 68, 0.1);
+  box-shadow: 0 24px 58px rgba(51, 30, 65, 0.14);
 }
 
 .public-quote-success h1,
@@ -1142,7 +1223,7 @@
   justify-content: center;
   min-height: 42px;
   padding: 0.55rem 0.85rem;
-  border-radius: 7px;
+  border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 850;
   text-decoration: none;
@@ -1152,11 +1233,36 @@
   color: #536075;
   border: 1px solid var(--quote-line);
   background: #fff;
+  box-shadow: 0 4px 12px rgba(49, 32, 62, 0.05);
 }
 
 .public-quote-primary-button {
   color: #fff;
-  background: var(--quote-purple);
+  background: linear-gradient(135deg, #9333ea, #c026d3);
+  box-shadow: 0 8px 18px rgba(147, 51, 234, 0.22);
+}
+
+.public-quote-stamp-list::-webkit-scrollbar,
+.public-quote-summary-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.public-quote-stamp-list::-webkit-scrollbar-track,
+.public-quote-summary-list::-webkit-scrollbar-track {
+  background: #f7f1fa;
+  border-radius: 999px;
+}
+
+.public-quote-stamp-list::-webkit-scrollbar-thumb,
+.public-quote-summary-list::-webkit-scrollbar-thumb {
+  border: 2px solid #f7f1fa;
+  border-radius: 999px;
+  background: #c69be8;
+}
+
+.public-quote-stamp-list::-webkit-scrollbar-thumb:hover,
+.public-quote-summary-list::-webkit-scrollbar-thumb:hover {
+  background: #aa6ddb;
 }
 
 @media (max-width: 1120px) {
@@ -1200,6 +1306,10 @@
 }
 
 @media (max-width: 640px) {
+  .public-quote-page {
+    padding-top: 64px;
+  }
+
   .public-quote-header {
     min-height: 54px;
     padding-inline: 16px;
@@ -1222,11 +1332,12 @@
   .public-quote-intro {
     align-items: flex-start;
     flex-direction: column;
-    padding-top: 0.85rem;
+    padding-top: 1.15rem;
   }
 
   .public-quote-intro h1 {
-    font-size: 1.55rem;
+    font-size: 1.48rem;
+    line-height: 1.22;
   }
 
   .public-quote-contact-card,

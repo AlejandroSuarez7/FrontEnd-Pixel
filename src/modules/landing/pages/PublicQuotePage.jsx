@@ -14,6 +14,7 @@ import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProv
 import { useAuth } from '../../../store/AuthContext';
 import { PublicQuoteProductEditor } from '../components/PublicQuoteProductEditor';
 import { PublicQuoteSummary } from '../components/PublicQuoteSummary';
+import PublicNavbar from '../components/PublicNavbar';
 import {
   MAX_ITEM_STAMPS,
   MAX_PUBLIC_QUOTE_ITEMS,
@@ -662,6 +663,7 @@ const PublicQuoteBuilder = ({ auth }) => {
   if (success) {
     return (
       <main className="public-quote-page">
+        <PublicNavbar />
         <section className="public-quote-success">
           <span className="public-quote-success-icon"><FileCheck2 size={34} /></span>
           <p className="public-quote-eyebrow">
@@ -693,14 +695,7 @@ const PublicQuoteBuilder = ({ auth }) => {
 
   return (
     <main className="public-quote-page">
-      <header className="public-quote-header">
-        <Link to="/" className="public-quote-brand" aria-label="PIXEL, volver al inicio">
-          PIXEL
-        </Link>
-        <Link to="/#contacto" className="public-quote-contact-link">
-          ¿Necesitas ayuda? Contacto
-        </Link>
-      </header>
+      <PublicNavbar />
 
       <section className="public-quote-intro">
         <div>
@@ -885,9 +880,7 @@ const PublicQuotePage = () => {
   if (auth.loading) {
     return (
       <main className="public-quote-page">
-        <header className="public-quote-header">
-          <Link to="/" className="public-quote-brand">PIXEL</Link>
-        </header>
+        <PublicNavbar />
         <section className="public-quote-auth-loading" aria-live="polite">
           <span className="public-quote-spinner" />
           <strong>Preparando tu solicitud…</strong>

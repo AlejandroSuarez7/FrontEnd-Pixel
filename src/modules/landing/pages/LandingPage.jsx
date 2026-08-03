@@ -2,9 +2,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import './LandingPage.css';
 import { motion } from 'motion/react';
-import { useAuth } from '../../../store/AuthContext';
-import { isClientUser } from '../../../core/utils/permissions';
 import { scrollToCurrentHash } from '../../../core/utils/landingNavigation';
+import PublicNavbar from '../components/PublicNavbar';
 import {
   Upload,
   Palette,
@@ -25,20 +24,14 @@ import {
 } from "react-icons/fa";
 
 const LandingPage = () => {
-  const { user, permissions, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [profileOpen, setProfileOpen] = useState(false);
   const [contactForm, setContactForm] = useState({
     nombre: '',
     correo: '',
     telefono: '',
     mensaje: '',
   });
-  const isLoggedIn = Boolean(user);
-  const isClient = isClientUser(user, permissions);
-  const userName = user?.nombre || 'Usuario';
-  const avatarLetter = userName.charAt(0).toUpperCase();
 
   useEffect(() => {
     if (!location.hash) return undefined;
@@ -48,17 +41,6 @@ const LandingPage = () => {
     });
     return () => window.cancelAnimationFrame(frameId);
   }, [location.hash]);
-
-  const handleGoDashboard = () => {
-    setProfileOpen(false);
-    navigate('/dashboard');
-  };
-
-  const handleLogout = () => {
-    setProfileOpen(false);
-    logout();
-    navigate('/');
-  };
 
   const scrollToSection = (sectionId) => {
     document.getElementById(sectionId)?.scrollIntoView({
@@ -86,69 +68,7 @@ const LandingPage = () => {
 
   return (
     <div>
-      <header className="landing-header">
-        <div className="landing-container">
-          <div className="landing-flex">
-
-            {/* Logo */}
-            <div className="landing-logo">PIXEL</div>
-
-            {/* Navegación Desktop */}
-            <nav className="landing-nav">
-              <a className="landing-nav-link" href="#inicio">Inicio</a>
-              <a className="landing-nav-link" href="#como-funciona">¿Cómo funciona?</a>
-              <a className="landing-nav-link" href="#servicios">Servicios</a>
-              <a className="landing-nav-link" href="#comparativo">Comparativo</a>
-              <a className="landing-nav-link" href="#productos">Productos</a>
-              <Link className="landing-nav-link" to="/cotizar">Cotizar</Link>
-              <a className="landing-nav-link" href="#contacto">Contacto</a>
-            </nav>
-
-            {/* Acciones (Login + Botón móvil) */}
-            <div className="actions">
-              {!isLoggedIn ? (
-              <Link to="/login" className="btn-login">
-                <span className="btn-login-text">
-                Iniciar Sesión
-                </span>
-              </Link>
-              ) : (
-                <>
-              {/*
-
-              <button className="hamburger-btn" aria-label="Abrir menú">
-              */}
-                <div className="landing-profile-wrapper">
-                  <button
-                    type="button"
-                    className="landing-profile-button"
-                    onClick={() => setProfileOpen(prev => !prev)}
-                    aria-expanded={profileOpen}
-                  >
-                    <span className="landing-profile-avatar">{avatarLetter}</span>
-                    <span className="landing-profile-label">Perfil</span>
-                  </button>
-
-                  {profileOpen && (
-                    <div className="landing-profile-menu">
-                      <p className="landing-profile-name">{userName}</p>
-                      <button type="button" onClick={handleGoDashboard} className="landing-profile-menu-btn">
-                        {isClient ? 'Mis pedidos' : 'Ir al Dashboard'}
-                      </button>
-                      <button type="button" onClick={handleLogout} className="landing-profile-menu-btn danger">
-                        Cerrar sesion
-                      </button>
-                    </div>
-                  )}
-                </div>
-                </>
-              )}
-
-            </div>
-
-          </div>
-        </div>
-      </header>
+      <PublicNavbar />
 
       {/* Hero / contenido principal */}
       <section id="inicio" className="hero-section">
@@ -1610,32 +1530,6 @@ const LandingPage = () => {
 
   </motion.div>
 </footer>
-
-
-      {/* Sheet lateral móvil (estilos en CSS, comportamiento JS opcional) */}
-      <aside className="sheet-container" aria-hidden="true">
-        <nav className="mobile-nav">
-          <a className="mobile-nav-link" href="#inicio">Inicio</a>
-          <a className="mobile-nav-link" href="#como-funciona">¿Cómo funciona?</a>
-          <a className="mobile-nav-link" href="#servicios">Servicios</a>
-          <a className="mobile-nav-link" href="#comparativo">Comparativo</a>
-          <a className="mobile-nav-link" href="#productos">Productos</a>
-          <Link className="mobile-nav-link" to="/cotizar">Cotizar</Link>
-          <a className="mobile-nav-link" href="#contacto">Contacto</a>
-        </nav>
-
-        <div className="mobile-user-section">
-          {!isLoggedIn ? (
-            <Link className="mobile-login-btn" to="/login">Iniciar Sesión</Link>
-          ) : (
-            <>
-              <p className="mobile-profile-name">{userName}</p>
-              <button type="button" className="mobile-login-btn" onClick={handleGoDashboard}>{isClient ? 'Mis pedidos' : 'Ir al Dashboard'}</button>
-              <button type="button" className="mobile-login-btn mobile-logout-btn" onClick={handleLogout}>Cerrar sesion</button>
-            </>
-          )}
-        </div>
-      </aside>
     </div>
   );
 };
