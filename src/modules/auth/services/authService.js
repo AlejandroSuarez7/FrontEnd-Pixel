@@ -3,6 +3,8 @@ import { PERMISSIONS_STORAGE_KEY, normalizePermissionCodes } from '../../../core
 
 const TOKEN_KEY = 'token';
 const USER_KEY  = 'pixel_user';
+let permissionsRequest = null;
+let permissionsRequestToken = null;
 
 export const authService = {
 
@@ -26,15 +28,32 @@ export const authService = {
   },
 
   async fetchPermissions() {
-    const { data } = await apiClient.get('/api/auth/me/permisos');
-    const sessionData = data.data || {};
-    const codigos = normalizePermissionCodes(sessionData.codigos || sessionData.permisos || []);
-    localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(codigos));
-    return {
-      usuario: sessionData.usuario || null,
-      permisos: sessionData.permisos || [],
-      codigos,
-    };
+    const currentToken = this.getToken();
+    if (permissionsRequest && permissionsRequestToken === currentToken) {
+      return permissionsRequest;
+    }
+
+    permissionsRequestToken = currentToken;
+    const request = apiClient.get('/api/auth/me/permisos').then(({ data }) => {
+      const sessionData = data.data || {};
+      const codigos = normalizePermissionCodes(sessionData.codigos || sessionData.permisos || []);
+      localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(codigos));
+      return {
+        usuario: sessionData.usuario || null,
+        permisos: sessionData.permisos || [],
+        codigos,
+      };
+    });
+    permissionsRequest = request;
+
+    try {
+      return await request;
+    } finally {
+      if (permissionsRequest === request) {
+        permissionsRequest = null;
+        permissionsRequestToken = null;
+      }
+    }
   },
 
   // Campos requeridos por el backend: nombre, telefono, correo, contrasena

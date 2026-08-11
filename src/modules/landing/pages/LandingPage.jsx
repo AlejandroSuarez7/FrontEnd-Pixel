@@ -1,9 +1,14 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import './LandingPage.css';
-import { motion } from 'motion/react';
 import { scrollToCurrentHash } from '../../../core/utils/landingNavigation';
 import PublicNavbar from '../components/PublicNavbar';
+import {
+  FacebookIcon,
+  InstagramIcon,
+  TwitterIcon,
+  YoutubeIcon,
+} from '../components/BrandIcons';
 import {
   Upload,
   Palette,
@@ -16,12 +21,6 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
-import {
-  FaInstagram,
-  FaFacebookF,
-  FaTwitter,
-  FaYoutube,
-} from "react-icons/fa";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -83,12 +82,8 @@ const LandingPage = () => {
       </div>
 
       {/* Content */}
-      <motion.div
+      <div
         className="hero-container"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.65, ease: 'easeOut' }}
       >
         <div className="hero-content">
 
@@ -139,7 +134,7 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
     </section>
 
@@ -150,12 +145,8 @@ const LandingPage = () => {
       className="how-section"
     >
 
-      <motion.div
+      <div
         className="how-container"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.65, ease: 'easeOut' }}
       >
 
         {/* Header */}
@@ -180,12 +171,8 @@ const LandingPage = () => {
           <div className="how-grid">
 
             {/* Step 1 */}
-            <motion.div
+            <div
               className="how-card"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.20, ease: 'easeOut' }}
             >
             
 
@@ -210,15 +197,11 @@ const LandingPage = () => {
                 Nuestro equipo te asesorará.
               </p>
 
-            </motion.div>
+            </div>
 
             {/* Step 2 */}
-            <motion.div
+            <div
               className="how-card"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.40, ease: 'easeOut' }}
             >
 
               <div className="step-number blue">
@@ -242,15 +225,11 @@ const LandingPage = () => {
                 tus necesidades y presupuesto.
               </p>
 
-            </motion.div>
+            </div>
 
             {/* Step 3 */}
-            <motion.div
+            <div
               className="how-card"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.60, ease: 'easeOut' }}
             >
 
               <div className="step-number pink">
@@ -274,15 +253,11 @@ const LandingPage = () => {
                 a tu diseño con la máxima calidad.
               </p>
 
-            </motion.div>
+            </div>
 
             {/* Step 4 */}
-            <motion.div
+            <div
               className="how-card"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.80, ease: 'easeOut' }}
             >
 
               <div className="step-number yellow">
@@ -306,13 +281,13 @@ const LandingPage = () => {
                 Tu creatividad lista para usar o vender.
               </p>
 
-            </motion.div>
+            </div>
 
           </div>
 
         </div>
 
-      </motion.div>
+      </div>
 
     </section>
 
@@ -324,12 +299,8 @@ const LandingPage = () => {
       className="services-section"
     >
 
-      <motion.div
+      <div
         className="services-container"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.65, ease: 'easeOut' }}
       >
 
     {/* Header */}
@@ -349,12 +320,8 @@ const LandingPage = () => {
     <div className="services-grid">
 
       {/* CARD 1 */}
-      <motion.div
+      <div
         className="service-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.20, ease: 'easeOut' }}
       >
 
         <div className="service-image-wrapper">
@@ -414,15 +381,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 2 */}
-      <motion.div
+      <div
         className="service-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.40, ease: 'easeOut' }}
       >
 
         <div className="service-image-wrapper">
@@ -482,15 +445,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 3 */}
-      <motion.div
+      <div
         className="service-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.60, ease: 'easeOut' }}
       >
 
         <div className="service-image-wrapper">
@@ -549,15 +508,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 4 */}
-      <motion.div
+      <div
         className="service-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.80, ease: 'easeOut' }}
       >
 
         <div className="service-image-wrapper">
@@ -617,11 +572,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
     </div>
 
-  </motion.div>
+  </div>
 
 </section>
 
@@ -636,12 +591,8 @@ const LandingPage = () => {
       className="comparative-section"
     >
 
-      <motion.div
+      <div
         className="comparative-container"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.65, ease: 'easeOut' }}
       >
 
     {/* HEADER */}
@@ -662,12 +613,8 @@ const LandingPage = () => {
     <div className="comparative-grid">
 
       {/* CARD 1 */}
-      <motion.div
+      <div
         className="comparative-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.20, ease: 'easeOut' }}
       >
       
 
@@ -755,15 +702,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 2 */}
-      <motion.div
+      <div
         className="comparative-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.40, ease: 'easeOut' }}
       >
 
         <div className="comparative-top-line blue-gradient"></div>
@@ -822,15 +765,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 3 */}
-      <motion.div
+      <div
         className="comparative-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.60, ease: 'easeOut' }}
       >
 
         <div className="comparative-top-line pink-gradient"></div>
@@ -891,15 +830,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 4 */}
-      <motion.div
+      <div
         className="comparative-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.80, ease: 'easeOut' }}
       >
 
         <div className="comparative-top-line yellow-gradient"></div>
@@ -960,11 +895,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
     </div>
 
-  </motion.div>
+  </div>
 
 </section>
 
@@ -976,12 +911,8 @@ const LandingPage = () => {
       className="products-section"
     >
 
-      <motion.div
+      <div
         className="products-container"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.20, ease: 'easeOut' }}
       >
 
     {/* HEADER */}
@@ -1002,12 +933,8 @@ const LandingPage = () => {
     <div className="products-grid">
 
       {/* CARD 1 */}
-      <motion.div
+      <div
         className="product-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.20, ease: 'easeOut' }}
       >
       
 
@@ -1046,15 +973,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 2 */}
-      <motion.div
+      <div
         className="product-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.40, ease: 'easeOut' }}
       >
 
         <div className="product-image-wrapper">
@@ -1090,15 +1013,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 3 */}
-      <motion.div
+      <div
         className="product-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.60, ease: 'easeOut' }}
       >
 
         <div className="product-image-wrapper">
@@ -1134,15 +1053,11 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
       {/* CARD 4 */}
-      <motion.div
+      <div
         className="product-card"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.80, ease: 'easeOut' }}
       >
 
         <div className="product-image-wrapper">
@@ -1178,7 +1093,7 @@ const LandingPage = () => {
 
         </div>
 
-      </motion.div>
+      </div>
 
     </div>
 
@@ -1191,7 +1106,7 @@ const LandingPage = () => {
 
     </div>
 
-  </motion.div>
+  </div>
 
 </section>
 
@@ -1202,12 +1117,8 @@ const LandingPage = () => {
   <div className="contact-bg-shape contact-shape-2"></div>
 
 
-  <motion.div
+  <div
     className="contact-container"
-    initial={{ opacity: 0, y: 40 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.25 }}
-    transition={{ duration: 0.65, ease: 'easeOut' }}
   >
 
     <div className="contact-grid">
@@ -1371,7 +1282,7 @@ const LandingPage = () => {
 
     </div>
 
-  </motion.div>
+  </div>
 
 </section>
 
@@ -1380,12 +1291,8 @@ const LandingPage = () => {
 
 <footer className="footer">
 
-  <motion.div
+  <div
     className="footer-container"
-    initial={{ opacity: 0, y: 40 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.2 }}
-    transition={{ duration: 0.65, ease: 'easeOut' }}
   >
 
     {/* Top */}
@@ -1406,19 +1313,19 @@ const LandingPage = () => {
         <div className="footer-socials">
 
           <a href="#" className="footer-social-link" aria-label="Instagram">
-            <FaInstagram className="footer-social-icon" />
+            <InstagramIcon className="footer-social-icon" />
           </a>
 
           <a href="#" className="footer-social-link" aria-label="Facebook">
-            <FaFacebookF className="footer-social-icon" />
+            <FacebookIcon className="footer-social-icon" />
           </a>
 
           <a href="#" className="footer-social-link" aria-label="Twitter">
-            <FaTwitter className="footer-social-icon" />
+            <TwitterIcon className="footer-social-icon" />
           </a>
 
           <a href="#" className="footer-social-link" aria-label="YouTube">
-            <FaYoutube className="footer-social-icon" />
+            <YoutubeIcon className="footer-social-icon" />
           </a>
 
         </div>
@@ -1552,7 +1459,7 @@ const LandingPage = () => {
 
     </div>
 
-  </motion.div>
+  </div>
 </footer>
     </div>
   );

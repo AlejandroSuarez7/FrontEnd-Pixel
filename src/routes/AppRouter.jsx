@@ -1,11 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Navigate, Routes, Route } from 'react-router-dom';
 import { PATHS } from './paths';
-import ProtectedRoute from './ProtectedRoute';
-import DashboardLayout from '../shared/layouts/DashboardLayout/DashboardLayout';
 
 import LandingPage from '../modules/landing/pages/LandingPage';
 
+const ProtectedDashboardLayout = lazy(() => import('./ProtectedDashboardLayout'));
 const PublicQuotePage = lazy(() => import('../modules/landing/pages/PublicQuotePage'));
 const LoginPage = lazy(() => import('../modules/auth/pages/LoginPage'));
 const ResetPasswordPage = lazy(() => import('../modules/auth/pages/ResetPasswordPage'));
@@ -76,9 +75,9 @@ const AppRouter = () => {
         <Route
           path={PATHS.DASHBOARD}
           element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
+            <LazyRoute>
+              <ProtectedDashboardLayout />
+            </LazyRoute>
           }
         >
           <Route index element={<LazyRoute><DashboardPage /></LazyRoute>} />

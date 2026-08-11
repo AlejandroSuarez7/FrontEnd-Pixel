@@ -57,4 +57,30 @@ describe('authService session persistence', () => {
     expect(localStorage.getItem('pixel_user')).toBeNull();
     expect(localStorage.getItem('pixel_permissions')).toBeNull();
   });
+
+  it('deduplicates concurrent permission requests for the same token', async () => {
+    localStorage.setItem('token', 'same-token');
+    let resolveRequest;
+    apiClient.get.mockReturnValueOnce(new Promise((resolve) => {
+      resolveRequest = resolve;
+    }));
+
+    const firstRequest = authService.fetchPermissions();
+    const secondRequest = authService.fetchPermissions();
+
+    expect(apiClient.get).toHaveBeenCalledTimes(1);
+
+    resolveRequest({
+      data: {
+        data: {
+          permisos: [],
+          codigos: ['dashboard.admin'],
+        },
+      },
+    });
+
+    const [firstResult, secondResult] = await Promise.all([firstRequest, secondRequest]);
+    expect(firstResult.codigos).toEqual(['dashboard.admin']);
+    expect(secondResult.codigos).toEqual(['dashboard.admin']);
+  });
 });
