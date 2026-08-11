@@ -1,0 +1,2187 @@
+
+===== PAGE 1 =====
+http://localhost:5173/
+Values are estimated and may vary. The performance score is calculated
+directly from these metrics.See calculator.
+0–49 50–89 90–100
+Performance
+41
+Accessibility
+98
+Best
+Practices
+100
+SEO
+83
+4 1
+Performance
+METRICS Expand view
+First Contentful Paint
+5.1 s
+Largest Contentful Paint
+10.2 s
+10/8/26, 10:10 p.m. about:blank
+about:blank 1/56
+
+===== PAGE 2 =====
+Show audits relevant to:All FCP LCP TBT CLS
+Total Blocking Time
+330 ms
+Cumulative Layout Shift
+0.001
+Speed Index
+6.5 s
+INSIGHTS
+LCP breakdown
+Each subpart has specific improvement strategies. Ideally, most of the LCP time should be spent on loading the resources,
+not within delays.LCP Unscored
+LCP request discovery
+Optimize LCP by making the LCP image discoverable from the HTML immediately, and avoiding lazy-loadingLCP
+Unscored
+fetchpriority=high should be applied
+Request is discoverable in initial document
+LCP resources should not use loading=lazy
+Time to first byte 20 ms
+Resource load delay 2,470 ms
+Resource load duration 300 ms
+Element render delay 210 ms
+div.hero-image
+Subpart Duration
+10/8/26, 10:10 p.m. about:blank
+about:blank 2/56
+
+===== PAGE 3 =====
+Network dependency tree
+Avoid chaining critical requests by reducing the length of chains, reducing the download size of resources, or deferring the
+download of unnecessary resources to improve page load.LCP Unscored
+Maximum critical path latency: 4,857 ms
+Initial Navigation
+http://localhost:5173 - 130 ms, 0.86 KiB
+/src/main.jsx  - 152 ms, 2.29 KiB
+…store/StoreProvider.jsx  - 205 ms, 2.77 KiB
+…store/AuthContext.jsx  - 274 ms, 13.27 KiB
+…services/apiService.js  - 411 ms, 9.00 KiB
+…deps/axios.js?v=57fd49b1  - 690 ms, 104.54 KiB
+…me/permisos  - 4,857 ms, 0.24 KiB
+…me/permisos  - 4,498 ms, 19.37 KiB
+…utils/notifications.js  - 684 ms, 2.69 KiB
+…utils/permissions.js  - 436 ms, 7.78 KiB
+…services/authService.js  - 435 ms, 8.93 KiB
+/src/App.jsx  - 205 ms, 4.11 KiB
+…routes/AppRouter.jsx  - 277 ms, 29.40 KiB
+…pages/QuotesPage.jsx  - 606 ms, 58.38 KiB
+…application/useQuotes.js  - 1,139 ms, 11.45 KiB
+…infrastructure/quote.repository.js - 1,530 ms, 16.91 KiB
+…adapters/cotizacionDTO.js  - 1,580 ms, 24.78 KiB
+…domain/cotizacionesModel.js  - 1,609 ms, 18.47 KiB
+…adapters/proposalDTO.js  - 1,579 ms, 8.54 KiB
+…presentation/QuoteProposalModal.jsx - 1,215 ms, 139.14 KiB
+…domain/quoteProposal.js  - 1,531 ms, 46.54 KiB
+…presentation/QuoteResponseModal.jsx  - 1,194 ms, 20.16 KiB
+…presentation/quoteWorkflow.module.css  - 1,531 ms, 32.27 KiB
+…presentation/quotes.module.css - 1,214 ms, 100.95 KiB
+…presentation/quoteWorkflow.utils.js  - 1,204 ms, 10.22 KiB
+…presentation/QuoteVersionsModal.jsx  - 1,198 ms, 19.54 KiB
+div.hero-image
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+10/8/26, 10:10 p.m. about:blank
+about:blank 3/56
+
+===== PAGE 4 =====
+…presentation/QuoteDetailsModal.jsx - 1,141 ms, 133.51 KiB
+…presentation/QuoteFormModal.jsx - 1,140 ms, 175.08 KiB
+…utils/formatters.js  - 1,139 ms, 10.06 KiB
+…pages/SalesProductsPage.jsx  - 552 ms, 0.73 KiB
+…presentation/VentasPage.jsx  - 991 ms, 54.58 KiB
+…application/useVentas.js  - 1,430 ms, 3.46 KiB
+…infrastructure/venta.repository.js - 1,544 ms, 9.98 KiB
+…adapters/venta.dto.js  - 1,595 ms, 3.60 KiB
+…domain/venta.model.js  - 1,609 ms, 2.49 KiB
+…presentation/VentasPage.css  - 1,431 ms, 9.37 KiB
+…hooks/usePagination.js  - 1,430 ms, 3.11 KiB
+…pages/ProvidersPage.jsx  - 556 ms, 2.86 KiB
+…presentation/ProveedoresPage.jsx  - 992 ms, 45.20 KiB
+…application/useProveedores.js  - 1,461 ms, 4.76 KiB
+…infrastructure/proveedor.repository.js - 1,543 ms, 7.16 KiB
+…adapters/proveedor.dto.js  - 1,594 ms, 4.04 KiB
+…domain/proveedor.model.js  - 1,609 ms, 1.16 KiB
+…presentation/ProveedoresPage.css  - 1,536 ms, 12.87 KiB
+…presentation/ProveedorModal.jsx - 1,488 ms, 21.75 KiB
+…presentation/ProveedorViewModal.jsx - 1,487 ms, 11.27 KiB
+…pages/PurchasesPage.jsx  - 557 ms, 2.82 KiB
+…presentation/ComprasPage.jsx  - 991 ms, 57.01 KiB
+…application/useCompras.js  - 1,451 ms, 7.39 KiB
+…infrastructure/compra.repository.js - 1,543 ms, 12.48 KiB
+…adapters/compra.dto.js  - 1,589 ms, 7.46 KiB
+…domain/compra.model.js  - 1,608 ms, 2.51 KiB
+…presentation/ComprasPage.css  - 1,479 ms, 13.48 KiB
+…presentation/CompraViewModal.jsx - 1,470 ms, 21.51 KiB
+…presentation/CompraModal.jsx - 1,459 ms, 37.60 KiB
+…pages/ServicesPage.jsx  - 607 ms, 34.53 KiB
+…application/useTecnicas.js  - 1,220 ms, 4.74 KiB
+…infrastructure/tecnicas.repository.js - 1,532 ms, 7.17 KiB
+…adapters/tecnicasDTO.js  - 1,578 ms, 4.61 KiB
+…domain/tecnicasModel.js  - 1,608 ms, 1.48 KiB
+…presentation/ServiceFormModal.jsx - 1,237 ms, 62.93 KiB
+…domain/serviceTariffs.js  - 1,533 ms, 12.84 KiB
+…presentation/services.module.css - 1,245 ms, 39.97 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+10/8/26, 10:10 p.m. about:blank
+about:blank 4/56
+
+===== PAGE 5 =====
+…presentation/ServiceDetailsModal.jsx - 1,239 ms, 32.76 KiB
+…presentation/PedidoExpedientePage.jsx  - 559 ms, 126.88 KiB
+…infrastructure/diseno.repository.js - 1,123 ms, 23.12 KiB
+…adapters/diseno.dto.js  - 1,538 ms, 10.26 KiB
+…domain/diseno.model.js  - 1,584 ms, 4.94 KiB
+…infrastructure/abono.repository.js - 1,079 ms, 21.88 KiB
+…adapters/abono.dto.js  - 1,537 ms, 15.51 KiB
+…domain/abono.model.js  - 1,577 ms, 8.28 KiB
+…services/protectedFileService.js - 1,536 ms, 2.04 KiB
+…presentation/AbonoModal.jsx  - 1,114 ms, 61.75 KiB
+…presentation/AbonosPage.css  - 1,537 ms, 27.44 KiB
+…domain/designRequirement.js  - 1,181 ms, 20.86 KiB
+…presentation/pedido-expediente.css - 1,138 ms, 24.09 KiB
+…presentation/RegisterClientDesignModal.jsx  - 1,137 ms, 20.32 KiB
+…presentation/DesignClientResponseModal.jsx  - 1,137 ms, 19.85 KiB
+…presentation/DesignOriginModal.jsx - 1,136 ms, 15.62 KiB
+…presentation/DisenoModal.jsx  - 1,135 ms, 81.20 KiB
+…presentation/ReceiptPreviewModal.jsx  - 1,135 ms, 14.52 KiB
+…presentation/ReviewConfirmAbonoModal.jsx  - 1,118 ms, 72.43 KiB
+…utils/productCategory.js  - 1,079 ms, 1.10 KiB
+…utils/paymentOrigin.js  - 1,027 ms, 2.72 KiB
+…pages/ProductionPage.jsx  - 609 ms, 2.90 KiB
+…presentation/ProductionQueuePage.jsx  - 1,281 ms, 45.30 KiB
+…application/useProductionQueue.js - 1,534 ms, 3.32 KiB
+…infrastructure/productionQueue.repository.js - 1,578 ms, 10.93 KiB
+…presentation/ProductionQueuePage.css  - 1,534 ms, 9.76 KiB
+…pages/ProfilePage.jsx  - 558 ms, 22.32 KiB
+…infrastructure/user.repository.js - 1,079 ms, 9.70 KiB
+…adapters/userDTO.js  - 1,537 ms, 2.50 KiB
+…domain/userModel.js  - 1,576 ms, 1.86 KiB
+…pages/UsersPage.jsx  - 490 ms, 42.87 KiB
+…infrastructure/roles.repository.js - 973 ms, 6.88 KiB
+…adapters/rolesDTO.js  - 1,429 ms, 3.30 KiB
+…domain/rolesModel.js  - 1,543 ms, 0.91 KiB
+…presentation/users.module.css  - 975 ms, 26.01 KiB
+…application/useUsers.js  - 974 ms, 6.79 KiB
+…presentation/UserFormModal.jsx - 974 ms, 32.18 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+10/8/26, 10:10 p.m. about:blank
+about:blank 5/56
+
+===== PAGE 6 =====
+…pages/DashboardPage.jsx  - 489 ms, 113.30 KiB
+…pages/ClientPaymentsPanel.jsx  - 956 ms, 77.33 KiB
+…application/receiptAnalysis.service.js - 1,427 ms, 8.48 KiB
+…application/receiptAnalysis.parsers.js - 1,542 ms, 24.87 KiB
+…infrastructure/pedido.repository.js - 972 ms, 16.34 KiB
+…adapters/pedidoDTO.js  - 1,428 ms, 16.03 KiB
+…domain/pedidoModel.js  - 1,542 ms, 12.67 KiB
+…utils/requestError.js  - 1,427 ms, 2.76 KiB
+…application/useDashboardData.js - 924 ms, 4.22 KiB
+…infrastructure/dashboard.repository.js - 1,402 ms, 61.90 KiB
+…deps/recharts.js?v=57fd49b1  - 1,213 ms, 1,366.35 KiB
+…pages/DashboardPage.css  - 972 ms, 40.98 KiB
+…utils/designCoverage.js  - 972 ms, 11.99 KiB
+…utils/fechaFormato.js  - 939 ms, 6.64 KiB
+…pages/DesignsPage.jsx  - 608 ms, 2.80 KiB
+…presentation/DisenosPage.jsx  - 1,331 ms, 73.87 KiB
+…application/useDisenos.js  - 1,539 ms, 7.40 KiB
+…pages/ProductsPage.jsx  - 623 ms, 37.04 KiB
+…presentation/ProductModal.jsx - 1,326 ms, 48.77 KiB
+…domain/productDiscountRanges.js - 1,538 ms, 6.76 KiB
+…application/useProducts.js  - 1,323 ms, 6.27 KiB
+…infrastructure/product.repository.js - 1,535 ms, 9.36 KiB
+…infrastructure/category.repository.js - 1,323 ms, 6.90 KiB
+…pages/SalesPaymentsPage.jsx  - 662 ms, 2.84 KiB
+…presentation/AbonosPage.jsx  - 1,325 ms, 87.04 KiB
+…presentation/AbonoViewModal.jsx - 1,536 ms, 26.60 KiB
+…application/useAbonos.js  - 1,535 ms, 13.84 KiB
+…pages/RolesPage.jsx  - 488 ms, 33.07 KiB
+…presentation/RolePermissionsModal.jsx  - 907 ms, 44.45 KiB
+…infrastructure/permissions.repository.js - 1,403 ms, 4.98 KiB
+…utils/permissionLabels.js  - 1,395 ms, 16.67 KiB
+…TableActions/TableActions.jsx  - 884 ms, 16.30 KiB
+…TableActions/TableActions.css  - 1,377 ms, 4.37 KiB
+…presentation/roles.module.css  - 912 ms, 32.00 KiB
+…presentation/RoleFormModal.jsx  - 909 ms, 18.24 KiB
+…application/useRoles.js  - 885 ms, 6.43 KiB
+…utils/serverPagination.js  - 883 ms, 4.16 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+10/8/26, 10:10 p.m. about:blank
+about:blank 6/56
+
+===== PAGE 7 =====
+…hooks/useDebounce.js  - 883 ms, 1.69 KiB
+…components/Pagination.jsx  - 882 ms, 7.61 KiB
+…pages/ResetPasswordPage.jsx  - 451 ms, 17.52 KiB
+…deps/motion_react.js?v=57fd49b1 - 854 ms, 497.67 KiB
+…deps/react_jsx-runtime.js?v=57fd49b1 - 1,395 ms, 10.93 KiB
+…hooks/useAsyncLock.js  - 847 ms, 2.88 KiB
+…utils/userValidation.js  - 845 ms, 8.34 KiB
+…pages/PublicQuotePage.jsx  - 482 ms, 103.75 KiB
+…components/PublicQuoteProductEditor.jsx - 847 ms, 90.58 KiB
+…components/StampTariffSelector.jsx  - 1,392 ms, 19.30 KiB
+…domain/stampTariffs.js  - 1,360 ms, 10.33 KiB
+…deps/lucide-react.js?v=57fd49b1 - 896 ms, 803.40 KiB
+…infrastructure/publicQuote.repository.js - 880 ms, 7.45 KiB
+…pages/PublicQuotePage.css  - 878 ms, 34.62 KiB
+…domain/publicQuoteBuilder.js  - 878 ms, 41.02 KiB
+…components/PublicNavbar.jsx  - 856 ms, 44.83 KiB
+…components/PublicQuoteSummary.jsx - 856 ms, 31.88 KiB
+…hooks/useContextualBack.js  - 850 ms, 2.90 KiB
+…pages/TechniqueRatesPage.jsx  - 686 ms, 33.99 KiB
+…presentation/TariffModal.jsx  - 1,327 ms, 21.49 KiB
+…infrastructure/tariff.repository.js - 1,327 ms, 10.50 KiB
+…presentation/tariffs.module.css - 1,326 ms, 12.19 KiB
+…application/useTariffs.js  - 1,325 ms, 4.17 KiB
+…presentation/ClientDisenosPage.jsx  - 607 ms, 46.13 KiB
+…presentation/DisenosPage.css  - 1,324 ms, 27.95 KiB
+…presentation/DisenoViewModal.jsx - 1,322 ms, 45.37 KiB
+…pages/ProductCategoriesPage.jsx  - 610 ms, 28.55 KiB
+…presentation/CategoryModal.jsx - 1,322 ms, 15.75 KiB
+…application/useProductCategories.js - 1,321 ms, 4.84 KiB
+…pages/PedidosPage.jsx  - 559 ms, 61.76 KiB
+…presentation/PedidoDetailsModal.jsx  - 1,113 ms, 77.06 KiB
+…application/usePedidos.js  - 1,072 ms, 11.17 KiB
+…presentation/pedidos.module.css - 1,071 ms, 36.61 KiB
+…presentation/PedidoEditModal.jsx  - 1,069 ms, 12.18 KiB
+…pages/ClientsPage.jsx  - 503 ms, 49.98 KiB
+…hooks/useLatestListRequest.js  - 990 ms, 7.84 KiB
+…infrastructure/client.repository.js - 989 ms, 6.19 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+10/8/26, 10:10 p.m. about:blank
+about:blank 7/56
+
+===== PAGE 8 =====
+…pages/LandingPage.jsx  - 488 ms, 188.31 KiB
+…deps/react-icons_fa.js?v=57fd49b1 - 887 ms, 1,402.21 KiB
+…pages/LandingPage.css  - 882 ms, 51.83 KiB
+…utils/landingNavigation.js  - 880 ms, 2.09 KiB
+…DashboardLayout/DashboardLayout.jsx - 487 ms, 4.26 KiB
+…DashboardLayout/DashboardLayout.css - 879 ms, 12.75 KiB
+…DashboardLayout/Sidebar.jsx  - 879 ms, 27.16 KiB
+…routes/ProtectedRoute.jsx  - 442 ms, 6.01 KiB
+…routes/SIDEBAR_CONFIG.js  - 685 ms, 20.83 KiB
+…pages/SettingsPage.jsx  - 685 ms, 3.16 KiB
+…pages/DeliveryPage.jsx  - 607 ms, 3.22 KiB
+…pages/SalesCategoriesPage.jsx  - 572 ms, 3.26 KiB
+…pages/SalesReturnsPage.jsx  - 560 ms, 3.22 KiB
+…pages/PurchaseCategoriesPage.jsx  - 552 ms, 3.31 KiB
+…pages/SuppliesPage.jsx  - 552 ms, 3.18 KiB
+…pages/AccessPage.jsx  - 489 ms, 3.13 KiB
+…pages/EmployeesPage.jsx  - 488 ms, 3.17 KiB
+…pages/CreateClientPasswordPage.jsx  - 487 ms, 19.22 KiB
+…pages/LoginPage.jsx  - 481 ms, 26.83 KiB
+…deps/react-router-dom.js?v=57fd49b1 - 439 ms, 386.60 KiB
+…routes/paths.js  - 434 ms, 4.66 KiB
+…ConfirmDialog/ConfirmProvider.jsx - 278 ms, 15.75 KiB
+…ConfirmDialog/ConfirmDialog.css - 684 ms, 2.99 KiB
+…deps/sonner.js?v=57fd49b1  - 286 ms, 52.08 KiB
+…dist/styles.css  - 278 ms, 18.56 KiB
+/src/App.css  - 277 ms, 3.42 KiB
+…deps/react-dom_client.js?v=57fd49b1 - 276 ms, 802.04 KiB
+…deps/react-dom.js?v=57fd49b1 - 410 ms, 14.59 KiB
+…deps/react.js?v=57fd49b1  - 204 ms, 37.71 KiB
+…deps/chunk-C-Qwzh9l.js?v=57fd49b1 - 274 ms, 10.50 KiB
+…deps/react_jsx-dev-runtime.js?v=57fd49b1 - 207 ms, 10.63 KiB
+/src/index.css  - 206 ms, 21.11 KiB
+/css2?family=…  - 2,478 ms, 0.90 KiB
+/@vite/client  - 167 ms, 200.14 KiB
+…client/env.mjs  - 206 ms, 3.68 KiB
+/@react-refresh  - 166 ms, 109.56 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( f o n t s . g o o g l e a p i s . c o m )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+10/8/26, 10:10 p.m. about:blank
+about:blank 8/56
+
+===== PAGE 9 =====
+Preconnected origins
+preconnect hints help the browser establish a connection earlier in the page load, saving time when the first
+request for that origin is made. The following are the origins that the page preconnected to.
+no origins were preconnected
+Preconnect candidates
+Add preconnect hints to your most important origins, but try to use no more than 4.
+Improve image delivery —Est savings of 564 KiB
+Reducing the download time of images can improve the perceived load time of the page and LCP. Learn more about
+optimizing image sizeFCP LCP Unscored
+https://fonts.googleapis.com 120 ms
+unsplash.com 792.4 KiB 564.1 KiB
+/photo-174…-58594b6d742b?crop=… 380.8 KiB 310.6 KiB
+Using a modern image format (WebP, AVIF) or increasing the image
+compression could improve this image's download size. 288.7 KiB
+This image file is larger than it needs to be (1080x524) for its
+displayed dimensions (536x804). Use responsive images to reduce
+the image download size.
+90.8 KiB
+/photo-169…-b897fb9d7154?crop=… 195.3 KiB 125.2 KiB
+Using a modern image format (WebP, AVIF) or increasing the image
+compression could improve this image's download size. 103.2 KiB
+This image file is larger than it needs to be (1080x524) for its
+displayed dimensions (536x804). Use responsive images to reduce
+the image download size.
+46.6 KiB
+/photo-167…-4eea8fe93948?crop=… 147.0 KiB 94.2 KiB
+Using a modern image format (WebP, AVIF) or increasing the image
+compression could improve this image's download size. 54.9 KiB
+img.service-image
+( i m a g e s . u n s p l a s h . c o m )
+img.service-image
+( i m a g e s . u n s p l a s h . c o m )
+img.service-image
+( i m a g e s . u n s p l a s h . c o m )
+Origin Est LCP savings
+URL Resource
+Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 9/56
+
+===== PAGE 10 =====
+Layout shift culprits
+Layout shifts occur when elements move absent any user interaction. Investigate the causes of layout shifts, such as elements
+being added, removed, or their fonts changing as the page loads.CLS Unscored
+Optimize DOM size
+A large DOM can increase the duration of style calculations and layout reflows, impacting page responsiveness. A large DOM
+will also increase memory usage. Learn how to avoid an excessive DOM size. Unscored
+3rd parties
+3rd party code can significantly impact load performance. Reduce and defer loading of 3rd party code to prioritize your
+page's content.Unscored
+This image file is larger than it needs to be (1080x524) for its
+displayed dimensions (536x606). Use responsive images to reduce
+the image download size.
+62.6 KiB
+/photo-172…-44bf1de2617e?crop=… 69.2 KiB 34.1 KiB
+This image file is larger than it needs to be (1080x524) for its
+displayed dimensions (536x536). Use responsive images to reduce
+the image download size.
+34.1 KiB
+img.service-image
+( i m a g e s . u n s p l a s h . c o m )
+Total 0.001
+0.001
+div.landing-header-actions
+Total elements 484
+DOM depth 12
+Most children 10
+path
+div
+URL Resource
+Size Est Savings
+Element Layout shift score
+Statistic Element Value
+10/8/26, 10:10 p.m. about:blank
+about:blank 10/56
+
+===== PAGE 11 =====
+These insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.
+Google Fonts Cdn  1 KiB 0 ms
+/css2?family=… 1 KiB 0 ms
+unsplash.com 900 KiB 0 ms
+/photo-174…-58594b6d742b?crop=… 381 KiB 0 ms
+/photo-169…-b897fb9d7154?crop=… 196 KiB 0 ms
+/photo-167…-4eea8fe93948?crop=… 147 KiB 0 ms
+/photo-158…?crop=… 106 KiB 0 ms
+/photo-172…-44bf1de2617e?crop=… 70 KiB 0 ms
+brave.com 207 KiB 0 ms
+…NzQzNDQyMzAxJndp/ZHRoPTE0NDU 76 KiB 0 ms
+…NUVBRDg3RTI0MTQx/MTVGRUM3QTk5 62 KiB 0 ms
+…cmFmaWEtMS0xLnBu/Zw 36 KiB 0 ms
+…YWlzX2h5YnJpZCZ3/PTc0MCZxPTgw 33 KiB 0 ms
+( f o n t s . g o o g l e a p i s . c o m )
+( i m a g e s . u n s p l a s h . c o m )
+( i m a g e s . u n s p l a s h . c o m )
+( i m a g e s . u n s p l a s h . c o m )
+( i m a g e s . u n s p l a s h . c o m )
+( i m a g e s . u n s p l a s h . c o m )
+( i m g s . s e a r c h . b r a v e . c o m )
+( i m g s . s e a r c h . b r a v e . c o m )
+( i m g s . s e a r c h . b r a v e . c o m )
+( i m g s . s e a r c h . b r a v e . c o m )
+DIAGNOSTICS
+Minimize main-thread work —2.4 s
+Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps
+with this. Learn how to minimize main-thread workTBT Unscored
+Other 1,450 ms
+Script Evaluation 544 ms
+Style & Layout 374 ms
+Script Parsing & Compilation 25 ms
+Rendering 17 ms
+3rd party Transfer size Main thread time
+Category Time Spent
+10/8/26, 10:10 p.m. about:blank
+about:blank 11/56
+
+===== PAGE 12 =====
+Minify JavaScript —Est savings of 3,869 KiB
+Minifying JavaScript files can reduce payload sizes and script parse time. Learn how to minify JavaScript. FCP LCP
+Unscored
+Parse HTML & CSS 15 ms
+Garbage Collection 12 ms
+localhost 1st Party 8,231.5 KiB 3,868.6 KiB
+…deps/recharts.js?v=57fd49b1 1,366.0 KiB 393.9 KiB
+…deps/motion_react.js?v=57fd49b1 497.4 KiB 196.0 KiB
+/@vite/client 199.9 KiB 169.1 KiB
+…deps/lucide-react.js?v=57fd49b1 803.1 KiB 130.4 KiB
+…presentation/QuoteFormModal.jsx 174.8 KiB 127.5 KiB
+…pages/LandingPage.jsx 188.0 KiB 127.2 KiB
+…deps/react-dom_client.js?v=57fd49b1 801.7 KiB 125.3 KiB
+/@react-refresh 109.3 KiB 99.3 KiB
+…presentation/QuoteProposalModal.jsx 138.9 KiB 97.0 KiB
+…presentation/QuoteDetailsModal.jsx 133.2 KiB 90.1 KiB
+…presentation/PedidoExpedientePage.jsx 126.6 KiB 84.0 KiB
+…pages/DashboardPage.jsx 113.0 KiB 73.0 KiB
+…pages/PublicQuotePage.jsx 103.5 KiB 72.9 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+Category Time Spent
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 12/56
+
+===== PAGE 13 =====
+…deps/react-router-dom.js?v=57fd49b1 386.3 KiB 64.8 KiB
+…components/PublicQuoteProductEditor.jsx 90.3 KiB 61.7 KiB
+…presentation/AbonosPage.jsx 86.8 KiB 59.4 KiB
+…presentation/DisenoModal.jsx 80.9 KiB 55.8 KiB
+…pages/ClientPaymentsPanel.jsx 77.0 KiB 51.6 KiB
+…presentation/PedidoDetailsModal.jsx 76.8 KiB 51.2 KiB
+…presentation/DisenosPage.jsx 73.6 KiB 49.7 KiB
+…presentation/ReviewConfirmAbonoModal.jsx 72.1 KiB 47.3 KiB
+…infrastructure/dashboard.repository.js 61.6 KiB 45.1 KiB
+…presentation/ServiceFormModal.jsx 62.6 KiB 43.9 KiB
+…pages/PedidosPage.jsx 61.5 KiB 41.8 KiB
+…presentation/AbonoModal.jsx 61.5 KiB 41.4 KiB
+…pages/QuotesPage.jsx 58.1 KiB 40.0 KiB
+…presentation/ComprasPage.jsx 56.7 KiB 37.6 KiB
+…deps/axios.js?v=57fd49b1 104.2 KiB 36.4 KiB
+…presentation/VentasPage.jsx 54.3 KiB 35.6 KiB
+…domain/quoteProposal.js 46.3 KiB 34.1 KiB
+…presentation/ProductModal.jsx 48.5 KiB 33.1 KiB
+…pages/ClientsPage.jsx 49.7 KiB 32.7 KiB
+…components/PublicNavbar.jsx 44.5 KiB 30.6 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 13/56
+
+===== PAGE 14 =====
+…presentation/ClientDisenosPage.jsx 45.8 KiB 30.6 KiB
+…presentation/RolePermissionsModal.jsx 44.2 KiB 30.2 KiB
+…domain/publicQuoteBuilder.js 40.7 KiB 29.9 KiB
+…presentation/ProductionQueuePage.jsx 45.0 KiB 29.8 KiB
+…presentation/ProveedoresPage.jsx 44.9 KiB 29.4 KiB
+…presentation/DisenoViewModal.jsx 45.1 KiB 28.8 KiB
+…pages/UsersPage.jsx 42.6 KiB 28.5 KiB
+…presentation/CompraModal.jsx 37.3 KiB 24.9 KiB
+…pages/ProductsPage.jsx 36.8 KiB 24.5 KiB
+…pages/ServicesPage.jsx 34.2 KiB 22.4 KiB
+…pages/TechniqueRatesPage.jsx 33.7 KiB 21.9 KiB
+…presentation/UserFormModal.jsx 31.9 KiB 21.6 KiB
+…pages/RolesPage.jsx 32.8 KiB 21.3 KiB
+…presentation/ServiceDetailsModal.jsx 32.5 KiB 21.0 KiB
+…components/PublicQuoteSummary.jsx 31.6 KiB 20.2 KiB
+…adapters/cotizacionDTO.js 24.5 KiB 18.3 KiB
+…application/receiptAnalysis.parsers.js 24.6 KiB 18.3 KiB
+…pages/ProductCategoriesPage.jsx 28.3 KiB 18.3 KiB
+…DashboardLayout/Sidebar.jsx 26.9 KiB 17.9 KiB
+…pages/LoginPage.jsx 26.5 KiB 17.3 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 14/56
+
+===== PAGE 15 =====
+…infrastructure/diseno.repository.js 22.8 KiB 17.2 KiB
+…routes/AppRouter.jsx 29.1 KiB 17.0 KiB
+…presentation/AbonoViewModal.jsx 26.3 KiB 16.2 KiB
+…infrastructure/abono.repository.js 21.6 KiB 16.2 KiB
+…routes/SIDEBAR_CONFIG.js 20.5 KiB 15.2 KiB
+…domain/designRequirement.js 20.6 KiB 14.7 KiB
+…pages/ProfilePage.jsx 22.0 KiB 14.3 KiB
+…presentation/ProveedorModal.jsx 21.5 KiB 13.7 KiB
+…domain/cotizacionesModel.js 18.2 KiB 13.3 KiB
+…presentation/TariffModal.jsx 21.2 KiB 13.1 KiB
+…presentation/CompraViewModal.jsx 21.2 KiB 13.0 KiB
+…infrastructure/quote.repository.js 16.6 KiB 12.5 KiB
+…components/StampTariffSelector.jsx 19.0 KiB 12.3 KiB
+…presentation/QuoteResponseModal.jsx 19.9 KiB 12.3 KiB
+…presentation/DesignClientResponseModal.jsx 19.6 KiB 12.2 KiB
+…presentation/RegisterClientDesignModal.jsx 20.0 KiB 12.2 KiB
+…infrastructure/pedido.repository.js 16.1 KiB 12.2 KiB
+…pages/CreateClientPasswordPage.jsx 18.9 KiB 11.9 KiB
+…utils/permissionLabels.js 16.4 KiB 11.8 KiB
+…adapters/pedidoDTO.js 15.7 KiB 11.8 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 15/56
+
+===== PAGE 16 =====
+…presentation/QuoteVersionsModal.jsx 19.3 KiB 11.7 KiB
+…presentation/RoleFormModal.jsx 18.0 KiB 11.4 KiB
+…adapters/abono.dto.js 15.2 KiB 11.0 KiB
+…pages/ResetPasswordPage.jsx 17.2 KiB 10.8 KiB
+…TableActions/TableActions.jsx 16.0 KiB 10.3 KiB
+…application/useAbonos.js 13.6 KiB 10.0 KiB
+…ConfirmDialog/ConfirmProvider.jsx 15.5 KiB 9.6 KiB
+…presentation/CategoryModal.jsx 15.5 KiB 9.5 KiB
+…domain/serviceTariffs.js 12.6 KiB 9.4 KiB
+…infrastructure/compra.repository.js 12.2 KiB 9.2 KiB
+…presentation/DesignOriginModal.jsx 15.3 KiB 9.2 KiB
+…domain/pedidoModel.js 12.4 KiB 9.1 KiB
+…deps/chunk-C-Qwzh9l.js?v=57fd49b1 10.2 KiB 8.6 KiB
+…application/useQuotes.js 11.2 KiB 8.5 KiB
+…presentation/ReceiptPreviewModal.jsx 14.2 KiB 8.4 KiB
+…store/AuthContext.jsx 13.0 KiB 8.3 KiB
+…utils/designCoverage.js 11.7 KiB 8.3 KiB
+…application/usePedidos.js 10.9 KiB 8.2 KiB
+…infrastructure/productionQueue.repository.js 10.6 KiB 7.9 KiB
+…infrastructure/tariff.repository.js 10.2 KiB 7.7 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 16/56
+
+===== PAGE 17 =====
+…domain/stampTariffs.js 10.0 KiB 7.5 KiB
+…infrastructure/user.repository.js 9.4 KiB 7.3 KiB
+…utils/formatters.js 9.8 KiB 7.3 KiB
+…infrastructure/venta.repository.js 9.7 KiB 7.3 KiB
+…presentation/quoteWorkflow.utils.js 9.9 KiB 7.2 KiB
+…adapters/diseno.dto.js 10.0 KiB 7.2 KiB
+…presentation/PedidoEditModal.jsx 11.9 KiB 6.8 KiB
+…deps/sonner.js?v=57fd49b1 51.8 KiB 6.8 KiB
+…infrastructure/product.repository.js 9.1 KiB 6.8 KiB
+…services/authService.js 8.6 KiB 6.6 KiB
+…services/apiService.js 8.7 KiB 6.6 KiB
+…adapters/proposalDTO.js 8.3 KiB 6.2 KiB
+…application/receiptAnalysis.service.js 8.2 KiB 6.1 KiB
+…deps/react.js?v=57fd49b1 37.4 KiB 6.1 KiB
+…presentation/ProveedorViewModal.jsx 11.0 KiB 6.0 KiB
+…utils/userValidation.js 8.1 KiB 6.0 KiB
+…domain/abono.model.js 8.0 KiB 5.8 KiB
+…hooks/useLatestListRequest.js 7.6 KiB 5.6 KiB
+…utils/permissions.js 7.5 KiB 5.6 KiB
+…infrastructure/publicQuote.repository.js 7.2 KiB 5.5 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 17/56
+
+===== PAGE 18 =====
+…adapters/compra.dto.js 7.2 KiB 5.3 KiB
+…application/useCompras.js 7.1 KiB 5.3 KiB
+…application/useDisenos.js 7.1 KiB 5.2 KiB
+…infrastructure/tecnicas.repository.js 6.9 KiB 5.2 KiB
+…infrastructure/proveedor.repository.js 6.9 KiB 5.1 KiB
+…infrastructure/roles.repository.js 6.6 KiB 5.1 KiB
+…application/useUsers.js 6.5 KiB 5.0 KiB
+…infrastructure/category.repository.js 6.6 KiB 5.0 KiB
+…utils/fechaFormato.js 6.4 KiB 4.9 KiB
+…domain/productDiscountRanges.js 6.5 KiB 4.9 KiB
+…application/useRoles.js 6.1 KiB 4.7 KiB
+…infrastructure/client.repository.js 5.9 KiB 4.5 KiB
+…application/useProducts.js 6.0 KiB 4.4 KiB
+…components/Pagination.jsx 7.3 KiB 4.2 KiB
+…adapters/tecnicasDTO.js 4.3 KiB 3.6 KiB
+…infrastructure/permissions.repository.js 4.7 KiB 3.6 KiB
+…domain/diseno.model.js 4.7 KiB 3.4 KiB
+…application/useProductCategories.js 4.6 KiB 3.4 KiB
+…application/useTecnicas.js 4.5 KiB 3.3 KiB
+…application/useProveedores.js 4.5 KiB 3.3 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 18/56
+
+===== PAGE 19 =====
+Reduce unused JavaScript —Est savings of 4,188 KiB
+Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity.
+Learn how to reduce unused JavaScript. FCP LCP Unscored
+…routes/paths.js 4.4 KiB 3.0 KiB
+…application/useDashboardData.js 3.9 KiB 3.0 KiB
+…utils/serverPagination.js 3.9 KiB 3.0 KiB
+…client/env.mjs 3.4 KiB 2.9 KiB
+…application/useTariffs.js 3.9 KiB 2.9 KiB
+…routes/ProtectedRoute.jsx 5.7 KiB 2.9 KiB
+…adapters/proveedor.dto.js 3.8 KiB 2.9 KiB
+…adapters/rolesDTO.js 3.0 KiB 2.5 KiB
+…adapters/venta.dto.js 3.3 KiB 2.5 KiB
+…application/useVentas.js 3.2 KiB 2.4 KiB
+…application/useProductionQueue.js 3.0 KiB 2.2 KiB
+…hooks/usePagination.js 2.8 KiB 2.1 KiB
+…deps/react-dom.js?v=57fd49b1 14.3 KiB 2.0 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+localhost 1st Party 7,408.9 KiB 4,187.8 KiB
+…deps/react-icons_fa.js?v=57fd49b1 1,401.9 KiB 1,372.8 KiB
+…fa/index.mjs 1,340.9 KiB 1,337.9 KiB
+…deps/recharts.js?v=57fd49b1 1,366.0 KiB 996.8 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 19/56
+
+===== PAGE 20 =====
+…recharts/es6/state/selectors/axisSelectors.js 42.9 KiB 31.9 KiB
+…recharts/es6/chart/Sankey.js 28.8 KiB 26.4 KiB
+…@reduxjs/toolkit/dist/redux-toolkit.modern.mjs 36.0 KiB 24.8 KiB
+…recharts/es6/chart/Treemap.js 25.4 KiB 22.8 KiB
+…recharts/es6/cartesian/Brush.js 22.1 KiB 21.8 KiB
+…deps/react-dom_client.js?v=57fd49b1 801.7 KiB 344.5 KiB
+…react-dom/cjs/react-dom-client.development.js 727.2 KiB 315.5 KiB
+…scheduler/cjs/scheduler.development.js 8.1 KiB 1.9 KiB
+…deps/react-router-dom.js?v=57fd49b1 386.3 KiB 334.9 KiB
+…react-router/dist/development/chunk-5KNZJZUH.mjs 276.9 KiB 239.1 KiB
+…react-router/dist/development/chunk-RMD3H4O3.mjs 58.9 KiB 58.2 KiB
+…react-router/dist/development/dom-export.mjs 5.4 KiB 5.3 KiB
+…set-cookie-parser/lib/set-cookie.js 4.2 KiB 4.0 KiB
+…cookie/dist/index.js 3.9 KiB 3.2 KiB
+…deps/motion_react.js?v=57fd49b1 497.3 KiB 276.4 KiB
+…motion-dom/dist/es/projection/node/create-projection-node.mjs 35.0 KiB 29.2 KiB
+…framer-motion/dist/es/gestures/drag/VisualElementDragControls.mjs 12.0 KiB 12.0 KiB
+…motion-dom/dist/es/animation/generators/spring.mjs 8.4 KiB 7.9 KiB
+…framer-motion/dist/es/animation/sequence/create.mjs 6.9 KiB 6.8 KiB
+…motion-dom/dist/es/layout/LayoutAnimationBuilder.mjs 6.3 KiB 6.2 KiB
+…presentation/QuoteFormModal.jsx 174.8 KiB 72.5 KiB
+… 39.3 KiB 37.4 KiB
+…presentation/QuoteDetailsModal.jsx 133.2 KiB 61.3 KiB
+… 33.6 KiB 32.6 KiB
+…presentation/QuoteProposalModal.jsx 138.8 KiB 61.0 KiB
+… 32.3 KiB 30.9 KiB
+…presentation/PedidoExpedientePage.jsx 126.6 KiB 52.2 KiB
+… 34.4 KiB 29.9 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 20/56
+
+===== PAGE 21 =====
+…pages/DashboardPage.jsx 113.0 KiB 48.3 KiB
+… 29.4 KiB 26.0 KiB
+…components/PublicQuoteProductEditor.jsx 90.2 KiB 39.4 KiB
+… 21.6 KiB 20.5 KiB
+…presentation/PedidoDetailsModal.jsx 76.8 KiB 36.4 KiB
+… 18.1 KiB 16.6 KiB
+…pages/PublicQuotePage.jsx 103.4 KiB 36.0 KiB
+… 27.3 KiB 25.0 KiB
+…deps/axios.js?v=57fd49b1 104.2 KiB 35.2 KiB
+…lib/adapters/fetch.js 8.9 KiB 6.8 KiB
+…lib/helpers/toFormData.js 3.7 KiB 3.5 KiB
+…lib/utils.js 11.0 KiB 2.9 KiB
+…lib/core/AxiosError.js 3.4 KiB 2.6 KiB
+…lib/core/AxiosHeaders.js 6.6 KiB 2.0 KiB
+…presentation/ReviewConfirmAbonoModal.jsx 72.1 KiB 34.9 KiB
+… 18.0 KiB 17.1 KiB
+…presentation/AbonosPage.jsx 86.8 KiB 33.8 KiB
+… 22.0 KiB 18.0 KiB
+…pages/ClientPaymentsPanel.jsx 77.0 KiB 32.4 KiB
+… 20.3 KiB 18.7 KiB
+…presentation/DisenoModal.jsx 80.9 KiB 32.3 KiB
+… 20.0 KiB 18.2 KiB
+…deps/sonner.js?v=57fd49b1 51.8 KiB 28.8 KiB
+… 48.4 KiB 26.4 KiB
+…presentation/DisenosPage.jsx 73.6 KiB 27.7 KiB
+… 19.4 KiB 15.6 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 21/56
+
+===== PAGE 22 =====
+Minify CSS —Est savings of 5 KiB
+Minifying CSS files can reduce network payload sizes. Learn how to minify CSS. FCP LCP Unscored
+…deps/lucide-react.js?v=57fd49b1 803.1 KiB 27.4 KiB
+…presentation/AbonoModal.jsx 61.5 KiB 25.9 KiB
+… 15.3 KiB 13.8 KiB
+…pages/PedidosPage.jsx 61.5 KiB 24.1 KiB
+… 15.6 KiB 14.1 KiB
+…presentation/ServiceFormModal.jsx 62.6 KiB 23.8 KiB
+… 14.9 KiB 13.7 KiB
+…presentation/VentasPage.jsx 54.3 KiB 22.7 KiB
+… 13.5 KiB 10.4 KiB
+…pages/ClientsPage.jsx 49.7 KiB 21.9 KiB
+… 12.2 KiB 10.8 KiB
+…presentation/ComprasPage.jsx 56.7 KiB 21.9 KiB
+… 15.0 KiB 11.8 KiB
+/@vite/client 199.9 KiB 21.1 KiB
+… 37.7 KiB 21.1 KiB
+…pages/QuotesPage.jsx 58.1 KiB 20.8 KiB
+… 15.0 KiB 12.9 KiB
+…presentation/DisenoViewModal.jsx 45.1 KiB 20.7 KiB
+… 11.8 KiB 10.4 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size Est Savings
+10/8/26, 10:10 p.m. about:blank
+about:blank 22/56
+
+===== PAGE 23 =====
+ Show 3rd-party resources (2)
+Reduce unused CSS —Est savings of 14 KiB
+Reduce unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by
+network activity. Learn how to reduce unused CSS. FCP LCP Unscored
+Avoid enormous network payloads —Total size was 11,510 KiB
+Large network payloads cost users real money and are highly correlated with long load times. Learn how to reduce payload
+sizes. Unscored
+/* Landing Page - estilos personalizados (responsive) */ #inicio, #como-funciona, #servicios,
+#com… 9.0 KiB 2.5 KiB
+/* ============================================================ client-quotes.module.css —
+Módulo… 14.6 KiB 2.4 KiB
+/* ============================================================ client-quotes.module.css —
+Módulo… 14.6 KiB 14.5 KiB
+localhost 1st Party 5,646.7 KiB
+…deps/react-icons_fa.js?v=57fd49b1 1,402.2 KiB
+…deps/recharts.js?v=57fd49b1 1,366.3 KiB
+…deps/lucide-react.js?v=57fd49b1 803.4 KiB
+…deps/react-dom_client.js?v=57fd49b1 802.0 KiB
+…deps/motion_react.js?v=57fd49b1 497.7 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer
+Size
+Est
+Savings
+URL Transfer
+Size
+Est
+Savings
+URL Transfer Size
+10/8/26, 10:10 p.m. about:blank
+about:blank 23/56
+
+===== PAGE 24 =====
+Avoid long main-thread tasks —4 long tasks found
+Lists the longest tasks on the main thread, useful for identifying worst contributors to input delay. Learn how to avoid long
+main-thread tasksTBT Unscored
+User Timing marks and measures —38 user timings
+Consider instrumenting your app with the User Timing API to measure your app's real-world performance during key user
+experiences. Learn more about User Timing marks. Unscored
+…deps/react-router-dom.js?v=57fd49b1 386.6 KiB
+/@vite/client 200.1 KiB
+…pages/LandingPage.jsx 188.3 KiB
+unsplash.com 576.7 KiB
+/photo-174…-58594b6d742b?crop=… 381.1 KiB
+/photo-169…-b897fb9d7154?crop=… 195.6 KiB
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( i m a g e s . u n s p l a s h . c o m )
+( i m a g e s . u n s p l a s h . c o m )
+localhost 1st Party 578 ms
+…deps/react-dom_client.js?v=57fd49b1 5,514 ms 303 ms
+…deps/react-dom_client.js?v=57fd49b1 5,817 ms 173 ms
+…store/AuthContext.jsx 10,234 ms 102 ms
+Unattributable 444 ms
+Unattributable 407 ms 444 ms
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Transfer Size
+URL Start Time Duration
+10/8/26, 10:10 p.m. about:blank
+about:blank 24/56
+
+===== PAGE 25 =====
+Update Blocked Measure 2,149.80 ms 31.70 ms
+Mount Measure 2,184.20 ms 253.50 ms
+Mount Measure 2,445.60 ms 8.90 ms
+Mount Measure 2,457.40 ms 8.20 ms
+Mount Measure 2,853.70 ms 16.30 ms
+Cascading Update Measure 2,882.90 ms 45.90 ms
+ Link Measure 2,945.00 ms 0.70 ms
+ Link Measure 2,945.70 ms 0.80 ms
+ Link Measure 2,946.50 ms 0.30 ms
+ Link Measure 2,946.80 ms 0.40 ms
+ Link Measure 2,947.20 ms 0.30 ms
+ Link Measure 2,947.50 ms 0.30 ms
+ Link Measure 2,947.80 ms 0.50 ms
+Mount Measure 2,948.40 ms 0.30 ms
+ Link Measure 2,951.00 ms 0.40 ms
+ Link Measure 2,951.40 ms 0.40 ms
+ Link Measure 2,951.80 ms 0.30 ms
+ Link Measure 2,952.10 ms 0.50 ms
+ Link Measure 2,952.60 ms 0.30 ms
+ Link Measure 2,952.90 ms 0.30 ms
+ Link Measure 2,953.20 ms 1.30 ms
+Name Type Start Time Duration
+10/8/26, 10:10 p.m. about:blank
+about:blank 25/56
+
+===== PAGE 26 =====
+More information about the performance of your application. These numbers don't directly affect the Performance score.
+Mount Measure 2,954.50 ms 0.20 ms
+Unmount Measure 2,956.30 ms 0.10 ms
+Update Measure 4,862.40 ms 0.90 ms
+ Link Measure 4,871.00 ms 0.30 ms
+ Link Measure 4,871.30 ms 0.40 ms
+ Link Measure 4,871.70 ms 0.20 ms
+ Link Measure 4,871.90 ms 0.20 ms
+ Link Measure 4,872.10 ms 0.20 ms
+ Link Measure 4,872.30 ms 0.30 ms
+ Link Measure 4,872.60 ms 0.10 ms
+ Link Measure 4,874.10 ms 0.20 ms
+ Link Measure 4,874.30 ms 0.10 ms
+ Link Measure 4,874.40 ms 0.20 ms
+ Link Measure 4,874.60 ms 0.10 ms
+ Link Measure 4,874.70 ms 0.20 ms
+ Link Measure 4,874.90 ms 0.20 ms
+ Link Measure 4,875.10 ms 0.10 ms
+PASSED AUDITS (14) Hide
+Use efficient cache lifetimes
+Name Type Start Time Duration
+10/8/26, 10:10 p.m. about:blank
+about:blank 26/56
+
+===== PAGE 27 =====
+A long cache lifetime can speed up repeat visits to your page. Learn more about caching. FCP LCP Unscored
+Document request latency
+Your first network request is the most important. Reduce its latency by avoiding redirects, ensuring a fast server response,
+and enabling text compression.FCP LCP Unscored
+Avoids redirects
+Server responds quickly (observed 4 ms)
+Applies text compression
+Duplicated JavaScript
+Remove large, duplicate JavaScript modules from bundles to reduce unnecessary bytes consumed by network activity.FCP
+LCP Unscored
+Font display
+Consider setting font-display to swap or optional to ensure text is consistently visible. swap can be further optimized
+to mitigate layout shifts with font metric overrides. Unscored
+Forced reflow
+A forced reflow occurs when JavaScript queries geometric properties (such as offsetWidth) after styles have been
+invalidated by a change to the DOM state. This can result in poor performance. Learn more about forced reflows and
+possible mitigations.Unscored
+INP breakdown
+Start investigating how to improve INP by looking at the longest subpart.Unscored
+Legacy JavaScript
+Polyfills and transforms enable older browsers to use new JavaScript features. However, many aren't necessary for modern
+browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must
+support older browsers. Learn why most sites can deploy ES6+ code without transpilingFCP LCP Unscored
+Modern HTTP
+HTTP/2 and HTTP/3 offer many benefits over HTTP/1.1, such as multiplexing. Learn more about using modern HTTP. FCP
+LCP Unscored
+10/8/26, 10:10 p.m. about:blank
+about:blank 27/56
+
+===== PAGE 28 =====
+Render-blocking requests
+Requests are blocking the page's initial render, which may delay LCP. Deferring or inlining can move these network requests
+out of the critical path.FCP LCP Unscored
+Optimize viewport for mobile
+Tap interactions may be delayed by up to 300 ms if the viewport is not optimized for mobile.Unscored
+JavaScript execution time —0.5 s
+Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps
+with this. Learn how to reduce Javascript execution time. TBT Unscored
+Avoid non-composited animations
+Animations which are not composited can be janky and increase CLS. Learn how to avoid non-composited animationsCLS
+Unscored
+Image elements have explicit width and height
+meta
+Unattributable 1,197 ms 7 ms 0 ms
+Unattributable 1,197 ms 7 ms 0 ms
+localhost 1st Party 1,087 ms 529 ms 6 ms
+…deps/react-dom_client.js?v=57fd49b1 459 ms 383 ms 1 ms
+http://localhost:5173 458 ms 21 ms 4 ms
+…store/AuthContext.jsx 95 ms 92 ms 0 ms
+…deps/motion_react.js?v=57fd49b1 76 ms 33 ms 1 ms
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Total CPU
+Time Script Evaluation Script Parse
+10/8/26, 10:10 p.m. about:blank
+about:blank 28/56
+
+===== PAGE 29 =====
+These checks highlight opportunities to improve the accessibility of your
+web app. Automatic detection can only detect a subset of issues and does
+not guarantee the accessibility of your web app, so manual testing is also
+encouraged.
+Set an explicit width and height on image elements to reduce layout shifts and improve CLS. Learn how to set image
+dimensionsCLS Unscored
+Page didn't prevent back/forward cache restoration
+Many navigations are performed by going back to a previous page, or forwards again. The back/forward cache (bfcache) can
+speed up these return navigations. Learn more about the bfcacheUnscored
+Accessibility
+98
+NAVIGATION
+Heading elements are not in a sequentially-descending order
+Properly ordered headings that do not skip levels convey the semantic structure of the page, making it easier to navigate
+and understand when using assistive technologies. Learn more about heading order.
+These are opportunities to improve keyboard navigation in your application.
+h4.comparative-pros-title
+ADDITIONAL ITEMS TO MANUALLY CHECK (10) Hide
+Interactive controls are keyboard focusable
+Custom interactive controls are keyboard focusable and display a focus indicator. Learn how to make custom controls
+focusable. Unscored
+Interactive elements indicate their purpose and state
+Failing Elements
+10/8/26, 10:10 p.m. about:blank
+about:blank 29/56
+
+===== PAGE 30 =====
+Interactive elements, such as links and buttons, should indicate their state and be distinguishable from non-interactive
+elements. Learn how to decorate interactive elements with affordance hints. Unscored
+The page has a logical tab order
+Tabbing through the page follows the visual layout. Users cannot focus elements that are offscreen. Learn more about logical
+tab ordering. Unscored
+Visual order on the page follows DOM order
+DOM order matches the visual order, improving navigation for assistive technology. Learn more about DOM and visual
+ordering. Unscored
+User focus is not accidentally trapped in a region
+A user can tab into and out of any control or region without accidentally trapping their focus. Learn how to avoid focus
+traps. Unscored
+The user's focus is directed to new content added to the page
+If new content, such as a dialog, is added to the page, the user's focus is directed to it. Learn how to direct focus to new
+content. Unscored
+HTML5 landmark elements are used to improve navigation
+Landmark elements (<main>, <nav>, etc.) are used to improve the keyboard navigation of the page for assistive technology.
+Learn more about landmark elements. Unscored
+Offscreen content is hidden from assistive technology
+Offscreen content is hidden with display: none or aria-hidden=true. Learn how to properly hide offscreen content.
+Unscored
+Custom controls have associated labels
+Custom interactive controls have associated labels, provided by aria-label or aria-labelledby. Learn more about custom
+controls and labels. Unscored
+Custom controls have ARIA roles
+Custom interactive controls have appropriate ARIA roles. Learn how to add roles to custom controls. Unscored
+10/8/26, 10:10 p.m. about:blank
+about:blank 30/56
+
+===== PAGE 31 =====
+These items address areas which an automated testing tool cannot cover. Learn more in our guide on conducting an accessibility
+review.
+PASSED AUDITS (21) Hide
+[aria-*] attributes match their roles
+Each ARIA role supports a specific subset of aria-* attributes. Mismatching these invalidates the aria-* attributes. Learn
+how to match ARIA attributes to their roles.
+[aria-hidden="true"] is not present on the document <body>
+Assistive technologies, like screen readers, work inconsistently when aria-hidden="true" is set on the document
+<body>. Learn how aria-hidden affects the document body.
+[aria-*] attributes have valid values
+Assistive technologies, like screen readers, can't interpret ARIA attributes with invalid values. Learn more about valid values
+for ARIA attributes.
+[aria-*] attributes are valid and not misspelled
+Assistive technologies, like screen readers, can't interpret ARIA attributes with invalid names. Learn more about valid ARIA
+attributes.
+Buttons have an accessible name
+When a button doesn't have an accessible name, screen readers announce it as "button", making it unusable for users who
+rely on screen readers. Learn how to make buttons more accessible.
+Image elements have [alt] attributes
+Informative elements should aim for short, descriptive alternate text. Decorative elements can be ignored with an empty alt
+attribute. Learn more about the alt attribute.
+Form elements have associated labels
+Labels ensure that form controls are announced properly by assistive technologies, like screen readers. Learn more about
+form element labels.
+[user-scalable="no"] is not used in the <meta name="viewport"> element and the [maximum-scale] attribute is not less than 5.
+10/8/26, 10:10 p.m. about:blank
+about:blank 31/56
+
+===== PAGE 32 =====
+Disabling zooming is problematic for users with low vision who rely on screen magnification to properly see the contents of
+a web page. Learn more about the viewport meta tag.
+ARIA attributes are used as specified for the element's role
+Some ARIA attributes are only allowed on an element under certain conditions. Learn more about conditional ARIA
+attributes.
+[aria-hidden="true"] elements do not contain focusable descendents
+Focusable descendents within an [aria-hidden="true"] element prevent those interactive elements from being
+available to users of assistive technologies like screen readers. Learn how aria-hidden affects focusable elements.
+Elements use only permitted ARIA attributes
+Using ARIA attributes in roles where they are prohibited can mean that important information is not communicated to users
+of assistive technologies. Learn more about prohibited ARIA roles.
+Background and foreground colors have a sufficient contrast ratio
+Low-contrast text is difficult or impossible for many users to read. Learn how to provide sufficient color contrast.
+Document has a <title> element
+The title gives screen reader users an overview of the page, and search engine users rely on it heavily to determine if a page
+is relevant to their search. Learn more about document titles.
+<html> element has a [lang] attribute
+If a page doesn't specify a lang attribute, a screen reader assumes that the page is in the default language that the user
+chose when setting up the screen reader. If the page isn't actually in the default language, then the screen reader might not
+announce the page's text correctly. Learn more about the lang attribute.
+<html> element has a valid value for its [lang] attribute
+Specifying a valid BCP 47 language helps screen readers announce text properly. Learn how to use the lang attribute.
+Links have a discernible name
+Link text (and alternate text for images, when used as links) that is discernible, unique, and focusable improves the
+navigation experience for screen reader users. Learn how to make links accessible.
+10/8/26, 10:10 p.m. about:blank
+about:blank 32/56
+
+===== PAGE 33 =====
+Lists contain only <li> elements and script supporting elements (<script> and <template>).
+Screen readers have a specific way of announcing lists. Ensuring proper list structure aids screen reader output. Learn more
+about proper list structure.
+List items (<li>) are contained within <ul>, <ol> or <menu> parent elements
+Screen readers require list items (<li>) to be contained within a parent <ul>, <ol> or <menu> to be announced properly.
+Learn more about proper list structure.
+No element has a [tabindex] value greater than 0
+A value greater than 0 implies an explicit navigation ordering. Although technically valid, this often creates frustrating
+experiences for users who rely on assistive technologies. Learn more about the tabindex attribute.
+Touch targets have sufficient size and spacing.
+Touch targets with sufficient size and spacing help users who may have difficulty targeting small controls to activate the
+targets. Learn more about touch targets.
+Document has a main landmark.
+One main landmark helps screen reader users navigate a web page. Learn more about landmarks.
+NOT APPLICABLE (41) Hide
+[accesskey] values are unique
+Access keys let users quickly focus a part of the page. For proper navigation, each access key must be unique. Learn more
+about access keys. Unscored
+button, link, and menuitem elements have accessible names
+When an element doesn't have an accessible name, screen readers announce it with a generic name, making it unusable for
+users who rely on screen readers. Learn how to make command elements more accessible. Unscored
+Deprecated ARIA roles were not used
+Deprecated ARIA roles may not be processed correctly by assistive technology. Learn more about deprecated ARIA roles.
+Unscored
+10/8/26, 10:10 p.m. about:blank
+about:blank 33/56
+
+===== PAGE 34 =====
+Elements with role="dialog" or role="alertdialog" have accessible names.
+ARIA dialog elements without accessible names may prevent screen readers users from discerning the purpose of these
+elements. Learn how to make ARIA dialog elements more accessible. Unscored
+ARIA input fields have accessible names
+When an input field doesn't have an accessible name, screen readers announce it with a generic name, making it unusable
+for users who rely on screen readers. Learn more about input field labels. Unscored
+ARIA meter elements have accessible names
+When a meter element doesn't have an accessible name, screen readers announce it with a generic name, making it
+unusable for users who rely on screen readers. Learn how to name meter elements. Unscored
+ARIA progressbar elements have accessible names
+When a progressbar element doesn't have an accessible name, screen readers announce it with a generic name, making it
+unusable for users who rely on screen readers. Learn how to label progressbar elements. Unscored
+[role]s have all required [aria-*] attributes
+Some ARIA roles have required attributes that describe the state of the element to screen readers. Learn more about roles
+and required attributes. Unscored
+Elements with an ARIA [role] that require children to contain a specific [role] have all required children.
+Some ARIA parent roles must contain specific child roles to perform their intended accessibility functions. Learn more about
+roles and required children elements. Unscored
+[role]s are contained by their required parent element
+Some ARIA child roles must be contained by specific parent roles to properly perform their intended accessibility functions.
+Learn more about ARIA roles and required parent element. Unscored
+[role] values are valid
+ARIA roles must have valid values in order to perform their intended accessibility functions. Learn more about valid ARIA
+roles. Unscored
+Elements with the role=text attribute do not have focusable descendents.
+10/8/26, 10:10 p.m. about:blank
+about:blank 34/56
+
+===== PAGE 35 =====
+Adding role=text around a text node split by markup enables VoiceOver to treat it as one phrase, but the element's
+focusable descendents will not be announced. Learn more about the role=text attribute. Unscored
+ARIA toggle fields have accessible names
+When a toggle field doesn't have an accessible name, screen readers announce it with a generic name, making it unusable
+for users who rely on screen readers. Learn more about toggle fields. Unscored
+ARIA tooltip elements have accessible names
+When a tooltip element doesn't have an accessible name, screen readers announce it with a generic name, making it
+unusable for users who rely on screen readers. Learn how to name tooltip elements. Unscored
+ARIA treeitem elements have accessible names
+When a treeitem element doesn't have an accessible name, screen readers announce it with a generic name, making it
+unusable for users who rely on screen readers. Learn more about labeling treeitem elements. Unscored
+The page contains a heading, skip link, or landmark region
+Adding ways to bypass repetitive content lets keyboard users navigate the page more efficiently. Learn more about bypass
+blocks. Unscored
+<dl>'s contain only properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements.
+When definition lists are not properly marked up, screen readers may produce confusing or inaccurate output. Learn how to
+structure definition lists correctly. Unscored
+Definition list items are wrapped in <dl> elements
+Definition list items (<dt> and <dd>) must be wrapped in a parent <dl> element to ensure that screen readers can properly
+announce them. Learn how to structure definition lists correctly. Unscored
+ARIA IDs are unique
+The value of an ARIA ID must be unique to prevent other instances from being overlooked by assistive technologies. Learn
+how to fix duplicate ARIA IDs. Unscored
+No form fields have multiple labels
+Form fields with multiple labels can be confusingly announced by assistive technologies like screen readers which use either
+10/8/26, 10:10 p.m. about:blank
+about:blank 35/56
+
+===== PAGE 36 =====
+the first, the last, or all of the labels. Learn how to use form labels. Unscored
+<frame> or <iframe> elements have a title
+Screen reader users rely on frame titles to describe the contents of frames. Learn more about frame titles. Unscored
+<html> element has an [xml:lang] attribute with the same base language as the [lang] attribute.
+If the webpage does not specify a consistent language, then the screen reader might not announce the page's text correctly.
+Learn more about the lang attribute. Unscored
+Input buttons have discernible text.
+Adding discernable and accessible text to input buttons may help screen reader users understand the purpose of the input
+button. Learn more about input buttons. Unscored
+<input type="image"> elements have [alt] text
+When an image is being used as an <input> button, providing alternative text can help screen reader users understand the
+purpose of the button. Learn about input image alt text. Unscored
+Links are distinguishable without relying on color.
+Low-contrast text is difficult or impossible for many users to read. Link text that is discernible improves the experience for
+users with low vision. Learn how to make links distinguishable. Unscored
+The document does not use <meta http-equiv="refresh">
+Users do not expect a page to refresh automatically, and doing so will move focus back to the top of the page. This may
+create a frustrating or confusing experience. Learn more about the refresh meta tag. Unscored
+<object> elements have alternate text
+Screen readers cannot translate non-text content. Adding alternate text to <object> elements helps screen readers convey
+meaning to users. Learn more about alt text for object elements. Unscored
+Select elements have associated label elements.
+Form elements without effective labels can create frustrating experiences for screen reader users. Learn more about the
+select element. Unscored
+10/8/26, 10:10 p.m. about:blank
+about:blank 36/56
+
+===== PAGE 37 =====
+Skip links are focusable.
+Including a skip link can help users skip to the main content to save time. Learn more about skip links. Unscored
+Cells in a <table> element that use the [headers] attribute refer to table cells within the same table.
+Screen readers have features to make navigating tables easier. Ensuring <td> cells using the [headers] attribute only refer
+to other cells in the same table may improve the experience for screen reader users. Learn more about the headers
+attribute. Unscored
+<th> elements and elements with [role="columnheader"/"rowheader"] have data cells they describe.
+Screen readers have features to make navigating tables easier. Ensuring table headers always refer to some set of cells may
+improve the experience for screen reader users. Learn more about table headers. Unscored
+[lang] attributes have a valid value
+Specifying a valid BCP 47 language on elements helps ensure that text is pronounced correctly by a screen reader. Learn how
+to use the lang attribute. Unscored
+<video> elements contain a <track> element with [kind="captions"]
+When a video provides a caption it is easier for deaf and hearing impaired users to access its information. Learn more about
+video captions. Unscored
+autocomplete attributes are used correctly
+The autocomplete attribute values must be valid and correctly applied for screen readers to function correctly. Learn more
+about valid autocomplete values. Unscored
+Elements with role="none" or role="presentation" do not have conflicts
+There are certain cases where the semantic role of an element with role="none" or role="presentation" does not
+resolve to none or presentation. To ensure the element remains removed from the accessibility tree, you should not add any
+global ARIA attributes to the element or make it focusable. Learn more about presentation role conflict. Unscored
+SVG elements with an img role have an accessible text alternative
+Ensures SVG elements with an img, graphics-document or graphics-symbol role have an accessible text alternative.
+Learn more about SVG alt text. Unscored
+10/8/26, 10:10 p.m. about:blank
+about:blank 37/56
+
+===== PAGE 38 =====
+Tables have different content in the summary attribute and <caption>.
+The summary attribute should describe the table structure, while <caption> should have the onscreen title. Accurate table
+mark-up helps users of screen readers. Learn more about summary and caption. Unscored
+All heading elements contain content.
+A heading with no content or inaccessible text prevent screen reader users from accessing information on the page's
+structure. Learn more about headings. Unscored
+Uses ARIA roles only on compatible elements
+Many HTML elements can only be assigned certain ARIA roles. Using ARIA roles where they are not allowed can interfere
+with the accessibility of the web page. Learn more about ARIA roles. Unscored
+Image elements do not have [alt] attributes that are redundant text.
+Informative elements should aim for short, descriptive alternative text. Alternative text that is exactly the same as the text
+adjacent to the link or image is potentially confusing for screen reader users, because the text will be read twice. Learn more
+about the alt attribute. Unscored
+Identical links have the same purpose.
+Links with the same destination should have the same description, to help users understand the link's purpose and decide
+whether to follow it. Learn more about identical links. Unscored
+Best Practices
+100
+TRUST AND SAFETY
+Ensure CSP is effective against XSS attacks
+A strong Content Security Policy (CSP) significantly reduces the risk of cross-site scripting (XSS) attacks. Learn how to use a
+CSP to prevent XSSUnscored
+10/8/26, 10:10 p.m. about:blank
+about:blank 38/56
+
+===== PAGE 39 =====
+Use a strong HSTS policy
+Deployment of the HSTS header significantly reduces the risk of downgrading HTTP connections and eavesdropping attacks.
+A rollout in stages, starting with a low max-age is recommended. Learn more about using a strong HSTS policy.Unscored
+Ensure proper origin isolation with COOP
+The Cross-Origin-Opener-Policy (COOP) can be used to isolate the top-level window from other documents such as pop-
+ups. Learn more about deploying the COOP header.Unscored
+Mitigate clickjacking with XFO or CSP
+The X-Frame-Options (XFO) header or the frame-ancestors directive in the Content-Security-Policy (CSP)
+header control where a page can be embedded. These can mitigate clickjacking attacks by blocking some or all sites from
+embedding the page. Learn more about mitigating clickjacking. Unscored
+Mitigate DOM-based XSS with Trusted Types
+The require-trusted-types-for directive in the Content-Security-Policy (CSP) header instructs user agents to
+control the data passed to DOM XSS sink functions. Learn more about mitigating DOM-based XSS with Trusted Types.
+Unscored
+No CSP found in enforcement mode High
+No HSTS header found High
+No COOP header found High
+No frame control policy found High
+Description Directive Severity
+Description Directive Severity
+Description Directive Severity
+Description Severity
+10/8/26, 10:10 p.m. about:blank
+about:blank 39/56
+
+===== PAGE 40 =====
+No `Content-Security-Policy` header with Trusted Types directive found High
+BROWSER COMPATIBILITY
+Baseline Features
+Lists web features used on the page and their Baseline status as of 2026-06-05. Learn more about Baseline. Unscored
+localhost 1st Party
+page-visibility-state Limited Availability (index):1
+long-animation-frames Limited Availability (index):1
+layout-instability Limited Availability (index):1
+requestidlecallback Limited Availability (index):1
+beforeunload Limited Availability client:881
+background-clip-text Limited Availability client:1174
+accent-color Limited Availability client:1178
+backdrop-filter Newly Available (2024-09-16) client:1178
+scrollbar-width Newly Available (2024-12-11) client:1178
+scrollbar-color Newly Available (2025-12-12) client:1178
+has Newly Available (2023-12-19) client:1178
+scrollbar-gutter Newly Available (2024-12-11) client:1178
+nesting Newly Available (2023-12-11) client:1178
+Description Severity
+Web-features Baseline Status Source
+10/8/26, 10:10 p.m. about:blank
+about:blank 40/56
+
+===== PAGE 41 =====
+scrollend Newly Available (2025-12-12) react-dom_client.js?v=57fd49b1:9212
+nullish-coalescing Widely Available (2020-09-16) (index):1
+aborting Widely Available (2019-03-25) (index):1
+js-modules Widely Available (2018-05-09) (index):-1
+logical-assignments Widely Available (2020-09-16) (index):1
+outline Widely Available (2023-03-27) sonner.js?v=57fd49b1:14
+focus-visible Widely Available (2022-03-14) sonner.js?v=57fd49b1:14
+not Widely Available (2021-01-21) client:1174
+appearance Widely Available (2022-03-14) client:1178
+color-mix Widely Available (2023-05-09) client:1178
+is Widely Available (2021-01-21) client:1178
+flexbox Widely Available (2015-09-30) (index):-1
+request-animation-frame Widely Available (2015-07-29) motion_react.js?v=57fd49b1:429
+intersection-observer Widely Available (2019-03-25) motion_react.js?v=57fd49b1:11310
+grid Widely Available (2017-10-17) (index):-1
+weak-references Widely Available (2021-04-26) (index):1
+web-animations Widely Available (2020-09-16) motion_react.js?v=57fd49b1:2104
+webp Widely Available (2020-09-16) (index):-1
+PASSED AUDITS (13) Hide
+Web-features Baseline Status Source
+10/8/26, 10:10 p.m. about:blank
+about:blank 41/56
+
+===== PAGE 42 =====
+Uses HTTPS
+All sites should be protected with HTTPS, even ones that don't handle sensitive data. This includes avoiding mixed content,
+where some resources are loaded over HTTP despite the initial request being served over HTTPS. HTTPS prevents intruders
+from tampering with or passively listening in on the communications between your app and your users, and is a prerequisite
+for HTTP/2 and many new web platform APIs. Learn more about HTTPS.
+Avoids deprecated APIs
+Deprecated APIs will eventually be removed from the browser. Learn more about deprecated APIs.
+Avoids third-party cookies
+Third-party cookies may be blocked in some contexts. Learn more about preparing for third-party cookie restrictions.
+Allows users to paste into input fields
+Preventing input pasting is a bad practice for the UX, and weakens security by blocking password managers.Learn more
+about user-friendly input fields.
+Avoids requesting the geolocation permission on page load
+Users are mistrustful of or confused by sites that request their location without context. Consider tying the request to a user
+action instead. Learn more about the geolocation permission. Also consider using the <geolocation> element.
+Avoids requesting the notification permission on page load
+Users are mistrustful of or confused by sites that request to send notifications without context. Consider tying the request to
+user gestures instead. Learn more about responsibly getting permission for notifications.
+Displays images with correct aspect ratio
+Image display dimensions should match natural aspect ratio. Learn more about image aspect ratio.
+Serves images with appropriate resolution
+Image natural dimensions should be proportional to the display size and the pixel ratio to maximize image clarity. Learn how
+to provide responsive images.
+Page has the HTML doctype
+Specifying a doctype prevents the browser from switching to quirks-mode. Learn more about the doctype declaration.
+10/8/26, 10:10 p.m. about:blank
+about:blank 42/56
+
+===== PAGE 43 =====
+Properly defines charset
+A character encoding declaration is required. It can be done with a <meta> tag in the first 1024 bytes of the HTML or in the
+Content-Type HTTP response header. Learn more about declaring the character encoding.
+No browser errors logged to the console
+Errors logged to the console indicate unresolved problems. They can come from network request failures and other browser
+concerns. Learn more about this errors in console diagnostic audit
+No issues in the Issues panel in Chrome Devtools
+Issues logged to the Issues panel in Chrome Devtools indicate unresolved problems. They can come from network request
+failures, insufficient security controls, and other browser concerns. Open up the Issues panel in Chrome DevTools for more
+details on each issue.
+Page has valid source maps
+Source maps translate minified code to the original source code. This helps developers debug in production. In addition,
+Lighthouse is able to provide further insights. Consider deploying source maps to take advantage of these benefits. Learn
+more about source maps. Unscored
+localhost 1st Party
+…store/StoreProvider.jsx
+…store/AuthContext.jsx
+…DashboardLayout/Sidebar.jsx
+…DashboardLayout/DashboardLayout.jsx
+…TableActions/TableActions.jsx
+…ConfirmDialog/ConfirmProvider.jsx
+…routes/SIDEBAR_CONFIG.js
+…routes/ProtectedRoute.jsx
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 43/56
+
+===== PAGE 44 =====
+…routes/paths.js
+…routes/AppRouter.jsx
+…presentation/UserFormModal.jsx
+…pages/UsersPage.jsx
+…pages/ProfilePage.jsx
+…pages/EmployeesPage.jsx
+…pages/ClientsPage.jsx
+…pages/AccessPage.jsx
+…infrastructure/user.repository.js
+…infrastructure/client.repository.js
+…adapters/userDTO.js
+…domain/userModel.js
+…application/useUsers.js
+…pages/SettingsPage.jsx
+…presentation/ServiceFormModal.jsx
+…presentation/ServiceDetailsModal.jsx
+…infrastructure/tecnicas.repository.js
+…adapters/tecnicasDTO.js
+…domain/tecnicasModel.js
+…application/useTecnicas.js
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 44/56
+
+===== PAGE 45 =====
+…presentation/TariffModal.jsx
+…pages/TechniqueRatesPage.jsx
+…infrastructure/tariff.repository.js
+…domain/serviceTariffs.js
+…application/useTariffs.js
+…pages/ServicesPage.jsx
+…pages/QuotesPage.jsx
+…presentation/quoteWorkflow.utils.js
+…presentation/QuoteVersionsModal.jsx
+…presentation/QuoteResponseModal.jsx
+…presentation/QuoteProposalModal.jsx
+…presentation/QuoteFormModal.jsx
+…presentation/QuoteDetailsModal.jsx
+…infrastructure/quote.repository.js
+…adapters/proposalDTO.js
+…adapters/cotizacionDTO.js
+…domain/quoteProposal.js
+…domain/cotizacionesModel.js
+…application/useQuotes.js
+…presentation/VentasPage.jsx
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 45/56
+
+===== PAGE 46 =====
+…infrastructure/venta.repository.js
+…adapters/venta.dto.js
+…domain/venta.model.js
+…application/useVentas.js
+…presentation/RegisterClientDesignModal.jsx
+…presentation/PedidoExpedientePage.jsx
+…presentation/PedidoEditModal.jsx
+…presentation/PedidoDetailsModal.jsx
+…infrastructure/pedido.repository.js
+…adapters/pedidoDTO.js
+…domain/pedidoModel.js
+…application/usePedidos.js
+…pages/SalesReturnsPage.jsx
+…pages/SalesProductsPage.jsx
+…pages/SalesPaymentsPage.jsx
+…pages/SalesCategoriesPage.jsx
+…pages/PedidosPage.jsx
+…presentation/ReviewConfirmAbonoModal.jsx
+…presentation/ReceiptPreviewModal.jsx
+…presentation/AbonoViewModal.jsx
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 46/56
+
+===== PAGE 47 =====
+…presentation/AbonosPage.jsx
+…presentation/AbonoModal.jsx
+…adapters/abono.dto.js
+…infrastructure/abono.repository.js
+…domain/abono.model.js
+…application/useAbonos.js
+…application/receiptAnalysis.service.js
+…application/receiptAnalysis.parsers.js
+…presentation/ProveedorViewModal.jsx
+…presentation/ProveedorModal.jsx
+…presentation/ProveedoresPage.jsx
+…infrastructure/proveedor.repository.js
+…adapters/proveedor.dto.js
+…domain/proveedor.model.js
+…application/useProveedores.js
+…pages/SuppliesPage.jsx
+…pages/PurchasesPage.jsx
+…pages/PurchaseCategoriesPage.jsx
+…pages/ProvidersPage.jsx
+…presentation/CompraViewModal.jsx
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 47/56
+
+===== PAGE 48 =====
+…presentation/ComprasPage.jsx
+…presentation/CompraModal.jsx
+…infrastructure/compra.repository.js
+…adapters/compra.dto.js
+…domain/compra.model.js
+…application/useCompras.js
+…presentation/ProductModal.jsx
+…presentation/CategoryModal.jsx
+…pages/ProductsPage.jsx
+…pages/ProductCategoriesPage.jsx
+…infrastructure/product.repository.js
+…infrastructure/category.repository.js
+…domain/productDiscountRanges.js
+…application/useProducts.js
+…application/useProductCategories.js
+…presentation/ProductionQueuePage.jsx
+…infrastructure/productionQueue.repository.js
+…application/useProductionQueue.js
+…pages/ProductionPage.jsx
+…pages/DesignsPage.jsx
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 48/56
+
+===== PAGE 49 =====
+…pages/DeliveryPage.jsx
+…presentation/DisenoViewModal.jsx
+…presentation/DisenosPage.jsx
+…presentation/DisenoModal.jsx
+…presentation/DesignOriginModal.jsx
+…presentation/DesignClientResponseModal.jsx
+…presentation/ClientDisenosPage.jsx
+…infrastructure/diseno.repository.js
+…adapters/diseno.dto.js
+…domain/diseno.model.js
+…domain/designRequirement.js
+…application/useDisenos.js
+…pages/PublicQuotePage.jsx
+…pages/LandingPage.jsx
+…infrastructure/publicQuote.repository.js
+…domain/stampTariffs.js
+…domain/publicQuoteBuilder.js
+…components/StampTariffSelector.jsx
+…components/PublicQuoteSummary.jsx
+…components/PublicQuoteProductEditor.jsx
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 49/56
+
+===== PAGE 50 =====
+…components/PublicNavbar.jsx
+…pages/DashboardPage.jsx
+…pages/ClientPaymentsPanel.jsx
+…infrastructure/dashboard.repository.js
+…application/useDashboardData.js
+…presentation/RolePermissionsModal.jsx
+…presentation/RoleFormModal.jsx
+…infrastructure/roles.repository.js
+…infrastructure/permissions.repository.js
+…adapters/rolesDTO.js
+…domain/rolesModel.js
+…application/useRoles.js
+…pages/RolesPage.jsx
+…services/authService.js
+…pages/ResetPasswordPage.jsx
+…pages/LoginPage.jsx
+…pages/CreateClientPasswordPage.jsx
+/src/main.jsx
+…utils/userValidation.js
+…utils/serverPagination.js
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 50/56
+
+===== PAGE 51 =====
+…utils/requestError.js
+…utils/productCategory.js
+…utils/permissions.js
+…utils/permissionLabels.js
+…utils/paymentOrigin.js
+…utils/notifications.js
+…utils/landingNavigation.js
+…utils/formatters.js
+…utils/fechaFormato.js
+…utils/designCoverage.js
+…services/protectedFileService.js
+…services/apiService.js
+…hooks/usePagination.js
+…hooks/useLatestListRequest.js
+…hooks/useDebounce.js
+…hooks/useContextualBack.js
+…hooks/useAsyncLock.js
+…components/Pagination.jsx
+/src/App.jsx
+…client/env.mjs
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 51/56
+
+===== PAGE 52 =====
+…deps/sonner.js?v=57fd49b1 …deps/sonner.js.map
+…deps/recharts.js?v=57fd49b1 …deps/recharts.js.map
+…deps/react.js?v=57fd49b1 …deps/react.js.map
+…deps/react-router-dom.js?v=57fd49b1 …deps/react-router-dom.js.map
+…deps/react-icons_fa.js?v=57fd49b1 …deps/react-icons_fa.js.map
+…deps/react-dom.js?v=57fd49b1 …deps/react-dom.js.map
+…deps/react-dom_client.js?v=57fd49b1 …deps/react-dom_client.js.map
+…deps/react_jsx-runtime.js?v=57fd49b1 …deps/react_jsx-runtime.js.map
+…deps/react_jsx-dev-runtime.js?v=57fd49b1 …deps/react_jsx-dev-runtime.js.map
+…deps/motion_react.js?v=57fd49b1 …deps/motion_react.js.map
+…deps/lucide-react.js?v=57fd49b1 …deps/lucide-react.js.map
+…deps/chunk-C-Qwzh9l.js?v=57fd49b1
+…deps/axios.js?v=57fd49b1 …deps/axios.js.map
+/@vite/client
+/@react-refresh
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+( l o c a l h o s t )
+NOT APPLICABLE (2) Hide
+Redirects HTTP traffic to HTTPS
+Make sure that you redirect all HTTP traffic to HTTPS in order to enable secure web features for all your users. Learn more.
+Unscored
+Detected JavaScript libraries
+URL Map URL
+10/8/26, 10:10 p.m. about:blank
+about:blank 52/56
+
+===== PAGE 53 =====
+These checks ensure that your page is following basic search engine
+optimization advice. There are many additional factors Lighthouse does not
+score here that may affect your search ranking, including performance on
+Core Web Vitals. Learn more about Google Search Essentials.
+All front-end JavaScript libraries detected on the page. Learn more about this JavaScript library detection diagnostic audit.
+Unscored
+SEO
+83
+CONTENT BEST PRACTICES
+Document does not have a meta description
+Meta descriptions may be included in search results to concisely summarize page content. Learn more about the meta
+description.
+Format your HTML in a way that enables crawlers to better understand your app’s content.
+CRAWLING AND INDEXING
+robots.txt is not valid —18 errors found
+If your robots.txt file is malformed, crawlers may not be able to understand how you want your website to be crawled or
+indexed. Learn more about robots.txt.
+1 <!doctype html> Syntax not understood
+2 <html lang="en"> Syntax not understood
+3 <head> Syntax not understood
+4 <script type="module">import { injectIntoGlobalHook } from "/@react-refresh"; Syntax not understood
+5 injectIntoGlobalHook(window); Syntax not understood
+Line # Content Error
+10/8/26, 10:10 p.m. about:blank
+about:blank 53/56
+
+===== PAGE 54 =====
+To appear in search results, crawlers need access to your app.
+6 window.$RefreshReg$ = () => {}; Syntax not understood
+7 window.$RefreshSig$ = () => (type) => type;</script> Syntax not understood
+9 <script type="module" src="/@vite/client"></script> Syntax not understood
+11 <meta charset="UTF-8" /> Syntax not understood
+12 <link rel="icon" type="image/svg+xml" href="/sarahizoellogo.svg" /> Syntax not understood
+13 <meta name="viewport" content="width=device-width, initial-scale=1.0" /> Syntax not understood
+14 <title>PIXEL</title> Syntax not understood
+15 </head> Syntax not understood
+16 <body> Syntax not understood
+17 <div id="root"></div> Syntax not understood
+18 <script type="module" src="/src/main.jsx"></script> Syntax not understood
+19 </body> Syntax not understood
+20 </html> Syntax not understood
+ADDITIONAL ITEMS TO MANUALLY CHECK (1) Hide
+Structured data is valid
+Run the Structured Data Testing Tool to validate structured data. Learn more about Structured Data. Unscored
+Run these additional validators on your site to check additional SEO best practices.
+PASSED AUDITS (7) Hide
+Page isn’t blocked from indexing
+Line # Content Error
+10/8/26, 10:10 p.m. about:blank
+about:blank 54/56
+
+===== PAGE 55 =====
+Search engines are unable to include your pages in search results if they don't have permission to crawl them. Learn more
+about crawler directives.
+Document has a <title> element
+The title gives screen reader users an overview of the page, and search engine users rely on it heavily to determine if a page
+is relevant to their search. Learn more about document titles.
+Page has successful HTTP status code
+Pages with unsuccessful HTTP status codes may not be indexed properly. Learn more about HTTP status codes.
+Links have descriptive text
+Descriptive link text helps search engines understand your content. Learn how to make links more accessible.
+Links are crawlable
+Search engines may use href attributes on links to crawl websites. Ensure that the href attribute of anchor elements links
+to an appropriate destination, so more pages of the site can be discovered. Learn how to make links crawlable
+Image elements have [alt] attributes
+Informative elements should aim for short, descriptive alternate text. Decorative elements can be ignored with an empty alt
+attribute. Learn more about the alt attribute.
+Document has a valid hreflang
+hreflang links tell search engines what version of a page they should list in search results for a given language or region.
+Learn more about hreflang.
+NOT APPLICABLE (1) Hide
+Document has a valid rel=canonical
+Canonical links suggest which URL to show in search results. Learn more about canonical links. Unscored
+Captured at Aug 10, 2026,
+10:07 PM GMT-5
+Emulated Desktop with
+Lighthouse 13.4.0
+Single page session
+10/8/26, 10:10 p.m. about:blank
+about:blank 55/56
+
+===== PAGE 56 =====
+Generated by Lighthouse 13.4.0 | File an issue
+Initial page load
+ Custom throttling
+ Using Chromium 151.0.0.0 with
+devtools
+10/8/26, 10:10 p.m. about:blank
+about:blank 56/56

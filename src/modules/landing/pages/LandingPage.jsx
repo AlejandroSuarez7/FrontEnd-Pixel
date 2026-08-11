@@ -360,9 +360,13 @@ const LandingPage = () => {
         <div className="service-image-wrapper">
 
           <img
-            src="https://images.unsplash.com/photo-1676113421481-4eea8fe93948?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+            src="https://images.unsplash.com/photo-1676113421481-4eea8fe93948?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=720"
+            srcSet="https://images.unsplash.com/photo-1676113421481-4eea8fe93948?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=480 480w, https://images.unsplash.com/photo-1676113421481-4eea8fe93948?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=720 720w, https://images.unsplash.com/photo-1676113421481-4eea8fe93948?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=1080 1080w"
+            sizes="(max-width: 768px) calc(100vw - 32px), (max-width: 1200px) 50vw, 536px"
             alt="Serigrafía"
             className="service-image"
+            loading="lazy"
+            decoding="async"
           />
 
           <div className="service-overlay purple-gradient"></div>
@@ -424,9 +428,13 @@ const LandingPage = () => {
         <div className="service-image-wrapper">
 
           <img
-            src="https://images.unsplash.com/photo-1693031630177-b897fb9d7154?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+            src="https://images.unsplash.com/photo-1693031630177-b897fb9d7154?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=720"
+            srcSet="https://images.unsplash.com/photo-1693031630177-b897fb9d7154?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=480 480w, https://images.unsplash.com/photo-1693031630177-b897fb9d7154?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=720 720w, https://images.unsplash.com/photo-1693031630177-b897fb9d7154?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=1080 1080w"
+            sizes="(max-width: 768px) calc(100vw - 32px), (max-width: 1200px) 50vw, 536px"
             alt="DTF"
             className="service-image"
+            loading="lazy"
+            decoding="async"
           />
 
           <div className="service-overlay blue-gradient"></div>
@@ -488,9 +496,13 @@ const LandingPage = () => {
         <div className="service-image-wrapper">
 
           <img
-            src="https://images.unsplash.com/photo-1744298975124-58594b6d742b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+            src="https://images.unsplash.com/photo-1744298975124-58594b6d742b?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=720"
+            srcSet="https://images.unsplash.com/photo-1744298975124-58594b6d742b?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=480 480w, https://images.unsplash.com/photo-1744298975124-58594b6d742b?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=720 720w, https://images.unsplash.com/photo-1744298975124-58594b6d742b?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=1080 1080w"
+            sizes="(max-width: 768px) calc(100vw - 32px), (max-width: 1200px) 50vw, 536px"
             alt="Sublimación"
             className="service-image"
+            loading="lazy"
+            decoding="async"
           />
 
           <div className="service-overlay pink-gradient"></div>
@@ -551,9 +563,13 @@ const LandingPage = () => {
         <div className="service-image-wrapper">
 
           <img
-            src="https://images.unsplash.com/photo-1724490056260-44bf1de2617e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+            src="https://images.unsplash.com/photo-1724490056260-44bf1de2617e?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=720"
+            srcSet="https://images.unsplash.com/photo-1724490056260-44bf1de2617e?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=480 480w, https://images.unsplash.com/photo-1724490056260-44bf1de2617e?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=720 720w, https://images.unsplash.com/photo-1724490056260-44bf1de2617e?auto=format&crop=entropy&cs=tinysrgb&fit=max&q=80&w=1080 1080w"
+            sizes="(max-width: 768px) calc(100vw - 32px), (max-width: 1200px) 50vw, 536px"
             alt="Estampado Digital"
             className="service-image"
+            loading="lazy"
+            decoding="async"
           />
 
           <div className="service-overlay yellow-gradient"></div>
@@ -659,13 +675,13 @@ const LandingPage = () => {
 
         <div className="comparative-card-header">
 
-          <div className="comparative-card-title">
+          <h3 className="comparative-card-title">
 
             <span className="comparative-dot purple-bg"></span>
 
             Serigrafía
 
-          </div>
+          </h3>
 
         </div>
 
@@ -754,13 +770,13 @@ const LandingPage = () => {
 
         <div className="comparative-card-header">
 
-          <div className="comparative-card-title">
+          <h3 className="comparative-card-title">
 
             <span className="comparative-dot blue-bg"></span>
 
             DTF
 
-          </div>
+          </h3>
 
         </div>
 
@@ -821,13 +837,13 @@ const LandingPage = () => {
 
         <div className="comparative-card-header">
 
-          <div className="comparative-card-title">
+          <h3 className="comparative-card-title">
 
             <span className="comparative-dot pink-bg"></span>
 
             Sublimación
 
-          </div>
+          </h3>
 
         </div>
 
@@ -890,13 +906,13 @@ const LandingPage = () => {
 
         <div className="comparative-card-header">
 
-          <div className="comparative-card-title">
+          <h3 className="comparative-card-title">
 
             <span className="comparative-dot yellow-bg"></span>
 
             Digital
 
-          </div>
+          </h3>
 
         </div>
 
@@ -1002,6 +1018,8 @@ const LandingPage = () => {
             src="https://imgs.search.brave.com/ArJcuNDlACoUa979GxUQhIB-pxtgWjIu55TiGGvyOW0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbmti/b3JkYWRvc3llc3Rh/bXBhZG9zLmNvbS9j/ZG4vc2hvcC9wcm9k/dWN0cy9XaGF0c0Fw/cEltYWdlMjAyMy0w/MS0yNmF0MTIuMjUu/MDlfMS5qcGc_dj0x/NzQzNDQyMzAxJndp/ZHRoPTE0NDU"
             alt="DTF"
             className="product-image"
+            loading="lazy"
+            decoding="async"
           />
 
           <span className="product-badge purple-bg">
@@ -1045,6 +1063,8 @@ const LandingPage = () => {
             src="https://imgs.search.brave.com/U3jTxYoBiYLzXfwSphNXOE8gwu8YssrI_BIN_HhRc4A/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/aW1wcmVudGFvbmxp/bmUubmV0L2Jsb2cv/d3AtY29udGVudC91/cGxvYWRzL3Nlcmln/cmFmaWEtMS0xLnBu/Zw"
             alt="Serigrafía"
             className="product-image"
+            loading="lazy"
+            decoding="async"
           />
 
           <span className="product-badge purple-bg">
@@ -1087,6 +1107,8 @@ const LandingPage = () => {
             src="https://imgs.search.brave.com/Wi9oQCFuGS-A4uJDkOAETUIR9HNBoc6pzUS30wtxut4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZS5yb2xhbmRkZ2Eu/Y29tLy0vbWVkaWEv/cm9sYW5kLWRnL2lt/YWdlcy9hcHBsaWNh/dGlvbnMvdXYtZHRm/L2Jhbm5lci91di1k/dGYtYmFubmVyLW1v/YmlsZS5qcGc_cmV2/PWU4OGMzZmY5MDM3/YzQ4N2Q4YzViZjNl/MDUyMDkwZTU2Jmxh/PWVzLTQxOSZoPTUz/MyZ3PTgwMCZoYXNo/PTM3Q0YyRTBBOTI1/NUVBRDg3RTI0MTQx/MTVGRUM3QTk5"
             alt="DTF UV"
             className="product-image"
+            loading="lazy"
+            decoding="async"
           />
 
           <span className="product-badge blue-bg">
@@ -1129,6 +1151,8 @@ const LandingPage = () => {
             src="https://imgs.search.brave.com/2GuZ1BT7LDyzhEs5foLm3m5FjjkS4-RVSSJlnAZdOf8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/Zm90b3MtcHJlbWl1/bS9tdWplci1lc3R1/ZGlhbnRlLWJyYXpv/LW1vZGVsby1yb2Jv/dF8xMDE2Njc1LTE3/OTAuanBnP3NlbXQ9/YWlzX2h5YnJpZCZ3/PTc0MCZxPTgw"
             alt="Sublimación"
             className="product-image"
+            loading="lazy"
+            decoding="async"
           />
 
           <span className="product-badge pink-bg">
