@@ -1,4 +1,5 @@
 import { analyzeReceiptText } from './receiptAnalysis.parsers';
+import { prepareReceiptImage } from './receiptImagePreprocessing';
 
 const createCanceledError = () => {
   const error = new Error('Analisis cancelado.');
@@ -64,11 +65,15 @@ export const createReceiptAnalysisSession = () => {
     }
 
     activeWorker = worker;
+    let preparedImage = { source: file, cleanup: () => {} };
     try {
-      const result = await worker.recognize(file);
+      preparedImage = await prepareReceiptImage(file);
+      if (runId !== activeRun) throw createCanceledError();
+      const result = await worker.recognize(preparedImage.source);
       if (runId !== activeRun) throw createCanceledError();
       return analyzeReceiptText(result?.data?.text, result?.data?.confidence);
     } finally {
+      preparedImage.cleanup();
       if (activeWorker === worker) activeWorker = null;
       await terminateWorker(worker);
     }
