@@ -3,6 +3,8 @@ import { Pagination } from '../../../../core/components/Pagination';
 import { notifications } from '../../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../../core/utils/serverPagination';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../../store/AuthContext';
 import { useProveedores } from '../application/useProveedores';
@@ -66,6 +68,7 @@ export const ProveedoresPage = () => {
   const [selectedProveedor, setSelectedProveedor] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [deletionProveedor, setDeletionProveedor] = useState(null);
 
   const {
     proveedores,
@@ -126,24 +129,6 @@ export const ProveedoresPage = () => {
       notifications.success('Proveedor desactivado correctamente.');
     } catch (error) {
       notifications.error(error.message || 'No se pudo desactivar el proveedor.');
-    }
-  };
-
-  const onHardDeleteClick = async (proveedor) => {
-    const accepted = await confirm({
-      title: 'Eliminar proveedor',
-      message: `Eliminar fisicamente proveedor "${proveedor.nombre}"? Esta accion no se puede deshacer.`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-
-    if (!accepted) return;
-
-    try {
-      await handleHardDelete(proveedor.idProveedor);
-      notifications.success('Proveedor eliminado correctamente.');
-    } catch (error) {
-      notifications.error(error.message || 'No se pudo eliminar el proveedor.');
     }
   };
 
@@ -243,7 +228,7 @@ export const ProveedoresPage = () => {
                           actions={[
                             hasPermission('proveedores.desactivar') && proveedor.estado && { label: 'Desactivar', onClick: () => onDeactivateClick(proveedor), variant: 'danger' },
                             hasPermission('proveedores.editar') && { label: 'Editar', onClick: () => handleOpenEdit(proveedor), variant: 'warning' },
-                            hasPermission('proveedores.eliminar') && isAdmin && { label: 'Eliminar', onClick: () => onHardDeleteClick(proveedor), variant: 'danger' },
+                            hasPermission('proveedores.eliminar') && isAdmin && { label: 'Eliminar', onClick: () => setDeletionProveedor(proveedor), variant: 'danger' },
                           ]}
                         />
                       </td>
@@ -276,6 +261,16 @@ export const ProveedoresPage = () => {
         isOpen={isViewOpen}
         onClose={() => { setIsViewOpen(false); setSelectedProveedor(null); }}
         proveedor={selectedProveedor}
+      />
+      <SafeDeleteModal
+        key={deletionProveedor?.idProveedor || 'provider-delete'}
+        isOpen={Boolean(deletionProveedor)}
+        entityLabel="proveedor"
+        entityName={deletionProveedor?.nombre || ''}
+        impactEndpoint={deletionProveedor ? SAFE_DELETE_IMPACT_ENDPOINTS.provider(deletionProveedor.idProveedor) : ''}
+        deleteAction={() => handleHardDelete(deletionProveedor.idProveedor)}
+        successMessage="Proveedor eliminado correctamente."
+        onClose={() => setDeletionProveedor(null)}
       />
     </div>
   );

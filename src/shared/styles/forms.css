@@ -24,7 +24,7 @@
   border-radius: 999px;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1;
   cursor: pointer;
   backdrop-filter: blur(12px);
@@ -120,7 +120,7 @@
   background: rgba(255, 255, 255, 0.16);
   color: #f8fafc;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 24px;
@@ -174,7 +174,7 @@
   display: block;
   margin-bottom: 8px;
   color: #2c3e50;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
 }
 
@@ -222,7 +222,7 @@
   color: #667eea;
   border: 1px solid rgba(102, 126, 234, 0.9);
   border-radius: 5px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s, color 0.3s;
@@ -262,7 +262,7 @@
 .register-link a,
 .login-link a {
   color: #667eea;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .forgot-password-link {
@@ -272,7 +272,7 @@
   background: transparent;
   color: #7e22ce;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
   padding: 0;
 }

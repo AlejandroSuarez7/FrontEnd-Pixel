@@ -60,6 +60,8 @@ export const useRoles = (filters = {}) => {
     }
   };
 
+  const getDeletionImpact = (id, options) => rolesRepository.getDeletionImpact(id, options);
+
   return {
     roles: data.items,
     paginationMeta: data.meta,
@@ -70,6 +72,7 @@ export const useRoles = (filters = {}) => {
     handleUpdate,
     handleDelete,
     handleHardDelete,
+    getDeletionImpact,
     refreshRoles: fetchRoles,
   };
 };

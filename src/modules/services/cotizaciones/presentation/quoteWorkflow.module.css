@@ -48,7 +48,7 @@
   margin-bottom: 5px;
   color: #98a4bd;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -101,7 +101,7 @@
   margin-top: 4px;
   color: #5a35c5;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .internalBanner p {
@@ -136,7 +136,7 @@
   min-width: 0;
   color: #74809a;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .fieldWide {
@@ -249,7 +249,7 @@
   border-radius: 7px;
   font: inherit;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -263,6 +263,7 @@
   border: 1px solid #dfe4ef;
   background: #fff;
   color: #65728f;
+  font-weight: 500;
 }
 
 .primaryButton:disabled,
@@ -297,7 +298,7 @@
 .versionCard > div:first-child span {
   color: #6d7892;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .versionCard > div:first-child strong {
@@ -327,7 +328,7 @@
   background: #eef1f6;
   color: #66728d;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .currentChip {
@@ -464,7 +465,7 @@
   margin-bottom: 2px;
   color: #8a96ae;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -514,7 +515,7 @@
   color: #6240c7;
   font: inherit;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -528,7 +529,7 @@
   background: #e7faf4;
   color: #087d63;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -602,7 +603,7 @@
   background: #eee9ff;
   color: #6238cb;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .itemMain {
@@ -706,7 +707,7 @@
   gap: 6px;
   color: #6d7992;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .moneyField input,
@@ -743,7 +744,7 @@
 .reasonField small {
   color: #929db1;
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.35;
 }
 
@@ -751,7 +752,7 @@
   color: #bd3540;
   font-size: 10px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .designRow {
@@ -796,7 +797,7 @@
   gap: 7px;
   color: #66738d;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .visibilityCheck input {
@@ -830,7 +831,7 @@
   color: #6138c9;
   font: inherit;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -960,7 +961,7 @@
   color: #5730bc;
   font: inherit;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -1046,7 +1047,7 @@
 .footerTotal span {
   color: #8490a7;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .footerTotal strong {

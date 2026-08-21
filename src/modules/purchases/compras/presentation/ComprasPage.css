@@ -16,7 +16,7 @@
 .compras-breadcrumb {
   display: block;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.8px;
   color: var(--color-text-muted, #b0bac9);
   text-transform: uppercase;
@@ -75,7 +75,7 @@
   display: block;
   font-size: 11px;
   color: var(--color-text-secondary, #8f9bb3);
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
   text-transform: uppercase;
 }
@@ -104,7 +104,7 @@
   gap: 5px;
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
@@ -182,7 +182,7 @@
 .compras-table-cell-id {
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .compras-status-badge {
@@ -222,7 +222,7 @@
   padding: 5px 10px;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -325,7 +325,7 @@
 
 .compras-input-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-secondary, #8f9bb3);
   text-transform: uppercase;
 }
@@ -399,7 +399,7 @@
   border: 1px solid var(--color-border, #edf1f7);
   border-radius: 6px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -415,7 +415,7 @@
 .compras-pagination-info {
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .compras-pagination-controls {
@@ -432,7 +432,7 @@
   background-color: var(--color-surface, #fff);
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 

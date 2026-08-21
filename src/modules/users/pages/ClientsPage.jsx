@@ -5,6 +5,8 @@ import { useLatestListRequest } from '../../../core/hooks/useLatestListRequest';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../store/AuthContext';
 import { clientRepository } from '../infrastructure/client.repository';
@@ -95,6 +97,7 @@ const ClientsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedClient, setSelectedClient] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [deletionClient, setDeletionClient] = useState(null);
   const detailRequestRef = useRef(0);
   const debouncedSearch = useDebounce(search, 350);
   const {
@@ -136,11 +139,11 @@ const ClientsPage = () => {
 
   const handleDeactivate = async (client) => {
     const accepted = await confirm({
-      title: 'Eliminar cliente',
-      message: '¿Estás seguro de eliminar este cliente? Esta acción puede afectar el historial relacionado.',
-      confirmText: 'Eliminar',
+      title: 'Desactivar cliente',
+      message: `¿Confirmas desactivar a "${client.nombre}"? El registro y su historial se conservarán.`,
+      confirmText: 'Desactivar',
       cancelText: 'Cancelar',
-      variant: 'danger',
+      variant: 'warning',
     });
 
     if (!accepted) return;
@@ -151,26 +154,6 @@ const ClientsPage = () => {
       fetchClients();
     } catch (error) {
       notifications.error(error.message || 'No se pudo desactivar el cliente.');
-    }
-  };
-
-  const handleDelete = async (client) => {
-    const accepted = await confirm({
-      title: 'Eliminar cliente',
-      message: '¿Estás seguro de eliminar este cliente? Esta acción puede afectar el historial relacionado.',
-      confirmText: 'Eliminar',
-      cancelText: 'Cancelar',
-      variant: 'danger',
-    });
-
-    if (!accepted) return;
-
-    try {
-      await clientRepository.delete(client.idCliente);
-      notifications.success('Cliente eliminado correctamente.');
-      fetchClients();
-    } catch (error) {
-      notifications.error(error.message || 'No se pudo eliminar el cliente.');
     }
   };
 
@@ -265,8 +248,8 @@ const ClientsPage = () => {
                         <TableActions
                           primaryAction={{ label: 'Ver', onClick: () => { void handleView(client); }, variant: 'accent' }}
                           actions={[
-                            hasPermission('clientes.desactivar') && client.estado && { label: 'Eliminar', onClick: () => handleDeactivate(client), variant: 'danger' },
-                            hasPermission('clientes.eliminar') && { label: 'Eliminar definitivo', onClick: () => handleDelete(client), variant: 'danger' },
+                            hasPermission('clientes.desactivar') && client.estado && { label: 'Desactivar', onClick: () => handleDeactivate(client), variant: 'warning' },
+                            hasPermission('clientes.eliminar') && { label: 'Eliminar', onClick: () => setDeletionClient(client), variant: 'danger' },
                           ]}
                         />
                       </td>
@@ -298,6 +281,18 @@ const ClientsPage = () => {
           setSelectedClient(null);
           setLoadingDetail(false);
         }}
+      />
+
+      <SafeDeleteModal
+        key={deletionClient?.idCliente || 'client-delete'}
+        isOpen={Boolean(deletionClient)}
+        entityLabel="cliente"
+        entityName={deletionClient?.nombre || ''}
+        impactEndpoint={deletionClient ? SAFE_DELETE_IMPACT_ENDPOINTS.client(deletionClient.idCliente) : ''}
+        deleteAction={() => clientRepository.delete(deletionClient.idCliente)}
+        onDeleted={fetchClients}
+        successMessage="Cliente eliminado correctamente."
+        onClose={() => setDeletionClient(null)}
       />
     </div>
   );

@@ -47,7 +47,7 @@
 .breadcrumb {
   display: block;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.8px;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -117,7 +117,7 @@
   display: block;
   font-size: 11px;
   color: var(--color-text-secondary);
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -154,7 +154,7 @@
   gap: 6px;
   color: var(--color-text-secondary);
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.4px;
   text-transform: uppercase;
 }
@@ -179,7 +179,7 @@
   box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
-.searchInput::placeholder { color: var(--color-text-muted); }
+.searchInput::placeholder { color: var(--placeholder-color, #94a3b8); }
 
 .selectFilter {
   width: 100%;
@@ -259,7 +259,7 @@
   padding: 16px 20px;
   color: var(--color-text-primary);
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .tableCellSecondary {
@@ -309,7 +309,7 @@
   padding: 5px 10px;
   border-radius: var(--radius-sm);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   font-family: var(--font-body);
   transition: background-color 0.15s ease;
@@ -437,7 +437,7 @@
 
 .inputLabel {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -462,7 +462,7 @@
   box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
-.inputField::placeholder { color: var(--color-text-muted); }
+.inputField::placeholder { color: var(--placeholder-color, #94a3b8); }
 
 textarea.inputField {
   resize: none;
@@ -511,7 +511,7 @@ textarea.inputField {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   font-family: var(--font-body);
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -524,7 +524,7 @@ textarea.inputField {
 /* ── Botón eliminar permanente ── */
 .actionBtnDelete {
   color: var(--color-danger);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .actionBtnDelete:hover {
@@ -544,7 +544,7 @@ textarea.inputField {
 .paginationInfo {
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .paginationControls {
@@ -561,7 +561,7 @@ textarea.inputField {
   background-color: var(--color-surface);
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -643,6 +643,54 @@ textarea.inputField {
   color: var(--color-danger);
 }
 
+.profilePasswordCard,
+.profilePasswordSection {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fafbfc;
+}
+
+.profilePasswordCard {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profilePasswordCard p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.profilePasswordSection {
+  flex-direction: column;
+}
+
+.profilePasswordSection > .btnSecondary {
+  align-self: flex-start;
+}
+
+.profilePasswordError {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+@media (max-width: 560px) {
+  .profilePasswordCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .profilePasswordSection > .btnSecondary {
+    align-self: stretch;
+  }
+}
+
 .rangeSection {
   display: flex;
   flex-direction: column;
@@ -678,7 +726,7 @@ textarea.inputField {
 .rangeHeader {
   color: var(--color-text-secondary);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.45px;
   text-transform: uppercase;
   padding: 0 2px;
@@ -711,7 +759,7 @@ textarea.inputField {
   background: #fff7f7;
   color: var(--color-danger);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -741,7 +789,7 @@ textarea.inputField {
     margin-bottom: 4px;
     color: var(--color-text-secondary);
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 500;
     text-transform: uppercase;
   }
 }

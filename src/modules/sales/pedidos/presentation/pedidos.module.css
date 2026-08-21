@@ -55,7 +55,7 @@
 .breadcrumb {
   display: block;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.8px;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -103,7 +103,7 @@
   display: block;
   font-size: 11px;
   color: var(--color-text-secondary);
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -139,7 +139,7 @@
   gap: 6px;
   color: var(--color-text-secondary);
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.4px;
   text-transform: uppercase;
 }
@@ -164,7 +164,7 @@
   box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
-.searchInput::placeholder { color: var(--color-text-muted); }
+.searchInput::placeholder { color: var(--placeholder-color, #94a3b8); }
 
 /* ── Table ── */
 .tableContainer {
@@ -224,19 +224,19 @@
   padding: 16px 20px;
   color: var(--color-text-secondary);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
-.clientName  { display: block; font-weight: 600; font-size: 13.5px; }
+.clientName  { display: block; font-weight: 500; font-size: 13.5px; }
 .clientEmail { display: block; font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
 
 .tableCellMuted { color: var(--color-text-muted); font-style: italic; font-size: 12px; }
 
-.totalPrice { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.totalPrice { font-size: 13.5px; font-weight: 600; white-space: nowrap; }
 
 .balanceDue {
   color: var(--color-danger);
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -253,7 +253,7 @@
 .deliveryDate {
   color: var(--color-text-primary);
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -300,7 +300,7 @@
   padding: 5px 10px;
   border-radius: var(--radius-sm);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   font-family: var(--font-body);
   transition: background-color 0.15s ease;
@@ -441,7 +441,7 @@
 
 .inputLabel {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -466,12 +466,12 @@
   box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
-.inputField::placeholder { color: var(--color-text-muted); }
+.inputField::placeholder { color: var(--placeholder-color, #94a3b8); }
 
 /* ── Detail rows in modal ── */
 .detailsSectionTitle {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -506,7 +506,7 @@
   display: block;
   font-size: 15px;
   color: var(--color-text-primary);
-  font-weight: 600;
+  font-weight: 400;
   margin-top: 2px;
 }
 
@@ -579,7 +579,7 @@
 .orderNoteBox span {
   display: block;
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--color-text-secondary);
@@ -716,7 +716,7 @@
   display: block;
   color: var(--color-text-secondary);
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
@@ -734,7 +734,7 @@
   margin-top: 2px;
   color: var(--color-danger);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .orderItemActions {
@@ -749,7 +749,7 @@
   background: #f7f4ff;
   color: var(--color-accent);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   padding: 8px 12px;
   cursor: pointer;
 }
@@ -861,7 +861,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   font-family: var(--font-body);
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -884,7 +884,7 @@
 .paginationInfo {
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .paginationControls {
@@ -901,7 +901,7 @@
   background-color: var(--color-surface);
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 

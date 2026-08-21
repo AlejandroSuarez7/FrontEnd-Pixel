@@ -4,6 +4,8 @@ import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../store/AuthContext';
 import { useProductCategories } from '../application/useProductCategories';
@@ -17,6 +19,7 @@ export const ProductCategoriesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletionCategory, setDeletionCategory] = useState(null);
   const debouncedSearch = useDebounce(search, 350);
 
   const {
@@ -74,24 +77,6 @@ export const ProductCategoriesPage = () => {
       notifications.success('Categoria desactivada correctamente.');
     } catch (error) {
       notifications.error(error.message || 'No se pudo desactivar la categoria.');
-    }
-  };
-
-  const handleDelete = async (category) => {
-    const accepted = await confirm({
-      title: 'Eliminar categoria',
-      message: `Eliminar permanentemente "${category.nombre}"?`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-
-    if (!accepted) return;
-
-    try {
-      await deleteCategory(category.idCategoriaProducto);
-      notifications.success('Categoria eliminada correctamente.');
-    } catch (error) {
-      notifications.error(error.message || 'No se pudo eliminar la categoria.');
     }
   };
 
@@ -158,7 +143,7 @@ export const ProductCategoriesPage = () => {
                         primaryAction={hasPermission('categorias_producto.editar') ? { label: 'Editar', onClick: () => openEdit(category), variant: 'warning' } : null}
                         actions={[
                           hasPermission('categorias_producto.desactivar') && category.estado && { label: 'Desactivar', onClick: () => handleDeactivate(category), variant: 'danger' },
-                          hasPermission('categorias_producto.eliminar') && { label: 'Eliminar', onClick: () => handleDelete(category), variant: 'danger' },
+                          hasPermission('categorias_producto.eliminar') && { label: 'Eliminar', onClick: () => setDeletionCategory(category), variant: 'danger' },
                         ]}
                       />
                     </td>
@@ -185,6 +170,17 @@ export const ProductCategoriesPage = () => {
         onClose={() => { setIsModalOpen(false); setSelectedCategory(null); }}
         onSubmit={handleSubmit}
         category={selectedCategory}
+      />
+
+      <SafeDeleteModal
+        key={deletionCategory?.idCategoriaProducto || 'category-delete'}
+        isOpen={Boolean(deletionCategory)}
+        entityLabel="categoría"
+        entityName={deletionCategory?.nombre || ''}
+        impactEndpoint={deletionCategory ? SAFE_DELETE_IMPACT_ENDPOINTS.category(deletionCategory.idCategoriaProducto) : ''}
+        deleteAction={() => deleteCategory(deletionCategory.idCategoriaProducto)}
+        successMessage="Categoría eliminada correctamente."
+        onClose={() => setDeletionCategory(null)}
       />
     </div>
   );

@@ -34,7 +34,7 @@
   border-radius: 8px;
   transition: all 0.2s ease;
   text-align: left;
-  font-weight: 500;
+  font-weight: 400;
   display: block;
   color: #4f3f6a;
 }
@@ -51,7 +51,7 @@
 }
 
 .sidebar > nav > div > button {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .sidebar > nav > div > div {
@@ -108,7 +108,7 @@
 .sidebar-profile-info p {
   margin: 0;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: #3b2f6e;
   white-space: nowrap;
   overflow: hidden;

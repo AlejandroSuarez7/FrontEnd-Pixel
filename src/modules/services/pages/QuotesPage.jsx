@@ -6,6 +6,8 @@ import { notifications } from '../../../core/utils/notifications';
 import { isClientUser } from '../../../core/utils/permissions';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../store/AuthContext';
 import { useQuotes } from '../cotizaciones/application/useQuotes';
@@ -109,6 +111,7 @@ const QuotesPage = () => {
   const [proposalQuote, setProposalQuote] = useState(null);
   const [versionsQuote, setVersionsQuote] = useState(null);
   const [responseState, setResponseState] = useState(null);
+  const [deletionQuote, setDeletionQuote] = useState(null);
 
   const canCreateStaffQuote = isStaff && hasPermission('cotizaciones.crear_presencial');
   const canSendProposal = isStaff && hasPermission('cotizaciones.propuesta.enviar');
@@ -182,23 +185,6 @@ const QuotesPage = () => {
     }
   };
 
-  const deleteQuote = async (quote) => {
-    const accepted = await confirm({
-      title: 'Eliminar cotizacion',
-      message: 'Esta accion elimina permanentemente la cotizacion y no se puede deshacer.',
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-    if (!accepted) return;
-
-    try {
-      await handleHardDelete(quote.idCotizacion);
-      notifications.success('Cotizacion eliminada correctamente.');
-    } catch (requestError) {
-      notifications.error(requestError.message || 'No se pudo eliminar la cotizacion.');
-    }
-  };
-
   const actionList = (quote) => {
     const status = String(quote.estado || '').toUpperCase();
     const currentVersion = getCurrentQuoteVersion(quote);
@@ -254,7 +240,7 @@ const QuotesPage = () => {
       ) {
         actions.push({
           label: 'Eliminar',
-          onClick: () => deleteQuote(quote),
+          onClick: () => setDeletionQuote(quote),
           variant: 'danger',
         });
       }
@@ -464,6 +450,17 @@ const QuotesPage = () => {
           onSubmit={submitResponse}
         />
       )}
+
+      <SafeDeleteModal
+        key={deletionQuote?.idCotizacion || 'quote-delete'}
+        isOpen={Boolean(deletionQuote)}
+        entityLabel="cotización"
+        entityName={deletionQuote ? `Cotización #${deletionQuote.idCotizacion}` : ''}
+        impactEndpoint={deletionQuote ? SAFE_DELETE_IMPACT_ENDPOINTS.quote(deletionQuote.idCotizacion) : ''}
+        deleteAction={() => handleHardDelete(deletionQuote.idCotizacion)}
+        successMessage="Cotización eliminada correctamente."
+        onClose={() => setDeletionQuote(null)}
+      />
     </div>
   );
 };

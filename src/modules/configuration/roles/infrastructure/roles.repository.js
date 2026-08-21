@@ -59,6 +59,25 @@ export class RolesApiRepository {
       throw createRequestError(error, 'No se pudo eliminar el rol');
     }
   }
+
+  async getDeletionImpact(id, options = {}) {
+    try {
+      const { data } = await apiClient.get(`${ENDPOINT}/${id}/impacto-eliminacion`, {
+        signal: options.signal,
+      });
+      const impact = data?.data ?? data ?? {};
+      return {
+        puedeEliminar: impact.puedeEliminar === true,
+        requiereConfirmacionReforzada: Boolean(impact.requiereConfirmacionReforzada),
+        totalAfectados: Math.max(0, Number(impact.totalAfectados) || 0),
+        limiteRegistrosPorTipo: Math.max(0, Number(impact.limiteRegistrosPorTipo) || 0),
+        afectados: Array.isArray(impact.afectados) ? impact.afectados : [],
+        explicacion: impact.explicacion || impact.motivo || impact.mensaje || '',
+      };
+    } catch (error) {
+      throw createRequestError(error, 'No se pudo consultar el impacto de la eliminación');
+    }
+  }
 }
 
 export const rolesRepository = new RolesApiRepository();

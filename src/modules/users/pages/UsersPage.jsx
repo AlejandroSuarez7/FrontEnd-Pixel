@@ -4,6 +4,8 @@ import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../store/AuthContext';
 import { rolesRepository } from '../../configuration/roles/infrastructure/roles.repository';
@@ -18,6 +20,7 @@ export const UsersPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [availableRoles, setAvailableRoles] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
+  const [deletionUser, setDeletionUser] = useState(null);
   const { hasPermission } = useAuth();
   const confirm = useConfirm();
   const debouncedSearch = useDebounce(filters.search, 350);
@@ -28,6 +31,7 @@ export const UsersPage = () => {
     error,
     handleCreate,
     handleUpdate,
+    handleToggleStatus,
     handleHardDelete,
     findDuplicateFields,
     paginationMeta,
@@ -125,25 +129,25 @@ export const UsersPage = () => {
     setIsModalOpen(false);
   };
 
-  const onEliminarClick = async (id, nombre) => {
-    const accepted = await confirm({
-      title: 'Eliminar usuario',
-      message: `Eliminar permanentemente al usuario "${nombre}"? Esta accion no se puede deshacer.`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
+  const isAdmin = (user) => user.nombreRol === 'Admin' || user.nombreRol === 'Administrador';
 
+  const onToggleStatusClick = async (user) => {
+    const action = user.estado ? 'Desactivar' : 'Activar';
+    const accepted = await confirm({
+      title: `${action} usuario`,
+      message: `¿Confirmas ${action.toLowerCase()} a "${user.nombre}"?`,
+      confirmText: action,
+      variant: user.estado ? 'warning' : 'success',
+    });
     if (!accepted) return;
 
     try {
-      await handleHardDelete(id);
-      notifications.success('Usuario eliminado correctamente.');
-    } catch (err) {
-      notifications.error(err.message || 'No se pudo eliminar el usuario.');
+      await handleToggleStatus(user.id);
+      notifications.success(`Usuario ${user.estado ? 'desactivado' : 'activado'} correctamente.`);
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo cambiar el estado del usuario.');
     }
   };
-
-  const isAdmin = (user) => user.nombreRol === 'Admin' || user.nombreRol === 'Administrador';
 
   return (
     <div className={styles.pageContainer}>
@@ -258,7 +262,8 @@ export const UsersPage = () => {
                         <TableActions
                           actions={[
                             hasPermission('usuarios.editar') && { label: 'Editar', onClick: () => handleOpenEdit(user), variant: 'warning' },
-                            hasPermission('usuarios.eliminar') && !isAdmin(user) && { label: 'Eliminar', onClick: () => onEliminarClick(user.id, user.nombre), variant: 'danger' },
+                            hasPermission('usuarios.desactivar') && !isAdmin(user) && { label: user.estado ? 'Desactivar' : 'Activar', onClick: () => onToggleStatusClick(user), variant: user.estado ? 'warning' : 'success' },
+                            hasPermission('usuarios.eliminar') && !isAdmin(user) && { label: 'Eliminar', onClick: () => setDeletionUser(user), variant: 'danger' },
                           ]}
                         />
                       </td>
@@ -291,6 +296,17 @@ export const UsersPage = () => {
           loadingRoles={loadingRoles}
         />
       )}
+
+      <SafeDeleteModal
+        key={deletionUser?.id || 'user-delete'}
+        isOpen={Boolean(deletionUser)}
+        entityLabel="usuario"
+        entityName={deletionUser?.nombre || ''}
+        impactEndpoint={deletionUser ? SAFE_DELETE_IMPACT_ENDPOINTS.user(deletionUser.id) : ''}
+        deleteAction={() => handleHardDelete(deletionUser.id)}
+        successMessage="Usuario eliminado correctamente."
+        onClose={() => setDeletionUser(null)}
+      />
     </div>
   );
 };

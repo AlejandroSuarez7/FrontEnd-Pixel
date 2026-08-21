@@ -16,7 +16,7 @@
 .ventas-breadcrumb {
   display: block;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.8px;
   color: var(--color-text-muted, #b0bac9);
   text-transform: uppercase;
@@ -60,7 +60,7 @@
   display: block;
   font-size: 11px;
   color: var(--color-text-secondary, #8f9bb3);
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
   text-transform: uppercase;
 }
@@ -97,7 +97,7 @@
   gap: 5px;
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
@@ -136,7 +136,7 @@
   color: var(--color-text-secondary, #8f9bb3);
   font: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -199,12 +199,12 @@
 .ventas-table-cell-id {
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .ventas-client-name {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ventas-client-email {
@@ -258,7 +258,7 @@
 .ventas-pagination-info {
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .ventas-pagination-controls {
@@ -275,7 +275,7 @@
   background-color: var(--color-surface, #fff);
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 

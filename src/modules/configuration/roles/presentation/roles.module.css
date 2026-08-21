@@ -52,7 +52,7 @@
 .breadcrumb {
   display: block;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.8px;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -122,7 +122,7 @@
   display: block;
   font-size: 11px;
   color: var(--color-text-secondary);
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -162,7 +162,7 @@
   box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
-.searchInput::placeholder { color: var(--color-text-muted); }
+.searchInput::placeholder { color: var(--placeholder-color, #94a3b8); }
 
 /* ── Table ── */
 .tableContainer {
@@ -240,13 +240,13 @@
   padding: 16px 20px;
   color: var(--color-text-secondary);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .tableCellName {
   padding: 16px 20px;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-accent);
 }
 
@@ -293,7 +293,7 @@
   padding: 5px 10px;
   border-radius: var(--radius-sm);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   font-family: var(--font-body);
   transition: background-color 0.15s ease;
@@ -335,7 +335,7 @@
 
 .switchLabel {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -490,7 +490,7 @@
 
 .inputLabel {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -565,7 +565,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   font-family: var(--font-body);
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -697,19 +697,19 @@
   background-color: var(--color-accent-light);
   color: var(--color-accent);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .permissionModuleToggle strong {
   color: var(--color-text-primary);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .permissionModuleToggle small {
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .permissionModuleActions button {
@@ -720,7 +720,7 @@
   color: var(--color-text-secondary);
   font-family: var(--font-body);
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -808,7 +808,7 @@
   background-color: #fafbfc;
   color: var(--color-text-secondary);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   text-align: center;
 }
 
@@ -824,7 +824,7 @@
 .paginationInfo {
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .paginationControls {
@@ -841,7 +841,7 @@
   background-color: var(--color-surface);
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 

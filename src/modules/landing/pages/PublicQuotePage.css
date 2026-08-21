@@ -33,10 +33,7 @@ body:has(.public-quote-page),
   box-sizing: border-box;
 }
 
-.public-quote-page button,
-.public-quote-page input,
-.public-quote-page select,
-.public-quote-page textarea {
+.public-quote-page :where(button, input, select, textarea) {
   font: inherit;
 }
 
@@ -85,7 +82,7 @@ body:has(.public-quote-page),
 .public-quote-back {
   color: #526075;
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
   transition: color 180ms ease, transform 180ms ease;
 }
@@ -127,7 +124,7 @@ body:has(.public-quote-page),
   line-height: 1.18;
   letter-spacing: 0;
   color: #24172f;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .public-quote-intro > div > p:last-child {
@@ -142,7 +139,7 @@ body:has(.public-quote-page),
   margin: 0;
   color: var(--quote-purple);
   font-size: 0.7rem;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -265,7 +262,7 @@ body:has(.public-quote-page),
 .public-quote-subsection-heading span {
   color: #8b6aa3;
   font-size: 0.69rem;
-  font-weight: 850;
+  font-weight: 600;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -278,7 +275,7 @@ body:has(.public-quote-page),
   letter-spacing: 0;
   overflow-wrap: anywhere;
   color: #2a1937;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .public-quote-editing-badge,
@@ -290,14 +287,14 @@ body:has(.public-quote-page),
   border: 1px solid #ead8fb;
   background: linear-gradient(135deg, #faf5ff, #fdf2f8);
   font-size: 0.68rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .public-quote-account-note {
   margin: 0.65rem 0 -0.1rem;
   color: #32766c;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .public-quote-contact-grid {
@@ -314,7 +311,7 @@ body:has(.public-quote-page),
   gap: 0.34rem;
   color: #3f3348;
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .public-quote-page label > span {
@@ -333,6 +330,7 @@ body:has(.public-quote-page),
   background: #fff;
   box-shadow: 0 1px 2px rgba(31, 20, 40, 0.02);
   transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  font-weight: 400;
 }
 
 .public-quote-page input,
@@ -374,13 +372,13 @@ body:has(.public-quote-page),
   justify-self: end;
   color: #8b96a8;
   font-size: 0.68rem;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .public-quote-field-error {
   justify-self: start !important;
   color: var(--quote-danger) !important;
-  font-weight: 750 !important;
+  font-weight: 500 !important;
 }
 
 .public-quote-login-required {
@@ -403,7 +401,7 @@ body:has(.public-quote-page),
   border: 0;
   border-radius: 6px;
   background: var(--quote-purple);
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -415,7 +413,7 @@ body:has(.public-quote-page),
   border-radius: 7px;
   background: #fff1f2;
   font-size: 0.79rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .public-quote-mode-switch {
@@ -437,7 +435,7 @@ body:has(.public-quote-page),
   border-radius: 9px;
   background: transparent;
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
   transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
@@ -446,6 +444,7 @@ body:has(.public-quote-page),
   color: var(--quote-purple);
   background: #fff;
   box-shadow: 0 4px 12px rgba(75, 34, 101, 0.1);
+  font-weight: 600;
 }
 
 .public-quote-field-grid {
@@ -522,7 +521,7 @@ body:has(.public-quote-page),
 }
 
 .public-quote-quantity-input {
-  font-weight: 800 !important;
+  font-weight: 400 !important;
 }
 
 .public-quote-subsection-heading {
@@ -558,7 +557,7 @@ body:has(.public-quote-page),
   background: #fff;
   box-shadow: 0 3px 10px rgba(78, 42, 98, 0.05);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
   transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -657,7 +656,7 @@ body:has(.public-quote-page),
   border-radius: 8px;
   background: linear-gradient(135deg, #f6edff, #fdf2f8);
   font-size: 0.74rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .public-quote-stamp-body {
@@ -716,7 +715,7 @@ body:has(.public-quote-page),
   background: #fff;
   box-shadow: 0 2px 8px rgba(62, 39, 76, 0.04);
   font-size: 0.7rem;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
   transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -821,7 +820,7 @@ body:has(.public-quote-page),
   background: linear-gradient(135deg, #9333ea, #c026d3);
   box-shadow: 0 9px 20px rgba(147, 51, 234, 0.22);
   font-size: 0.83rem;
-  font-weight: 850;
+  font-weight: 600;
   cursor: pointer;
   transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -946,7 +945,7 @@ body:has(.public-quote-page),
 .public-quote-summary-item-head small {
   color: #8793a5;
   font-size: 0.65rem;
-  font-weight: 800;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
@@ -973,7 +972,7 @@ body:has(.public-quote-page),
 .public-quote-summary-facts dt {
   color: #8a95a7;
   font-size: 0.63rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .public-quote-summary-facts dd {
@@ -981,7 +980,7 @@ body:has(.public-quote-page),
   margin: 0;
   color: #39465a;
   font-size: 0.7rem;
-  font-weight: 750;
+  font-weight: 400;
   overflow-wrap: anywhere;
 }
 
@@ -1047,7 +1046,7 @@ body:has(.public-quote-page),
   border: 1px solid #e6d8f8;
   background: #f3eafd;
   font-size: 0.64rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .public-quote-general-observations {
@@ -1123,7 +1122,7 @@ body:has(.public-quote-page),
   background: linear-gradient(135deg, #9333ea, #c026d3);
   box-shadow: 0 9px 20px rgba(147, 51, 234, 0.22);
   font-size: 0.79rem;
-  font-weight: 850;
+  font-weight: 600;
   cursor: pointer;
   transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -1148,7 +1147,7 @@ body:has(.public-quote-page),
   border-radius: 11px;
   background: linear-gradient(135deg, #9333ea, #c026d3);
   box-shadow: 0 8px 18px rgba(147, 51, 234, 0.2);
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -1206,7 +1205,7 @@ body:has(.public-quote-page),
   border-radius: 999px;
   background: #fff3cd;
   font-size: 0.72rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .public-quote-success-actions {
@@ -1225,7 +1224,7 @@ body:has(.public-quote-page),
   padding: 0.55rem 0.85rem;
   border-radius: 12px;
   font-size: 0.8rem;
-  font-weight: 850;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -1234,6 +1233,7 @@ body:has(.public-quote-page),
   border: 1px solid var(--quote-line);
   background: #fff;
   box-shadow: 0 4px 12px rgba(49, 32, 62, 0.05);
+  font-weight: 500;
 }
 
 .public-quote-primary-button {

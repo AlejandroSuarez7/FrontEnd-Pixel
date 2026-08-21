@@ -4,7 +4,8 @@ import { Pagination } from '../../../../core/components/Pagination';
 import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { notifications } from '../../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../../core/utils/serverPagination';
-import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../../store/AuthContext';
 import { useTariffs } from '../application/useTariffs';
@@ -24,7 +25,6 @@ const formatDimension = (value) => (
 
 export const TechniqueRatesPage = () => {
   const { hasPermission } = useAuth();
-  const confirm = useConfirm();
   const [search, setSearch] = useState('');
   const [techniqueFilter, setTechniqueFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -32,6 +32,7 @@ export const TechniqueRatesPage = () => {
   const [catalogError, setCatalogError] = useState('');
   const [selectedTariff, setSelectedTariff] = useState(null);
   const [rateModalOpen, setRateModalOpen] = useState(false);
+  const [deletionTariff, setDeletionTariff] = useState(null);
   const debouncedSearch = useDebounce(search, 350);
 
   const filters = useMemo(() => ({
@@ -83,23 +84,6 @@ export const TechniqueRatesPage = () => {
     } else {
       await createTariff(payload);
       notifications.success('Tarifa creada correctamente.');
-    }
-  };
-
-  const removeTariff = async (tariff) => {
-    const accepted = await confirm({
-      title: 'Eliminar tarifa',
-      message: `¿Eliminar la tarifa de ${tariff.tecnica?.nombre || 'esta técnica'} para ${formatDimension(tariff.anchoHastaCm)} × ${formatDimension(tariff.altoHastaCm)}?`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-    if (!accepted) return;
-
-    try {
-      await deleteTariff(tariff.idTarifa);
-      notifications.success('Tarifa eliminada correctamente.');
-    } catch (requestError) {
-      notifications.error(requestError.message || 'No se pudo eliminar la tarifa.');
     }
   };
 
@@ -198,7 +182,7 @@ export const TechniqueRatesPage = () => {
                           hasPermission('tarifas.tecnicas.eliminar') && {
                             label: 'Eliminar',
                             variant: 'danger',
-                            onClick: () => removeTariff(tariff),
+                            onClick: () => setDeletionTariff(tariff),
                           },
                         ]}
                       />
@@ -235,6 +219,17 @@ export const TechniqueRatesPage = () => {
           onSubmit={saveTariff}
         />
       )}
+
+      <SafeDeleteModal
+        key={deletionTariff?.idTarifa || 'tariff-delete'}
+        isOpen={Boolean(deletionTariff)}
+        entityLabel="tarifa"
+        entityName={deletionTariff?.tecnica?.nombre || `Tarifa #${deletionTariff?.idTarifa || ''}`}
+        impactEndpoint={deletionTariff ? SAFE_DELETE_IMPACT_ENDPOINTS.tariff(deletionTariff.idTarifa) : ''}
+        deleteAction={() => deleteTariff(deletionTariff.idTarifa)}
+        successMessage="Tarifa eliminada correctamente."
+        onClose={() => setDeletionTariff(null)}
+      />
 
     </div>
   );

@@ -93,7 +93,7 @@
 .dashboard-hero-card strong {
   color: var(--color-text-primary);
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .dashboard-hero-card span {
@@ -164,7 +164,7 @@
 .dashboard-kpi-label {
   color: var(--color-text-secondary);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.4px;
   text-transform: uppercase;
 }
@@ -241,7 +241,7 @@
 .dashboard-client-design-form label {
   color: var(--color-text-secondary);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: .4px;
   text-transform: uppercase;
 }
@@ -277,7 +277,7 @@
   color: #fff;
   font: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -321,13 +321,14 @@
   background: transparent;
   color: var(--color-text-secondary);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   font-family: var(--font-body);
 }
 
 .dashboard-period-tabs button.active {
   background-color: var(--color-success-bg);
   color: var(--color-success);
+  font-weight: 600;
 }
 
 .dashboard-grid {
@@ -409,12 +410,12 @@
 .dashboard-chart-tooltip strong {
   color: var(--color-text-primary);
   font-size: 12.5px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .dashboard-chart-tooltip span {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .dashboard-chart-empty {
@@ -642,7 +643,7 @@
 .dashboard-table td:first-child {
   color: var(--color-text-secondary);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .dashboard-table tr:hover td {
@@ -696,7 +697,7 @@
 .dashboard-state-panel strong {
   color: var(--color-text-primary);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .dashboard-state-panel p {
@@ -712,7 +713,7 @@
   background: #6c5ce7;
   color: #fff;
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -799,7 +800,7 @@
 .dashboard-final-balance-alert small {
   color: var(--color-warning);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .dashboard-ready-alert {
@@ -1047,7 +1048,7 @@
   color: var(--color-text-primary);
   max-width: 130px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.25;
 }
 
@@ -1056,7 +1057,7 @@
   margin-top: 3px;
   color: var(--color-text-secondary);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .tracking-step p {
@@ -1294,7 +1295,7 @@
   border-radius: 8px;
   background: #6c5ce7;
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -1398,7 +1399,7 @@
   background: #fff4e0;
   color: #c96b00;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .dashboard-payment-status.confirmado {
@@ -1536,7 +1537,7 @@
   border: 0;
   background: transparent;
   color: #d23434;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -1664,7 +1665,7 @@
   margin-top: 12px;
   color: #43506a;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .dashboard-receipt-observations textarea {
@@ -1702,7 +1703,7 @@
   border-radius: 8px;
   background: #fff;
   color: #67728a;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -1811,7 +1812,7 @@
   background: #f0ecff;
   color: #5b43d6;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
 }
 
@@ -1845,7 +1846,7 @@
   padding: 0 14px;
   background: #6c5ce7;
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 

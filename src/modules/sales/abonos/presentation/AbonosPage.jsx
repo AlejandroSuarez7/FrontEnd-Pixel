@@ -6,6 +6,8 @@ import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { notifications } from '../../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../../core/utils/serverPagination';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../../store/AuthContext';
 import { clientRepository } from '../../../users/infrastructure/client.repository';
@@ -114,6 +116,7 @@ export const AbonosPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [reviewAbono, setReviewAbono] = useState(null);
+  const [deletionAbono, setDeletionAbono] = useState(null);
   const debouncedSearch = useDebounce(filters.search, 350);
   const debouncedClientSearch = useDebounce(clientSearch, 350);
 
@@ -301,24 +304,6 @@ export const AbonosPage = () => {
     }
   };
 
-  const onDeleteClick = async (abono) => {
-    const accepted = await confirm({
-      title: 'Eliminar abono',
-      message: `Eliminar abono pendiente #${abono.idAbono}?`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-
-    if (!accepted) return;
-
-    try {
-      await handleDelete(abono.idAbono);
-      notifications.success('Abono eliminado correctamente.');
-    } catch (error) {
-      if (!error.wasNotified) notifications.error(error.message || 'No se pudo eliminar el abono.');
-    }
-  };
-
   return (
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
@@ -503,7 +488,7 @@ export const AbonosPage = () => {
                             hasPermission('abonos.confirmar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Aprobar', onClick: () => setReviewAbono(abono), variant: 'success' },
                             hasPermission('abonos.rechazar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Rechazar', onClick: () => onRejectClick(abono), variant: 'danger' },
                             hasPermission('abonos.editar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Editar datos', onClick: () => handleOpenEdit(abono), variant: 'warning' },
-                            hasPermission('abonos.eliminar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => onDeleteClick(abono), variant: 'danger' },
+                            hasPermission('abonos.eliminar') && isStaff && abono.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => setDeletionAbono(abono), variant: 'danger' },
                           ]}
                         />
                     </td>
@@ -550,6 +535,16 @@ export const AbonosPage = () => {
         onClose={() => setReviewAbono(null)}
         onCompleted={refetch}
         canReject={hasPermission('abonos.rechazar')}
+      />
+      <SafeDeleteModal
+        key={deletionAbono?.idAbono || 'payment-delete'}
+        isOpen={Boolean(deletionAbono)}
+        entityLabel="abono"
+        entityName={deletionAbono ? `Abono #${deletionAbono.idAbono}` : ''}
+        impactEndpoint={deletionAbono ? SAFE_DELETE_IMPACT_ENDPOINTS.payment(deletionAbono.idAbono) : ''}
+        deleteAction={() => handleDelete(deletionAbono.idAbono)}
+        successMessage="Abono eliminado correctamente."
+        onClose={() => setDeletionAbono(null)}
       />
     </div>
   );

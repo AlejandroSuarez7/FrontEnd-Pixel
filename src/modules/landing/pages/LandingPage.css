@@ -119,7 +119,7 @@
 
 .landing-nav-link.active {
   color: #7e22ce;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .landing-nav-link.active::after {
@@ -660,7 +660,7 @@
 
 .how-title {
   font-size: 56px;
-  font-weight: 800;
+  font-weight: 700;
 
   color: #111827;
 
@@ -832,7 +832,7 @@
 
 .step-title {
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
 
   color: #111827;
 
@@ -949,7 +949,7 @@
 
 .services-title {
   font-size: 56px;
-  font-weight: 800;
+  font-weight: 700;
 
   color: #111827;
 
@@ -1079,7 +1079,7 @@
 
 .service-card-title {
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 600;
 
   color: #111827;
 
@@ -1225,7 +1225,7 @@
 
 .comparative-title {
   font-size: 56px;
-  font-weight: 800;
+  font-weight: 700;
 
   color: #111827;
 
@@ -1322,7 +1322,7 @@
   gap: 12px;
 
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 600;
 
   color: #111827;
 }
@@ -1501,7 +1501,7 @@
 
 .products-title {
   font-size: 56px;
-  font-weight: 800;
+  font-weight: 700;
 
   color: #111827;
 
@@ -1637,7 +1637,7 @@
 
 .product-card-title {
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 600;
 
   color: #111827;
 
@@ -1951,7 +1951,7 @@
 
 .contact-form-title {
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
   color: #111827;
   margin-bottom: 14px;
 }
@@ -1983,7 +1983,7 @@
   min-height: 42px;
   color: #6b21a8;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .contact-quote-link {
@@ -1991,7 +1991,7 @@
   border-radius: 14px;
   color: #7e22ce;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 500;
   min-height: 46px;
   padding: 11px 16px;
   transition: background-color 0.2s ease, border-color 0.2s ease;
@@ -2035,7 +2035,7 @@
   margin-bottom: 5px;
   color: #374151;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 /* ========================================
@@ -2059,7 +2059,7 @@
 
 .contact-input::placeholder,
 .contact-textarea::placeholder {
-  color: #6b7280;
+  color: var(--placeholder-color, #94a3b8);
   opacity: 1;
 }
 
@@ -2162,7 +2162,7 @@
   background: #faf5ff;
   color: #7c3aed;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   padding: 8px 10px;
   cursor: pointer;
 }
@@ -2229,7 +2229,7 @@
 .quote-item-summary-btn span {
   color: #111827;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .quote-item-summary-btn small {
@@ -2243,7 +2243,7 @@
   border-radius: 999px;
   padding: 5px 8px;
   font-size: 10.5px;
-  font-weight: 800;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -2263,7 +2263,7 @@
   background: #faf5ff;
   color: #7c3aed;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 500;
   padding: 8px 10px;
   cursor: pointer;
 }
@@ -2301,13 +2301,13 @@
 
 .quote-product-select:invalid,
 .quote-technique-select:invalid {
-  color: #6b7280;
+  color: var(--placeholder-color, #94a3b8);
 }
 
 .quote-quantity-input {
   width: 100%;
   text-align: center;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .quote-item-note {
@@ -2341,7 +2341,7 @@
   padding: 3px 8px;
   background: #dcfce7;
   color: #15803d;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .quote-total-card {
@@ -2394,7 +2394,7 @@
   background: #faf5ff;
   color: #5b21b6;
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.35;
 }
 
@@ -2413,7 +2413,7 @@
   color: #fff;
   cursor: pointer;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   padding: 8px 10px;
 }
 
@@ -2730,7 +2730,7 @@
 .mobile-nav-link.active {
 	color: #7e22ce;
 	background: #f5eafe;
-	font-weight: 700;
+	font-weight: 600;
 }
 
 .mobile-user-section { margin-top: 16px; padding: 12px 16px; background: #faf5ff; border-radius: 8px; }
@@ -2978,7 +2978,7 @@
   gap: 5px;
   color: #59627a;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .quote-general-design {

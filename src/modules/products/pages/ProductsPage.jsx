@@ -4,6 +4,8 @@ import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
 import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../store/AuthContext';
 import { useProducts } from '../application/useProducts';
@@ -20,6 +22,7 @@ export const ProductsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletionProduct, setDeletionProduct] = useState(null);
   const debouncedSearch = useDebounce(search, 350);
 
   const {
@@ -124,23 +127,6 @@ export const ProductsPage = () => {
     }
   };
 
-  const handleDelete = async (product) => {
-    const accepted = await confirm({
-      title: 'Eliminar producto',
-      message: `Eliminar permanentemente "${product.nombre}"?`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-    if (!accepted) return;
-
-    try {
-      await deleteProduct(product.idProducto);
-      notifications.success('Producto eliminado correctamente.');
-    } catch (error) {
-      notifications.error(error.message || 'No se pudo eliminar el producto.');
-    }
-  };
-
   return (
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
@@ -226,7 +212,7 @@ export const ProductsPage = () => {
                         primaryAction={hasPermission('productos.editar') ? { label: 'Editar', onClick: () => openEdit(product), variant: 'warning' } : null}
                         actions={[
                           hasPermission('productos.desactivar') && product.estado && { label: 'Desactivar', onClick: () => handleDeactivate(product), variant: 'danger' },
-                          hasPermission('productos.eliminar') && { label: 'Eliminar', onClick: () => handleDelete(product), variant: 'danger' },
+                          hasPermission('productos.eliminar') && { label: 'Eliminar', onClick: () => setDeletionProduct(product), variant: 'danger' },
                         ]}
                       />
                     </td>
@@ -260,6 +246,17 @@ export const ProductsPage = () => {
           canManageDiscounts={canManageDiscounts}
         />
       )}
+
+      <SafeDeleteModal
+        key={deletionProduct?.idProducto || 'product-delete'}
+        isOpen={Boolean(deletionProduct)}
+        entityLabel="producto"
+        entityName={deletionProduct?.nombre || ''}
+        impactEndpoint={deletionProduct ? SAFE_DELETE_IMPACT_ENDPOINTS.product(deletionProduct.idProducto) : ''}
+        deleteAction={() => deleteProduct(deletionProduct.idProducto)}
+        successMessage="Producto eliminado correctamente."
+        onClose={() => setDeletionProduct(null)}
+      />
     </div>
   );
 };

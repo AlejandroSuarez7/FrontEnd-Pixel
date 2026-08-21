@@ -3,6 +3,8 @@ import { Pagination } from '../../../../core/components/Pagination';
 import { notifications } from '../../../../core/utils/notifications';
 import { usePagination } from '../../../../core/hooks/usePagination';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../../store/AuthContext';
 import { useDisenos } from '../application/useDisenos';
@@ -112,6 +114,7 @@ export const DisenosPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [responseModal, setResponseModal] = useState({ open: false, mode: 'approve', diseno: null });
+  const [deletionDiseno, setDeletionDiseno] = useState(null);
 
   const {
     disenos,
@@ -263,24 +266,6 @@ export const DisenosPage = () => {
     }
   };
 
-  const onDeleteClick = async (diseno) => {
-    const accepted = await confirm({
-      title: 'Eliminar diseno',
-      message: `Eliminar diseno #${diseno.idDiseno}?`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-
-    if (!accepted) return;
-
-    try {
-      await handleDelete(diseno.idDiseno);
-      notifications.success('Diseno eliminado correctamente.');
-    } catch (error) {
-      notifications.error(error.message || 'No se pudo eliminar el diseno.');
-    }
-  };
-
   return (
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
@@ -405,7 +390,7 @@ export const DisenosPage = () => {
                           canRejectByClient(diseno) && { label: 'Rechazar por cliente', onClick: () => openClientResponseModal('reject', diseno), variant: 'danger' },
                           canApprove(diseno) && { label: 'Aprobar', onClick: () => onApproveClick(diseno), variant: 'success' },
                           hasPermission('disenos.editar') && (isStaff || isDisenador) && diseno.estado !== 'APROBADO' && { label: 'Editar', onClick: () => handleOpenEdit(diseno), variant: 'warning' },
-                          hasPermission('disenos.eliminar') && isStaff && diseno.estado !== 'APROBADO' && { label: 'Eliminar', onClick: () => onDeleteClick(diseno), variant: 'danger' },
+                          hasPermission('disenos.eliminar') && isStaff && diseno.estado !== 'APROBADO' && { label: 'Eliminar', onClick: () => setDeletionDiseno(diseno), variant: 'danger' },
                         ]}
                       />
                     </td>
@@ -447,6 +432,16 @@ export const DisenosPage = () => {
         diseno={responseModal.diseno}
         onClose={closeClientResponseModal}
         onSubmit={handleClientResponseSubmit}
+      />
+      <SafeDeleteModal
+        key={deletionDiseno?.idDiseno || 'design-delete'}
+        isOpen={Boolean(deletionDiseno)}
+        entityLabel="diseño"
+        entityName={deletionDiseno ? `Diseño #${deletionDiseno.idDiseno}` : ''}
+        impactEndpoint={deletionDiseno ? SAFE_DELETE_IMPACT_ENDPOINTS.design(deletionDiseno.idDiseno) : ''}
+        deleteAction={() => handleDelete(deletionDiseno.idDiseno)}
+        successMessage="Diseño eliminado correctamente."
+        onClose={() => setDeletionDiseno(null)}
       />
     </div>
   );
