@@ -1,16 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toCalendarDateInput } from '../../../../core/utils/fechaFormato';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import styles from './pedidos.module.css';
 
 export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido }) => {
-  const [fechaEntregaEstimada, setFechaEntregaEstimada] = useState('');
+  const [fechaEntregaEstimada, setFechaEntregaEstimada] = useState(
+    () => toCalendarDateInput(pedido?.fechaEntregaEstimada),
+  );
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
-
-  useEffect(() => {
-    setFechaEntregaEstimada(toCalendarDateInput(pedido?.fechaEntregaEstimada));
-  }, [pedido, isOpen]);
 
   if (!isOpen || !pedido) return null;
 
@@ -33,7 +31,9 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido }) => {
       <div className={`${styles.modalContainer} ${styles.modalSm}`}>
         <div className={styles.modalHeader}>
           <div>
-            <h3 className={styles.modalTitle}>Asignar fecha estimada de entrega</h3>
+            <h3 className={styles.modalTitle}>
+              {pedido.fechaEntregaEstimada ? 'Editar fecha estimada de entrega' : 'Asignar fecha estimada de entrega'}
+            </h3>
             <p className={styles.modalSubtitle}>Pedido #{pedido.idPedido}</p>
           </div>
           <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>X</button>

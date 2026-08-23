@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../../../core/components/Pagination';
 import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { usePagination } from '../../../../core/hooks/usePagination';
 import { formatDate } from '../../../../core/utils/fechaFormato';
 import { UserApiRepository } from '../../../users/infrastructure/user.repository';
+import { TableActions } from '../../../../shared/components/TableActions/TableActions';
+import { useAuth } from '../../../../store/AuthContext';
 import { useVentas } from '../application/useVentas';
 import './VentasPage.css';
 
@@ -47,6 +50,7 @@ const styles = {
   statusWarning: 'ventas-status-warning',
   statusDanger: 'ventas-status-danger',
   techniqueList: 'ventas-technique-list',
+  actionsCell: 'ventas-actions-cell',
   totalPrice: 'ventas-total-price',
   paidAmount: 'ventas-paid-amount',
   balanceAmount: 'ventas-balance-amount',
@@ -83,6 +87,8 @@ const getClientesActivos = () => {
 };
 
 export const VentasPage = () => {
+  const navigate = useNavigate();
+  const { hasPermission } = useAuth();
   const [filters, setFilters] = useState({
     search: '',
     fechaInicio: '',
@@ -170,6 +176,7 @@ export const VentasPage = () => {
       </div>
 
       <div className={styles.filterSection}>
+        <p className="ventas-filter-help">Filtra las ventas segun la fecha de su primer pago.</p>
         <label className={`${styles.filterField} ${styles.filterSearch}`}>
           <span>Buscar ventas</span>
           <input
@@ -181,7 +188,7 @@ export const VentasPage = () => {
           />
         </label>
         <label className={styles.filterDateGroup}>
-          <span>Fecha inicio</span>
+          <span>Desde</span>
           <input
             type="date"
             value={filters.fechaInicio}
@@ -190,7 +197,7 @@ export const VentasPage = () => {
           />
         </label>
         <label className={styles.filterDateGroup}>
-          <span>Fecha fin</span>
+          <span>Hasta</span>
           <input
             type="date"
             value={filters.fechaFin}
@@ -262,6 +269,7 @@ export const VentasPage = () => {
                     <th className={styles.tableHeader}>Primer pago</th>
                     <th className={styles.tableHeader}>Tecnicas</th>
                     <th className={styles.tableHeader}>Cantidad</th>
+                    <th className={styles.tableHeader}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -296,6 +304,17 @@ export const VentasPage = () => {
                         </span>
                       </td>
                       <td className={styles.tableCell}>{venta.cantidadTotalProductos}</td>
+                      <td className={styles.actionsCell}>
+                        {hasPermission('pedidos.ver') && venta.idPedido && (
+                          <TableActions
+                            actions={[{
+                              label: 'Ver expediente',
+                              variant: 'accent',
+                              onClick: () => navigate(`/dashboard/orders/${venta.idPedido}/expediente?mode=readonly&from=sales`),
+                            }]}
+                          />
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

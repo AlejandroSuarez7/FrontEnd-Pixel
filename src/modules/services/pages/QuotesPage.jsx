@@ -15,7 +15,6 @@ import { QuoteFormModal } from '../cotizaciones/presentation/QuoteFormModal';
 import { QuoteDetailsModal } from '../cotizaciones/presentation/QuoteDetailsModal';
 import { QuoteProposalModal } from '../cotizaciones/presentation/QuoteProposalModal';
 import { QuoteResponseModal } from '../cotizaciones/presentation/QuoteResponseModal';
-import { QuoteVersionsModal } from '../cotizaciones/presentation/QuoteVersionsModal';
 import {
   canRespondToProposal,
   getClientVisibleQuoteTotal,
@@ -71,6 +70,9 @@ const getProductsText = (quote) => {
 
 const getQuoteDisplayTotal = (quote, isClient) => {
   if (isClient) return getClientVisibleQuoteTotal(quote);
+  const currentProposal = getCurrentQuoteVersion(quote);
+  const proposalValue = Number(currentProposal?.precioFinal);
+  if (Number.isFinite(proposalValue) && proposalValue > 0) return proposalValue;
   const value = Number(quote.total);
   return Number.isFinite(value) && value > 0 ? value : null;
 };
@@ -109,13 +111,11 @@ const QuotesPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [detailsQuote, setDetailsQuote] = useState(null);
   const [proposalQuote, setProposalQuote] = useState(null);
-  const [versionsQuote, setVersionsQuote] = useState(null);
   const [responseState, setResponseState] = useState(null);
   const [deletionQuote, setDeletionQuote] = useState(null);
 
   const canCreateStaffQuote = isStaff && hasPermission('cotizaciones.crear_presencial');
   const canSendProposal = isStaff && hasPermission('cotizaciones.propuesta.enviar');
-  const canViewVersions = isStaff && hasPermission('cotizaciones.versiones.ver');
   const canRegisterResponse = isStaff && hasPermission('cotizaciones.respuesta_cliente.registrar');
   const canClientRespond = isClient && hasPermission('cotizaciones.cliente.responder');
 
@@ -130,14 +130,27 @@ const QuotesPage = () => {
   };
 
   const submitRequest = async (payload) => {
+    const { immediateProposal, ...requestPayload } = payload;
     if (formQuote) {
-      await updateRequest(formQuote.idCotizacion, payload);
+      await updateRequest(formQuote.idCotizacion, requestPayload);
       notifications.success('Solicitud actualizada correctamente.');
     } else {
-      await handleCreate(payload, true);
+      const createdQuote = await handleCreate(requestPayload, true);
+      if (immediateProposal?.enabled) {
+        try {
+          await sendProposal(createdQuote.idCotizacion, immediateProposal.payload);
+          notifications.success('Cotizacion creada y propuesta enviada al cliente correctamente.');
+        } catch {
+          setIsFormOpen(false);
+          setFormQuote(null);
+          notifications.warning('La solicitud fue creada, pero no pudimos enviar la propuesta. Puedes retomarla desde Gestion de Cotizaciones.');
+          return;
+        }
+      } else {
       notifications.success(
         'Cotizacion creada correctamente. El cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.'
       );
+      }
     }
     setIsFormOpen(false);
     setFormQuote(null);
@@ -208,13 +221,6 @@ const QuotesPage = () => {
           label: currentVersion ? 'Enviar nueva propuesta' : 'Enviar propuesta',
           onClick: () => setProposalQuote(quote),
           variant: 'info',
-        });
-      }
-
-      if (canViewVersions && (currentVersion || quote.versiones?.length > 0)) {
-        actions.push({
-          label: 'Ver versiones',
-          onClick: () => setVersionsQuote(quote),
         });
       }
 
@@ -359,9 +365,9 @@ const QuotesPage = () => {
                             ? <span className={styles.pricePending}>Precio pendiente de confirmacion</span>
                             : formatMoneyCOP(displayTotal)}
                         </strong>
-                        {proposal?.numeroVersion > 0 && (
+                        {proposal && (
                           <small className={styles.proposalMeta}>
-                            Version {proposal.numeroVersion}{expired ? ' - Vencida' : ''}
+                            {expired ? 'Propuesta vencida' : 'Propuesta vigente'}
                           </small>
                         )}
                       </td>
@@ -427,15 +433,6 @@ const QuotesPage = () => {
           quote={proposalQuote}
           onClose={() => setProposalQuote(null)}
           onSubmit={submitProposal}
-        />
-      )}
-
-      {versionsQuote && (
-        <QuoteVersionsModal
-          key={versionsQuote.idCotizacion}
-          open
-          quote={versionsQuote}
-          onClose={() => setVersionsQuote(null)}
         />
       )}
 

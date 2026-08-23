@@ -60,7 +60,7 @@ export const QuoteResponseModal = ({ open, quote, version, isStaff, onClose, onS
               <p className={styles.internalNotice}>Estás registrando esta decisión en nombre del cliente.</p>
             )}
             <div className={styles.proposalSummary}>
-              <span>Versión {version.numeroVersion}</span>
+              <span>Propuesta oficial</span>
               <strong>{formatMoneyCOP(version.precioFinal)}</strong>
             </div>
             <label className={styles.stackField}>

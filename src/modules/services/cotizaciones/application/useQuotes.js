@@ -21,12 +21,14 @@ export const useQuotes = (filters = {}) => {
   // Crea una cotización nueva (cliente o staff)
   const handleCreate = async (quoteData, isStaff = false) => {
     try {
+      let createdQuote;
       if (isStaff) {
-        await quoteRepository.createAsStaff(quoteData);
+        createdQuote = await quoteRepository.createAsStaff(quoteData);
       } else {
-        await quoteRepository.createAsClient(quoteData);
+        createdQuote = await quoteRepository.createAsClient(quoteData);
       }
       await fetchQuotes();
+      return createdQuote;
     } catch (error) {
       console.error('Error al crear cotización:', error);
       throw error;

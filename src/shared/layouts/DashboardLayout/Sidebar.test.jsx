@@ -71,4 +71,12 @@ describe('Sidebar accordion', () => {
     expect(screen.getByText('Gestion de Cotizaciones')).toBeInTheDocument();
     expect(document.querySelectorAll('.menu-toggle.active')).toHaveLength(1);
   });
+
+  it('does not expose Gestion de Abonos as an independent navigation module', async () => {
+    renderSidebar('/dashboard/orders');
+
+    await waitFor(() => expect(screen.getByTitle('Ventas')).toHaveAttribute('aria-expanded', 'true'));
+    expect(screen.queryByText('Gestion de Abonos')).not.toBeInTheDocument();
+    expect(screen.getByText('Gestion de Pedidos')).toBeInTheDocument();
+  });
 });

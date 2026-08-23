@@ -17,7 +17,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useContextualBack } from '../../../../core/hooks/useContextualBack';
 import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { notifications } from '../../../../core/utils/notifications';
@@ -50,6 +50,7 @@ import { DesignOriginModal } from '../../../production/disenos/presentation/Desi
 import { DesignClientResponseModal } from '../../../production/disenos/presentation/DesignClientResponseModal';
 import { pedidoRepository } from '../infrastructure/pedido.repository';
 import { RegisterClientDesignModal } from './RegisterClientDesignModal';
+import { PedidoEditModal } from './PedidoEditModal';
 import './pedido-expediente.css';
 
 const formatMoney = value => new Intl.NumberFormat('es-CO', {
@@ -213,10 +214,12 @@ const DesignRequirementCard = ({
 export const PedidoExpedientePage = () => {
   const { idPedido } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const confirm = useConfirm();
   const { user, permissions, hasPermission } = useAuth();
   const isClient = isClientUser(user, permissions);
-  const goBack = useContextualBack(isClient ? PATHS.DASHBOARD : PATHS.ORDERS);
+  const readOnly = new URLSearchParams(location.search || '').get('mode') === 'readonly';
+  const goBack = useContextualBack(readOnly ? PATHS.SALES : isClient ? PATHS.DASHBOARD : PATHS.ORDERS);
   const [activeTab, setActiveTab] = useState('resumen');
   const [receiptPayment, setReceiptPayment] = useState(null);
   const [reviewPayment, setReviewPayment] = useState(null);
@@ -225,6 +228,7 @@ export const PedidoExpedientePage = () => {
   const [designModalContext, setDesignModalContext] = useState(null);
   const [originRequirement, setOriginRequirement] = useState(null);
   const [clientDesignDetail, setClientDesignDetail] = useState(null);
+  const [showDateModal, setShowDateModal] = useState(false);
   const [designResponseModal, setDesignResponseModal] = useState({
     open: false,
     mode: 'approve',
@@ -301,6 +305,7 @@ export const PedidoExpedientePage = () => {
   }), [client, expediente?.detalles, expediente?.montoMinimoPrimerAbono, idPedido, pedido, summary]);
 
   const handleCreatePayment = async payload => {
+    if (readOnly) return;
     await abonoRepository.create(payload);
     setShowAbonoModal(false);
     await loadExpediente();
@@ -308,6 +313,7 @@ export const PedidoExpedientePage = () => {
   };
 
   const handleCreateDesign = async payload => {
+    if (readOnly) return;
     await disenoRepository.create(payload);
     setDesignModalContext(null);
     await Promise.all([loadExpediente(), loadDesignRequirements()]);
@@ -315,6 +321,7 @@ export const PedidoExpedientePage = () => {
   };
 
   const handleRegisterClientDesign = async payload => {
+    if (readOnly) return;
     await pedidoRepository.registrarDisenoRecibidoCliente(
       clientDesignDetail.idPedido || pedido.idPedido,
       clientDesignDetail.idRequerimientoDiseno,
@@ -326,6 +333,7 @@ export const PedidoExpedientePage = () => {
   };
 
   const handleDefineDesignOrigin = async origin => {
+    if (readOnly) return;
     await disenoRepository.definirOrigenRequerimiento(
       originRequirement.idPedido || pedido.idPedido,
       originRequirement.idRequerimientoDiseno,
@@ -380,6 +388,7 @@ export const PedidoExpedientePage = () => {
   };
 
   const handleDesignClientResponse = async ({ medio, observaciones }) => {
+    if (readOnly) return;
     const design = designResponseModal.diseno;
     if (!design) return;
 
@@ -407,6 +416,7 @@ export const PedidoExpedientePage = () => {
   };
 
   const handleRejectPayment = async payment => {
+    if (readOnly) return;
     const result = await confirm({
       title: 'Rechazar abono',
       message: `Indica por que se rechaza el comprobante del abono #${payment.idAbono}.`,
@@ -430,6 +440,12 @@ export const PedidoExpedientePage = () => {
     }
   };
 
+  const handleUpdateEstimatedDelivery = async (pedidoId, fechaEntregaEstimada) => {
+    if (readOnly) return;
+    await pedidoRepository.updateEstimatedDelivery(pedidoId, fechaEntregaEstimada);
+    await loadExpediente();
+  };
+
   if (loading) return <div className="expediente-state">Cargando expediente del pedido...</div>;
   if (error || !expediente) {
     return (
@@ -445,12 +461,12 @@ export const PedidoExpedientePage = () => {
   return (
     <main className="expediente-page">
       <button type="button" className="expediente-back" onClick={goBack}>
-        <ArrowLeft size={18} /> Volver a pedidos
+        <ArrowLeft size={18} /> {readOnly ? 'Volver a ventas' : 'Volver a pedidos'}
       </button>
 
       <header className="expediente-header">
         <div className="expediente-header-main">
-          <span className="expediente-eyebrow">Expediente central</span>
+          <span className="expediente-eyebrow">{readOnly ? 'Consulta historica' : 'Expediente central'}</span>
           <h1>Pedido #{pedido.idPedido}</h1>
           <div className="expediente-client">
             <span className="expediente-client-icon"><UserRound size={17} /></span>
@@ -476,7 +492,18 @@ export const PedidoExpedientePage = () => {
         <div><span className="expediente-kpi-icon purple"><CircleDollarSign size={19} /></span><div><span>Total</span><strong>{formatMoney(summary.total)}</strong></div></div>
         <div><span className="expediente-kpi-icon green"><WalletCards size={19} /></span><div><span>Pagado</span><strong>{formatMoney(summary.totalConfirmado)}</strong></div></div>
         <div><span className="expediente-kpi-icon orange"><BadgeDollarSign size={19} /></span><div><span>Saldo pendiente</span><strong>{formatMoney(summary.saldoPendiente)}</strong></div></div>
-        <div><span className="expediente-kpi-icon blue"><CalendarDays size={19} /></span><div><span>Entrega estimada</span><strong>{formatCalendarDate(pedido.fechaEntregaEstimada)}</strong></div></div>
+        <div className="expediente-delivery-kpi">
+          <span className="expediente-kpi-icon blue"><CalendarDays size={19} /></span>
+          <div>
+            <span>Entrega estimada</span>
+            <strong>{formatCalendarDate(pedido.fechaEntregaEstimada)}</strong>
+            {!readOnly && hasPermission('pedidos.editar') && pedido.estadoPedido !== 'ENTREGADO' && pedido.estadoPedido !== 'ANULADO' && (
+              <button type="button" onClick={() => setShowDateModal(true)}>
+                {pedido.fechaEntregaEstimada ? 'Editar' : 'Asignar fecha'}
+              </button>
+            )}
+          </div>
+        </div>
       </section>
 
       <nav className="expediente-tabs" aria-label="Secciones del expediente" role="tablist">
@@ -524,12 +551,12 @@ export const PedidoExpedientePage = () => {
                   <strong>{formatMoney(detail.subtotalConDescuento ?? detail.subtotalFinal ?? detail.subtotal)}</strong>
                   <div className="expediente-card-actions">
                     {coverage.fileUrl && <a className="expediente-button secondary" href={coverage.fileUrl} target="_blank" rel="noreferrer">Ver diseno</a>}
-                    {(hasPermission('disenos.crear') || hasPermission('disenos.editar')) && coverage.canCreate && (
+                    {!readOnly && (hasPermission('disenos.crear') || hasPermission('disenos.editar')) && coverage.canCreate && (
                       <button className="expediente-button primary" type="button" onClick={() => openDesignModal(detail)}>
                         {coverage.isCorrection ? 'Cargar diseno corregido' : 'Crear o asignar diseno'}
                       </button>
                     )}
-                    {hasPermission('disenos.crear')
+                    {!readOnly && hasPermission('disenos.crear')
                       && coverage.canRegisterClientFile
                       && detail.idRequerimientoDiseno && (
                       <button className="expediente-button primary" type="button" onClick={() => setClientDesignDetail(detail)}>
@@ -572,21 +599,9 @@ export const PedidoExpedientePage = () => {
         <section className="expediente-content">
           <div className="expediente-section-heading">
             <div><span>Pagos</span><h2>Abonos del pedido</h2></div>
-            {hasPermission('abonos.crear') && (
+            {!readOnly && hasPermission('abonos.crear') && (
               <div className="expediente-heading-actions">
                 <button type="button" onClick={() => setShowAbonoModal(true)}>Registrar abono</button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => navigate('/dashboard/sales/payments', {
-                    state: {
-                      idPedido: pedido.idPedido,
-                      idCliente: client.idCliente || pedido.idCliente,
-                    },
-                  })}
-                >
-                  Ver todos <ExternalLink size={15} />
-                </button>
               </div>
             )}
           </div>
@@ -602,10 +617,10 @@ export const PedidoExpedientePage = () => {
                 <div><span className="expediente-reference">{payment.referencia || payment.referenciaDetectadaOcr || 'Sin referencia'}</span><small>{payment.requiereRevisionManual ? 'Revision manual' : formatPaymentOrigin(payment)}</small></div>
                 <div className="expediente-row-actions">
                   {payment.comprobanteDisponible && <button className="expediente-button secondary" type="button" onClick={() => setReceiptPayment(payment)}>Ver comprobante</button>}
-                  {payment.estado === 'PENDIENTE' && hasPermission('abonos.confirmar') && (
+                  {!readOnly && payment.estado === 'PENDIENTE' && hasPermission('abonos.confirmar') && (
                     <button className="expediente-button primary" type="button" disabled={pendingActionId === payment.idAbono} onClick={() => setReviewPayment(payment)}>Revisar y confirmar</button>
                   )}
-                  {payment.estado === 'PENDIENTE' && hasPermission('abonos.rechazar') && (
+                  {!readOnly && payment.estado === 'PENDIENTE' && hasPermission('abonos.rechazar') && (
                     <button type="button" className="expediente-button danger" disabled={pendingActionId === payment.idAbono} onClick={() => handleRejectPayment(payment)}>Rechazar</button>
                   )}
                 </div>
@@ -620,7 +635,7 @@ export const PedidoExpedientePage = () => {
         <section className="expediente-content">
           <div className="expediente-section-heading">
             <div><span>Disenos</span><h2>Requerimientos de diseno</h2></div>
-            {hasPermission('disenos.ver') && (
+            {!readOnly && hasPermission('disenos.ver') && (
               <div className="expediente-heading-actions">
                 {hasPermission('disenos.crear') && <button type="button" onClick={() => openDesignModal(null)}>Nuevo diseno</button>}
                 <button type="button" className="secondary" onClick={() => navigate('/dashboard/production/designs')}>Ver todos <ExternalLink size={15} /></button>
@@ -643,11 +658,11 @@ export const PedidoExpedientePage = () => {
                 key={requirement.idRequerimientoDiseno}
                 requirement={requirement}
                 index={index}
-                canManage={hasPermission('disenos.crear') || hasPermission('disenos.editar')}
-                canRegisterClientFile={hasPermission('disenos.crear')}
-                canDefineOrigin={hasPermission('disenos.crear')}
-                canApproveByClient={hasPermission('disenos.aprobar_cliente')}
-                canRejectByClient={hasPermission('disenos.rechazar_cliente')}
+                canManage={!readOnly && (hasPermission('disenos.crear') || hasPermission('disenos.editar'))}
+                canRegisterClientFile={!readOnly && hasPermission('disenos.crear')}
+                canDefineOrigin={!readOnly && hasPermission('disenos.crear')}
+                canApproveByClient={!readOnly && hasPermission('disenos.aprobar_cliente')}
+                canRejectByClient={!readOnly && hasPermission('disenos.rechazar_cliente')}
                 onCreate={() => openDesignModal(requirement)}
                 onRegisterClientFile={() => setClientDesignDetail(requirement)}
                 onDefineOrigin={() => setOriginRequirement(requirement)}
@@ -693,14 +708,14 @@ export const PedidoExpedientePage = () => {
         loadReceipt={loadReceipt}
         title={`Comprobante del abono #${receiptPayment?.idAbono || ''}`}
       />
-      <ReviewConfirmAbonoModal
+      {!readOnly && <ReviewConfirmAbonoModal
         isOpen={Boolean(reviewPayment)}
         abono={reviewPayment}
         onClose={() => setReviewPayment(null)}
         onCompleted={loadExpediente}
         canReject={hasPermission('abonos.rechazar')}
-      />
-      {showAbonoModal && (
+      />}
+      {!readOnly && showAbonoModal && (
         <AbonoModal
           isOpen
           onClose={() => setShowAbonoModal(false)}
@@ -714,7 +729,7 @@ export const PedidoExpedientePage = () => {
           lockPedido
         />
       )}
-      <DisenoModal
+      {!readOnly && <DisenoModal
         isOpen={Boolean(designModalContext)}
         onClose={() => setDesignModalContext(null)}
         onSubmit={handleCreateDesign}
@@ -725,28 +740,37 @@ export const PedidoExpedientePage = () => {
         presetRequirement={designModalContext?.requirement || null}
         presetRequirementId={designModalContext?.requirementId || ''}
         lockPedido
-      />
-      <RegisterClientDesignModal
+      />}
+      {!readOnly && <RegisterClientDesignModal
         isOpen={Boolean(clientDesignDetail)}
         pedido={pedido}
         detail={clientDesignDetail}
         onClose={() => setClientDesignDetail(null)}
         onSubmit={handleRegisterClientDesign}
-      />
-      <DesignClientResponseModal
+      />}
+      {!readOnly && <DesignClientResponseModal
         isOpen={designResponseModal.open}
         mode={designResponseModal.mode}
         diseno={designResponseModal.diseno}
         onClose={() => setDesignResponseModal({ open: false, mode: 'approve', diseno: null })}
         onSubmit={handleDesignClientResponse}
-      />
-      <DesignOriginModal
+      />}
+      {!readOnly && <DesignOriginModal
         isOpen={Boolean(originRequirement)}
         requirement={originRequirement}
         pedido={pedido}
         onClose={() => setOriginRequirement(null)}
         onSubmit={handleDefineDesignOrigin}
-      />
+      />}
+      {!readOnly && showDateModal && (
+        <PedidoEditModal
+          key={`${pedido.idPedido}-${pedido.fechaEntregaEstimada || 'pending-date'}`}
+          isOpen
+          onClose={() => setShowDateModal(false)}
+          onSubmit={handleUpdateEstimatedDelivery}
+          pedido={pedido}
+        />
+      )}
     </main>
   );
 };

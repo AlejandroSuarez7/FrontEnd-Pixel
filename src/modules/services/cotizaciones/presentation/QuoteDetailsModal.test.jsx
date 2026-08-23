@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { QuoteDetailsModal } from './QuoteDetailsModal';
 
@@ -155,7 +155,8 @@ describe('QuoteDetailsModal long contact data', () => {
     expect(discountLabel.parentElement?.querySelector('strong')).toHaveTextContent('No aplica');
     expect(screen.getByText('Creacion del diseno')).toBeInTheDocument();
     expect(screen.getByText('Transporte')).toBeInTheDocument();
-    expect(screen.getByText('Version 3')).toBeInTheDocument();
+    expect(screen.getByText('Propuesta vigente')).toBeInTheDocument();
+    expect(screen.queryByText(/Version 3/i)).not.toBeInTheDocument();
     expect(screen.getByText('Total final').parentElement?.querySelector('strong')).toHaveTextContent('$ 3.357.200');
     expect(container).not.toHaveTextContent(/undefined|null|NaN/i);
     expect(container).not.toHaveTextContent(/motivo|notas internas|estimacion interna/i);
@@ -197,6 +198,7 @@ describe('QuoteDetailsModal long contact data', () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: 'Ver detalle' }));
     expect(screen.getByText('Descuento por cantidad')).toBeInTheDocument();
     expect(screen.getByText(/Desde 10 unidades/)).toBeInTheDocument();
     expect(screen.getByText('Medidas pendientes de definir con el cliente.')).toBeInTheDocument();

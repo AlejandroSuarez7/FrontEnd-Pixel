@@ -10,12 +10,13 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   success: vi.fn(),
   requirement: null,
+  locationSearch: '',
 }));
 
 vi.mock('react-router-dom', async importOriginal => ({
   ...(await importOriginal()),
   useNavigate: () => mocks.navigate,
-  useLocation: () => ({ key: 'default' }),
+  useLocation: () => ({ key: 'default', search: mocks.locationSearch }),
   useParams: () => ({ idPedido: '54' }),
 }));
 
@@ -104,6 +105,7 @@ vi.mock('../../../production/disenos/presentation/DesignClientResponseModal', ()
 describe('PedidoExpedientePage design origin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.locationSearch = '';
     mocks.requirement = {
       idPedido: 54,
       idRequerimientoDiseno: 'STAMP-34',
@@ -180,5 +182,20 @@ describe('PedidoExpedientePage design origin', () => {
     expect(mocks.loadExpediente).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog', { name: 'Registrar diseno recibido' })).not.toBeInTheDocument();
     expect(mocks.success).toHaveBeenCalledWith('Diseno recibido. Quedo pendiente de revision.');
+  });
+
+  it('hides every mutation action when opened from sales in read-only mode', () => {
+    mocks.locationSearch = '?mode=readonly&from=sales';
+    render(<PedidoExpedientePage />);
+
+    expect(screen.getByText('Consulta historica')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Asignar fecha' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Abonos/i }));
+    expect(screen.queryByRole('button', { name: 'Registrar abono' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Disenos/i }));
+    expect(screen.queryByRole('button', { name: 'Nuevo diseno' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Definir quien entrega el diseno' })).not.toBeInTheDocument();
   });
 });

@@ -85,6 +85,7 @@ export const quotesDTO = {
       disenosPropuesta: apiData.disenosPropuesta ?? apiData.disenosCotizables ?? apiData.disenos ?? [],
       conceptosAdicionales: apiData.conceptosAdicionales ?? [],
       estadoPrecio: apiData.estadoPrecio ?? null,
+      propuestaActual: apiData.propuestaActual ?? null,
       propuesta: apiData.propuesta ?? null,
       versiones: apiData.versiones ?? [],
       fechaCreacion:     apiData.fechaCreacion

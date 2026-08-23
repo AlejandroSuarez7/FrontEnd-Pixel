@@ -177,7 +177,7 @@ const deriveDesignsFromDetails = (details = []) => {
   return designs;
 };
 
-const getExistingProposal = (quote = {}) => quote.propuesta || quote.propuestaActual || null;
+const getExistingProposal = (quote = {}) => quote.propuestaActual || quote.propuesta || null;
 
 export const createProposalForm = (quote = {}, now = new Date()) => {
   const existingProposal = getExistingProposal(quote);

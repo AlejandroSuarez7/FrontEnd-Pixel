@@ -234,4 +234,31 @@ describe('QuoteFormModal presencial', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Crear solicitud' })).toBeEnabled();
   });
+
+  it('incluye una propuesta inmediata opcional sin mezclarla con los items', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue({});
+    renderModal({ onSubmit });
+
+    await completeWalkInClient(user);
+    selectCatalogProduct();
+    await goToReview(user);
+    await user.click(screen.getByRole('radio', { name: 'Si, enviar propuesta ahora' }));
+    await user.type(screen.getByLabelText('Precio final *'), '850000');
+    fireEvent.change(screen.getByLabelText('Valida hasta (opcional)'), { target: { value: '2026-09-01' } });
+    await user.type(screen.getByLabelText('Mensaje para el cliente (opcional)'), 'Propuesta preparada por PIXEL.');
+    await user.click(screen.getByRole('button', { name: 'Crear solicitud' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0].immediateProposal).toEqual({
+      enabled: true,
+      payload: {
+        precioFinal: 850000,
+        validaHasta: '2026-09-01T23:59:59.000Z',
+        motivoAjusteManual: 'Precio acordado durante la atencion presencial.',
+        mensajeCliente: 'Propuesta preparada por PIXEL.',
+      },
+    });
+    expect(onSubmit.mock.calls[0][0].items[0]).not.toHaveProperty('immediateProposal');
+  });
 });

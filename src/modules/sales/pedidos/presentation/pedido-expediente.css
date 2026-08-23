@@ -385,6 +385,24 @@
   gap: 4px;
 }
 
+.expediente-delivery-kpi button {
+  width: fit-content;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: #6c5ce7;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.expediente-delivery-kpi button:hover,
+.expediente-delivery-kpi button:focus-visible {
+  color: #4c35c7;
+  text-decoration: underline;
+}
+
 .expediente-kpis strong {
   overflow-wrap: anywhere;
   font-size: 16px;

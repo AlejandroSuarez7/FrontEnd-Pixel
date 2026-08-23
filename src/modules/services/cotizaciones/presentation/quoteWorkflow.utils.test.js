@@ -1,12 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
   canRespondToProposal,
+  getCurrentQuoteVersion,
   getProposalStatusLabel,
   getQuoteDecisionLabel,
   getResponseMediumLabel,
 } from './quoteWorkflow.utils';
 
 describe('quote workflow labels and response rules', () => {
+  it('prioritizes propuestaActual over historical proposal fields', () => {
+    const propuestaActual = { idVersion: 12, precioFinal: 850000, esVigente: true };
+    expect(getCurrentQuoteVersion({
+      propuestaActual,
+      propuesta: { idVersion: 9, precioFinal: 700000 },
+      versiones: [{ idVersion: 8, esVigente: true }],
+    })).toBe(propuestaActual);
+  });
+
   it('converts workflow enums into human labels', () => {
     expect(getProposalStatusLabel('ENVIADA')).toBe('Enviada al cliente');
     expect(getQuoteDecisionLabel('SOLICITAR_AJUSTE')).toBe('Ajuste solicitado');

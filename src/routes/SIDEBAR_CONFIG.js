@@ -70,7 +70,6 @@ export const SIDEBAR_ITEMS = [
     items: [
       { label: 'Gestion de Cotizaciones', to: PATHS.SERVICES_QUOTES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_QUOTES] },
       { label: 'Gestion de Pedidos', to: PATHS.ORDERS, permissions: ROUTE_PERMISSIONS[PATHS.ORDERS] },
-      { label: 'Gestion de Abonos', to: PATHS.SALES_PAYMENTS, permissions: ROUTE_PERMISSIONS[PATHS.SALES_PAYMENTS] },
       { label: 'Gestion de Ventas', to: PATHS.SALES, permissions: ROUTE_PERMISSIONS[PATHS.SALES] },
     ],
   },

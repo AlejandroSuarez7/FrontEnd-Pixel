@@ -17,10 +17,16 @@ export class VentaApiRepository {
 
     if (normalizedFilters.search) {
       const { data } = await apiClient.get(`${ENDPOINT}/buscar`, {
-        params: { termino: normalizedFilters.search },
+        params: {
+          termino: normalizedFilters.search,
+          ...(normalizedFilters.fechaInicio ? { fechaInicio: normalizedFilters.fechaInicio } : {}),
+          ...(normalizedFilters.fechaFin ? { fechaFin: normalizedFilters.fechaFin } : {}),
+          ...(normalizedFilters.idCliente ? { idCliente: normalizedFilters.idCliente } : {}),
+          ...(normalizedFilters.estadoPago ? { estadoPago: normalizedFilters.estadoPago } : {}),
+        },
         signal: options.signal,
       });
-      return this.applyLocalFilters(ventaDTO.fromApiList(getItems(data)), normalizedFilters);
+      return ventaDTO.fromApiList(getItems(data));
     }
 
     const params = {};
@@ -31,21 +37,6 @@ export class VentaApiRepository {
 
     const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
     return ventaDTO.fromApiList(getItems(data));
-  }
-
-  applyLocalFilters(items, filters) {
-    return items.filter(item => {
-      const fecha = item.fechaFinalizado ? new Date(item.fechaFinalizado) : null;
-      const desde = filters.fechaInicio ? new Date(`${filters.fechaInicio}T00:00:00`) : null;
-      const hasta = filters.fechaFin ? new Date(`${filters.fechaFin}T23:59:59.999`) : null;
-
-      return (
-        (!filters.idCliente || Number(item.idCliente) === Number(filters.idCliente)) &&
-        (!filters.estadoPago || item.estadoPago === filters.estadoPago) &&
-        (!desde || (fecha && fecha >= desde)) &&
-        (!hasta || (fecha && fecha <= hasta))
-      );
-    });
   }
 
   async getResumen(filters = {}, options = {}) {

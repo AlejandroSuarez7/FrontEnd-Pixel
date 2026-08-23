@@ -89,6 +89,20 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
+.ventas-filter-help {
+  grid-column: 1 / -1;
+  margin: 0 0 -4px;
+  color: var(--color-text-secondary, #7f8aa3);
+  font-size: 12px;
+}
+
+.ventas-actions-cell {
+  width: 62px;
+  padding: 8px 14px;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .ventas-filter-field,
 .ventas-filter-date-group {
   display: flex;

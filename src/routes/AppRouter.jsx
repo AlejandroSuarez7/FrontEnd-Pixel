@@ -22,7 +22,6 @@ import SuppliesPage from '../modules/purchases/pages/SuppliesPage';
 import PurchaseCategoriesPage from '../modules/purchases/pages/PurchaseCategoriesPage';
 import SalesProductsPage from '../modules/sales/pages/SalesProductsPage';
 import SalesCategoriesPage from '../modules/sales/pages/SalesCategoriesPage';
-import SalesPaymentsPage from '../modules/sales/pages/SalesPaymentsPage';
 import SalesReturnsPage from '../modules/sales/pages/SalesReturnsPage';
 import PedidosPage from '../modules/sales/pages/PedidosPage.jsx';
 import { PedidoExpedientePage } from '../modules/sales/pedidos/presentation/PedidoExpedientePage';
@@ -74,7 +73,7 @@ const AppRouter = () => {
           <Route path={PATHS.SALES} element={<SalesProductsPage />} />
           <Route path={PATHS.SALES_PRODUCTS} element={<SalesProductsPage />} />
           <Route path={PATHS.SALES_CATEGORIES} element={<SalesCategoriesPage />} />
-          <Route path={PATHS.SALES_PAYMENTS} element={<SalesPaymentsPage />} />
+          <Route path={PATHS.SALES_PAYMENTS} element={<Navigate to={PATHS.ORDERS} replace />} />
           <Route path={PATHS.SALES_RETURNS} element={<SalesReturnsPage />} />
           <Route path={PATHS.ORDERS} element={<PedidosPage />}/>
           <Route path={PATHS.ORDER_FILE} element={<PedidoExpedientePage />}/>

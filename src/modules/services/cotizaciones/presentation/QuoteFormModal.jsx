@@ -179,6 +179,14 @@ export const QuoteFormModal = ({
   const [activeItemIndex, setActiveItemIndex] = useState(0);
   const [activeStampId, setActiveStampId] = useState(() => items[0]?.estampados?.[0]?.localId || null);
   const [step, setStep] = useState(isEditing ? 2 : 1);
+  const [sendImmediateProposal, setSendImmediateProposal] = useState(false);
+  const [immediateProposal, setImmediateProposal] = useState({
+    precioFinal: '',
+    validaHasta: '',
+    descuentoManual: '',
+    motivoAjusteManual: 'Precio acordado durante la atencion presencial.',
+    mensajeCliente: '',
+  });
   const [catalogs, setCatalogs] = useState({ categories: [], products: [], techniques: [] });
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
@@ -480,6 +488,25 @@ export const QuoteFormModal = ({
         notifications.warning(productsError.message);
         return;
       }
+      if (isStaff && !isEditing && sendImmediateProposal) {
+        const finalPrice = Number(immediateProposal.precioFinal);
+        const manualDiscount = Number(immediateProposal.descuentoManual || 0);
+        if (!Number.isFinite(finalPrice) || finalPrice <= 0) {
+          setStep(3);
+          notifications.warning('Ingresa un precio final valido para enviar la propuesta.');
+          return;
+        }
+        if (!Number.isFinite(manualDiscount) || manualDiscount < 0 || manualDiscount > finalPrice) {
+          setStep(3);
+          notifications.warning('Revisa el descuento manual antes de continuar.');
+          return;
+        }
+        if (manualDiscount > 0 && !immediateProposal.motivoAjusteManual.trim()) {
+          setStep(3);
+          notifications.warning('Explica el ajuste aplicado al precio acordado.');
+          return;
+        }
+      }
 
       try {
         await onSubmit({
@@ -495,6 +522,28 @@ export const QuoteFormModal = ({
                   telefono: cliente.telefono.trim(),
                 },
               }
+            : {}),
+          ...(isStaff && !isEditing && sendImmediateProposal
+            ? {
+              immediateProposal: {
+                enabled: true,
+                payload: {
+                  precioFinal: Number(immediateProposal.precioFinal),
+                  ...(immediateProposal.validaHasta
+                    ? { validaHasta: `${immediateProposal.validaHasta}T23:59:59.000Z` }
+                    : {}),
+                  ...(Number(immediateProposal.descuentoManual || 0) > 0
+                    ? { descuentoManual: Number(immediateProposal.descuentoManual) }
+                    : {}),
+                  ...(immediateProposal.motivoAjusteManual.trim()
+                    ? { motivoAjusteManual: immediateProposal.motivoAjusteManual.trim() }
+                    : {}),
+                  ...(immediateProposal.mensajeCliente.trim()
+                    ? { mensajeCliente: immediateProposal.mensajeCliente.trim() }
+                    : {}),
+                },
+              },
+            }
             : {}),
         });
       } catch (error) {
@@ -1014,9 +1063,99 @@ export const QuoteFormModal = ({
                 )}
 
                 <div className={styles.quotePendingPriceNotice}>
-                  <strong>Precio pendiente de confirmacion</strong>
-                  <span>El equipo de PIXEL revisara servicios, medidas, descuentos y disenos antes de enviar la propuesta.</span>
+                  <strong>{sendImmediateProposal ? 'Propuesta inmediata' : 'Precio pendiente de confirmacion'}</strong>
+                  <span>
+                    {sendImmediateProposal
+                      ? 'La solicitud se creara primero y luego se enviara el precio acordado al cliente.'
+                      : 'El equipo de PIXEL revisara servicios, medidas, descuentos y disenos antes de enviar la propuesta.'}
+                  </span>
                 </div>
+
+                {isStaff && !isEditing && (
+                  <div className={styles.quoteImmediateProposal}>
+                    <div className={styles.quoteRequestSectionTitle}>
+                      <span>Propuesta</span>
+                      <strong>¿Ya conoces el precio acordado?</strong>
+                    </div>
+                    <div className={styles.quoteImmediateProposalOptions}>
+                      <label>
+                        <input
+                          type="radio"
+                          name="sendImmediateProposal"
+                          checked={!sendImmediateProposal}
+                          onChange={() => setSendImmediateProposal(false)}
+                        />
+                        <span>No, dejar para revision</span>
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          name="sendImmediateProposal"
+                          checked={sendImmediateProposal}
+                          onChange={() => setSendImmediateProposal(true)}
+                        />
+                        <span>Si, enviar propuesta ahora</span>
+                      </label>
+                    </div>
+                    {sendImmediateProposal && (
+                      <div className={styles.quoteImmediateProposalGrid}>
+                        <label className={styles.inputGroup}>
+                          <span className={styles.inputLabel}>Precio final *</span>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={immediateProposal.precioFinal}
+                            onChange={(event) => setImmediateProposal((current) => ({ ...current, precioFinal: event.target.value }))}
+                            className={styles.inputField}
+                            placeholder="850000"
+                          />
+                        </label>
+                        <label className={styles.inputGroup}>
+                          <span className={styles.inputLabel}>Valida hasta (opcional)</span>
+                          <input
+                            type="date"
+                            value={immediateProposal.validaHasta}
+                            onChange={(event) => setImmediateProposal((current) => ({ ...current, validaHasta: event.target.value }))}
+                            className={styles.inputField}
+                          />
+                        </label>
+                        <label className={styles.inputGroup}>
+                          <span className={styles.inputLabel}>Descuento manual</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={immediateProposal.descuentoManual}
+                            onChange={(event) => setImmediateProposal((current) => ({ ...current, descuentoManual: event.target.value }))}
+                            className={styles.inputField}
+                            placeholder="0"
+                          />
+                        </label>
+                        <label className={styles.inputGroup}>
+                          <span className={styles.inputLabel}>Motivo del ajuste</span>
+                          <input
+                            value={immediateProposal.motivoAjusteManual}
+                            onChange={(event) => setImmediateProposal((current) => ({ ...current, motivoAjusteManual: event.target.value }))}
+                            className={styles.inputField}
+                            maxLength={500}
+                          />
+                        </label>
+                        <label className={`${styles.inputGroup} ${styles.quoteRequestWide}`}>
+                          <span className={styles.inputLabel}>Mensaje para el cliente (opcional)</span>
+                          <textarea
+                            value={immediateProposal.mensajeCliente}
+                            onChange={(event) => setImmediateProposal((current) => ({ ...current, mensajeCliente: event.target.value }))}
+                            className={styles.inputField}
+                            rows={2}
+                            maxLength={500}
+                            placeholder="Esta es la propuesta preparada por PIXEL."
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )}
               </section>
             )}
           </div>

@@ -20,7 +20,7 @@ const PROPOSAL_STATUS_LABELS = {
   RECHAZADA: 'Rechazada',
   AJUSTE_SOLICITADO: 'Ajuste solicitado',
   VENCIDA: 'Vencida',
-  INVALIDADA: 'Reemplazada por una nueva version',
+  INVALIDADA: 'Reemplazada por una nueva propuesta',
 };
 
 const DECISION_LABELS = {
@@ -58,6 +58,7 @@ export const getResponseMediumLabel = (medium) => (
 );
 
 export const getCurrentQuoteVersion = (quote) => {
+  if (quote?.propuestaActual) return quote.propuestaActual;
   if (quote?.propuesta) return quote.propuesta;
   if (!Array.isArray(quote?.versiones)) return null;
   return quote.versiones.find((version) => version?.esVigente) || null;

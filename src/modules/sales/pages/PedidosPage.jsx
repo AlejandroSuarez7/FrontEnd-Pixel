@@ -10,7 +10,6 @@ import { TableActions } from '../../../shared/components/TableActions/TableActio
 import { useAuth } from '../../../store/AuthContext';
 import { usePedidos } from '../pedidos/application/usePedidos';
 import { PedidoDetailsModal } from '../pedidos/presentation/PedidoDetailsModal';
-import { PedidoEditModal } from '../pedidos/presentation/PedidoEditModal';
 import styles from '../pedidos/presentation/pedidos.module.css';
 
 const ESTADO_PEDIDO_CLASS = {
@@ -43,8 +42,6 @@ const PedidosPage = () => {
     loading,
     error,
     refetch,
-    handleUpdateEstimatedDelivery,
-    handleMarcarEnProceso,
     handlePendienteSaldo,
     handleFinalizar,
     handleAnular,
@@ -60,7 +57,6 @@ const PedidosPage = () => {
   });
 
   const [isDetailsOpen, setIsDetailsOpen]   = useState(false);
-  const [isEditOpen, setIsEditOpen]         = useState(false);
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [pendingDesignRequirementId, setPendingDesignRequirementId] = useState(null);
 
@@ -75,24 +71,6 @@ const PedidosPage = () => {
     (pedido.estadoPago === 'COMPLETO' || Number(pedido.saldoPendiente || 0) <= 0)
   );
   const canFinalizePedido = (pedido) => pedido.puedeFinalizar === true;
-
-  const onEnProcesoClick = async (id) => {
-    const accepted = await confirm({
-      title: 'Pasar a proceso',
-      message: 'Marcar este pedido como EN PROCESO?',
-      confirmText: 'Pasar a proceso',
-      variant: 'warning',
-    });
-
-    if (!accepted) return;
-
-    try {
-      await handleMarcarEnProceso(id);
-      notifications.success('Pedido marcado en proceso.');
-    } catch (err) {
-      notifications.error(err.message || 'No se pudo marcar el pedido en proceso.');
-    }
-  };
 
   const onPendienteSaldoClick = async (id) => {
     const accepted = await confirm({
@@ -346,17 +324,11 @@ const PedidosPage = () => {
                       <TableActions
                         primaryAction={{ label: 'Ver', onClick: () => { setSelectedPedido(pedido); setIsDetailsOpen(true); }, variant: 'accent' }}
                         actions={[
-                          hasPermission('pedidos.ver') && isStaff && { label: 'Ver expediente', onClick: () => navigate(`/dashboard/orders/${pedido.idPedido}/expediente`), variant: 'accent' },
-                          hasPermission('pedidos.pasar_proceso') && isStaff && pedido.estadoPedido === 'PENDIENTE' && { label: 'En proceso', onClick: () => onEnProcesoClick(pedido.idPedido), variant: 'info' },
+                          hasPermission('pedidos.ver') && isStaff && { label: 'Gestionar pedido', onClick: () => navigate(`/dashboard/orders/${pedido.idPedido}/expediente`), variant: 'accent' },
                           hasPermission('pedidos.finalizar') && isStaff && pedido.puedeSolicitarSaldoFinal === true && { label: 'Solicitar saldo final', onClick: () => onPendienteSaldoClick(pedido.idPedido), variant: 'warning' },
                           hasPermission('pedidos.finalizar') && isStaff && canFinalizePedido(pedido) && { label: 'Finalizar pedido', onClick: () => onFinalizarClick(pedido.idPedido), variant: 'success' },
                           hasPermission('pedidos.finalizar') && isStaff && canConfirmDelivery(pedido) && { label: 'Confirmar entrega', onClick: () => onConfirmarEntregaClick(pedido.idPedido), variant: 'success' },
                           hasPermission('pedidos.anular') && isStaff && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ENTREGADO' && pedido.estadoPedido !== 'ANULADO' && { label: 'Anular', onClick: () => onAnularClick(pedido.idPedido), variant: 'danger' },
-                          hasPermission('pedidos.editar') && pedido.estadoPedido !== 'FINALIZADO' && pedido.estadoPedido !== 'ENTREGADO' && pedido.estadoPedido !== 'ANULADO' && {
-                            label: 'Asignar fecha estimada',
-                            onClick: () => { setSelectedPedido(pedido); setIsEditOpen(true); },
-                            variant: 'warning',
-                          },
                         ]}
                       />
                     </td>
@@ -386,13 +358,6 @@ const PedidosPage = () => {
         canEditDesignRequirement={hasPermission('pedidos.editar') && isStaff}
         onToggleDesignRequirement={onToggleDesignRequirement}
         pendingDesignRequirementId={pendingDesignRequirementId}
-      />
-
-      <PedidoEditModal
-        isOpen={isEditOpen}
-        onClose={() => { setIsEditOpen(false); setSelectedPedido(null); }}
-        onSubmit={handleUpdateEstimatedDelivery}
-        pedido={selectedPedido}
       />
     </div>
   );

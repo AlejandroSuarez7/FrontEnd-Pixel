@@ -26,7 +26,7 @@ export const QuoteVersionsModal = ({ open, quote, onClose }) => {
       })
       .catch((requestError) => {
         if (!controller.signal.aborted && requestError?.code !== 'ERR_CANCELED') {
-          setError(requestError.message || 'No se pudieron cargar las versiones.');
+          setError(requestError.message || 'No se pudieron cargar las propuestas.');
         }
       })
       .finally(() => {
@@ -49,7 +49,7 @@ export const QuoteVersionsModal = ({ open, quote, onClose }) => {
         </header>
         <div className={styles.body}>
           {loading ? (
-            <p className={styles.stateMessage}>Cargando versiones...</p>
+            <p className={styles.stateMessage}>Cargando propuestas...</p>
           ) : error ? (
             <p className={styles.errorMessage}>{error}</p>
           ) : versions.length === 0 ? (
@@ -59,7 +59,7 @@ export const QuoteVersionsModal = ({ open, quote, onClose }) => {
               {versions.map((version) => (
                 <article className={`${styles.versionCard} ${version.esVigente ? styles.currentVersion : ''}`} key={version.idVersion}>
                   <div>
-                    <span>Versión {version.numeroVersion}</span>
+                    <span>{version.esVigente ? 'Propuesta vigente' : 'Propuesta historica'}</span>
                     <strong>{formatMoneyCOP(version.precioFinal)}</strong>
                   </div>
                   <div className={styles.versionMeta}>
