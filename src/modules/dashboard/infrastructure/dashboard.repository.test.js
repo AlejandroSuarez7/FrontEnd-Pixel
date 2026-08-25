@@ -40,6 +40,73 @@ describe('dashboardRepository', () => {
     });
   });
 
+  it('loads and normalizes real admin trends using both calendar dates', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          periodo: {
+            fechaInicio: '2026-08-01',
+            fechaFin: '2026-08-31',
+            granularidad: 'DIA',
+            zonaHoraria: 'America/Bogota',
+          },
+          resumen: { ingresos: '3500000', ventas: '15', pedidos: 18, cotizaciones: 24 },
+          series: [{
+            fecha: '2026-08-01',
+            ingresos: '200000',
+            ventas: '2',
+            pedidos: 3,
+            cotizaciones: 4,
+          }],
+        },
+      },
+    });
+    const controller = new AbortController();
+
+    const result = await dashboardRepository.getAdminTrends({
+      fechaInicio: '2026-08-01',
+      fechaFin: '2026-08-31',
+      granularidad: 'DIA',
+    }, { signal: controller.signal });
+
+    expect(apiClient.get).toHaveBeenCalledWith('api/dashboard/admin/tendencias', {
+      params: {
+        fechaInicio: '2026-08-01',
+        fechaFin: '2026-08-31',
+        granularidad: 'DIA',
+      },
+      signal: controller.signal,
+    });
+    expect(result.resumen).toEqual({ ingresos: 3500000, ventas: 15, pedidos: 18, cotizaciones: 24 });
+    expect(result.series).toEqual([{
+      fecha: '2026-08-01',
+      ingresos: 200000,
+      ventas: 2,
+      pedidos: 3,
+      cotizaciones: 4,
+    }]);
+  });
+
+  it('never sends an incomplete date range to the trends endpoint', async () => {
+    await expect(dashboardRepository.getAdminTrends({
+      fechaInicio: '2026-08-01',
+      granularidad: 'DIA',
+    })).rejects.toThrow('Selecciona la fecha de inicio y la fecha final.');
+
+    expect(apiClient.get).not.toHaveBeenCalled();
+  });
+
+  it('keeps empty trend series empty without generating points', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      data: { data: { resumen: {}, series: [] } },
+    });
+
+    const result = await dashboardRepository.getAdminTrends({ granularidad: 'DIA' });
+
+    expect(result.series).toEqual([]);
+    expect(result.resumen).toEqual({ ingresos: 0, ventas: 0, pedidos: 0, cotizaciones: 0 });
+  });
+
   it('builds selectable client orders including delivered orders from available dashboard payload fields', async () => {
     apiClient.get.mockResolvedValueOnce({
       data: {

@@ -18,18 +18,11 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Area,
-  Bar,
-  CartesianGrid,
   Cell,
-  ComposedChart,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
 } from 'recharts';
 import { useAuth } from '../../../store/AuthContext';
 import { PATHS } from '../../../routes/paths';
@@ -41,6 +34,7 @@ import { getDesignCoverageInfo } from '../../../core/utils/designCoverage';
 import { pedidoRepository } from '../../sales/pedidos/infrastructure/pedido.repository';
 import { formatCalendarDate } from '../../../core/utils/fechaFormato';
 import { navigateToLandingQuote } from '../../../core/utils/landingNavigation';
+import { AdminTrendsPanel } from './AdminTrendsPanel';
 import './DashboardPage.css';
 
 const kpiIcons = {
@@ -188,27 +182,8 @@ const SectionHeader = ({ eyebrow, title }) => (
   </div>
 );
 
-const formatCopCompact = (value = 0) => {
-  const amount = Number(value || 0);
-
-  if (Math.abs(amount) >= 1000000) {
-    return `$${(amount / 1000000).toLocaleString('es-CO', {
-      maximumFractionDigits: 1,
-    })}M`;
-  }
-
-  if (Math.abs(amount) >= 1000) {
-    return `$${Math.round(amount / 1000).toLocaleString('es-CO')}k`;
-  }
-
-  return `$${amount.toLocaleString('es-CO')}`;
-};
-
 const formatCopFull = (value = 0) =>
   `$${Number(value || 0).toLocaleString('es-CO')}`;
-
-const hasChartData = (data = [], keys = []) =>
-  data.some((item) => keys.some((key) => Number(item[key] || 0) > 0));
 
 const ChartEmptyState = () => (
   <div className="dashboard-chart-empty">
@@ -216,95 +191,6 @@ const ChartEmptyState = () => (
     <span>Cuando existan registros confirmados, la visualizacion aparecera aqui.</span>
   </div>
 );
-
-const DashboardChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-
-  return (
-    <div className="dashboard-chart-tooltip">
-      <strong>{label}</strong>
-      {payload.map((item) => (
-        <span key={item.dataKey} style={{ color: item.color }}>
-          {item.name}: {item.dataKey === 'revenue' ? formatCopFull(item.value) : Number(item.value || 0).toLocaleString('es-CO')}
-        </span>
-      ))}
-    </div>
-  );
-};
-
-const MonthlyRevenueChart = ({ data }) => {
-  const hasData = hasChartData(data, ['revenue', 'orders']);
-
-  return (
-    <section className="dashboard-panel dashboard-chart-panel">
-      <SectionHeader eyebrow="Ventas" title="Ingresos y ventas por mes" />
-      {!hasData ? (
-        <ChartEmptyState />
-      ) : (
-        <div className="dashboard-recharts-wrap" aria-label="Ingresos y ventas por mes">
-          <ResponsiveContainer width="100%" height={292}>
-            <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id="dashboardRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6c5ce7" stopOpacity={0.28} />
-                  <stop offset="95%" stopColor="#6c5ce7" stopOpacity={0.03} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="#edf1f7" vertical={false} />
-              <XAxis
-                dataKey="month"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#8f9bb3', fontSize: 12, fontWeight: 600 }}
-              />
-              <YAxis
-                yAxisId="revenue"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#8f9bb3', fontSize: 11, fontWeight: 600 }}
-                tickFormatter={formatCopCompact}
-                width={58}
-              />
-              <YAxis
-                yAxisId="orders"
-                orientation="right"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#8f9bb3', fontSize: 11, fontWeight: 600 }}
-                allowDecimals={false}
-                width={34}
-              />
-              <Tooltip content={<DashboardChartTooltip />} cursor={{ fill: 'rgba(108, 92, 231, 0.06)' }} />
-              <Legend
-                verticalAlign="bottom"
-                iconType="circle"
-                wrapperStyle={{ paddingTop: 14, color: '#8f9bb3', fontSize: 12, fontWeight: 600 }}
-              />
-              <Area
-                yAxisId="revenue"
-                type="monotone"
-                dataKey="revenue"
-                name="Ingresos"
-                stroke="#6c5ce7"
-                strokeWidth={3}
-                fill="url(#dashboardRevenueGradient)"
-                activeDot={{ r: 5, strokeWidth: 2 }}
-              />
-              <Bar
-                yAxisId="orders"
-                dataKey="orders"
-                name="Ventas"
-                fill="#0984e3"
-                radius={[8, 8, 2, 2]}
-                maxBarSize={34}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-    </section>
-  );
-};
 
 const StatusDistribution = ({ data }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -615,7 +501,7 @@ const AdminDashboard = ({ userName, data }) => {
     </section>
 
     <div className="dashboard-grid dashboard-grid-charts">
-      <MonthlyRevenueChart data={data.monthlySales} />
+      <AdminTrendsPanel />
       <StatusDistribution data={data.orderStatus} />
     </div>
 

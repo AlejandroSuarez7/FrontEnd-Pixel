@@ -1,6 +1,8 @@
 import { apiClient } from '../../../core/services/apiService';
 import { isClientUser } from '../../../core/utils/permissions';
 import { getDesignCoverageInfo } from '../../../core/utils/designCoverage';
+import { createRequestError } from '../../../core/utils/requestError';
+import { ADMIN_TRENDS_GRANULARITIES } from '../domain/adminTrends';
 
 const currentYear = new Date().getFullYear();
 
@@ -44,13 +46,6 @@ const buildRevenue = (ingresos = {}) => ({
     detail: `Ingresos confirmados ${currentYear}`,
   },
 });
-
-const buildMonthlySales = (ventasPorMes = []) =>
-  ventasPorMes.map((item) => ({
-    month: item.mes,
-    orders: toNumber(item.cantidadPedidos),
-    revenue: toNumber(item.total),
-  }));
 
 const buildOrderStatus = (distribucion = {}) => [
   { label: 'Pendiente', value: toNumber(distribucion.PENDIENTE), color: '#e17b00' },
@@ -476,7 +471,6 @@ const adaptAdminDashboard = (payload) => {
     },
     pendingQuotesList: buildPendingQuotesList(cotizacionesPendientes),
     revenue: buildRevenue(payload.ingresos),
-    monthlySales: buildMonthlySales(payload.ventasPorMes),
     orderStatus: buildOrderStatus(payload.distribucionPedidos),
     latestOrders: buildLatestOrders(payload.ultimosPedidos),
   };
@@ -528,5 +522,60 @@ export const dashboardRepository = {
     return isClient
       ? { client: adaptClientDashboard(payload) }
       : { admin: adaptAdminDashboard(payload) };
+  },
+
+  async getAdminTrends(filters = {}, options = {}) {
+    const fechaInicio = String(filters.fechaInicio || '').trim();
+    const fechaFin = String(filters.fechaFin || '').trim();
+    const granularidad = ADMIN_TRENDS_GRANULARITIES.includes(filters.granularidad)
+      ? filters.granularidad
+      : 'DIA';
+
+    if (Boolean(fechaInicio) !== Boolean(fechaFin)) {
+      throw new Error('Selecciona la fecha de inicio y la fecha final.');
+    }
+
+    const params = { granularidad };
+    if (fechaInicio && fechaFin) {
+      params.fechaInicio = fechaInicio;
+      params.fechaFin = fechaFin;
+    }
+
+    try {
+      const { data } = await apiClient.get('api/dashboard/admin/tendencias', {
+        params,
+        signal: options.signal,
+      });
+      const payload = data?.data || {};
+      const resumen = payload.resumen || {};
+
+      return {
+        periodo: {
+          fechaInicio: payload.periodo?.fechaInicio || fechaInicio || '',
+          fechaFin: payload.periodo?.fechaFin || fechaFin || '',
+          granularidad: ADMIN_TRENDS_GRANULARITIES.includes(payload.periodo?.granularidad)
+            ? payload.periodo.granularidad
+            : granularidad,
+          zonaHoraria: payload.periodo?.zonaHoraria || 'America/Bogota',
+        },
+        resumen: {
+          ingresos: toNumber(resumen.ingresos),
+          ventas: toNumber(resumen.ventas),
+          pedidos: toNumber(resumen.pedidos),
+          cotizaciones: toNumber(resumen.cotizaciones),
+        },
+        series: Array.isArray(payload.series)
+          ? payload.series.map((point) => ({
+              fecha: String(point.fecha || ''),
+              ingresos: toNumber(point.ingresos),
+              ventas: toNumber(point.ventas),
+              pedidos: toNumber(point.pedidos),
+              cotizaciones: toNumber(point.cotizaciones),
+            }))
+          : [],
+      };
+    } catch (error) {
+      throw createRequestError(error, 'No pudimos cargar las estadísticas de este periodo.');
+    }
   },
 };
