@@ -1,0 +1,299 @@
+import { useMemo, useRef, useState } from 'react';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
+import { notifications } from '../../../../core/utils/notifications';
+import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useAuth } from '../../../../store/AuthContext';
+import { formatDate } from '../../../../core/utils/fechaFormato';
+import { disenoRepository } from '../infrastructure/diseno.repository';
+import { DisenoViewModal } from './DisenoViewModal';
+import './DisenosPage.css';
+
+const styles = {
+  pageContainer: 'disenos-page-container',
+  headerWrapper: 'disenos-header-wrapper',
+  breadcrumb: 'disenos-breadcrumb',
+  pageTitle: 'disenos-page-title',
+  pageSubtitle: 'disenos-page-subtitle',
+  tableContainer: 'disenos-table-container',
+  loadingText: 'disenos-loading-text',
+  clientGrid: 'disenos-client-grid',
+  clientCard: 'disenos-client-card',
+  clientCardHeader: 'disenos-client-card-header',
+  statusBadge: 'disenos-status-badge',
+  estadoPagoParcial: 'disenos-status-warning',
+  estadoPedidoEnProceso: 'disenos-status-info',
+  estadoPagoCompleto: 'disenos-status-success',
+  estadoRechazado: 'disenos-status-danger',
+  detailsInfoBox: 'disenos-details-info-box',
+  clientActions: 'disenos-client-actions',
+  btnSecondary: 'disenos-btn-secondary',
+  btnPrimary: 'disenos-btn-primary',
+};
+
+const ESTADO_CLASS = {
+  PENDIENTE: styles.estadoPagoParcial,
+  ENVIADO: styles.estadoPedidoEnProceso,
+  APROBADO: styles.estadoPagoCompleto,
+  RECHAZADO: styles.estadoRechazado,
+};
+
+const normalizeStatus = (value = '') => String(value || '').toUpperCase();
+const formatDesignOrigin = (origen = '') => normalizeStatus(origen) === 'CLIENTE'
+  ? 'Diseno aportado por ti'
+  : 'Equipo PIXEL';
+const getDesignProductName = (diseno) => {
+  if (diseno?.esDisenoGeneral) return 'Diseno general del pedido';
+  const detalle = diseno?.detallePedido;
+  return detalle?.producto?.nombre || detalle?.descripcion || diseno?.descripcion || diseno?.pedido?.detalles?.[0]?.descripcion || 'Producto no especificado';
+};
+const getDesignDetailText = (diseno) => {
+  if (diseno?.esDisenoGeneral) return 'Aplica para todo el pedido';
+  const detalle = diseno?.detallePedido;
+  return [
+    detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : null),
+    detalle?.cantidad ? `Cant. ${detalle.cantidad}` : null,
+  ].filter(Boolean).join(' | ') || 'Detalle no especificado';
+};
+const canRespondDesign = (estado) => [
+  'ENVIADO',
+  'PENDIENTE_APROBACION',
+  'PENDIENTE_DE_APROBACION',
+  'POR_APROBAR',
+  'EN_REVISION',
+].includes(normalizeStatus(estado));
+const getApprovalMessage = (response) => {
+  const pedidoEstado = normalizeStatus(response?.data?.pedido?.estadoPedido || response?.pedido?.estadoPedido || response?.data?.estadoPedido);
+  if (pedidoEstado === 'EN_PROCESO') {
+    return 'Diseno aprobado. Todos los disenos requeridos fueron aprobados y el pedido entro en produccion.';
+  }
+  return 'Diseno aprobado. El pedido seguira pendiente hasta que todos los disenos requeridos esten aprobados.';
+};
+
+export const ClientDisenosPage = () => {
+  const { hasPermission } = useAuth();
+  const confirm = useConfirm();
+  const { isLocked, runLocked } = useAsyncLock();
+  const [selectedDiseno, setSelectedDiseno] = useState(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [pendingActionId, setPendingActionId] = useState(null);
+  const detailRequestRef = useRef(0);
+
+  const canApprove = hasPermission('disenos.cliente.aprobar');
+  const canReject = hasPermission('disenos.cliente.rechazar');
+
+  const {
+    data: disenos,
+    loading,
+    error,
+    refetch: fetchDisenos,
+  } = useLatestListRequest({
+    queryKey: 'client-designs',
+    load: signal => disenoRepository.listClientDesigns({ signal }),
+    initialData: [],
+  });
+
+  const counts = useMemo(() => ({
+    total: disenos.length,
+    pendientes: disenos.filter((item) => canRespondDesign(item.estado)).length,
+    aprobados: disenos.filter((item) => normalizeStatus(item.estado) === 'APROBADO').length,
+    rechazados: disenos.filter((item) => normalizeStatus(item.estado) === 'RECHAZADO').length,
+  }), [disenos]);
+
+  const openDetail = async (diseno) => {
+    const requestId = ++detailRequestRef.current;
+    setSelectedDiseno(diseno);
+    setIsViewOpen(true);
+
+    try {
+      const detail = await disenoRepository.getClientDesign(diseno.idDiseno);
+      if (requestId !== detailRequestRef.current) return;
+      setSelectedDiseno(detail || diseno);
+    } catch (error) {
+      if (requestId !== detailRequestRef.current) return;
+      notifications.error(error.message || 'No se pudo cargar el detalle del diseno.');
+    }
+  };
+
+  const handleApprove = async (diseno) => {
+    const accepted = await confirm({
+      title: 'Aprobar diseno',
+      message: 'Al aprobarlo, el pedido podra avanzar a produccion.',
+      confirmText: 'Aprobar diseno',
+      variant: 'success',
+    });
+
+    if (!accepted) return false;
+
+    return runLocked(async () => {
+      setPendingActionId(diseno.idDiseno);
+      try {
+        const response = await disenoRepository.approveClientDesign(diseno.idDiseno);
+        notifications.success(response.message || getApprovalMessage(response));
+        await fetchDisenos();
+        return true;
+      } catch (error) {
+        notifications.error(error.message || 'No se pudo aprobar el diseno.');
+      } finally {
+        setPendingActionId(null);
+      }
+    });
+  };
+
+  const handleReject = async (diseno) => {
+    const result = await confirm({
+      title: 'Solicitar cambios',
+      message: 'Indica que cambios necesitas para este diseno.',
+      confirmText: 'Enviar cambios',
+      variant: 'danger',
+      input: true,
+      inputLabel: 'Cambios solicitados',
+      inputPlaceholder: 'Ej: Cambiar color, tamano o ubicacion del logo...',
+      requiredInput: true,
+    });
+
+    if (!result.confirmed) return false;
+
+    return runLocked(async () => {
+      setPendingActionId(diseno.idDiseno);
+      try {
+        const response = await disenoRepository.rejectClientDesign(diseno.idDiseno, {
+          observacionesCliente: result.value,
+        });
+        notifications.success(response.message || 'Solicitud de cambios enviada correctamente.');
+        await fetchDisenos();
+        return true;
+      } catch (error) {
+        notifications.error(error.message || 'No se pudo rechazar el diseno.');
+      } finally {
+        setPendingActionId(null);
+      }
+    });
+  };
+
+  return (
+    <div className={styles.pageContainer}>
+      <div className={styles.headerWrapper}>
+        <div>
+          <span className={styles.breadcrumb}>Panel cliente / Disenos</span>
+          <h1 className={styles.pageTitle}>Mis disenos</h1>
+          <p className={styles.pageSubtitle}>
+            Revisa las propuestas enviadas y aprueba o solicita cambios cuando corresponda.
+          </p>
+        </div>
+      </div>
+
+      <div className="disenos-kpi-grid">
+        <div className="disenos-kpi-card"><span className="disenos-kpi-label">Total</span><span className="disenos-kpi-value">{counts.total}</span></div>
+        <div className="disenos-kpi-card disenos-kpi-card-info"><span className="disenos-kpi-label">Por revisar</span><span className="disenos-kpi-value disenos-kpi-value-info">{counts.pendientes}</span></div>
+        <div className="disenos-kpi-card disenos-kpi-card-success"><span className="disenos-kpi-label">Aprobados</span><span className="disenos-kpi-value disenos-kpi-value-success">{counts.aprobados}</span></div>
+        <div className="disenos-kpi-card disenos-kpi-card-warning"><span className="disenos-kpi-label">Con cambios</span><span className="disenos-kpi-value disenos-kpi-value-warning">{counts.rechazados}</span></div>
+      </div>
+
+      <section className={styles.tableContainer}>
+        {loading ? (
+          <p className={styles.loadingText}>Cargando tus disenos...</p>
+        ) : error && disenos.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>No fue posible cargar tus disenos.</p>
+            <button type="button" className={styles.btnPrimary} onClick={fetchDisenos}>
+              Reintentar
+            </button>
+          </div>
+        ) : disenos.length === 0 ? (
+          <p className={styles.loadingText}>Aun no tienes disenos enviados para revisar.</p>
+        ) : (
+          <div className={styles.clientGrid}>
+            {disenos.map((diseno) => {
+              const isPending = pendingActionId === diseno.idDiseno || isLocked;
+              const canRespond = canRespondDesign(diseno.estado);
+              const producto = getDesignProductName(diseno);
+
+              return (
+                <article
+                  key={diseno.idDiseno}
+                  className={styles.clientCard}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openDetail(diseno)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      openDetail(diseno);
+                    }
+                  }}
+                  aria-label={`Ver detalle del diseno ${diseno.idDiseno}`}
+                >
+                  <div className={styles.clientCardHeader}>
+                    <div>
+                      <strong>Diseno #{diseno.idDiseno}</strong>
+                      <span>Pedido #{diseno.idPedido} | {formatDate(diseno.fechaEnvio || diseno.fechaCreacion)}</span>
+                    </div>
+                    <span className={`${styles.statusBadge} ${ESTADO_CLASS[normalizeStatus(diseno.estado)] || ''}`}>
+                      {diseno.estado}
+                    </span>
+                  </div>
+
+                  <div className={styles.detailsInfoBox}>
+                    <strong>Producto:</strong> {producto}
+                    <span style={{ display: 'block', marginTop: 4 }}>{getDesignDetailText(diseno)}</span>
+                    {diseno.esDisenoGeneral && <span style={{ display: 'block', marginTop: 4 }}>Aplica a todos los productos que requieren diseno.</span>}
+                  </div>
+
+                  <div className={styles.detailsInfoBox}>
+                    <strong>Origen:</strong> {formatDesignOrigin(diseno.origenDiseno)}
+                    {diseno.medioRecepcion ? ` | ${diseno.medioRecepcion}` : ''}
+                  </div>
+
+                  {normalizeStatus(diseno.estado) === 'RECHAZADO' && (
+                    <div className={styles.detailsInfoBox}>
+                      <strong>Cambios solicitados:</strong> {diseno.observacionesCliente || 'Sin observaciones registradas'}
+                    </div>
+                  )}
+
+                  <div className={styles.clientActions}>
+                    {canRespond && canReject && (
+                      <button type="button" className={styles.btnSecondary} onClick={(event) => { event.stopPropagation(); handleReject(diseno); }} disabled={isPending}>
+                        {pendingActionId === diseno.idDiseno ? 'Enviando...' : 'Solicitar cambios'}
+                      </button>
+                    )}
+                    {canRespond && canApprove && (
+                      <button type="button" className={styles.btnPrimary} onClick={(event) => { event.stopPropagation(); handleApprove(diseno); }} disabled={isPending}>
+                        {pendingActionId === diseno.idDiseno ? 'Aprobando...' : 'Aprobar'}
+                      </button>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <DisenoViewModal
+        isOpen={isViewOpen}
+        onClose={() => {
+          detailRequestRef.current += 1;
+          setIsViewOpen(false);
+          setSelectedDiseno(null);
+        }}
+        diseno={selectedDiseno}
+        pendingAction={Boolean(pendingActionId) || isLocked}
+        onApprove={canApprove ? async () => {
+          const completed = await handleApprove(selectedDiseno);
+          if (completed) {
+            setIsViewOpen(false);
+            setSelectedDiseno(null);
+          }
+        } : undefined}
+        onReject={canReject ? async () => {
+          const completed = await handleReject(selectedDiseno);
+          if (completed) {
+            setIsViewOpen(false);
+            setSelectedDiseno(null);
+          }
+        } : undefined}
+      />
+    </div>
+  );
+};

@@ -1,8 +1,9 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import './LandingPage.css';
 import { motion } from 'motion/react';
-import { useAuth } from '../../../store/AuthContext';
+import { scrollToCurrentHash } from '../../../core/utils/landingNavigation';
+import PublicNavbar from '../components/PublicNavbar';
 import {
   Upload,
   Palette,
@@ -23,88 +24,51 @@ import {
 } from "react-icons/fa";
 
 const LandingPage = () => {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [profileOpen, setProfileOpen] = useState(false);
-  const isLoggedIn = Boolean(user);
-  const userName = user?.nombre || 'Usuario';
-  const avatarLetter = userName.charAt(0).toUpperCase();
+  const location = useLocation();
+  const [contactForm, setContactForm] = useState({
+    nombre: '',
+    correo: '',
+    telefono: '',
+    mensaje: '',
+  });
 
-  const handleGoDashboard = () => {
-    setProfileOpen(false);
-    navigate('/dashboard');
+  useEffect(() => {
+    if (!location.hash) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      scrollToCurrentHash(location.hash);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [location.hash]);
+
+  const scrollToSection = (sectionId) => {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   };
 
-  const handleLogout = () => {
-    setProfileOpen(false);
-    logout();
-    navigate('/');
+  const updateContactForm = (field, value) => {
+    setContactForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleContactSubmit = (event) => {
+    event.preventDefault();
+    const subject = encodeURIComponent(`Consulta general de ${contactForm.nombre.trim()}`);
+    const body = encodeURIComponent([
+      `Nombre: ${contactForm.nombre.trim()}`,
+      `Correo: ${contactForm.correo.trim()}`,
+      `Telefono: ${contactForm.telefono.trim()}`,
+      '',
+      contactForm.mensaje.trim(),
+    ].join('\n'));
+    window.location.assign(`mailto:contacto@pixel.com?subject=${subject}&body=${body}`);
   };
 
   return (
     <div>
-      <header className="landing-header">
-        <div className="landing-container">
-          <div className="landing-flex">
-
-            {/* Logo */}
-            <div className="landing-logo">PIXEL</div>
-
-            {/* Navegación Desktop */}
-            <nav className="landing-nav">
-              <a className="landing-nav-link" href="#inicio">Inicio</a>
-              <a className="landing-nav-link" href="#como-funciona">¿Cómo funciona?</a>
-              <a className="landing-nav-link" href="#servicios">Servicios</a>
-              <a className="landing-nav-link" href="#comparativo">Comparativo</a>
-              <a className="landing-nav-link" href="#productos">Productos</a>
-              <a className="landing-nav-link" href="#contacto">Contacto</a>
-            </nav>
-
-            {/* Acciones (Login + Botón móvil) */}
-            <div className="actions">
-              {!isLoggedIn ? (
-              <Link to="/login" className="btn-login">
-                <span className="btn-login-text">
-                Iniciar Sesión
-                </span>
-              </Link>
-              ) : (
-                <>
-              {/*
-
-              <button className="hamburger-btn" aria-label="Abrir menú">
-              */}
-                <div className="landing-profile-wrapper">
-                  <button
-                    type="button"
-                    className="landing-profile-button"
-                    onClick={() => setProfileOpen(prev => !prev)}
-                    aria-expanded={profileOpen}
-                  >
-                    <span className="landing-profile-avatar">{avatarLetter}</span>
-                    <span className="landing-profile-label">Perfil</span>
-                  </button>
-
-                  {profileOpen && (
-                    <div className="landing-profile-menu">
-                      <p className="landing-profile-name">{userName}</p>
-                      <button type="button" onClick={handleGoDashboard} className="landing-profile-menu-btn">
-                        Ir al Dashboard
-                      </button>
-                      <button type="button" onClick={handleLogout} className="landing-profile-menu-btn danger">
-                        Cerrar sesion
-                      </button>
-                    </div>
-                  )}
-                </div>
-                </>
-              )}
-
-            </div>
-
-          </div>
-        </div>
-      </header>
+      <PublicNavbar />
 
       {/* Hero / contenido principal */}
       <section id="inicio" className="hero-section">
@@ -144,11 +108,19 @@ const LandingPage = () => {
           {/* Buttons */}
           <div className="hero-buttons">
 
-            <button className="hero-btn-primary">
+            <button
+              type="button"
+              className="hero-btn-primary"
+              onClick={() => scrollToSection('servicios')}
+            >
               Explorar Servicios
             </button>
 
-            <button className="hero-btn-secondary">
+            <button
+              type="button"
+              className="hero-btn-secondary"
+              onClick={() => navigate('/cotizar')}
+            >
               Solicitar Cotización
             </button>
 
@@ -1050,10 +1022,9 @@ const LandingPage = () => {
             para diseños vibrantes y duraderos.
           </p>
 
-          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
-            <FaInstagram className="footer-social-icon" />
-            Cotizar en Instagram
-          </a>
+          <Link to="/cotizar" className="product-btn">
+            Solicitar cotización
+          </Link>
 
         </div>
 
@@ -1093,10 +1064,9 @@ const LandingPage = () => {
             con acabados profesionales y colores sólidos.
           </p>
 
-          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
-            <FaInstagram className="footer-social-icon" />
-            Cotizar en Instagram
-          </a>
+          <Link to="/cotizar" className="product-btn">
+            Solicitar cotización
+          </Link>
 
         </div>
 
@@ -1136,10 +1106,9 @@ const LandingPage = () => {
             madera, plástico, vidrio y más.
           </p>
 
-          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
-            <FaInstagram className="footer-social-icon" />
-            Cotizar en Instagram
-          </a>
+          <Link to="/cotizar" className="product-btn">
+            Solicitar cotización
+          </Link>
 
         </div>
 
@@ -1179,10 +1148,9 @@ const LandingPage = () => {
             personalizados como mugs, termos y más.
           </p>
 
-          <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="product-btn">
-            <FaInstagram className="footer-social-icon" />
-            Cotizar en Instagram
-          </a>
+          <Link to="/cotizar" className="product-btn">
+            Solicitar cotización
+          </Link>
 
         </div>
 
@@ -1193,10 +1161,9 @@ const LandingPage = () => {
     {/* BUTTON */}
     <div className="products-action">
 
-      <a href="https://www.instagram.com/pixel_arts.co" target="_blank" rel="noopener noreferrer" className="products-main-btn">
-        <FaInstagram className="footer-social-icon" />
-        Solicitar Cotización en Instagram
-      </a>
+      <Link to="/cotizar" className="products-main-btn">
+        Solicitar cotización
+      </Link>
 
     </div>
 
@@ -1296,83 +1263,85 @@ const LandingPage = () => {
 
       </div>
 
-      {/* Form */}
+      {/* General contact */}
       <div className="contact-form-card">
 
         <h3 className="contact-form-title">
-          Solicita tu cotización
+          Escríbenos
         </h3>
 
-        <form className="contact-form">
+        <p className="contact-form-copy">
+          Este espacio es para preguntas generales. Si ya tienes claro lo que
+          necesitas, usa el cotizador para configurar productos, estampados y diseños.
+        </p>
 
-          {/* Nombre */}
-          <div className="contact-field">
-
-            <label className="contact-field-label">
-              Nombre
+        <form className="contact-form" onSubmit={handleContactSubmit}>
+          <div className="quote-contact-grid">
+            <label className="contact-field quote-name-field">
+              <span className="contact-field-label">Nombre completo</span>
+              <input
+                className="contact-input"
+                type="text"
+                value={contactForm.nombre}
+                onChange={(event) => updateContactForm('nombre', event.target.value)}
+                placeholder="Tu nombre completo"
+                required
+              />
             </label>
-
-            <input
-              type="text"
-              placeholder="Tu nombre"
-              className="contact-input"
-            />
-
+            <label className="contact-field">
+              <span className="contact-field-label">Correo</span>
+              <input
+                className="contact-input"
+                type="email"
+                value={contactForm.correo}
+                onChange={(event) => updateContactForm('correo', event.target.value)}
+                placeholder="tu@email.com"
+                required
+              />
+            </label>
+            <label className="contact-field">
+              <span className="contact-field-label">Teléfono</span>
+              <input
+                className="contact-input"
+                type="tel"
+                inputMode="numeric"
+                value={contactForm.telefono}
+                onChange={(event) => updateContactForm('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="3000000000"
+                minLength={10}
+                maxLength={10}
+                required
+              />
+            </label>
           </div>
-
-          {/* Email */}
-          <div className="contact-field">
-
-            <label className="contact-field-label">
-              Email
-            </label>
-
-            <input
-              type="email"
-              placeholder="tu@email.com"
-              className="contact-input"
-            />
-
-          </div>
-
-          {/* Teléfono */}
-          <div className="contact-field">
-
-            <label className="contact-field-label">
-              Teléfono
-            </label>
-
-            <input
-              type="tel"
-              placeholder="+57 300 000 0000"
-              className="contact-input"
-            />
-
-          </div>
-
-          {/* Proyecto */}
-          <div className="contact-field">
-
-            <label className="contact-field-label">
-              Cuéntanos sobre tu proyecto
-            </label>
-
+          <label className="contact-field">
+            <span className="contact-field-label">Mensaje</span>
             <textarea
-              placeholder="Describe tu idea, cantidad de prendas, tipo de estampado preferido..."
               className="contact-textarea"
-            ></textarea>
-
-          </div>
-
-          {/* Button */}
-          <button
-            type="submit"
-            className="contact-submit-btn"
-          >
-            Enviar solicitud
+              value={contactForm.mensaje}
+              onChange={(event) => updateContactForm('mensaje', event.target.value)}
+              placeholder="Cuéntanos cómo podemos ayudarte"
+              maxLength={1000}
+              required
+            />
+          </label>
+          <button type="submit" className="contact-submit-btn">
+            Enviar mensaje
           </button>
-
         </form>
+
+        <div className="contact-direct-actions contact-secondary-actions">
+          <a
+            className="contact-email-link"
+            href="mailto:contacto@pixel.com?subject=Consulta%20general%20PIXEL"
+          >
+            <Mail size={18} aria-hidden="true" />
+            Enviar consulta por correo directamente
+          </a>
+          <Link className="contact-quote-link" to="/cotizar">
+            Crear solicitud de cotización
+          </Link>
+        </div>
 
       </div>
 
@@ -1561,31 +1530,6 @@ const LandingPage = () => {
 
   </motion.div>
 </footer>
-
-
-      {/* Sheet lateral móvil (estilos en CSS, comportamiento JS opcional) */}
-      <aside className="sheet-container" aria-hidden="true">
-        <nav className="mobile-nav">
-          <a className="mobile-nav-link" href="#inicio">Inicio</a>
-          <a className="mobile-nav-link" href="#como-funciona">¿Cómo funciona?</a>
-          <a className="mobile-nav-link" href="#servicios">Servicios</a>
-          <a className="mobile-nav-link" href="#comparativo">Comparativo</a>
-          <a className="mobile-nav-link" href="#productos">Productos</a>
-          <a className="mobile-nav-link" href="#contacto">Contacto</a>
-        </nav>
-
-        <div className="mobile-user-section">
-          {!isLoggedIn ? (
-            <Link className="mobile-login-btn" to="/login">Iniciar Sesión</Link>
-          ) : (
-            <>
-              <p className="mobile-profile-name">{userName}</p>
-              <button type="button" className="mobile-login-btn" onClick={handleGoDashboard}>Ir al Dashboard</button>
-              <button type="button" className="mobile-login-btn mobile-logout-btn" onClick={handleLogout}>Cerrar sesion</button>
-            </>
-          )}
-        </div>
-      </aside>
     </div>
   );
 };

@@ -1,4 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
+import { notifications } from '../../../core/utils/notifications';
+import {
+  getPasswordRulesStatus,
+  getPasswordValidationError,
+} from '../../../core/utils/userValidation';
 import { useAuth } from '../../../store/AuthContext';
 import { UserApiRepository } from '../infrastructure/user.repository';
 import styles from '../presentation/users.module.css';
@@ -14,10 +20,13 @@ const ProfilePage = () => {
     correo: '',
     telefono: '',
     contrasena: '',
+    confirmarContrasena: '',
   });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   useEffect(() => {
     setForm({
@@ -25,8 +34,17 @@ const ProfilePage = () => {
       correo: user?.correo || '',
       telefono: user?.telefono || '',
       contrasena: '',
+      confirmarContrasena: '',
     });
   }, [user]);
+
+  const passwordRulesStatus = getPasswordRulesStatus(form.contrasena);
+  const passwordValidationError = isChangingPassword
+    ? getPasswordValidationError(form.contrasena)
+    : null;
+  const passwordsMatch = form.contrasena === form.confirmarContrasena;
+  const passwordChangeIsValid = !isChangingPassword
+    || (!passwordValidationError && passwordsMatch);
 
   const handleChange = (field) => (event) => {
     setForm(prev => ({ ...prev, [field]: event.target.value }));
@@ -34,47 +52,68 @@ const ProfilePage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setMessage('');
+    await runLocked(async () => {
+      setMessage('');
+      setError('');
+
+      const idUsuario = getSessionUserId(user);
+      if (!idUsuario) {
+        const errorMessage = 'No se pudo identificar tu usuario.';
+        setError(errorMessage);
+        notifications.error(errorMessage);
+        return;
+      }
+
+      if (isChangingPassword && !passwordChangeIsValid) {
+        const errorMessage = passwordValidationError || 'Las contrasenas no coinciden.';
+        setError(errorMessage);
+        notifications.warning(errorMessage);
+        return;
+      }
+
+      const payload = {
+        nombre: form.nombre.trim(),
+        correo: form.correo.trim().toLowerCase(),
+        telefono: form.telefono.trim() || null,
+        idRol: user?.rol?.idRol || user?.idRol || 3,
+        estado: user?.estado ?? true,
+      };
+
+      if (isChangingPassword) {
+        payload.contrasena = form.contrasena;
+      }
+
+      setLoading(true);
+      try {
+        const updatedUser = await userRepository.update(idUsuario, payload);
+        updateSession({
+          ...user,
+          idUsuario,
+          nombre: updatedUser.nombre,
+          correo: updatedUser.correo,
+          telefono: updatedUser.telefono,
+          documento: updatedUser.documento,
+          direccion: updatedUser.direccion,
+          estado: updatedUser.estado,
+        });
+        setForm(prev => ({ ...prev, contrasena: '', confirmarContrasena: '' }));
+        setIsChangingPassword(false);
+        setMessage('Perfil actualizado correctamente.');
+        notifications.success('Perfil actualizado correctamente.');
+      } catch (err) {
+        const errorMessage = err.message || 'No se pudo actualizar el perfil.';
+        setError(errorMessage);
+        notifications.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    });
+  };
+
+  const cancelPasswordChange = () => {
+    setForm(prev => ({ ...prev, contrasena: '', confirmarContrasena: '' }));
+    setIsChangingPassword(false);
     setError('');
-
-    const idUsuario = getSessionUserId(user);
-    if (!idUsuario) {
-      setError('No se pudo identificar tu usuario.');
-      return;
-    }
-
-    const payload = {
-      nombre: form.nombre.trim(),
-      correo: form.correo.trim().toLowerCase(),
-      telefono: form.telefono.trim() || null,
-      idRol: user?.rol?.idRol || user?.idRol || 3,
-      estado: user?.estado ?? true,
-    };
-
-    if (form.contrasena.trim()) {
-      payload.contrasena = form.contrasena;
-    }
-
-    setLoading(true);
-    try {
-      const updatedUser = await userRepository.update(idUsuario, payload);
-      updateSession({
-        ...user,
-        idUsuario,
-        nombre: updatedUser.nombre,
-        correo: updatedUser.correo,
-        telefono: updatedUser.telefono,
-        documento: updatedUser.documento,
-        direccion: updatedUser.direccion,
-        estado: updatedUser.estado,
-      });
-      setForm(prev => ({ ...prev, contrasena: '' }));
-      setMessage('Perfil actualizado correctamente.');
-    } catch (err) {
-      setError(err.message || 'No se pudo actualizar el perfil.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -128,20 +167,84 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Nueva contrasena (opcional)</label>
-            <input
-              type="password"
-              value={form.contrasena}
-              onChange={handleChange('contrasena')}
-              className={styles.inputField}
-              placeholder="Dejar vacio para no cambiar"
-            />
-          </div>
+          {!isChangingPassword ? (
+            <section className={styles.profilePasswordCard}>
+              <div>
+                <span className={styles.inputLabel}>Contraseña</span>
+                <p>Tu contraseña permanece protegida.</p>
+              </div>
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => setIsChangingPassword(true)}
+              >
+                Cambiar contraseña
+              </button>
+            </section>
+          ) : (
+            <section className={styles.profilePasswordSection}>
+              <div className={styles.formRow}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.inputLabel} htmlFor="profile-new-password">Nueva contraseña *</label>
+                  <input
+                    id="profile-new-password"
+                    type="password"
+                    value={form.contrasena}
+                    onChange={handleChange('contrasena')}
+                    className={styles.inputField}
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.inputLabel} htmlFor="profile-confirm-password">Confirmar contraseña *</label>
+                  <input
+                    id="profile-confirm-password"
+                    type="password"
+                    value={form.confirmarContrasena}
+                    onChange={handleChange('confirmarContrasena')}
+                    className={styles.inputField}
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
+              </div>
+
+              {form.contrasena.length > 0 && (
+                <div className={styles.passwordRules}>
+                  {passwordRulesStatus.map(rule => (
+                    <span
+                      key={rule.id}
+                      className={`${styles.passwordRule} ${rule.passed ? styles.passwordRuleOk : styles.passwordRuleError}`}
+                    >
+                      {rule.passed ? 'OK' : 'X'} {rule.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {form.confirmarContrasena.length > 0 && !passwordsMatch && (
+                <p className={styles.profilePasswordError}>Las contraseñas no coinciden.</p>
+              )}
+
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={cancelPasswordChange}
+                disabled={loading || isSubmitting}
+              >
+                Cancelar cambio de contraseña
+              </button>
+            </section>
+          )}
 
           <div className={styles.modalFooter}>
-            <button type="submit" className={styles.btnPrimary} disabled={loading}>
-              {loading ? 'Guardando...' : 'Guardar cambios'}
+            <button
+              type="submit"
+              className={styles.btnPrimary}
+              disabled={loading || isSubmitting || !passwordChangeIsValid}
+            >
+              {loading || isSubmitting ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
         </form>

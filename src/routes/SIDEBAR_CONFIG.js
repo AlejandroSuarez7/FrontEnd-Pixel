@@ -1,13 +1,16 @@
-import { hasAnyPermission } from '../core/utils/permissions';
+import { hasAnyPermission, isClientUser } from '../core/utils/permissions';
+import { LANDING_QUOTE_PATH } from '../core/utils/landingNavigation';
 import { PATHS } from './paths';
 
 export const ROUTE_PERMISSIONS = {
   [PATHS.DASHBOARD]: ['dashboard.admin', 'dashboard.cliente'],
+  [PATHS.CLIENT_DESIGNS]: ['disenos.cliente.ver'],
+  [PATHS.CLIENT_QUOTES]: ['cotizaciones.cliente.ver'],
   [PATHS.ROLES]: ['roles.ver'],
   [PATHS.USERS]: ['usuarios.ver'],
   [PATHS.USERS_EMPLOYEES]: ['usuarios.ver'],
   [PATHS.USERS_ACCESS]: ['usuarios.ver'],
-  [PATHS.USERS_CLIENTS]: ['usuarios.ver'],
+  [PATHS.USERS_CLIENTS]: ['clientes.ver'],
   [PATHS.PROFILE]: [],
   [PATHS.PURCHASES]: ['compras.ver'],
   [PATHS.PURCHASES_PROVIDERS]: ['proveedores.ver'],
@@ -24,6 +27,9 @@ export const ROUTE_PERMISSIONS = {
   [PATHS.PRODUCTION_DELIVERY]: ['pedidos.ver'],
   [PATHS.SERVICES]: ['tecnicas.ver'],
   [PATHS.SERVICES_QUOTES]: ['cotizaciones.ver'],
+  [PATHS.SERVICES_PRODUCTS]: ['productos.ver'],
+  [PATHS.SERVICES_PRODUCT_CATEGORIES]: ['categorias_producto.ver'],
+  [PATHS.SERVICES_TECHNIQUE_RATES]: ['tarifas.tecnicas.ver'],
   [PATHS.SETTINGS]: ['roles.ver', 'usuarios.ver', 'permisos.ver'],
 };
 
@@ -44,15 +50,17 @@ export const SIDEBAR_ITEMS = [
     key: 'users',
     items: [
       { label: 'Gestion de Usuarios', to: PATHS.USERS, permissions: ROUTE_PERMISSIONS[PATHS.USERS] },
+      { label: 'Clientes', to: PATHS.USERS_CLIENTS, permissions: ROUTE_PERMISSIONS[PATHS.USERS_CLIENTS] },
     ],
   },
   {
-    label: 'Compras',
-    icon: 'shopping_cart',
-    key: 'purchases',
+    label: 'Catalogo',
+    icon: 'inventory_2',
+    key: 'catalog',
     items: [
-      { label: 'Compras', to: PATHS.PURCHASES, permissions: ROUTE_PERMISSIONS[PATHS.PURCHASES] },
-      { label: 'Proveedores', to: PATHS.PURCHASES_PROVIDERS, permissions: ROUTE_PERMISSIONS[PATHS.PURCHASES_PROVIDERS] },
+      { label: 'Categorias de productos', to: PATHS.SERVICES_PRODUCT_CATEGORIES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_PRODUCT_CATEGORIES] },
+      { label: 'Productos cotizables', to: PATHS.SERVICES_PRODUCTS, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_PRODUCTS] },
+      { label: 'Gestion de Tecnicas', to: PATHS.SERVICES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES] },
     ],
   },
   {
@@ -60,18 +68,18 @@ export const SIDEBAR_ITEMS = [
     icon: 'sell',
     key: 'sales',
     items: [
-      { label: 'Gestion de Ventas', to: PATHS.SALES, permissions: ROUTE_PERMISSIONS[PATHS.SALES] },
-      { label: 'Gestion de Abonos', to: PATHS.SALES_PAYMENTS, permissions: ROUTE_PERMISSIONS[PATHS.SALES_PAYMENTS] },
+      { label: 'Gestion de Cotizaciones', to: PATHS.SERVICES_QUOTES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_QUOTES] },
       { label: 'Gestion de Pedidos', to: PATHS.ORDERS, permissions: ROUTE_PERMISSIONS[PATHS.ORDERS] },
+      { label: 'Gestion de Ventas', to: PATHS.SALES, permissions: ROUTE_PERMISSIONS[PATHS.SALES] },
     ],
   },
   {
-    label: 'Servicios',
-    icon: 'build',
-    key: 'services',
+    label: 'Compras',
+    icon: 'shopping_cart',
+    key: 'purchases',
     items: [
-      { label: 'Gestion de Servicios', to: PATHS.SERVICES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES] },
-      { label: 'Gestion de Cotizaciones', to: PATHS.SERVICES_QUOTES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_QUOTES] },
+      { label: 'Proveedores', to: PATHS.PURCHASES_PROVIDERS, permissions: ROUTE_PERMISSIONS[PATHS.PURCHASES_PROVIDERS] },
+      { label: 'Compras', to: PATHS.PURCHASES, permissions: ROUTE_PERMISSIONS[PATHS.PURCHASES] },
     ],
   },
   {
@@ -86,8 +94,13 @@ export const SIDEBAR_ITEMS = [
   { label: 'Mi Perfil', icon: 'account_circle', to: PATHS.PROFILE },
 ];
 
-export const canAccessPath = (permissions, pathname) => {
+export const canAccessPath = (permissions, pathname, user = null) => {
   if (pathname === PATHS.HOME || pathname === PATHS.PROFILE) return true;
+
+  if (isClientUser(user, permissions)) {
+    if (pathname === PATHS.DASHBOARD) return true;
+    return hasAnyPermission(permissions, ROUTE_PERMISSIONS[pathname] || []);
+  }
 
   const matchedPath = Object.keys(ROUTE_PERMISSIONS)
     .sort((a, b) => b.length - a.length)
@@ -97,28 +110,45 @@ export const canAccessPath = (permissions, pathname) => {
   return hasAnyPermission(permissions, ROUTE_PERMISSIONS[matchedPath]);
 };
 
-export const getDefaultProtectedPath = (permissions) => {
+export const getDefaultProtectedPath = (permissions, user = null) => {
+  if (isClientUser(user, permissions)) return PATHS.DASHBOARD;
+
   const preferredPaths = [
     PATHS.DASHBOARD,
     PATHS.ROLES,
     PATHS.USERS,
-    PATHS.PURCHASES,
-    PATHS.PURCHASES_PROVIDERS,
-    PATHS.SALES,
-    PATHS.SALES_PAYMENTS,
-    PATHS.ORDERS,
+    PATHS.USERS_CLIENTS,
+    PATHS.SERVICES_PRODUCT_CATEGORIES,
+    PATHS.SERVICES_PRODUCTS,
     PATHS.SERVICES,
+    PATHS.SERVICES_TECHNIQUE_RATES,
     PATHS.SERVICES_QUOTES,
+    PATHS.ORDERS,
+    PATHS.SALES_PAYMENTS,
+    PATHS.SALES,
+    PATHS.PURCHASES_PROVIDERS,
+    PATHS.PURCHASES,
     PATHS.PRODUCTION,
     PATHS.PRODUCTION_DESIGNS,
     PATHS.PROFILE,
   ];
 
-  return preferredPaths.find((path) => canAccessPath(permissions, path)) || null;
+  return preferredPaths.find((path) => canAccessPath(permissions, path, user)) || null;
 };
 
-export const filterSidebarByPermissions = (permissions) => (
-  SIDEBAR_ITEMS
+export const filterSidebarByPermissions = (permissions, user = null) => {
+  if (isClientUser(user, permissions)) {
+    return [
+      { label: 'Inicio', icon: 'home', to: PATHS.HOME },
+      { label: 'Mis pedidos', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
+      { label: 'Mis cotizaciones', icon: 'description', to: PATHS.CLIENT_QUOTES, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_QUOTES] },
+      { label: 'Mis disenos', icon: 'image', to: PATHS.CLIENT_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_DESIGNS] },
+      { label: 'Crear cotizacion', icon: 'add_circle', to: LANDING_QUOTE_PATH },
+      { label: 'Mi perfil', icon: 'account_circle', to: PATHS.PROFILE },
+    ].filter((item) => !item.permissions || hasAnyPermission(permissions, item.permissions));
+  }
+
+  return SIDEBAR_ITEMS
     .map((section) => {
       if (section.items) {
         const items = section.items.filter((item) => hasAnyPermission(permissions, item.permissions));
@@ -127,8 +157,8 @@ export const filterSidebarByPermissions = (permissions) => (
 
       return hasAnyPermission(permissions, section.permissions) ? section : null;
     })
-    .filter(Boolean)
-);
+    .filter(Boolean);
+};
 
 export const SIDEBAR_BY_ROLE = {};
 export const ALLOWED_PATHS_BY_ROLE = {};

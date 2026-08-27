@@ -1,27 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { productionQueueRepository } from '../infrastructure/productionQueue.repository';
 
 export const useProductionQueue = () => {
-  const [pedidos, setPedidos] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
-
-  const fetchQueue = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await productionQueueRepository.list();
-      setPedidos(data);
-    } catch (error) {
-      console.error('Error al consultar cola de produccion:', error);
-      setPedidos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchQueue();
-  }, [fetchQueue]);
+  const {
+    data: pedidos,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchQueue,
+  } = useLatestListRequest({
+    queryKey: 'production-queue',
+    load: (signal) => productionQueueRepository.list({ signal }),
+    initialData: [],
+  });
 
   const saveOrder = async (orderedPedidos) => {
     setSavingOrder(true);
@@ -35,6 +28,8 @@ export const useProductionQueue = () => {
 
   return {
     loading,
+    refreshing,
+    error,
     pedidos,
     refetch: fetchQueue,
     saveOrder,

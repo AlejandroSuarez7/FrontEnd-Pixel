@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import './ProveedoresPage.css';
 
@@ -26,6 +27,7 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
   const [correo, setCorreo] = useState('');
   const [direccion, setDireccion] = useState('');
   const [estado, setEstado] = useState(true);
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(proveedor);
 
@@ -49,6 +51,7 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
 
     if (!nombre.trim()) {
       notifications.warning('El nombre del proveedor es obligatorio.');
@@ -60,6 +63,7 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
     } catch (error) {
       notifications.error(error.message || 'No se pudo procesar el proveedor.');
     }
+    });
   };
 
   return (
@@ -69,7 +73,7 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
           <h3 className={styles.modalTitle}>
             {isEditing ? `Editar proveedor #${proveedor.idProveedor}` : 'Registrar proveedor'}
           </h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -133,11 +137,11 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
           </label>
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary}>
-              {isEditing ? 'Guardar cambios' : 'Registrar'}
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Registrar'}
             </button>
           </div>
         </form>

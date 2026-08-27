@@ -2,47 +2,62 @@ import axios from 'axios';
 import { notifications } from '../utils/notifications';
 
 const BASE_URL = 'http://localhost:3000/';
+export const SESSION_EXPIRED_EVENT = 'pixel:session-expired';
+const AUTH_STORAGE_KEYS = ['token', 'pixel_user', 'pixel_permissions'];
 
-// Instancia de Axios compartida por todos los módulos
+// Instancia de Axios compartida por todos los modulos.
 export const apiClient = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
-// Interceptor de REQUEST: agrega el Bearer token automáticamente
-apiClient.interceptors.request.use(
-  (config) => {
-    // Ajusta esto según dónde guardas el token en tu proyecto
-    // Opción A — localStorage directamente:
-    const token = localStorage.getItem('token');
+export const prepareApiRequest = (config) => {
+  const token = localStorage.getItem('token');
 
-    // Opción B — si usas un store (Zustand, Redux, etc.):
-    // const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  // Axios debe generar el Content-Type con su boundary para cuerpos multipart.
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    if (typeof config.headers.delete === 'function') {
+      config.headers.delete('Content-Type');
+    } else {
+      delete config.headers['Content-Type'];
     }
-    return config;
-  },
+  }
+
+  return config;
+};
+
+export const clearStoredAuthSession = () => {
+  AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+  window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+};
+
+// Interceptor de REQUEST: agrega el Bearer token automaticamente.
+apiClient.interceptors.request.use(
+  prepareApiRequest,
   (error) => Promise.reject(error)
 );
 
-// Interceptor de RESPONSE: manejo global de errores
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
+export const handleApiError = (error) => {
+    if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+      return Promise.reject(error);
+    }
+
     const status = error.response?.status;
     const message = error.response?.data?.message || error.message;
 
     if (status === 401) {
-      // Token expirado o inválido — aquí puedes redirigir al login
-      const authPaths = ['/login', '/register'];
-      const isAuthPage = authPaths.includes(window.location.pathname);
+      const authPaths = ['/login', '/register', '/reset-password', '/crear-password-cliente'];
+      const isAuthPage = authPaths.some((path) => window.location.pathname.startsWith(path));
+      const isAuthenticatedRequest = Boolean(error.config?.headers?.Authorization);
 
       console.warn('[API] No autorizado.');
-      if (!isAuthPage) {
+      if (isAuthenticatedRequest && !isAuthPage) {
+        clearStoredAuthSession();
+      }
+      if (!isAuthPage && !error.config?.skipAuthRedirect) {
         window.location.href = '/login';
       }
     }
@@ -52,7 +67,6 @@ apiClient.interceptors.response.use(
       notifications.error(message || 'No tienes permisos para realizar esta accion.');
     }
 
-    // Lanza un error legible para los repositorios
     const apiError = new Error(
       status === 403
         ? message || 'No tienes permisos para realizar esta accion.'
@@ -62,6 +76,14 @@ apiClient.interceptors.response.use(
     apiError.payload = error.response?.data;
     apiError.response = error.response;
     apiError.isForbidden = status === 403;
+    apiError.wasNotified = status === 403;
+    apiError.isNetworkError = !error.response;
+    apiError.code = error.code;
     return Promise.reject(apiError);
-  }
+};
+
+// Interceptor de RESPONSE: manejo global de errores.
+apiClient.interceptors.response.use(
+  (response) => response,
+  handleApiError,
 );

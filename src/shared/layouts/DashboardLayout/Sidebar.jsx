@@ -4,11 +4,25 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { filterSidebarByPermissions } from '../../../routes/SIDEBAR_CONFIG';
 import { useAuth } from '../../../store/AuthContext';
 
+const getActiveSidebarSectionKey = (menu, pathname, hash = '') => (
+  menu
+    .flatMap((section) => (
+      section.items
+        ? section.items.map((item) => ({ sectionKey: section.key, path: item.to }))
+        : []
+    ))
+    .filter(({ path: target }) => {
+      const [targetPath, targetHash = ''] = target.split('#');
+      const pathnameMatches = pathname === targetPath || pathname.startsWith(`${targetPath}/`);
+      return pathnameMatches && (!targetHash || hash === `#${targetHash}`);
+    })
+    .sort((a, b) => b.path.length - a.path.length)[0]?.sectionKey || null
+);
+
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, permissions, logout } = useAuth();
-  const [openMenu, setOpenMenu] = useState(null);
   const [collapsed, setCollapsed] = useState(() => (
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
   ));
@@ -16,12 +30,18 @@ const Sidebar = () => {
   const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const userName = user?.nombre || user?.correo || 'Usuario';
   const avatarLetter = userName.charAt(0).toUpperCase();
-  const menu = filterSidebarByPermissions(permissions);
+  const menu = filterSidebarByPermissions(permissions, user);
+  const activeSectionKey = getActiveSidebarSectionKey(menu, location.pathname, location.hash);
+  const routeKey = `${location.pathname}${location.hash}`;
+  const [sectionState, setSectionState] = useState({ routeKey, section: activeSectionKey });
+  const openSection = sectionState.routeKey === routeKey ? sectionState.section : activeSectionKey;
 
-  const activeSection = menu.find((section) =>
-    section.items?.some((item) => location.pathname.startsWith(item.to)) ||
-    section.to === location.pathname
-  );
+  const getLinkClassName = (target, baseClass = 'nav-link') => {
+    const [path, hash = ''] = target.split('#');
+    const pathnameMatches = location.pathname === path;
+    const hashMatches = hash ? location.hash === `#${hash}` : !location.hash;
+    return pathnameMatches && hashMatches ? `${baseClass} active` : baseClass;
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -52,6 +72,12 @@ const Sidebar = () => {
     navigate('/');
   };
 
+  const handleGoHome = () => {
+    setSectionState({ routeKey, section: null });
+    navigate('/');
+    closeMobileSidebar();
+  };
+
   return (
     <>
       <button
@@ -74,7 +100,9 @@ const Sidebar = () => {
       <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
         <div>
           <div className="sidebar-header">
-            <h2 className="sidebar-title">{collapsed ? 'P' : 'PIXEL'}</h2>
+            <button type="button" className="sidebar-title" onClick={handleGoHome}>
+              <span className="sidebar-brand-word">PIXEL</span>
+            </button>
             <button
               type="button"
               className="sidebar-toggle"
@@ -89,8 +117,7 @@ const Sidebar = () => {
 
           <nav>
             {menu.map((section) => {
-              const isSectionActive = section.key && activeSection?.key === section.key;
-              const isMenuOpen = openMenu === section.key || isSectionActive;
+              const isMenuOpen = openSection === section.key;
 
               return (
                 <div key={section.label} className="sidebar-section">
@@ -99,8 +126,11 @@ const Sidebar = () => {
                       to={section.to}
                       end
                       title={section.label}
-                      onClick={closeMobileSidebar}
-                      className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                      onClick={() => {
+                        setSectionState({ routeKey, section: null });
+                        closeMobileSidebar();
+                      }}
+                      className={() => getLinkClassName(section.to)}
                     >
                       <span className="sidebar-icon material-symbols-outlined">{section.icon}</span>
                       <span className="sidebar-label">{section.label}</span>
@@ -109,8 +139,12 @@ const Sidebar = () => {
                     <button
                       type="button"
                       title={section.label}
-                      className={isSectionActive ? 'menu-toggle active' : 'menu-toggle'}
-                      onClick={() => setOpenMenu(isMenuOpen ? null : section.key)}
+                      className={isMenuOpen ? 'menu-toggle active' : 'menu-toggle'}
+                      aria-expanded={isMenuOpen}
+                      onClick={() => setSectionState({
+                        routeKey,
+                        section: openSection === section.key ? null : section.key,
+                      })}
                     >
                       <span className="sidebar-icon material-symbols-outlined">{section.icon}</span>
                       <span className="sidebar-label">{section.label}</span>
@@ -125,9 +159,7 @@ const Sidebar = () => {
                           to={item.to}
                           end
                           onClick={closeMobileSidebar}
-                          className={({ isActive }) =>
-                            isActive ? 'nav-link sublink active' : 'nav-link sublink'
-                          }
+                          className={() => getLinkClassName(item.to, 'nav-link sublink')}
                         >
                           <span className="sidebar-label">{item.label}</span>
                         </NavLink>

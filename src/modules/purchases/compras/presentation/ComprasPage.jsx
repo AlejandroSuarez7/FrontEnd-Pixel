@@ -4,6 +4,8 @@ import { notifications } from '../../../../core/utils/notifications';
 import { usePagination } from '../../../../core/hooks/usePagination';
 import { formatDate } from '../../../../core/utils/fechaFormato';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../../store/AuthContext';
 import { useCompras } from '../application/useCompras';
@@ -68,10 +70,9 @@ const ESTADO_CLASS = {
 const fmt = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 
 export const ComprasPage = () => {
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const confirm = useConfirm();
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const isStaff = userRole === 'Admin' || userRole === 'Secretaria';
   const isDesigner = userRole?.toLowerCase?.().includes('dise');
 
@@ -79,11 +80,14 @@ export const ComprasPage = () => {
   const [selectedCompra, setSelectedCompra] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [deletionCompra, setDeletionCompra] = useState(null);
 
   const {
     compras,
     resumen,
     loading,
+    error,
+    refetch,
     handleCreate,
     handleUpdate,
     handleConfirm,
@@ -179,24 +183,6 @@ export const ComprasPage = () => {
     }
   };
 
-  const onDeleteClick = async (compra) => {
-    const accepted = await confirm({
-      title: 'Eliminar compra',
-      message: `Eliminar compra pendiente #${compra.idCompra}?`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-
-    if (!accepted) return;
-
-    try {
-      await handleDelete(compra.idCompra);
-      notifications.success('Compra eliminada correctamente.');
-    } catch (error) {
-      notifications.error(error.message || 'No se pudo eliminar la compra.');
-    }
-  };
-
   return (
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
@@ -250,6 +236,11 @@ export const ComprasPage = () => {
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando compras...</p>
+        ) : error && filteredCompras.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>{error.message || 'No se pudieron cargar las compras.'}</p>
+            <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
+          </div>
         ) : filteredCompras.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron compras.</p>
         ) : (
@@ -285,7 +276,7 @@ export const ComprasPage = () => {
                             hasPermission('compras.confirmar') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Confirmar', onClick: () => onConfirmClick(compra), variant: 'success' },
                             hasPermission('compras.anular') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Anular', onClick: () => onCancelClick(compra), variant: 'danger' },
                             hasPermission('compras.editar') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Editar', onClick: () => handleOpenEdit(compra), variant: 'warning' },
-                            hasPermission('compras.eliminar') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => onDeleteClick(compra), variant: 'danger' },
+                            hasPermission('compras.eliminar') && isStaff && compra.estado === 'PENDIENTE' && { label: 'Eliminar', onClick: () => setDeletionCompra(compra), variant: 'danger' },
                           ]}
                         />
                       </td>
@@ -301,6 +292,16 @@ export const ComprasPage = () => {
 
       <CompraModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedCompra(null); }} onSubmit={handleSubmit} compra={selectedCompra} getPedidos={getPedidos} getProveedoresActivos={getProveedoresActivos} />
       <CompraViewModal isOpen={isViewOpen} onClose={() => { setIsViewOpen(false); setSelectedCompra(null); }} compra={selectedCompra} isDesigner={isDesigner && !isStaff} />
+      <SafeDeleteModal
+        key={deletionCompra?.idCompra || 'purchase-delete'}
+        isOpen={Boolean(deletionCompra)}
+        entityLabel="compra"
+        entityName={deletionCompra ? `Compra #${deletionCompra.idCompra}` : ''}
+        impactEndpoint={deletionCompra ? SAFE_DELETE_IMPACT_ENDPOINTS.purchase(deletionCompra.idCompra) : ''}
+        deleteAction={() => handleDelete(deletionCompra.idCompra)}
+        successMessage="Compra eliminada correctamente."
+        onClose={() => setDeletionCompra(null)}
+      />
     </div>
   );
 };

@@ -1,23 +1,19 @@
 import { apiClient } from '../../../../core/services/apiService.js';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
+import { createRequestError } from '../../../../core/utils/requestError.js';
 import { proveedorDTO } from './adapters/proveedor.dto.js';
 
 const ENDPOINT = 'api/proveedores';
 
 export class ProveedorApiRepository {
-  async list(filters = {}) {
-    try {
-      const params = buildPaginationParams({
-        sortBy: 'nombre',
-        order: 'asc',
-        ...filters,
-      });
-      const { data } = await apiClient.get(ENDPOINT, { params });
-      return normalizePaginatedResponse(data, proveedorDTO.fromApiList.bind(proveedorDTO));
-    } catch (error) {
-      console.error('Error al listar proveedores:', error);
-      return normalizePaginatedResponse({}, proveedorDTO.fromApiList.bind(proveedorDTO));
-    }
+  async list(filters = {}, options = {}) {
+    const params = buildPaginationParams({
+      sortBy: 'nombre',
+      order: 'asc',
+      ...filters,
+    });
+    const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
+    return normalizePaginatedResponse(data, proveedorDTO.fromApiList.bind(proveedorDTO));
   }
 
   async getById(idProveedor) {
@@ -25,7 +21,7 @@ export class ProveedorApiRepository {
       const { data } = await apiClient.get(`${ENDPOINT}/${idProveedor}`);
       return proveedorDTO.fromApi(data.data);
     } catch (error) {
-      throw new Error(error.message || 'No se pudo consultar el proveedor');
+      throw createRequestError(error, 'No se pudo consultar el proveedor');
     }
   }
 
@@ -34,7 +30,7 @@ export class ProveedorApiRepository {
       const { data } = await apiClient.post(ENDPOINT, proveedorDTO.toApiCreate(proveedorData));
       return proveedorDTO.fromApi(data.data);
     } catch (error) {
-      throw new Error(error.message || 'No se pudo crear el proveedor');
+      throw createRequestError(error, 'No se pudo crear el proveedor');
     }
   }
 
@@ -43,7 +39,7 @@ export class ProveedorApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${idProveedor}`, proveedorDTO.toApi(proveedorData));
       return proveedorDTO.fromApi(data.data);
     } catch (error) {
-      throw new Error(error.message || 'No se pudo actualizar el proveedor');
+      throw createRequestError(error, 'No se pudo actualizar el proveedor');
     }
   }
 
@@ -52,7 +48,7 @@ export class ProveedorApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${idProveedor}`);
       return data;
     } catch (error) {
-      throw new Error(error.message || 'No se pudo desactivar el proveedor');
+      throw createRequestError(error, 'No se pudo desactivar el proveedor');
     }
   }
 
@@ -61,7 +57,7 @@ export class ProveedorApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${idProveedor}/eliminar`);
       return data;
     } catch (error) {
-      throw new Error(error.message || 'No se pudo eliminar el proveedor');
+      throw createRequestError(error, 'No se pudo eliminar el proveedor');
     }
   }
 }

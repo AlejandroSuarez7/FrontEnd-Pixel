@@ -1,43 +1,34 @@
-// cotizaciones/application/useQuotes.js
-import { useState, useEffect, useCallback } from 'react';
 import { createPaginationMeta } from '../../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { QuoteApiRepository } from '../infrastructure/quote.repository';
 
 const quoteRepository = new QuoteApiRepository();
 
 export const useQuotes = (filters = {}) => {
-  const [quotes, setQuotes]   = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchQuotes = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await quoteRepository.list(filters);
-      setQuotes(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error('Error en useQuotes al listar:', error);
-      setQuotes([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  }, [JSON.stringify(filters)]);
-
-  useEffect(() => {
-    fetchQuotes();
-  }, [fetchQuotes]);
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchQuotes,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => quoteRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   // Crea una cotización nueva (cliente o staff)
   const handleCreate = async (quoteData, isStaff = false) => {
     try {
+      let createdQuote;
       if (isStaff) {
-        await quoteRepository.createAsStaff(quoteData);
+        createdQuote = await quoteRepository.createAsStaff(quoteData);
       } else {
-        await quoteRepository.createAsClient(quoteData);
+        createdQuote = await quoteRepository.createAsClient(quoteData);
       }
       await fetchQuotes();
+      return createdQuote;
     } catch (error) {
       console.error('Error al crear cotización:', error);
       throw error;
@@ -99,16 +90,46 @@ export const useQuotes = (filters = {}) => {
     }
   };
 
+  const updateRequest = async (idCotizacion, quoteData) => {
+    const result = await quoteRepository.updateRequest(idCotizacion, quoteData);
+    await fetchQuotes();
+    return result;
+  };
+
+  const sendProposal = async (idCotizacion, payload) => {
+    const result = await quoteRepository.sendProposal(idCotizacion, payload);
+    await fetchQuotes();
+    return result;
+  };
+
+  const respondAsClient = async (idCotizacion, payload) => {
+    const result = await quoteRepository.respondAsClient(idCotizacion, payload);
+    await fetchQuotes();
+    return result;
+  };
+
+  const respondAsStaff = async (idCotizacion, payload) => {
+    const result = await quoteRepository.respondAsStaff(idCotizacion, payload);
+    await fetchQuotes();
+    return result;
+  };
+
   return {
-    quotes,
-    paginationMeta,
+    quotes: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     refetch:         fetchQuotes,
     handleCreate,
     handleUpdate,
+    updateRequest,
     handleApprove,
     handleReject,
     handleCancel,
     handleHardDelete,
+    sendProposal,
+    respondAsClient,
+    respondAsStaff,
   };
 };

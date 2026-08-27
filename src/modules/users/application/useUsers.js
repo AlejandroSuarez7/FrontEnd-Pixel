@@ -1,33 +1,23 @@
 // application/useUsers.js
-import { useState, useEffect, useCallback } from 'react';
 import { createPaginationMeta } from '../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../core/hooks/useLatestListRequest';
 import { UserApiRepository } from '../infrastructure/user.repository';
 
 const userRepository = new UserApiRepository();
 
 export const useUsers = (filters = {}) => {
-  const [users, setUsers]   = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await userRepository.list(filters);
-      setUsers(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error('Error en useUsers hook:', error);
-      setUsers([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  }, [JSON.stringify(filters)]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchUsers,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => userRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   // Crear usuario nuevo
   const handleCreate = async (userData) => {
@@ -77,9 +67,11 @@ export const useUsers = (filters = {}) => {
     userRepository.findDuplicateFields(userData, excludeId);
 
   return {
-    users,
-    paginationMeta,
+    users: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     handleCreate,
     handleUpdate,
     handleToggleStatus,

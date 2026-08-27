@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react';
+import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import './AbonosPage.css';
 
@@ -17,6 +17,8 @@ const styles = {
   inputField: 'abonos-input-field',
   loadingText: 'abonos-loading-text',
   detailsInfoBox: 'abonos-details-info-box',
+  paymentSummary: 'abonos-payment-summary',
+  paymentSummaryItem: 'abonos-payment-summary-item',
   modalFooter: 'abonos-modal-footer',
   btnSecondary: 'abonos-btn-secondary',
   btnPrimary: 'abonos-btn-primary',
@@ -24,6 +26,7 @@ const styles = {
 
 const METODOS_PAGO_STAFF = ['EFECTIVO', 'TRANSFERENCIA'];
 const METODOS_PAGO_CLIENTE = ['TRANSFERENCIA'];
+const EMPTY_PRESET_ABONOS = Object.freeze([]);
 
 export const AbonoModal = ({
   isOpen,
@@ -34,61 +37,42 @@ export const AbonoModal = ({
   getPedido,
   getAbonosByPedido,
   getPedidos,
+  presetPedido = null,
+  presetAbonos = EMPTY_PRESET_ABONOS,
+  lockPedido = false,
 }) => {
-  const [idPedido, setIdPedido] = useState('');
-  const [monto, setMonto] = useState('');
-  const [metodoPago, setMetodoPago] = useState('TRANSFERENCIA');
-  const [referencia, setReferencia] = useState('');
-  const [comprobanteUrl, setComprobanteUrl] = useState('');
+  const isEditing = Boolean(abono);
+  const [idPedido, setIdPedido] = useState(() => abono?.idPedido || presetPedido?.idPedido || '');
+  const [monto, setMonto] = useState(() => abono?.monto || '');
+  const [metodoPago, setMetodoPago] = useState(() => (
+    isStaff ? abono?.metodoPago || 'TRANSFERENCIA' : 'TRANSFERENCIA'
+  ));
+  const [referencia, setReferencia] = useState(() => abono?.referencia || '');
+  const [fechaPago, setFechaPago] = useState(() => (
+    abono?.fechaPago ? String(abono.fechaPago).slice(0, 10) : ''
+  ));
+  const [observaciones, setObservaciones] = useState(() => abono?.observaciones || '');
+  const [archivo, setArchivo] = useState(null);
   const [confirmar, setConfirmar] = useState(false);
-  const [pedido, setPedido] = useState(null);
-  const [abonosPedido, setAbonosPedido] = useState([]);
+  const [pedido, setPedido] = useState(presetPedido);
+  const [abonosPedido, setAbonosPedido] = useState(presetAbonos);
   const [pedidosDisponibles, setPedidosDisponibles] = useState([]);
-  const [loadingPedidos, setLoadingPedidos] = useState(false);
-  const [loadingPedido, setLoadingPedido] = useState(false);
+  const [loadingPedidos, setLoadingPedidos] = useState(() => (
+    Boolean(isOpen && !isEditing && getPedidos && !lockPedido)
+  ));
+  const [loadingPedido, setLoadingPedido] = useState(() => (
+    Boolean(isOpen && idPedido && !lockPedido)
+  ));
   const [pedidoError, setPedidoError] = useState('');
   const [pedidosError, setPedidosError] = useState('');
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
-  const isEditing = Boolean(abono);
   const metodosPagoDisponibles = isStaff ? METODOS_PAGO_STAFF : METODOS_PAGO_CLIENTE;
 
   useEffect(() => {
-    if (abono) {
-      setIdPedido(abono.idPedido || '');
-      setMonto(abono.monto || '');
-      setMetodoPago(isStaff ? abono.metodoPago || 'TRANSFERENCIA' : 'TRANSFERENCIA');
-      setReferencia(abono.referencia || '');
-      setComprobanteUrl(abono.comprobanteUrl || '');
-      setConfirmar(false);
-    } else {
-      setIdPedido('');
-      setMonto('');
-      setMetodoPago('TRANSFERENCIA');
-      setReferencia('');
-      setComprobanteUrl('');
-      setConfirmar(false);
-    }
-    setPedido(null);
-    setAbonosPedido([]);
-    setPedidoError('');
-    setPedidosError('');
-  }, [abono, isOpen, isStaff]);
-
-  useEffect(() => {
-    if (!metodosPagoDisponibles.includes(metodoPago)) {
-      setMetodoPago('TRANSFERENCIA');
-    }
-    if (metodoPago === 'EFECTIVO') {
-      setComprobanteUrl('');
-    }
-  }, [metodoPago, metodosPagoDisponibles]);
-
-  useEffect(() => {
-    if (!isOpen || isEditing || !getPedidos) return;
+    if (!isOpen || isEditing || !getPedidos || lockPedido) return;
 
     let cancelled = false;
-    setLoadingPedidos(true);
-    setPedidosError('');
 
     getPedidos()
       .then((data) => {
@@ -111,14 +95,13 @@ export const AbonoModal = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, isEditing, getPedidos]);
+  }, [isOpen, isEditing, getPedidos, lockPedido]);
 
   useEffect(() => {
     if (!isOpen || !idPedido || !Number.isInteger(Number(idPedido))) return;
+    if (lockPedido) return;
 
     let cancelled = false;
-    setLoadingPedido(true);
-    setPedidoError('');
 
     Promise.all([getPedido(idPedido), getAbonosByPedido(idPedido)])
       .then(([pedidoData, abonosData]) => {
@@ -139,18 +122,20 @@ export const AbonoModal = ({
     return () => {
       cancelled = true;
     };
-  }, [idPedido, isOpen, getPedido, getAbonosByPedido]);
+  }, [idPedido, isOpen, getPedido, getAbonosByPedido, lockPedido]);
 
   const resumenPago = useMemo(() => {
-    const total = Number(pedido?.total || 0);
-    const confirmado = abonosPedido
+    const total = Number(pedido?.totalPedido ?? pedido?.total ?? 0);
+    const confirmedFromAbonos = abonosPedido
       .filter(item => item.estado === 'CONFIRMADO')
       .reduce((sum, item) => sum + Number(item.monto || 0), 0);
-    const saldo = Math.max(total - confirmado, 0);
+    const confirmado = Number(pedido?.totalConfirmado ?? pedido?.totalPagado ?? confirmedFromAbonos);
+    const saldo = Number(pedido?.saldoPendiente ?? Math.max(total - confirmado, 0));
     const primerAbonoConfirmado = confirmado > 0;
-    const minimo = total * 0.5;
+    const minimo = Number(pedido?.montoMinimoPrimerAbono ?? total * 0.5);
+    const estadoPago = pedido?.estadoPago || (saldo <= 0 ? 'COMPLETO' : confirmado > 0 ? 'PARCIAL' : 'PENDIENTE');
 
-    return { total, confirmado, saldo, primerAbonoConfirmado, minimo };
+    return { total, confirmado, saldo, primerAbonoConfirmado, minimo, estadoPago };
   }, [pedido, abonosPedido]);
 
   const montoNumber = Number(monto || 0);
@@ -163,8 +148,24 @@ export const AbonoModal = ({
 
   if (!isOpen) return null;
 
+  const handlePedidoChange = (event) => {
+    const nextPedidoId = event.target.value;
+    setIdPedido(nextPedidoId);
+    setPedido(null);
+    setAbonosPedido([]);
+    setPedidoError('');
+    setLoadingPedido(Boolean(nextPedidoId));
+  };
+
+  const handleMetodoPagoChange = (event) => {
+    const nextMetodo = event.target.value;
+    setMetodoPago(nextMetodo);
+    if (nextMetodo === 'EFECTIVO') setArchivo(null);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
 
     if (superaSaldo) {
       notifications.warning('El abono no puede superar el saldo pendiente del pedido.');
@@ -181,15 +182,18 @@ export const AbonoModal = ({
       monto,
       metodoPago,
       referencia,
-      comprobanteUrl: metodoPago === 'EFECTIVO' ? '' : comprobanteUrl,
+      fechaPago,
+      observaciones,
+      archivo: metodoPago === 'EFECTIVO' ? null : archivo,
       ...(isStaff && !isEditing && { confirmar }),
     };
 
     try {
       await onSubmit(payload);
     } catch (error) {
-      notifications.error(error.message || 'No se pudo procesar el abono.');
+      if (!error.wasNotified) notifications.error(error.message || 'No se pudo procesar el abono.');
     }
+    });
   };
 
   return (
@@ -199,18 +203,26 @@ export const AbonoModal = ({
           <h3 className={styles.modalTitle}>
             {isEditing ? `Editar abono #${abono.idAbono}` : 'Registrar abono'}
           </h3>
-          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formRow}>
+          <section className="abonos-modal-section">
+            <span className="abonos-modal-section-title">A. Resumen del pedido</span>
+            {lockPedido && presetPedido ? (
+              <div className="abonos-locked-order">
+                <strong>Pedido #{presetPedido.idPedido}</strong>
+                <span>{presetPedido.cliente?.nombre || presetPedido.nombreCliente || 'Cliente no especificado'}</span>
+                <small>Pedido precargado desde el expediente</small>
+              </div>
+            ) : (
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Pedido *</label>
               <select
                 value={idPedido}
-                onChange={event => setIdPedido(event.target.value)}
+                onChange={handlePedidoChange}
                 className={styles.inputField}
-                disabled={isEditing || loadingPedidos}
+                disabled={isSubmitting || isEditing || loadingPedidos}
                 required
               >
                 <option value="">
@@ -226,6 +238,21 @@ export const AbonoModal = ({
                 ))}
               </select>
             </div>
+            )}
+            {pedido && (
+              <div className={styles.paymentSummary}>
+                <div className={styles.paymentSummaryItem}><span>Total</span><strong>${resumenPago.total.toLocaleString('es-CO')}</strong></div>
+                <div className={styles.paymentSummaryItem}><span>Confirmado</span><strong>${resumenPago.confirmado.toLocaleString('es-CO')}</strong></div>
+                <div className={styles.paymentSummaryItem}><span>Saldo</span><strong>${resumenPago.saldo.toLocaleString('es-CO')}</strong></div>
+                <div className={styles.paymentSummaryItem}><span>Minimo primer abono</span><strong>${resumenPago.minimo.toLocaleString('es-CO')}</strong></div>
+                <div className={styles.paymentSummaryItem}><span>Estado</span><strong>{resumenPago.estadoPago}</strong></div>
+              </div>
+            )}
+          </section>
+
+          <section className="abonos-modal-section">
+            <span className="abonos-modal-section-title">B. Datos del pago</span>
+            <div className={styles.formRow}>
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Monto *</label>
               <input
@@ -244,7 +271,7 @@ export const AbonoModal = ({
             <label className={styles.inputLabel}>Metodo de pago *</label>
             <select
               value={metodoPago}
-              onChange={event => setMetodoPago(event.target.value)}
+              onChange={handleMetodoPagoChange}
               className={styles.inputField}
               required
             >
@@ -266,39 +293,79 @@ export const AbonoModal = ({
             />
           </div>
 
-          {metodoPago !== 'EFECTIVO' && (
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>Fecha del pago</label>
+            <input
+              type="date"
+              value={fechaPago}
+              onChange={event => setFechaPago(event.target.value)}
+              className={styles.inputField}
+            />
+          </div>
+          </section>
+
+          <section className="abonos-modal-section">
+            <span className="abonos-modal-section-title">C. Comprobante y observaciones</span>
+          {metodoPago !== 'EFECTIVO' && !isEditing && (
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Comprobante URL</label>
+              <label className={styles.inputLabel}>Comprobante (opcional)</label>
               <input
-                type="url"
-                value={comprobanteUrl}
-                onChange={event => setComprobanteUrl(event.target.value)}
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                onChange={event => setArchivo(event.target.files?.[0] || null)}
                 className={styles.inputField}
-                maxLength={500}
-                placeholder="https://..."
               />
+              <small>JPG, PNG o PDF. Los datos detectados deben revisarse antes de confirmar el abono.</small>
+            </div>
+          )}
+
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>Observaciones</label>
+            <textarea
+              value={observaciones}
+              onChange={event => setObservaciones(event.target.value)}
+              className={styles.inputField}
+              maxLength={500}
+              rows={3}
+              placeholder="Aclaraciones sobre el pago..."
+              style={{ resize: 'none' }}
+            />
+          </div>
+          </section>
+
+          {isEditing && (
+            abono.origenAnalisis === 'FRONTEND'
+            || abono.montoDetectadoOcr != null
+            || abono.referenciaDetectadaOcr
+          ) && (
+            <div className={styles.paymentSummary}>
+              <div className={styles.paymentSummaryItem}>
+                <span>Monto detectado</span>
+                <strong>{abono.montoDetectadoOcr == null ? 'No identificado' : `$${Number(abono.montoDetectadoOcr).toLocaleString('es-CO')}`}</strong>
+              </div>
+              <div className={styles.paymentSummaryItem}>
+                <span>Referencia detectada</span>
+                <strong>{abono.referenciaDetectadaOcr || 'No identificada'}</strong>
+              </div>
+              <div className={styles.paymentSummaryItem}>
+                <span>Fecha detectada</span>
+                <strong>{abono.fechaDetectadaOcr || 'No identificada'}</strong>
+              </div>
+              <div className={styles.paymentSummaryItem}>
+                <span>Valor que se guardara</span>
+                <strong>{monto ? `$${Number(monto).toLocaleString('es-CO')}` : 'Pendiente'}</strong>
+              </div>
             </div>
           )}
 
           {loadingPedido && <p className={styles.loadingText}>Consultando pedido...</p>}
           {pedidosError && <p className={styles.detailsInfoBox}>{pedidosError}</p>}
-          {!isEditing && !loadingPedidos && pedidosDisponibles.length === 0 && !pedidosError && (
+          {!lockPedido && !isEditing && !loadingPedidos && pedidosDisponibles.length === 0 && !pedidosError && (
             <p className={styles.detailsInfoBox}>
               No tienes pedidos pendientes de pago disponibles para registrar abonos.
             </p>
           )}
           {pedidoError && <p className={styles.detailsInfoBox}>{pedidoError}</p>}
-          {pedido && (
-            <div className={styles.detailsInfoBox}>
-              Total: <strong>${resumenPago.total.toLocaleString('es-CO')}</strong>
-              {' '} | Confirmado: <strong>${resumenPago.confirmado.toLocaleString('es-CO')}</strong>
-              {' '} | Saldo: <strong>${resumenPago.saldo.toLocaleString('es-CO')}</strong>
-              {!resumenPago.primerAbonoConfirmado && (
-                <> | Minimo primer abono: <strong>${resumenPago.minimo.toLocaleString('es-CO')}</strong></>
-              )}
-            </div>
-          )}
-
           {incumplePrimerAbono && (
             <div className={styles.detailsInfoBox}>
               Este monto no cumple el minimo del primer abono confirmado.
@@ -306,7 +373,7 @@ export const AbonoModal = ({
           )}
 
           {isStaff && !isEditing && (
-            <label className={styles.detailsInfoBox}>
+            <label className="abonos-confirm-toggle">
               <span className={styles.inputLabel}>Confirmar al registrar</span>
               <input
                 type="checkbox"
@@ -317,11 +384,11 @@ export const AbonoModal = ({
           )}
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.btnSecondary}>
+            <button type="button" onClick={onClose} className={styles.btnSecondary} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className={styles.btnPrimary}>
-              {isEditing ? 'Guardar cambios' : 'Registrar'}
+            <button type="submit" className={styles.btnPrimary} disabled={isSubmitting || loadingPedido || loadingPedidos}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Registrar'}
             </button>
           </div>
         </form>

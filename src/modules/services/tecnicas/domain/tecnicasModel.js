@@ -3,6 +3,7 @@ export const createTecnicas = ({
     nombre,
     descripcion,
     estado,
+    requiereMedidas,
     fechaActualizacion,
     fechaCreacion,
     detalles
@@ -12,6 +13,7 @@ export const createTecnicas = ({
         nombre,
         descripcion,
         estado,
+        requiereMedidas: requiereMedidas ?? true,
         fechaActualizacion,
         fechaCreacion,
         detalles

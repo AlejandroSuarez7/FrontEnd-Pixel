@@ -5,12 +5,16 @@ export const ventaDTO = {
     if (!apiData) return null;
     return createVenta({
       idPedido: apiData.idPedido,
+      idVenta: apiData.idVenta,
       idCliente: apiData.idCliente,
       nombreCliente: apiData.nombreCliente,
       correoCliente: apiData.correoCliente,
       telefonoCliente: apiData.telefonoCliente,
       total: apiData.total,
       totalPagado: apiData.totalPagado,
+      saldoPendiente: apiData.saldoPendiente,
+      estado: apiData.estado,
+      fechaPrimerPago: apiData.fechaPrimerPago,
       fechaCreacion: apiData.fechaCreacion,
       fechaFinalizado: apiData.fechaFinalizado,
       fechaEntregado: apiData.fechaEntregado,

@@ -1,135 +1,683 @@
 // cotizaciones/presentation/QuoteDetailsModal.jsx
-import React from 'react';
+import { useMemo, useState } from 'react';
+import {
+  formatMoneyCOP,
+  formatPercentage,
+  getQuoteDiscountTotal,
+  getQuoteSubtotalBruto,
+  getQuoteSubtotalWithDiscount,
+  getQuoteTotal,
+} from '../../../../core/utils/formatters';
+import { getProductCategoryName } from '../../../../core/utils/productCategory';
+import {
+  getClientVisibleQuoteTotal,
+  getCurrentQuoteVersion,
+  getProposalStatusLabel,
+  getQuoteDecisionLabel,
+  getQuoteStatusLabel,
+  getResponseMediumLabel,
+  isQuoteProposalExpired,
+} from './quoteWorkflow.utils';
+import { formatCalendarDate } from '../../../../core/utils/fechaFormato';
 import styles from './quotes.module.css';
 
-export const QuoteDetailsModal = ({ isOpen, onClose, quote }) => {
+const formatMoney = (value) => {
+  const numberValue = Number(value || 0);
+  return numberValue > 0 ? formatMoneyCOP(numberValue) : 'Por cotizar';
+};
+
+const getQuoteTypeLabel = (type) => {
+  const normalized = String(type || '').toUpperCase();
+  if (normalized.includes('PUBLIC')) return 'Publica';
+  if (normalized.includes('PRESENC')) return 'Presencial';
+  return type || 'Cotizacion';
+};
+
+const PRODUCT_PAGE_SIZE = 10;
+
+const toFiniteAmount = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : null;
+};
+
+const sumAmounts = (items, getValue) => items.reduce((totalValue, item) => {
+  const amount = toFiniteAmount(getValue(item));
+  return totalValue + (amount ?? 0);
+}, 0);
+
+const getDetailName = (detail, fallback = 'Producto no especificado') => (
+  detail?.producto?.nombre
+  || detail?.nombrePersonalizado
+  || detail?.descripcionPersonalizada
+  || detail?.descripcion
+  || fallback
+);
+
+const getDetailTechniques = (detail) => {
+  const names = Array.isArray(detail?.estampados)
+    ? detail.estampados.map((stamp) => stamp.tecnica?.nombre).filter(Boolean)
+    : [];
+  if (names.length > 0) return [...new Set(names)].join(', ');
+  return detail?.tecnica?.nombre || 'Tecnica no registrada';
+};
+
+const getSupplyLabel = (value) => (
+  String(value || '').toUpperCase() === 'CLIENTE' ? 'Lo suministra el cliente' : 'Lo suministra PIXEL'
+);
+
+const getDesignOriginLabel = (value) => {
+  const labels = {
+    CLIENTE: 'El cliente aporta el diseno',
+    PIXEL: 'PIXEL crea el diseno',
+    PENDIENTE_DEFINIR: 'Pendiente por definir',
+    NO_REQUIERE: 'No requiere diseno',
+  };
+  return labels[String(value || '').toUpperCase()] || 'Pendiente por definir';
+};
+
+const getProductDiscountRangeLabel = (detail) => {
+  const range = detail?.rangoProductoAplicado;
+  if (!range) return detail?.tipoProducto === 'OTRO' ? 'No aplica' : 'No especificado';
+  if (typeof range === 'string') return range.replaceAll('_', ' ').toLowerCase();
+
+  const minimum = range.cantidadMinima ?? range.cantidadMin;
+  const percentage = range.porcentaje ?? range.descuentoPorcentaje;
+  if (minimum == null && percentage == null) return 'No especificado';
+  return [
+    minimum != null ? `Desde ${Number(minimum).toLocaleString('es-CO')} unidades` : null,
+    percentage != null ? formatPercentage(percentage) : null,
+  ].filter(Boolean).join(' · ');
+};
+
+const getReviewMessages = (detail) => {
+  if (!detail) return [];
+  const rawReasons = [
+    detail.estadoMedidas,
+    ...(Array.isArray(detail.motivosRevision) ? detail.motivosRevision : []),
+    ...(Array.isArray(detail.estampados)
+      ? detail.estampados.flatMap((stamp) => [
+          stamp.estadoMedidas,
+          ...(Array.isArray(stamp.motivosRevision) ? stamp.motivosRevision : []),
+        ])
+      : []),
+  ].filter(Boolean);
+
+  const messages = rawReasons.map((reason) => {
+    const normalized = String(reason).toUpperCase();
+    if (normalized.includes('TECNICA') || normalized.includes('SERVICIO')) {
+      return 'Servicio pendiente de seleccionar.';
+    }
+    if (normalized.includes('TARIFA')) {
+      return 'No existe una tarifa configurada para estas medidas.';
+    }
+    if (normalized.includes('MEDIDA')) {
+      return 'Medidas pendientes de definir con el cliente.';
+    }
+    return 'El precio sugerido requiere revisión manual.';
+  });
+
+  if (detail.tipoProducto === 'OTRO') {
+    messages.push('El producto personalizado requiere revisión manual.');
+  }
+  if ((detail.requiereRevisionPrecio || detail.calculoCompleto === false) && messages.length === 0) {
+    messages.push('El precio sugerido requiere revisión manual.');
+  }
+  return [...new Set(messages)];
+};
+
+export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) => {
+  const [selectedProductIndex, setSelectedProductIndex] = useState(null);
+  const [productSearch, setProductSearch] = useState('');
+  const [productPage, setProductPage] = useState(1);
+
+  const details = useMemo(() => (
+    Array.isArray(quote?.detalles) ? quote.detalles : []
+  ), [quote]);
+
+  const searchableDetails = useMemo(() => {
+    const term = productSearch.trim().toLowerCase();
+    if (!term) return details;
+
+    return details.filter((detail, index) => {
+      const product = getDetailName(detail, `Producto ${index + 1}`);
+      const tecnica = getDetailTechniques(detail);
+      const observaciones = detail.observaciones || '';
+      return `${product} ${tecnica} ${observaciones}`.toLowerCase().includes(term);
+    });
+  }, [details, productSearch]);
+
+  const totalProductPages = Math.max(1, Math.ceil(searchableDetails.length / PRODUCT_PAGE_SIZE));
+  const safeProductPage = Math.min(productPage, totalProductPages);
+  const paginatedDetails = searchableDetails.slice(
+    (safeProductPage - 1) * PRODUCT_PAGE_SIZE,
+    safeProductPage * PRODUCT_PAGE_SIZE,
+  );
+
   if (!isOpen || !quote) return null;
 
+  const firstDetail = details[0] || null;
+  const statusLabel = getQuoteStatusLabel(quote.estado);
+  const clienteContacto = [quote.cliente?.correo, quote.cliente?.telefono].filter(Boolean);
+  const productName = quote.productosResumen || getDetailName(firstDetail);
+  const quantityItems = quote.cantidadItems ?? details.length;
+  const totalQuantity = details.reduce((sum, detail) => sum + Number(detail.cantidad || 0), 0);
+  const subtotalBruto = getQuoteSubtotalBruto(quote) || details.reduce((sum, detail) => sum + getQuoteSubtotalBruto(detail || {}), 0);
+  const discountTotal = getQuoteDiscountTotal(quote) || details.reduce((sum, detail) => sum + getQuoteDiscountTotal(detail || {}), 0);
+  const subtotalWithDiscount = getQuoteSubtotalWithDiscount(quote) || details.reduce((sum, detail) => sum + getQuoteSubtotalWithDiscount(detail || {}), 0);
+  const discountPercentage = quote.descuentoPorcentaje
+    ?? (subtotalBruto > 0 && discountTotal > 0 ? (discountTotal / subtotalBruto) * 100 : 0);
+  const additionalCosts = Number(quote.costosAdicionales || 0);
+  const designCost = Number(quote.costoDiseno || details.reduce((sum, detail) => sum + Number(detail.costoDiseno || 0), 0));
+  const currentProposal = getCurrentQuoteVersion(quote);
+  const proposalBreakdown = currentProposal?.desgloseVisible || null;
+  const proposalItems = Array.isArray(proposalBreakdown?.items)
+    ? proposalBreakdown.items
+    : Array.isArray(currentProposal?.items) ? currentProposal.items : [];
+  const proposalDesigns = (
+    Array.isArray(proposalBreakdown?.disenos)
+      ? proposalBreakdown.disenos
+      : Array.isArray(currentProposal?.disenos) ? currentProposal.disenos : []
+  ).filter((design) => design.visibleCliente !== false);
+  const proposalConcepts = (
+    Array.isArray(proposalBreakdown?.conceptosAdicionales)
+      ? proposalBreakdown.conceptosAdicionales
+      : Array.isArray(currentProposal?.conceptosAdicionales)
+        ? currentProposal.conceptosAdicionales
+        : []
+  ).filter((concept) => concept.visibleCliente !== false);
+  const proposalItemsSubtotal = toFiniteAmount(proposalBreakdown?.subtotalItems)
+    ?? sumAmounts(proposalItems, (item) => item.subtotalOficial ?? item.subtotal);
+  const proposalDesignsTotal = toFiniteAmount(proposalBreakdown?.totalDisenos)
+    ?? sumAmounts(proposalDesigns, (design) => design.costoDiseno ?? design.valor);
+  const proposalConceptsTotal = toFiniteAmount(proposalBreakdown?.totalConceptosAdicionales)
+    ?? sumAmounts(proposalConcepts, (concept) => concept.valor);
+  const proposalLegacyAdditional = toFiniteAmount(currentProposal?.costosAdicionales) ?? 0;
+  const proposalAdjustment = toFiniteAmount(
+    currentProposal?.ajusteManual ?? proposalBreakdown?.ajusteManual,
+  );
+  const proposalExpired = isQuoteProposalExpired(currentProposal);
+  const currentProposalTotal = toFiniteAmount(currentProposal?.precioFinal);
+  const total = isStaff
+    ? (currentProposalTotal ?? getQuoteTotal(quote))
+    : getClientVisibleQuoteTotal(quote);
+  const clientObservations = quote.observaciones || '';
+  const internalObservations = quote.observacionesInternas || quote.notasInternas || quote.observacionesAdmin || '';
   const getStatusClass = (estado) => {
     switch (estado) {
-      case 'APROBADA':  return styles.statusAprobada;
-      case 'COTIZADA':  return styles.statusCotizada;
-      case 'ANULADA':   return styles.statusAnulada;
+      case 'APROBADA': return styles.statusAprobada;
+      case 'ACEPTADA':
+      case 'CONVERTIDA_EN_PEDIDO': return styles.statusAprobada;
+      case 'COTIZADA': return styles.statusCotizada;
+      case 'PENDIENTE_APROBACION_CLIENTE': return styles.statusCotizada;
+      case 'ANULADA': return styles.statusAnulada;
       case 'RECHAZADA': return styles.statusRechazada;
+      case 'RECHAZADA_CLIENTE': return styles.statusRechazada;
+      case 'VENCIDA': return styles.statusNeutral;
+      case 'POR APROBAR': return styles.statusCotizada;
       case 'PENDIENTE':
-      default:          return styles.statusPendiente;
+      default: return styles.statusPendiente;
     }
+  };
+
+  const renderProductDetail = (detail, index) => {
+    const detailName = getDetailName(detail);
+    const detailTechniques = getDetailTechniques(detail);
+    const stamps = Array.isArray(detail?.estampados) ? detail.estampados : [];
+    const quantity = Number(detail?.cantidad || 0);
+    const basePrice = Number(detail?.precioBase || detail?.producto?.precioBase || 0);
+    const unitPrice = Number(detail?.precioUnitario || 0);
+    const discount = detail?.descuentoPorcentaje ?? null;
+    const detailDiscountTotal = getQuoteDiscountTotal(detail || {});
+    const detailSubtotalBruto = getQuoteSubtotalBruto(detail || {});
+    const detailSubtotalWithDiscount = getQuoteSubtotalWithDiscount(detail || {});
+    const reviewMessages = getReviewMessages(detail);
+    const requiresDesign = detail?.requiereDiseno !== false
+      && (stamps.length === 0 || !stamps.every((stamp) => stamp.origenDiseno === 'NO_REQUIERE'));
+    const designOrigin = requiresDesign
+      ? (detail?.origenDiseno === 'CLIENTE' ? 'Cliente' : 'PIXEL')
+      : 'No aplica';
+    const designStatus = !requiresDesign
+      ? 'No requiere diseno'
+      : detail?.origenDiseno === 'CLIENTE'
+        ? 'Diseno aportado por el cliente'
+        : 'PIXEL crea el diseno';
+
+    return (
+      <div className={styles.quoteSelectedProductPanel}>
+        <div className={styles.quoteSelectedProductHeader}>
+          <span>Detalle del producto</span>
+          <strong>Producto {index + 1}</strong>
+        </div>
+        <div className={styles.quoteSelectedProductTitle}>
+          <strong>{detailName}</strong>
+          <small>Tecnicas: {detailTechniques}</small>
+          <small>Categoria: {getProductCategoryName(detail)}</small>
+          <small>{getSupplyLabel(detail.suministradoPor)}</small>
+        </div>
+        <div className={styles.quoteProductExpandedDetail}>
+          <div><span>Tipo de producto</span><strong>{detail.tipoProducto === 'OTRO' ? 'Producto personalizado' : 'Producto del catalogo'}</strong></div>
+          <div><span>Cantidad</span><strong>{quantity.toLocaleString('es-CO')}</strong></div>
+          {isStaff && (
+            <>
+              <div><span>Precio base unitario</span><strong>{basePrice > 0 ? formatMoneyCOP(basePrice) : 'Por cotizar'}</strong></div>
+              <div><span>Rango del producto aplicado</span><strong>{getProductDiscountRangeLabel(detail)}</strong></div>
+              <div><span>Descuento por cantidad</span><strong>{formatPercentage(discount, 'No especificado')}</strong></div>
+              <div><span>Monto descontado</span><strong>{detailDiscountTotal > 0 ? `-${formatMoneyCOP(detailDiscountTotal)}` : 'Sin descuento'}</strong></div>
+              <div><span>Tarifa unitaria aplicada</span><strong>{unitPrice > 0 ? formatMoneyCOP(unitPrice) : 'Por cotizar'}</strong></div>
+              <div><span>Subtotal bruto de servicios</span><strong>{formatMoney(detailSubtotalBruto)}</strong></div>
+              <div><span>Subtotal neto de servicios</span><strong>{formatMoney(detailSubtotalWithDiscount)}</strong></div>
+            </>
+          )}
+          <div><span>Configuracion de diseno</span><strong>{designStatus}</strong></div>
+          <div><span>Origen del diseno</span><strong>{designOrigin}</strong></div>
+          {isStaff && (
+            <div><span>Costo de diseno</span><strong>{requiresDesign && Number(detail.costoDiseno || 0) > 0 ? formatMoneyCOP(detail.costoDiseno) : 'No configurado'}</strong></div>
+          )}
+          {detail?.esDisenoGeneral && <div><span>Alcance</span><strong>Diseno general del pedido</strong></div>}
+          {detail?.archivoDisenoInicialUrl && (
+            <div><span>Archivo aportado</span><a href={detail.archivoDisenoInicialUrl} target="_blank" rel="noreferrer">Ver diseno</a></div>
+          )}
+          <div className={styles.quoteProductObservation}><span>Observaciones del item</span><strong>{detail.observaciones || 'Sin observaciones'}</strong></div>
+        </div>
+        {isStaff && reviewMessages.length > 0 && (
+          <div className={styles.quoteReviewMessages}>
+            <strong>Revision pendiente</strong>
+            <ul>{reviewMessages.map((message) => <li key={message}>{message}</li>)}</ul>
+          </div>
+        )}
+        <div className={styles.quoteStampsList}>
+          <span className={styles.quoteStampsTitle}>Estampados solicitados</span>
+          {stamps.length === 0 ? (
+            <p>Esta cotizacion historica no tiene estampados separados.</p>
+          ) : stamps.map((stamp, stampIndex) => (
+            <article key={stamp.idDetalleEstampadoCotizacion || `${stamp.idTecnica}-${stampIndex}`}>
+              <strong>Estampado {stampIndex + 1}: {stamp.tecnica?.nombre || 'Tecnica no especificada'}</strong>
+              <span>Ubicacion: {String(stamp.ubicacion || 'Por definir').replaceAll('_', ' ').toLowerCase()}</span>
+              <span>Medidas: {stamp.anchoCm && stamp.altoCm ? `${stamp.anchoCm} x ${stamp.altoCm} cm` : 'Por definir'}</span>
+              <span>Diseno: {getDesignOriginLabel(stamp.origenDiseno)}</span>
+              {stamp.grupoDisenoCompartido && <span>Diseno compartido con otro estampado</span>}
+              {(stamp.descripcion || stamp.observaciones) && <small>{stamp.descripcion || stamp.observaciones}</small>}
+            </article>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className={styles.overlay}>
-      <div className={`${styles.modalContainer} ${styles.modalLg}`}>
-
-        <div className={styles.modalHeader}>
+      <div className={`${styles.modalContainer} ${styles.quoteDetailsModal}`}>
+        <div className={styles.quoteDetailsHeader}>
           <div>
-            <h3 className={styles.modalTitle}>Cotización #{quote.idCotizacion}</h3>
-            <p className={styles.modalSubtitle}>
-              Cliente: {quote.cliente?.nombre || 'N/A'} · Tipo: {quote.tipoCotizacion}
-            </p>
+            <span className={styles.breadcrumb}>Cotizacion</span>
+            <h3 className={styles.modalTitle}>Cotizacion #{quote.idCotizacion}</h3>
+            <div className={styles.quoteHeaderMeta}>
+              <span className={styles.typeBadge}>{getQuoteTypeLabel(quote.tipoCotizacion)}</span>
+              <span className={`${styles.statusBadge} ${getStatusClass(quote.estado)}`}>
+                {statusLabel}
+              </span>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <span className={`${styles.statusBadge} ${getStatusClass(quote.estado)}`}>
-              {quote.estado}
-            </span>
-            <button onClick={onClose} className={styles.modalCloseBtn}>✕</button>
-          </div>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
         </div>
 
-        <div className={styles.form}>
+        <div className={styles.quoteDetailsBody}>
+          <section className={styles.quoteDetailsSummary}>
+            <div className={styles.quoteDetailsSummaryItem}>
+              <span>Cliente</span>
+              <strong>{quote.cliente?.nombre || 'Cliente no registrado'}</strong>
+              <small title={clienteContacto.join(' | ') || undefined}>
+                {clienteContacto.join(' | ') || 'Sin contacto registrado'}
+              </small>
+            </div>
+            <div className={styles.quoteDetailsSummaryItem}>
+              <span>Productos cotizados</span>
+              <strong>{productName}</strong>
+              <small>{quantityItems === 1 ? '1 producto cotizado' : `${quantityItems} productos cotizados`}</small>
+            </div>
+            <div className={styles.quoteDetailsSummaryItem}>
+              <span>Cantidad total</span>
+              <strong>{totalQuantity > 0 ? totalQuantity.toLocaleString('es-CO') : 'Sin cantidad'}</strong>
+              <small>{quantityItems} item(s)</small>
+            </div>
+            <div className={styles.quoteDetailsSummaryItem}>
+              <span>Total</span>
+              <strong>{total == null ? 'Precio pendiente de confirmacion' : formatMoney(total)}</strong>
+              <small>{statusLabel}</small>
+            </div>
+          </section>
 
-          {/* Observaciones */}
-          <div className={styles.detailsInfoBox}>
-            <strong>Observaciones generales:</strong>{' '}
-            {quote.observaciones || 'Ninguna registrada'}
-          </div>
+          {!isStaff && (
+            <section className={styles.clientQuoteNotice}>
+              <strong>
+                {currentProposal
+                  ? 'Propuesta oficial'
+                  : 'Precio pendiente de confirmacion'}
+              </strong>
+              <span>
+                {currentProposal
+                  ? 'Revisa el valor y la vigencia antes de responder.'
+                  : 'El equipo de PIXEL revisara productos, medidas y disenos antes de enviarte una propuesta final.'}
+              </span>
+            </section>
+          )}
 
-          {/* Creado por */}
-          {quote.creadoPor?.nombre && (
+          {isStaff && (
+            <section className={styles.internalEstimateBanner}>
+              <div>
+                <span>Estimacion interna - no enviada al cliente</span>
+                <strong>
+                  {quote.precioSugeridoInterno == null
+                    ? 'No configurada'
+                    : formatMoneyCOP(quote.precioSugeridoInterno)}
+                </strong>
+              </div>
+              {quote.requiereRevisionPrecio && (
+                <p>Hay productos o estampados que requieren revision manual de precio.</p>
+              )}
+              {Array.isArray(quote.advertenciasInternas) && quote.advertenciasInternas.length > 0 && (
+                <ul>
+                  {quote.advertenciasInternas.map((warning, index) => (
+                    <li key={`${warning}-${index}`}>{warning}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
+          <section className={styles.quoteDetailsSection}>
+            <div className={styles.quoteDetailsSectionHeader}>
+              <span>Productos cotizados</span>
+              <strong>{productName}</strong>
+            </div>
+
+            <div className={styles.quoteProductsToolbar}>
+              <input
+                type="search"
+                value={productSearch}
+                onChange={(event) => {
+                  setProductSearch(event.target.value);
+                  setProductPage(1);
+                  setSelectedProductIndex(null);
+                }}
+                className={styles.quoteProductSearch}
+                placeholder="Buscar producto, tecnica u observacion..."
+              />
+              <span>
+                {searchableDetails.length} de {details.length} producto(s)
+              </span>
+            </div>
+
+            <div className={styles.quoteProductsCompactList}>
+              {details.length === 0 ? (
+                <div className={styles.quoteProductCompactItem}>
+                  <div className={styles.quoteProductCompactSummary}>
+                    <span>Producto</span>
+                    <strong>Producto no especificado</strong>
+                  </div>
+                </div>
+              ) : paginatedDetails.length === 0 ? (
+                <div className={styles.quoteProductEmptyState}>No hay productos que coincidan con la busqueda.</div>
+              ) : paginatedDetails.map((detail, pageIndex) => {
+                const index = details.indexOf(detail);
+                const itemName = getDetailName(detail, `Producto ${index + 1}`);
+                const quantity = Number(detail.cantidad || 0);
+                const discount = detail.descuentoPorcentaje ?? null;
+                const itemSubtotalWithDiscount = getQuoteSubtotalWithDiscount(detail || {});
+                const isSelected = selectedProductIndex === index;
+
+                return (
+                  <div
+                    className={`${styles.quoteProductCompactItem} ${isSelected ? styles.quoteProductCompactItemActive : ''}`}
+                    key={detail.idDetalleCotizacion || `${index}-${pageIndex}`}
+                  >
+                    <button
+                      type="button"
+                      className={styles.quoteProductCompactSummary}
+                      onClick={() => setSelectedProductIndex((current) => current === index ? null : index)}
+                      aria-expanded={isSelected}
+                    >
+                      <span>Producto {index + 1}</span>
+                      <strong>{itemName}</strong>
+                      <small>
+                        {getDetailTechniques(detail)} - Cant. {quantity.toLocaleString('es-CO')}
+                        {isStaff
+                          ? ` - ${formatPercentage(discount, 'Sin descuento')} - ${formatMoney(itemSubtotalWithDiscount)}`
+                          : ` - ${getSupplyLabel(detail.suministradoPor)}`}
+                      </small>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.quoteProductExpandBtn}
+                      onClick={() => setSelectedProductIndex((current) => current === index ? null : index)}
+                      aria-expanded={isSelected}
+                    >
+                      {isSelected ? 'Ocultar detalle' : 'Ver detalle'}
+                    </button>
+                    {isSelected && renderProductDetail(detail, index)}
+                  </div>
+                );
+              })}
+            </div>
+
+            {searchableDetails.length > PRODUCT_PAGE_SIZE && (
+              <div className={styles.quoteProductsPager}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProductPage(page => Math.max(1, page - 1));
+                  }}
+                  disabled={safeProductPage <= 1}
+                >
+                  Anterior
+                </button>
+                <span>Pagina {safeProductPage} de {totalProductPages}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProductPage(page => Math.min(totalProductPages, page + 1));
+                  }}
+                  disabled={safeProductPage >= totalProductPages}
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+
+          </section>
+
+          <section className={styles.observationsGrid}>
+            <div className={styles.readOnlyNote}>
+              <span>Observaciones del cliente</span>
+              <p>{clientObservations || 'Sin observaciones'}</p>
+            </div>
+            {isStaff && (
+              <div className={styles.readOnlyNote}>
+                <span>Observaciones internas</span>
+                <p>{internalObservations || 'Sin observaciones'}</p>
+              </div>
+            )}
+          </section>
+
+          {isStaff && quote.creadoPor?.nombre && (
             <p className={styles.detailsCreatedBy}>
               Gestionada por: <strong>{quote.creadoPor.nombre}</strong>
-              {quote.creadoPor.rol?.nombre ? ` · ${quote.creadoPor.rol.nombre}` : ''}
+              {quote.creadoPor.rol?.nombre ? ` - ${quote.creadoPor.rol.nombre}` : ''}
             </p>
           )}
 
-          {/* Tabla de ítems */}
-          <p className={styles.detailsSectionTitle}>Prendas / Servicios incluidos</p>
+          {isStaff ? (
+            <section className={styles.quoteTotalsPanel}>
+              <div className={styles.quoteTotalsRows}>
+              <div>
+                <span>Subtotal bruto de servicios</span>
+                <strong>{formatMoney(subtotalBruto)}</strong>
+              </div>
+              <div>
+                <span>Descuento por cantidad del producto</span>
+                <strong>{formatPercentage(discountPercentage, '0%')}</strong>
+              </div>
+              <div>
+                <span>Monto descontado</span>
+                <strong>{discountTotal > 0 ? `-${formatMoneyCOP(discountTotal)}` : 'Sin descuento'}</strong>
+              </div>
+              <div>
+                <span>Subtotal neto de servicios</span>
+                <strong>{formatMoney(subtotalWithDiscount)}</strong>
+              </div>
+              <div>
+                <span>Costos adicionales</span>
+                <strong>{additionalCosts > 0 ? formatMoneyCOP(additionalCosts) : 'No aplica'}</strong>
+              </div>
+              <div>
+                <span>Costo de diseno</span>
+                <strong>{designCost > 0 ? formatMoneyCOP(designCost) : 'No aplica'}</strong>
+              </div>
+              </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table className={styles.table}>
-              <thead>
-                <tr className={styles.tableHeadRow}>
-                  <th className={styles.tableHeader}>Descripción</th>
-                  <th className={styles.tableHeader}>Cantidad</th>
-                  <th className={styles.tableHeader}>Precio unitario</th>
-                  <th className={styles.tableHeader}>Costo diseño</th>
-                  <th className={styles.tableHeader}>Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {!quote.detalles || quote.detalles.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className={styles.loadingText}>
-                      Esta cotización no tiene ítems registrados.
-                    </td>
-                  </tr>
-                ) : (
-                  quote.detalles.map((det) => {
-                    const precioUnitario = Number(det.precioUnitario || 0);
-                    const costoDiseno    = Number(det.costoDiseno || 0);
-                    const subtotal       = Number(det.subtotal || 0);
+              <div className={styles.quoteGrandTotalCard}>
+                <span>Total final</span>
+                <strong>{formatMoney(total)}</strong>
+              </div>
+            </section>
+          ) : currentProposal ? (
+            <section className={styles.clientProposalPanel}>
+              <div className={styles.clientProposalHeading}>
+                <div>
+                  <span>Propuesta oficial</span>
+                  <strong>{formatMoneyCOP(currentProposal.precioFinal)}</strong>
+                  <small>{proposalExpired ? 'Propuesta vencida' : 'Propuesta vigente'}</small>
+                </div>
+                <div className={styles.clientProposalStatus}>
+                  <span>{getProposalStatusLabel(currentProposal.estado)}</span>
+                  <small>
+                    {currentProposal.validaHasta
+                      ? `${proposalExpired ? 'Vencio' : 'Valida hasta'}: ${formatCalendarDate(currentProposal.validaHasta)}`
+                      : 'Sin fecha limite'}
+                  </small>
+                </div>
+              </div>
 
-                    return (
-                      <tr key={det.idDetalleCotizacion} className={styles.tableBodyRow}>
-                        <td className={styles.tableCell}>
-                          <span style={{ fontWeight: '500' }}>{det.descripcion}</span>
-                          {det.observaciones && (
-                            <small style={{ display: 'block', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                              {det.observaciones}
-                            </small>
-                          )}
-                        </td>
-                        <td className={styles.tableCell}>{det.cantidad || 0}</td>
-                        <td className={styles.tableCell}>
-                          {precioUnitario > 0 ? `$${precioUnitario.toLocaleString('es-CO')}` : '—'}
-                        </td>
-                        <td className={styles.tableCell}>
-                          {costoDiseno > 0 ? `$${costoDiseno.toLocaleString('es-CO')}` : '—'}
-                        </td>
-                        <td className={styles.tableCell}>
-                          <strong>{subtotal > 0 ? `$${subtotal.toLocaleString('es-CO')}` : '—'}</strong>
-                        </td>
-                      </tr>
-                    );
-                  })
+              {proposalItems.length > 0 && (
+                <div className={styles.clientProposalItems}>
+                  <span>Desglose por producto</span>
+                  {proposalItems.map((item, index) => (
+                    <div key={item.idDetalleCotizacion || `${item.nombre}-${index}`}>
+                      <p>
+                        <strong>{item.nombre || `Producto ${index + 1}`}</strong>
+                        <small>Cant. {Number(item.cantidad || 0).toLocaleString('es-CO')}</small>
+                      </p>
+                      <strong>{formatMoneyCOP(item.subtotalOficial ?? item.subtotal ?? 0)}</strong>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {proposalDesigns.length > 0 && (
+                <div className={styles.clientProposalVisibleList}>
+                  <span>Disenos incluidos</span>
+                  {proposalDesigns.map((design, index) => (
+                    <div key={design.idDiseno || design.idDetalleCotizacion || design.idDetalleEstampadoCotizacion || design.grupoDisenoCompartido || index}>
+                      <strong>{design.descripcionVisible || `Diseno ${index + 1}`}</strong>
+                      <span>{formatMoneyCOP(design.costoDiseno ?? design.valor ?? 0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {proposalConcepts.length > 0 && (
+                <div className={styles.clientProposalVisibleList}>
+                  <span>Conceptos adicionales</span>
+                  {proposalConcepts.map((concept, index) => (
+                    <div key={`${concept.concepto || 'concepto'}-${index}`}>
+                      <strong>{concept.concepto || 'Concepto adicional'}</strong>
+                      <span>{formatMoneyCOP(concept.valor ?? 0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className={styles.clientProposalAmounts}>
+                <div>
+                  <span>Subtotal de productos</span>
+                  <strong>{formatMoneyCOP(proposalItemsSubtotal || currentProposal.precioFinal)}</strong>
+                </div>
+                <div>
+                  <span>Descuento comercial</span>
+                  <strong>
+                    {Number(currentProposal.descuentoManual || 0) > 0
+                      ? `-${formatMoneyCOP(currentProposal.descuentoManual)}`
+                      : 'No aplica'}
+                  </strong>
+                </div>
+                <div>
+                  <span>Conceptos adicionales</span>
+                  <strong>
+                    {(proposalConceptsTotal || proposalLegacyAdditional) > 0
+                      ? formatMoneyCOP(proposalConceptsTotal || proposalLegacyAdditional)
+                      : 'No aplica'}
+                  </strong>
+                </div>
+                {proposalDesigns.length > 0 && (
+                  <div>
+                    <span>Disenos visibles</span>
+                    <strong>{proposalDesignsTotal > 0 ? formatMoneyCOP(proposalDesignsTotal) : 'No aplica'}</strong>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
+                {proposalAdjustment != null && proposalAdjustment !== 0 && (
+                  <div>
+                    <span>Ajuste comercial</span>
+                    <strong>{proposalAdjustment > 0 ? '+' : '-'}{formatMoneyCOP(Math.abs(proposalAdjustment))}</strong>
+                  </div>
+                )}
+                <div className={styles.clientProposalTotal}>
+                  <span>Total final</span>
+                  <strong>{formatMoneyCOP(currentProposal.precioFinal)}</strong>
+                </div>
+              </div>
 
-          {/* Totales */}
-          <div className={styles.totalBlock}>
-            <div className={styles.totalBlockRow}>
-              <span>Subtotal general</span>
-              <span>${Number(quote.subtotal || 0).toLocaleString('es-CO')}</span>
-            </div>
-            <div className={styles.totalBlockRow}>
-              <span>Costos adicionales</span>
-              <span>${Number(quote.costosAdicionales || 0).toLocaleString('es-CO')}</span>
-            </div>
-            <div className={styles.grandTotal}>
-              <span>Total</span>
-              <span>${Number(quote.total || 0).toLocaleString('es-CO')}</span>
-            </div>
-          </div>
+              {(currentProposal.mensajeCliente || currentProposal.observacionesCliente) && (
+                <div className={styles.clientProposalMessages}>
+                  {currentProposal.mensajeCliente && (
+                    <div>
+                      <span>Mensaje de PIXEL</span>
+                      <p>{currentProposal.mensajeCliente}</p>
+                    </div>
+                  )}
+                  {currentProposal.observacionesCliente && (
+                    <div>
+                      <span>Observaciones de la propuesta</span>
+                      <p>{currentProposal.observacionesCliente}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
+              {currentProposal.respuesta && (
+                <div className={styles.clientProposalResponse}>
+                  <strong>{getQuoteDecisionLabel(currentProposal.respuesta.decision)}</strong>
+                  <span>
+                    {getResponseMediumLabel(currentProposal.respuesta.medio)}
+                    {currentProposal.respuesta.fechaRespuesta
+                      ? ` - ${formatCalendarDate(currentProposal.respuesta.fechaRespuesta)}`
+                      : ''}
+                  </span>
+                  {currentProposal.respuesta.observaciones && (
+                    <p>{currentProposal.respuesta.observaciones}</p>
+                  )}
+                </div>
+              )}
+            </section>
+          ) : null}
         </div>
 
         <div className={styles.modalFooter}>
-          <button onClick={onClose} className={styles.btnPrimary}>
+          <button type="button" onClick={onClose} className={styles.btnPrimary}>
             Cerrar ventana
           </button>
         </div>
-
       </div>
     </div>
   );

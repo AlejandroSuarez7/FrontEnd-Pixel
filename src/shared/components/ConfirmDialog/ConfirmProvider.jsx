@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import './ConfirmDialog.css';
 
 const ConfirmContext = createContext(null);
@@ -19,6 +19,8 @@ const defaultOptions = {
 export const ConfirmProvider = ({ children }) => {
   const [dialog, setDialog] = useState(null);
   const [inputValue, setInputValue] = useState('');
+  const [isResolving, setIsResolving] = useState(false);
+  const resolvingRef = useRef(false);
 
   const confirm = useCallback((options = {}) => (
     new Promise((resolve) => {
@@ -28,11 +30,16 @@ export const ConfirmProvider = ({ children }) => {
         resolve,
       };
       setInputValue(nextDialog.defaultValue || '');
+      resolvingRef.current = false;
+      setIsResolving(false);
       setDialog(nextDialog);
     })
   ), []);
 
   const close = (result) => {
+    if (resolvingRef.current) return;
+    resolvingRef.current = true;
+    setIsResolving(true);
     dialog?.resolve(result);
     setDialog(null);
     setInputValue('');
@@ -85,6 +92,7 @@ export const ConfirmProvider = ({ children }) => {
                 type="button"
                 className="confirm-dialog-button confirm-dialog-cancel"
                 onClick={() => close(dialog.input ? { confirmed: false, value: '' } : false)}
+                disabled={isResolving}
               >
                 {dialog.cancelText}
               </button>
@@ -92,9 +100,9 @@ export const ConfirmProvider = ({ children }) => {
                 type="button"
                 className={`confirm-dialog-button confirm-dialog-confirm ${dialog.variant}`}
                 onClick={handleConfirm}
-                disabled={dialog.input && dialog.requiredInput && !inputValue.trim()}
+                disabled={isResolving || (dialog.input && dialog.requiredInput && !inputValue.trim())}
               >
-                {dialog.confirmText}
+                {isResolving ? 'Procesando...' : dialog.confirmText}
               </button>
             </div>
           </section>

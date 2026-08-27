@@ -5,6 +5,7 @@ import {
   hasPermission as checkPermission,
   normalizePermissionCodes,
 } from '../core/utils/permissions';
+import { SESSION_EXPIRED_EVENT } from '../core/services/apiService';
 import { authService } from '../modules/auth/services/authService';
 
 export const AuthContext = createContext();
@@ -59,10 +60,21 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleExpiredSession = () => {
+      setUser(null);
+      setPermissions([]);
+    };
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleExpiredSession);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpiredSession);
+  }, []);
+
   const login = async (email, password) => {
     const loggedInUser = await authService.login(email, password);
     setUser(loggedInUser);
     setPermissions(normalizePermissionCodes(loggedInUser.codigos));
+    return loggedInUser;
   };
 
   const register = async (userData) => {

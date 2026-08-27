@@ -1,35 +1,31 @@
-import { useEffect, useState } from 'react';
 import { createPaginationMeta } from '../../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { tecnicasRepository } from '../infrastructure/tecnicas.repository';
 
 export const useTecnicas = (filters = {}) => {
-  const [tecnicas, setTecnicas] = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchTecnicas = async () => {
-    setLoading(true);
-    try {
-      const response = await tecnicasRepository.list(filters);
-      setTecnicas(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error('Error en el hook al cargar las tecnicas:', error);
-      setTecnicas([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  };
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchTecnicas,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => tecnicasRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   const handleCreate = async (tecnicaData) => {
-    await tecnicasRepository.create(tecnicaData);
+    const created = await tecnicasRepository.create(tecnicaData);
     await fetchTecnicas();
+    return created;
   };
 
   const handleUpdate = async (id, updatedData) => {
-    await tecnicasRepository.update(id, updatedData);
+    const updated = await tecnicasRepository.update(id, updatedData);
     await fetchTecnicas();
+    return updated;
   };
 
   const handleDelete = async (id) => {
@@ -42,14 +38,12 @@ export const useTecnicas = (filters = {}) => {
     await fetchTecnicas();
   };
 
-  useEffect(() => {
-    fetchTecnicas();
-  }, [filters.search, filters.page, filters.limit, filters.sortBy, filters.order]);
-
   return {
-    tecnicas,
-    paginationMeta,
+    tecnicas: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     handleCreate,
     handleUpdate,
     handleDelete,

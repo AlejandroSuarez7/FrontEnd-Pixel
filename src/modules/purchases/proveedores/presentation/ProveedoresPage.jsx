@@ -3,6 +3,8 @@ import { Pagination } from '../../../../core/components/Pagination';
 import { notifications } from '../../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../../core/utils/serverPagination';
 import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { SafeDeleteModal } from '../../../../shared/components/SafeDeleteModal/SafeDeleteModal';
+import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../../store/AuthContext';
 import { useProveedores } from '../application/useProveedores';
@@ -26,6 +28,8 @@ const styles = {
   kpiValueSuccess: 'proveedores-kpi-value-success',
   kpiValueDanger: 'proveedores-kpi-value-danger',
   filterSection: 'proveedores-filter-section',
+  filterField: 'proveedores-filter-field',
+  filterSearch: 'proveedores-filter-search',
   searchInput: 'proveedores-search-input',
   inputField: 'proveedores-input-field',
   tableContainer: 'proveedores-table-container',
@@ -54,10 +58,9 @@ const styles = {
 };
 
 export const ProveedoresPage = () => {
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const confirm = useConfirm();
-  const session = JSON.parse(localStorage.getItem('pixel_user') || '{}');
-  const userRole = session?.rol?.nombre || 'Cliente';
+  const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const isAdmin = userRole === 'Admin';
 
   const [filters, setFilters] = useState({ search: '', estado: '' });
@@ -65,10 +68,13 @@ export const ProveedoresPage = () => {
   const [selectedProveedor, setSelectedProveedor] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [deletionProveedor, setDeletionProveedor] = useState(null);
 
   const {
     proveedores,
     loading,
+    error,
+    refetch,
     handleCreate,
     handleUpdate,
     handleDeactivate,
@@ -126,24 +132,6 @@ export const ProveedoresPage = () => {
     }
   };
 
-  const onHardDeleteClick = async (proveedor) => {
-    const accepted = await confirm({
-      title: 'Eliminar proveedor',
-      message: `Eliminar fisicamente proveedor "${proveedor.nombre}"? Esta accion no se puede deshacer.`,
-      confirmText: 'Eliminar',
-      variant: 'danger',
-    });
-
-    if (!accepted) return;
-
-    try {
-      await handleHardDelete(proveedor.idProveedor);
-      notifications.success('Proveedor eliminado correctamente.');
-    } catch (error) {
-      notifications.error(error.message || 'No se pudo eliminar el proveedor.');
-    }
-  };
-
   return (
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
@@ -168,33 +156,44 @@ export const ProveedoresPage = () => {
       </div>
 
       <div className={styles.filterSection}>
-        <input
-          type="text"
-          placeholder="Buscar proveedor por nombre..."
-          value={filters.search}
-          onChange={event => {
-            setFilters(prev => ({ ...prev, search: event.target.value }));
-            setCurrentPage(1);
-          }}
-          className={styles.searchInput}
-        />
-        <select
-          value={filters.estado}
-          onChange={event => {
-            setFilters(prev => ({ ...prev, estado: event.target.value }));
-            setCurrentPage(1);
-          }}
-          className={styles.inputField}
-        >
-          <option value="">Todos los estados</option>
-          <option value="true">Activos</option>
-          <option value="false">Inactivos</option>
-        </select>
+        <label className={`${styles.filterField} ${styles.filterSearch}`}>
+          <span>Buscar proveedores</span>
+          <input
+            type="text"
+            placeholder="Nombre del proveedor..."
+            value={filters.search}
+            onChange={event => {
+              setFilters(prev => ({ ...prev, search: event.target.value }));
+              setCurrentPage(1);
+            }}
+            className={styles.searchInput}
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span>Estado</span>
+          <select
+            value={filters.estado}
+            onChange={event => {
+              setFilters(prev => ({ ...prev, estado: event.target.value }));
+              setCurrentPage(1);
+            }}
+            className={styles.inputField}
+          >
+            <option value="">Todos los estados</option>
+            <option value="true">Activos</option>
+            <option value="false">Inactivos</option>
+          </select>
+        </label>
       </div>
 
       <div className={styles.tableContainer}>
         {loading ? (
           <p className={styles.loadingText}>Cargando proveedores...</p>
+        ) : error && proveedores.length === 0 ? (
+          <div className={styles.loadingText}>
+            <p>{error.message || 'No se pudieron cargar los proveedores.'}</p>
+            <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
+          </div>
         ) : proveedores.length === 0 ? (
           <p className={styles.loadingText}>No se encontraron proveedores.</p>
         ) : (
@@ -229,7 +228,7 @@ export const ProveedoresPage = () => {
                           actions={[
                             hasPermission('proveedores.desactivar') && proveedor.estado && { label: 'Desactivar', onClick: () => onDeactivateClick(proveedor), variant: 'danger' },
                             hasPermission('proveedores.editar') && { label: 'Editar', onClick: () => handleOpenEdit(proveedor), variant: 'warning' },
-                            hasPermission('proveedores.eliminar') && isAdmin && { label: 'Eliminar', onClick: () => onHardDeleteClick(proveedor), variant: 'danger' },
+                            hasPermission('proveedores.eliminar') && isAdmin && { label: 'Eliminar', onClick: () => setDeletionProveedor(proveedor), variant: 'danger' },
                           ]}
                         />
                       </td>
@@ -262,6 +261,16 @@ export const ProveedoresPage = () => {
         isOpen={isViewOpen}
         onClose={() => { setIsViewOpen(false); setSelectedProveedor(null); }}
         proveedor={selectedProveedor}
+      />
+      <SafeDeleteModal
+        key={deletionProveedor?.idProveedor || 'provider-delete'}
+        isOpen={Boolean(deletionProveedor)}
+        entityLabel="proveedor"
+        entityName={deletionProveedor?.nombre || ''}
+        impactEndpoint={deletionProveedor ? SAFE_DELETE_IMPACT_ENDPOINTS.provider(deletionProveedor.idProveedor) : ''}
+        deleteAction={() => handleHardDelete(deletionProveedor.idProveedor)}
+        successMessage="Proveedor eliminado correctamente."
+        onClose={() => setDeletionProveedor(null)}
       />
     </div>
   );

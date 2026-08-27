@@ -1,9 +1,12 @@
 import {
   ArrowRight,
   BadgeDollarSign,
+  Check,
   Clock3,
   Factory,
+  FileSearch,
   FileText,
+  Link2,
   PencilRuler,
   ShieldCheck,
   ShoppingBag,
@@ -14,9 +17,24 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
 import { useAuth } from '../../../store/AuthContext';
 import { PATHS } from '../../../routes/paths';
+import { isClientUser } from '../../../core/utils/permissions';
 import { useDashboardData } from '../application/useDashboardData';
+import { ClientPaymentsPanel } from './ClientPaymentsPanel';
+import { notifications } from '../../../core/utils/notifications';
+import { getDesignCoverageInfo } from '../../../core/utils/designCoverage';
+import { pedidoRepository } from '../../sales/pedidos/infrastructure/pedido.repository';
+import { formatCalendarDate } from '../../../core/utils/fechaFormato';
+import { navigateToLandingQuote } from '../../../core/utils/landingNavigation';
+import { AdminTrendsPanel } from './AdminTrendsPanel';
 import './DashboardPage.css';
 
 const kpiIcons = {
@@ -27,10 +45,19 @@ const kpiIcons = {
 };
 
 const trackingIcons = {
-  'Diseno aprobado': PencilRuler,
-  Produccion: Factory,
-  'Control de calidad': ShieldCheck,
-  Entrega: Truck,
+  'Cotizacion aceptada': FileText,
+  'Comprobante en revision': FileSearch,
+  'Pendiente de primer abono': Clock3,
+  'Primer abono confirmado': BadgeDollarSign,
+  'Diseno en proceso': PencilRuler,
+  'Diseno pendiente de aprobacion': ShieldCheck,
+  'Diseno aprobado': ShieldCheck,
+  'Correcciones solicitadas': PencilRuler,
+  'En produccion': Factory,
+  'Pendiente de saldo final': Clock3,
+  'Pedido listo para reclamar / entregar': Truck,
+  'Producto entregado': ShieldCheck,
+  'Pedido anulado': Clock3,
 };
 
 const statusClassMap = {
@@ -43,20 +70,20 @@ const statusClassMap = {
   Cotizar: 'statusProduction',
   PENDIENTE: 'statusPending',
   EN_PROCESO: 'statusProduction',
+  PENDIENTE_SALDO_FINAL: 'statusPending',
   FINALIZADO: 'statusDone',
+  ENTREGADO: 'statusDelivered',
   ANULADO: 'statusCancelled',
   POR_APROBAR: 'statusProduction',
 };
-
-const getRoleName = (user) => user?.rol?.nombre || user?.nombreRol || user?.role || 'Cliente';
-
-const formatRole = (roleName) => roleName?.toLowerCase?.() || 'cliente';
 
 const readableStatus = (status) => {
   const labels = {
     PENDIENTE: 'Pendiente',
     EN_PROCESO: 'En produccion',
+    PENDIENTE_SALDO_FINAL: 'Pendiente saldo final',
     FINALIZADO: 'Terminado',
+    ENTREGADO: 'Entregado',
     ANULADO: 'Anulado',
     POR_APROBAR: 'Por aprobar',
   };
@@ -64,11 +91,27 @@ const readableStatus = (status) => {
   return labels[status] || status;
 };
 
-const KpiCard = ({ item }) => {
+const KpiCard = ({ item, onActivate }) => {
   const Icon = kpiIcons[item.iconKey] || Clock3;
+  const interactiveProps = onActivate
+    ? {
+        role: 'link',
+        tabIndex: 0,
+        onClick: onActivate,
+        onKeyDown: (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onActivate();
+          }
+        },
+      }
+    : {};
 
   return (
-    <article className={`dashboard-kpi-card dashboard-tone-${item.tone}`}>
+    <article
+      className={`dashboard-kpi-card dashboard-tone-${item.tone}${onActivate ? ' dashboard-kpi-card-link' : ''}`}
+      {...interactiveProps}
+    >
       <div>
         <p className="dashboard-kpi-label">{item.label}</p>
         <strong>{item.value}</strong>
@@ -81,7 +124,7 @@ const KpiCard = ({ item }) => {
   );
 };
 
-const RevenueKpiCard = ({ revenue }) => {
+const RevenueKpiCard = ({ revenue, onActivate }) => {
   const [period, setPeriod] = useState('monthly');
   const selected = revenue[period];
   const options = [
@@ -91,7 +134,18 @@ const RevenueKpiCard = ({ revenue }) => {
   ];
 
   return (
-    <article className="dashboard-kpi-card dashboard-revenue-card dashboard-tone-success">
+    <article
+      className={`dashboard-kpi-card dashboard-revenue-card dashboard-tone-success${onActivate ? ' dashboard-kpi-card-link' : ''}`}
+      role={onActivate ? 'link' : undefined}
+      tabIndex={onActivate ? 0 : undefined}
+      onClick={onActivate}
+      onKeyDown={(event) => {
+        if (onActivate && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onActivate();
+        }
+      }}
+    >
       <div className="dashboard-kpi-content">
         <p className="dashboard-kpi-label">Ingresos</p>
         <strong>{selected.value}</strong>
@@ -107,7 +161,10 @@ const RevenueKpiCard = ({ revenue }) => {
               type="button"
               key={option.key}
               className={period === option.key ? 'active' : ''}
-              onClick={() => setPeriod(option.key)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setPeriod(option.key);
+              }}
             >
               {option.label}
             </button>
@@ -125,77 +182,78 @@ const SectionHeader = ({ eyebrow, title }) => (
   </div>
 );
 
-const MonthlyRevenueChart = ({ data }) => {
-  const maxValue = Math.max(1, ...data.map((item) => Math.max(item.revenue, item.orders)));
-  const topValue = Math.ceil(maxValue / 10) * 10 || 10;
-  const axisSteps = [topValue, Math.round(topValue * 0.75), Math.round(topValue * 0.5), Math.round(topValue * 0.25), 0];
+const formatCopFull = (value = 0) =>
+  `$${Number(value || 0).toLocaleString('es-CO')}`;
 
-  return (
-    <section className="dashboard-panel dashboard-chart-panel">
-      <SectionHeader eyebrow="Ventas" title="Ingresos/ventas por mes" />
-      <div className="dashboard-chart-layout">
-        <div className="dashboard-y-axis" aria-hidden="true">
-          {axisSteps.map((step) => <span key={step}>{step}M</span>)}
-        </div>
-        <div className="dashboard-bars" aria-label="Ingresos y ventas por mes">
-          {data.map((item) => (
-            <div className="dashboard-bar-group" key={item.month}>
-              <div className="dashboard-bar-track">
-                <span
-                  className="dashboard-bar-orders"
-                  style={{ height: `${(item.orders / topValue) * 100}%` }}
-                  title={`${item.orders} ventas`}
-                />
-                <span
-                  className="dashboard-bar-revenue"
-                  style={{ height: `${(item.revenue / topValue) * 100}%` }}
-                  title={`$ ${item.revenue}M COP`}
-                />
-              </div>
-              <strong>{item.month}</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="dashboard-legend">
-        <span><i className="legend-sales" />Cantidad de ventas</span>
-        <span><i className="legend-income" />Ingresos en millones COP</span>
-      </div>
-    </section>
-  );
-};
+const ChartEmptyState = () => (
+  <div className="dashboard-chart-empty">
+    <strong>No hay datos suficientes para mostrar esta grafica.</strong>
+    <span>Cuando existan registros confirmados, la visualizacion aparecera aqui.</span>
+  </div>
+);
 
 const StatusDistribution = ({ data }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  const conicStops = total > 0
-    ? data
-        .reduce((acc, item) => {
-          const start = acc.current;
-          const end = start + (item.value / total) * 100;
-          acc.parts.push(`${item.color} ${start}% ${end}%`);
-          acc.current = end;
-          return acc;
-        }, { current: 0, parts: [] })
-        .parts.join(', ')
-    : '#eef2f5 0% 100%';
+  const chartData = data.filter((item) => Number(item.value || 0) > 0);
 
   return (
-    <section className="dashboard-panel">
+    <section className="dashboard-panel dashboard-status-panel">
       <SectionHeader eyebrow="Estados" title="Distribucion de pedidos" />
-      <div className="dashboard-donut-wrap">
-        <div className="dashboard-donut" style={{ background: `conic-gradient(${conicStops})` }}>
-          <span>{total}</span>
-          <small>pedidos</small>
-        </div>
-        <div className="dashboard-status-list">
-          {data.map((item) => (
-            <div key={item.label}>
-              <span><i style={{ backgroundColor: item.color }} />{item.label}</span>
-              <strong>{item.value}</strong>
+      {total === 0 ? (
+        <ChartEmptyState />
+      ) : (
+        <div className="dashboard-donut-wrap">
+          <div className="dashboard-pie-wrap">
+            <ResponsiveContainer width="100%" height={210}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  nameKey="label"
+                  innerRadius={62}
+                  outerRadius={88}
+                  paddingAngle={3}
+                  stroke="#ffffff"
+                  strokeWidth={3}
+                >
+                  {chartData.map((item) => (
+                    <Cell key={item.label} fill={item.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  allowEscapeViewBox={{ x: true, y: true }}
+                  position={{ x: 158, y: 66 }}
+                  wrapperStyle={{ zIndex: 20, pointerEvents: 'none' }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const item = payload[0];
+                    return (
+                      <div className="dashboard-chart-tooltip">
+                        <strong>{item.name}</strong>
+                        <span style={{ color: item.payload.color }}>
+                          {Number(item.value || 0).toLocaleString('es-CO')} pedidos
+                        </span>
+                      </div>
+                    );
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="dashboard-pie-center" aria-hidden="true">
+              <strong>{total}</strong>
+              <span>pedidos</span>
             </div>
-          ))}
+          </div>
+          <div className="dashboard-status-list">
+            {data.map((item) => (
+              <div key={item.label}>
+                <span><i style={{ backgroundColor: item.color }} />{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 };
@@ -266,35 +324,99 @@ const QuoteFlowPanel = ({ data, quotes }) => (
   </section>
 );
 
-const TrackingPanel = ({ tracking }) => (
+const trackingStatusText = {
+  completed: 'Completado',
+  current: 'En este paso',
+  pending: 'Pendiente',
+};
+
+const ActiveOrdersPanel = ({ orders, selectedOrderId, onSelectOrder }) => (
+  <section className="dashboard-panel dashboard-active-orders-panel">
+    <SectionHeader eyebrow="Pedidos" title="Pedidos activos" />
+    {orders.length === 0 ? (
+      <div className="dashboard-empty-state">
+        <strong>No tienes pedidos activos</strong>
+        <p>Cuando una cotizacion avance a pedido, podras consultar aqui su progreso.</p>
+      </div>
+    ) : (
+      <div className="dashboard-order-selector">
+        {orders.map((order) => (
+          <button
+            type="button"
+            key={order.id}
+            className={selectedOrderId === order.id ? 'dashboard-order-card active' : 'dashboard-order-card'}
+            onClick={() => onSelectOrder(order.id)}
+          >
+            <span>
+              <strong>{order.number}</strong>
+              <small>{order.date}</small>
+              <small>{order.estimatedDelivery
+                ? `Entrega estimada: ${formatCalendarDate(order.estimatedDelivery)}`
+                : 'Entrega estimada: Por definir'}
+              </small>
+            </span>
+            <span className={`dashboard-status-badge ${statusClassMap[order.status] || 'statusPending'}`}>
+              {readableStatus(order.status)}
+            </span>
+          </button>
+        ))}
+      </div>
+    )}
+  </section>
+);
+
+const TrackingPanel = ({ order }) => (
   <section className="dashboard-panel dashboard-tracking-panel">
-    <SectionHeader eyebrow="Seguimiento" title="Progreso del pedido actual" />
-    <div className="dashboard-tracking">
-      {tracking.map((step, index) => {
-        const Icon = trackingIcons[step.label] || Clock3;
+    <SectionHeader eyebrow="Seguimiento" title={order ? `Progreso de ${order.number}` : 'Progreso del pedido'} />
+    {!order ? (
+      <div className="dashboard-empty-state">
+        <strong>Selecciona un pedido</strong>
+        <p>No hay un pedido activo para mostrar seguimiento.</p>
+      </div>
+    ) : (
+      <>
+      {order.progressNotice && (
+        <div className={`dashboard-final-balance-alert dashboard-progress-alert-${order.progressNotice.tone}`}>
+          <strong>{order.progressNotice.title}</strong>
+          {order.progressNotice.detail && <span>{order.progressNotice.detail}</span>}
+          {order.progressNotice.balance != null && (
+            <small>Saldo pendiente: {formatCopFull(order.progressNotice.balance)}</small>
+          )}
+        </div>
+      )}
+      {order.estimatedDelivery && (
+        <div className="dashboard-estimated-delivery">
+          Entrega estimada: <strong>{formatCalendarDate(order.estimatedDelivery)}</strong>
+        </div>
+      )}
+      <div className="dashboard-tracking dashboard-tracking-timeline">
+        {order.tracking.map((step) => {
+        const Icon = step.state === 'completed' ? Check : trackingIcons[step.label] || Clock3;
         return (
-          <article className={step.completed ? 'tracking-step completed' : 'tracking-step'} key={step.label}>
+          <article className={`tracking-step ${step.state}`} key={step.label}>
             <span className="tracking-marker">
               <Icon size={20} />
             </span>
             <div>
               <strong>{step.label}</strong>
-              <small>{step.completed ? 'Completado' : index === 2 ? 'En revision' : 'Pendiente'}</small>
+              <small>{trackingStatusText[step.state] || 'Pendiente'}</small>
+              {step.detail && <p>{step.detail}</p>}
             </div>
           </article>
         );
       })}
-    </div>
+      </div>
+      </>
+    )}
   </section>
 );
 
 const QuickActions = () => {
   const navigate = useNavigate();
-  const { hasAnyPermission } = useAuth();
   const actions = [
-    hasAnyPermission(['cotizaciones.crear_cliente', 'cotizaciones.crear_presencial']) && { label: 'Crear cotizacion', icon: FileText, onClick: () => navigate(PATHS.SERVICES_QUOTES) },
+    { label: 'Crear cotizacion', icon: FileText, onClick: () => navigateToLandingQuote(navigate) },
     { label: 'Actualizar perfil', icon: UserRound, onClick: () => navigate(PATHS.PROFILE) },
-  ].filter(Boolean);
+  ];
 
   return (
     <section className="dashboard-panel">
@@ -319,22 +441,38 @@ const LoadingDashboard = () => (
   <div className="dashboard-page">
     <section className="dashboard-panel dashboard-state-panel">
       <strong>Cargando dashboard...</strong>
-      <p>Estamos consultando el resumen desde la API.</p>
+      <p>Estamos consultando el resumen del sistema.</p>
     </section>
   </div>
 );
 
-const ErrorDashboard = ({ message }) => (
+const ErrorDashboard = ({ message, onRetry }) => (
   <div className="dashboard-page">
     <section className="dashboard-panel dashboard-state-panel">
       <strong>No se pudo cargar el dashboard</strong>
       <p>{message}</p>
+      {onRetry && (
+        <button type="button" className="dashboard-state-retry" onClick={onRetry}>
+          Reintentar
+        </button>
+      )}
     </section>
   </div>
 );
 
-const AdminDashboard = ({ userName, data }) => (
-  <div className="dashboard-page">
+const AdminDashboard = ({ userName, data }) => {
+  const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+  const destinations = {
+    'Pedidos pendientes': hasPermission('pedidos.ver') ? PATHS.ORDERS : null,
+    'Total clientes': hasPermission('clientes.ver') ? PATHS.USERS_CLIENTS : null,
+  };
+  const salesPath = hasPermission('ventas.ver') || hasPermission('ventas.resumen')
+    ? PATHS.SALES
+    : null;
+
+  return (
+    <div className="dashboard-page">
     <header className="dashboard-hero">
       <div>
         <span className="dashboard-eyebrow"><Sparkles size={16} /> Panel administrador</span>
@@ -349,12 +487,21 @@ const AdminDashboard = ({ userName, data }) => (
     </header>
 
     <section className="dashboard-kpi-grid admin-kpis">
-      {data.kpis.map((item) => <KpiCard item={item} key={item.label} />)}
-      <RevenueKpiCard revenue={data.revenue} />
+      {data.kpis.map((item) => (
+        <KpiCard
+          item={item}
+          key={item.label}
+          onActivate={destinations[item.label] ? () => navigate(destinations[item.label]) : undefined}
+        />
+      ))}
+      <RevenueKpiCard
+        revenue={data.revenue}
+        onActivate={salesPath ? () => navigate(salesPath) : undefined}
+      />
     </section>
 
     <div className="dashboard-grid dashboard-grid-charts">
-      <MonthlyRevenueChart data={data.monthlySales} />
+      <AdminTrendsPanel />
       <StatusDistribution data={data.orderStatus} />
     </div>
 
@@ -362,56 +509,167 @@ const AdminDashboard = ({ userName, data }) => (
       <OrdersTable title="Ultimos pedidos" orders={data.latestOrders} />
       <QuoteFlowPanel data={data.pendingQuotes} quotes={data.pendingQuotesList} />
     </div>
-  </div>
-);
-
-const ClientDashboard = ({ userName, data }) => (
-  <div className="dashboard-page dashboard-page-client">
-    <header className="dashboard-hero">
-      <div>
-        <span className="dashboard-eyebrow"><Sparkles size={16} /> Panel cliente</span>
-        <h1>Mis pedidos</h1>
-        <p>Hola, {userName}. Consulta el estado de tus estampados y gestiona tus proximas acciones.</p>
-      </div>
-      <div className="dashboard-hero-card">
-        <Truck size={24} />
-        <strong>Seguimiento activo</strong>
-        <span>{data.tracking.activeOrder}</span>
-      </div>
-    </header>
-
-    <section className="dashboard-kpi-grid client-kpis">
-      {data.kpis.map((item) => <KpiCard item={item} key={item.label} />)}
-    </section>
-
-    <div className="dashboard-grid dashboard-client-grid">
-      <TrackingPanel tracking={data.tracking.steps} />
-      <QuickActions />
     </div>
+  );
+};
 
-    <OrdersTable title="Historial" orders={data.history} showCustomer={false} />
-  </div>
-);
+const ClientDesignUrlPanel = ({ order, onSaved }) => {
+  const [urls, setUrls] = useState({});
+  const [pendingDetailId, setPendingDetailId] = useState(null);
+  const clientDetails = (order?.details || []).filter((detail) => (
+    detail.requiereDiseno !== false
+    && String(detail.origenDiseno || '').toUpperCase() === 'CLIENTE'
+  ));
+
+  if (!order || clientDetails.length === 0) return null;
+
+  const saveDesignUrl = async (detail) => {
+    if (pendingDetailId) return;
+    const value = String(urls[detail.idDetallePedido] || '').trim();
+
+    if (!/^https?:\/\/\S+$/i.test(value)) {
+      notifications.warning('Ingresa una URL valida que comience con http:// o https://.');
+      return;
+    }
+
+    setPendingDetailId(detail.idDetallePedido);
+    try {
+      await pedidoRepository.saveClientDesignUrl(order.id, detail.idDetallePedido, value);
+      notifications.success('Diseno enviado correctamente. Quedo pendiente de revision.');
+      setUrls((current) => ({ ...current, [detail.idDetallePedido]: '' }));
+      await onSaved?.();
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo guardar el enlace del diseno.');
+    } finally {
+      setPendingDetailId(null);
+    }
+  };
+
+  return (
+    <section className="dashboard-panel dashboard-client-design-panel">
+      <div className="dashboard-panel-title">
+        <span>Archivos del cliente</span>
+        <h2>Tu diseno</h2>
+      </div>
+      <div className="dashboard-client-design-list">
+        {clientDetails.map((detail, index) => {
+          const coverage = getDesignCoverageInfo(detail);
+          const fileUrl = coverage.fileUrl;
+          return (
+            <article key={detail.idDetallePedido || index}>
+              <div>
+                <strong>{detail.producto?.nombre || detail.descripcion || `Producto ${index + 1}`}</strong>
+                <span>{detail.tecnica?.nombre || 'Tecnica no especificada'} · Cant. {Number(detail.cantidad || 0).toLocaleString('es-CO')}</span>
+              </div>
+              {fileUrl ? (
+                <a href={fileUrl} target="_blank" rel="noreferrer">
+                  <Link2 size={15} /> Abrir diseno
+                </a>
+              ) : (
+                <div className="dashboard-client-design-form">
+                  <label htmlFor={`client-design-${detail.idDetallePedido}`}>URL del diseno</label>
+                  <div>
+                    <input
+                      id={`client-design-${detail.idDetallePedido}`}
+                      type="url"
+                      placeholder="https://drive.google.com/... o enlace accesible"
+                      value={urls[detail.idDetallePedido] || ''}
+                      onChange={(event) => setUrls((current) => ({
+                        ...current,
+                        [detail.idDetallePedido]: event.target.value,
+                      }))}
+                      disabled={pendingDetailId === detail.idDetallePedido}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => saveDesignUrl(detail)}
+                      disabled={Boolean(pendingDetailId)}
+                    >
+                      {pendingDetailId === detail.idDetallePedido ? 'Guardando...' : 'Guardar diseno'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+const ClientDashboard = ({ userName, data, onRefresh }) => {
+  const { hasPermission } = useAuth();
+  const activeOrders = useMemo(() => data.activeOrders || [], [data.activeOrders]);
+  const [selectedOrderId, setSelectedOrderId] = useState(activeOrders[0]?.id || '');
+  const effectiveOrderId = activeOrders.some((order) => order.id === selectedOrderId)
+    ? selectedOrderId
+    : activeOrders[0]?.id || '';
+  const selectedOrder = activeOrders.find((order) => order.id === effectiveOrderId) || null;
+  const activeOrderLabel = selectedOrder ? selectedOrder.number : 'Sin pedido activo';
+
+  return (
+    <div className="dashboard-page dashboard-page-client">
+      <header className="dashboard-hero">
+        <div>
+          <span className="dashboard-eyebrow"><Sparkles size={16} /> Panel cliente</span>
+          <h1>Mis pedidos</h1>
+          <p>Hola, {userName}. Consulta el estado de tus estampados y gestiona tus proximas acciones.</p>
+        </div>
+        <div className="dashboard-hero-card">
+          <Truck size={24} />
+          <strong>Seguimiento activo</strong>
+          <span>{activeOrderLabel}</span>
+        </div>
+      </header>
+
+      <section className="dashboard-kpi-grid client-kpis">
+        {data.kpis.map((item) => <KpiCard item={item} key={item.label} />)}
+      </section>
+
+      <div id="pedidos" className="dashboard-grid dashboard-client-grid">
+        <ActiveOrdersPanel
+          orders={activeOrders}
+          selectedOrderId={selectedOrder?.id || ''}
+          onSelectOrder={setSelectedOrderId}
+        />
+        <QuickActions />
+      </div>
+
+      <TrackingPanel order={selectedOrder} />
+      <ClientPaymentsPanel
+        order={selectedOrder}
+        canUpload={hasPermission('abonos.cliente.crear')}
+        canView={hasPermission('abonos.cliente.ver')}
+      />
+      <ClientDesignUrlPanel order={selectedOrder} onSaved={onRefresh} />
+
+      <OrdersTable title="Historial" orders={data.history} showCustomer={false} />
+    </div>
+  );
+};
 
 const DashboardPage = () => {
-  const { user } = useAuth();
-  const { data, loading, error } = useDashboardData(user);
-  const roleName = useMemo(() => formatRole(getRoleName(user)), [user]);
+  const { user, permissions } = useAuth();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { data, loading, error, refetch } = useDashboardData(user, permissions, refreshKey);
   const userName = user?.nombre || user?.name || user?.correo || user?.email || 'Usuario';
-  const isClient = roleName.includes('cliente');
+  const isClient = isClientUser(user, permissions);
 
   if (loading) return <LoadingDashboard />;
-  if (error || !data) return <ErrorDashboard message={error || 'Respuesta vacia desde la API.'} />;
+  if (error || !data) {
+    return <ErrorDashboard message={error || 'El sistema devolvio una respuesta vacia.'} onRetry={refetch} />;
+  }
 
   if (isClient && data.client) {
-    return <ClientDashboard userName={userName} data={data.client} />;
+    return <ClientDashboard userName={userName} data={data.client} onRefresh={() => setRefreshKey((value) => value + 1)} />;
   }
 
   if (!isClient && data.admin) {
     return <AdminDashboard userName={userName} data={data.admin} />;
   }
 
-  return <ErrorDashboard message="La API no devolvio datos para este rol." />;
+  return <ErrorDashboard message="No hay datos disponibles para este perfil." />;
 };
 
 export default DashboardPage;

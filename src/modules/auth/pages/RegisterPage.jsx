@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import {
   getAuthFormValidationError,
@@ -20,6 +21,7 @@ const RegisterPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -37,6 +39,7 @@ const RegisterPage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await runLocked(async () => {
     setError('');
 
     const validationError = getAuthFormValidationError(formData);
@@ -63,6 +66,7 @@ const RegisterPage = () => {
     } finally {
       setLoading(false);
     }
+    });
   };
 
   return (
@@ -194,8 +198,8 @@ const RegisterPage = () => {
                 </div>
               )}
 
-              <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '20px' }}>
-                {loading ? 'Registrando...' : 'Registrarse'}
+              <button type="submit" className="btn-primary" disabled={loading || isSubmitting} style={{ marginTop: '20px' }}>
+                {loading || isSubmitting ? 'Registrando...' : 'Registrarse'}
               </button>
 
             </form>

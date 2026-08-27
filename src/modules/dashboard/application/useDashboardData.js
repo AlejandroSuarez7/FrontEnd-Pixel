@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLatestListRequest } from '../../../core/hooks/useLatestListRequest';
 import { dashboardRepository } from '../infrastructure/dashboard.repository';
 
 const getStoredUser = () => {
@@ -10,46 +10,38 @@ const getStoredUser = () => {
   }
 };
 
-export const useDashboardData = (user) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadDashboard = async () => {
-      setLoading(true);
-      setError('');
-
-      try {
-        const sessionUser = user || getStoredUser();
-
-        if (!sessionUser) {
-          setData(null);
-          setError('No hay una sesion activa para cargar el dashboard.');
-          return;
-        }
-
-        const dashboardData = await dashboardRepository.getDashboardData(sessionUser);
-        if (isMounted) setData(dashboardData);
-      } catch (requestError) {
-        console.error('Error al cargar datos del dashboard:', requestError);
-        if (isMounted) {
-          setData(null);
-          setError(requestError.message || 'No se pudo cargar el dashboard.');
-        }
-      } finally {
-        if (isMounted) setLoading(false);
+export const useDashboardData = (user, permissions = [], refreshKey = 0) => {
+  const permissionsKey = permissions.join('|');
+  const sessionUser = user || getStoredUser();
+  const queryKey = [
+    sessionUser?.idUsuario || sessionUser?.id || sessionUser?.correo || 'no-session',
+    permissionsKey,
+    refreshKey,
+  ].join('|');
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => {
+      if (!sessionUser) {
+        throw new Error('No hay una sesion activa para cargar el dashboard.');
       }
-    };
 
-    loadDashboard();
+      const dashboardPermissions = permissionsKey ? permissionsKey.split('|') : [];
+      return dashboardRepository.getDashboardData(sessionUser, dashboardPermissions, { signal });
+    },
+    initialData: null,
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
-
-  return { data, loading, error };
+  return {
+    data,
+    loading,
+    refreshing,
+    error: error?.message || '',
+    refetch,
+  };
 };

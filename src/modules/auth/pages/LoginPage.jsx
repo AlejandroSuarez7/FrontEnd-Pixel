@@ -1,25 +1,40 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../store/AuthContext';
+import { getDefaultProtectedPath } from '../../../routes/SIDEBAR_CONFIG';
+import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
+import { isClientUser } from '../../../core/utils/permissions';
+import { authService } from '../services/authService';
 import { motion } from 'motion/react';
 const LoginPage = () => {
   const [correo, setCorreo]       = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const { isLocked: isLoginLocked, runLocked: runLoginLocked } = useAsyncLock();
+  const { isLocked: isForgotLocked, runLocked: runForgotLocked } = useAsyncLock();
 
   const { login }  = useAuth();
   const navigate   = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    await runLoginLocked(async () => {
     setError('');
     setLoading(true);
 
     try {
-      await login(correo, contrasena);
-      navigate('/dashboard');
+      const loggedInUser = await login(correo, contrasena);
+      const redirectTo = location.state?.redirectTo;
+      const nextPath = redirectTo || (isClientUser(loggedInUser, loggedInUser.codigos)
+        ? '/dashboard'
+        : getDefaultProtectedPath(loggedInUser.codigos, loggedInUser) || '/dashboard');
+      navigate(nextPath);
     } catch (err) {
       const message = err.message || 'Credenciales incorrectas';
       setError(message);
@@ -27,6 +42,25 @@ const LoginPage = () => {
     } finally {
       setLoading(false);
     }
+    });
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    await runForgotLocked(async () => {
+    setForgotLoading(true);
+
+    try {
+      await authService.forgotPassword(forgotEmail);
+      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena. Si no lo encuentras, revisa SPAM o correo no deseado.');
+      setForgotOpen(false);
+      setForgotEmail('');
+    } catch {
+      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena. Si no lo encuentras, revisa SPAM o correo no deseado.');
+    } finally {
+      setForgotLoading(false);
+    }
+    });
   };
 
   return (
@@ -75,15 +109,25 @@ const LoginPage = () => {
                   onChange={(e) => setContrasena(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  className="forgot-password-link"
+                  onClick={() => {
+                    setForgotEmail(correo);
+                    setForgotOpen(true);
+                  }}
+                >
+                  Olvide mi contrasena
+                </button>
               </div>
 
-              <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+              <button type="submit" className="btn-primary" disabled={loading || isLoginLocked}>
+                {loading || isLoginLocked ? 'Ingresando...' : 'Iniciar Sesión'}
               </button>
 
             </form>
 
-            <p className="register-link">
+            <p className="register-link" hidden>
               ¿No tienes cuenta? <a href="/register">Registrarse</a>
             </p>
           </div>
@@ -97,6 +141,35 @@ const LoginPage = () => {
           </div>
         </div>
       </motion.div>
+
+      {forgotOpen && (
+        <div className="auth-modal-overlay">
+          <div className="auth-modal-card">
+            <h3>Recuperar contrasena</h3>
+            <p>Escribe tu correo y te enviaremos instrucciones si existe una cuenta asociada.</p>
+            <form onSubmit={handleForgotPassword}>
+              <div className="form-group">
+                <label htmlFor="forgotEmail">Correo electronico</label>
+                <input
+                  type="email"
+                  id="forgotEmail"
+                  value={forgotEmail}
+                  onChange={(event) => setForgotEmail(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="auth-modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setForgotOpen(false)} disabled={forgotLoading || isForgotLocked}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" disabled={forgotLoading || isForgotLocked}>
+                  {forgotLoading || isForgotLocked ? 'Enviando...' : 'Enviar instrucciones'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,25 +1,21 @@
 // infrastructure/roles.repository.js
 import { apiClient } from '../../../../core/services/apiService.js';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
+import { createRequestError } from '../../../../core/utils/requestError.js';
 import { rolesDTO } from './adapters/rolesDTO.js';
 
 const ENDPOINT = 'api/roles';
 
 export class RolesApiRepository {
 
-  async list(filters = {}) {
-    try {
-      const params = buildPaginationParams({
-        sortBy: 'nombre',
-        order: 'asc',
-        ...filters,
-      });
-      const { data } = await apiClient.get(ENDPOINT, { params });
-      return normalizePaginatedResponse(data, rolesDTO.fromApiList.bind(rolesDTO));
-    } catch (error) {
-      console.error("Error al listar los roles desde el servidor", error);
-      return normalizePaginatedResponse({}, rolesDTO.fromApiList.bind(rolesDTO));
-    }
+  async list(filters = {}, options = {}) {
+    const params = buildPaginationParams({
+      sortBy: 'nombre',
+      order: 'asc',
+      ...filters,
+    });
+    const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
+    return normalizePaginatedResponse(data, rolesDTO.fromApiList.bind(rolesDTO));
   }
 
   async create(roleData) {
@@ -29,7 +25,7 @@ export class RolesApiRepository {
       const item = data.data ? data.data : data;
       return rolesDTO.fromApi(item);
     } catch (error) {
-      throw new Error(error.response?.data?.message || "No se pudo crear el rol");
+      throw createRequestError(error, 'No se pudo crear el rol');
     }
   }
 
@@ -40,7 +36,7 @@ export class RolesApiRepository {
       const item = data.data ? data.data : data;
       return rolesDTO.fromApi(item);
     } catch (error) {
-      throw new Error(error.response?.data?.message || "No se pudo actualizar el rol");
+      throw createRequestError(error, 'No se pudo actualizar el rol');
     }
   }
 
@@ -50,7 +46,7 @@ export class RolesApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${id}`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "No se pudo cambiar el estado del rol");
+      throw createRequestError(error, 'No se pudo cambiar el estado del rol');
     }
   }
 
@@ -60,7 +56,26 @@ export class RolesApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${id}/eliminar`);
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "No se pudo eliminar el rol");
+      throw createRequestError(error, 'No se pudo eliminar el rol');
+    }
+  }
+
+  async getDeletionImpact(id, options = {}) {
+    try {
+      const { data } = await apiClient.get(`${ENDPOINT}/${id}/impacto-eliminacion`, {
+        signal: options.signal,
+      });
+      const impact = data?.data ?? data ?? {};
+      return {
+        puedeEliminar: impact.puedeEliminar === true,
+        requiereConfirmacionReforzada: Boolean(impact.requiereConfirmacionReforzada),
+        totalAfectados: Math.max(0, Number(impact.totalAfectados) || 0),
+        limiteRegistrosPorTipo: Math.max(0, Number(impact.limiteRegistrosPorTipo) || 0),
+        afectados: Array.isArray(impact.afectados) ? impact.afectados : [],
+        explicacion: impact.explicacion || impact.motivo || impact.mensaje || '',
+      };
+    } catch (error) {
+      throw createRequestError(error, 'No se pudo consultar el impacto de la eliminación');
     }
   }
 }

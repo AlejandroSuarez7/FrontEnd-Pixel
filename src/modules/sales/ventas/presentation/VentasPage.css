@@ -16,7 +16,7 @@
 .ventas-breadcrumb {
   display: block;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.8px;
   color: var(--color-text-muted, #b0bac9);
   text-transform: uppercase;
@@ -38,15 +38,15 @@
 
 .ventas-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .ventas-kpi-card {
   background-color: var(--color-surface, #fff);
-  padding: 22px 24px;
-  border-radius: 14px;
+  padding: 17px 18px;
+  border-radius: 8px;
   border: 1px solid var(--color-border, #edf1f7);
   border-left: 3px solid var(--color-accent, #6c5ce7);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
@@ -60,7 +60,7 @@
   display: block;
   font-size: 11px;
   color: var(--color-text-secondary, #8f9bb3);
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
   text-transform: uppercase;
 }
@@ -77,26 +77,48 @@
 .ventas-kpi-value-warning { color: var(--color-warning, #e17b00); }
 
 .ventas-filter-section {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(240px, 1.5fr) repeat(2, minmax(145px, 0.7fr)) minmax(190px, 1fr) minmax(155px, 0.75fr) auto;
+  align-items: end;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--color-border, #edf1f7);
+  border-radius: 8px;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
+.ventas-filter-help {
+  grid-column: 1 / -1;
+  margin: 0 0 -4px;
+  color: var(--color-text-secondary, #7f8aa3);
+  font-size: 12px;
+}
+
+.ventas-actions-cell {
+  width: 62px;
+  padding: 8px 14px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ventas-filter-field,
 .ventas-filter-date-group {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 5px;
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
 .ventas-search-input,
 .ventas-input-field {
   width: 100%;
-  max-width: 380px;
+  max-width: none;
   padding: 9px 12px;
   border: 1px solid var(--color-border, #edf1f7);
   border-radius: 6px;
@@ -113,6 +135,30 @@
 .ventas-input-field:focus {
   border-color: var(--color-accent, #6c5ce7);
   box-shadow: 0 0 0 3px var(--color-accent-light, #ede9ff);
+}
+
+.ventas-clear-filters-button {
+  min-height: 39px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid var(--color-border, #edf1f7);
+  border-radius: 7px;
+  background: #fafbfc;
+  color: var(--color-text-secondary, #8f9bb3);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ventas-clear-filters-button:hover {
+  border-color: var(--color-accent, #6c5ce7);
+  background: var(--color-accent-light, #ede9ff);
+  color: var(--color-accent, #6c5ce7);
 }
 
 .ventas-table-container {
@@ -157,22 +203,22 @@
   border-bottom: 1px solid var(--color-border, #edf1f7);
 }
 
-.ventas-table-body-row:hover { background-color: #fafbfc; }
+.ventas-table-body-row:hover { background-color: #f8f7ff; }
 .ventas-table-cell,
 .ventas-table-cell-id {
-  padding: 16px 20px;
+  padding: 13px 16px;
   color: var(--color-text-primary, #1a2038);
 }
 
 .ventas-table-cell-id {
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .ventas-client-name {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ventas-client-email {
@@ -206,6 +252,8 @@
 }
 
 .ventas-total-price { font-weight: 700; }
+.ventas-paid-amount { color: #047857; font-weight: 700; white-space: nowrap; }
+.ventas-balance-amount { color: var(--color-danger, #d63031); font-weight: 700; white-space: nowrap; }
 .ventas-technique-list {
   display: inline-block;
   max-width: 220px;
@@ -224,7 +272,7 @@
 .ventas-pagination-info {
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .ventas-pagination-controls {
@@ -241,7 +289,7 @@
   background-color: var(--color-surface, #fff);
   color: var(--color-text-secondary, #8f9bb3);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -259,12 +307,14 @@
 
 @media (max-width: 1100px) {
   .ventas-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .ventas-filter-section { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 700px) {
   .ventas-page-container { padding: 28px 20px; }
   .ventas-header-wrapper { flex-direction: column; }
   .ventas-kpi-grid { grid-template-columns: 1fr; }
+  .ventas-filter-section { grid-template-columns: 1fr; }
   .ventas-pagination {
     align-items: flex-start;
     flex-direction: column;

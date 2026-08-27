@@ -1,31 +1,20 @@
-// pedidos/application/usePedidos.js
-import { useState, useEffect, useCallback } from 'react';
 import { createPaginationMeta } from '../../../../core/utils/serverPagination';
+import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { pedidoRepository } from '../infrastructure/pedido.repository';
 
 export const usePedidos = (filters = {}) => {
-  const [pedidos, setPedidos] = useState([]);
-  const [paginationMeta, setPaginationMeta] = useState(createPaginationMeta());
-  const [loading, setLoading] = useState(false);
-
-  const fetchPedidos = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await pedidoRepository.list(filters);
-      setPedidos(response.items);
-      setPaginationMeta(response.meta);
-    } catch (error) {
-      console.error('Error en usePedidos al listar:', error);
-      setPedidos([]);
-      setPaginationMeta(createPaginationMeta());
-    } finally {
-      setLoading(false);
-    }
-  }, [JSON.stringify(filters)]);
-
-  useEffect(() => {
-    fetchPedidos();
-  }, [fetchPedidos]);
+  const queryKey = JSON.stringify(filters);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refetch: fetchPedidos,
+  } = useLatestListRequest({
+    queryKey,
+    load: (signal) => pedidoRepository.list(filters, { signal }),
+    initialData: { items: [], meta: createPaginationMeta() },
+  });
 
   // Crea un pedido desde una cotización aprobada
   const handleCreate = async (pedidoData) => {
@@ -69,9 +58,29 @@ export const usePedidos = (filters = {}) => {
     }
   };
 
-  const handleAnular = async (id) => {
+  const handleUpdateEstimatedDelivery = async (id, fechaEntregaEstimada) => {
     try {
-      await pedidoRepository.anular(id);
+      await pedidoRepository.updateEstimatedDelivery(id, fechaEntregaEstimada);
+      await fetchPedidos();
+    } catch (error) {
+      console.error(`Error al actualizar entrega estimada del pedido #${id}:`, error);
+      throw error;
+    }
+  };
+
+  const handlePendienteSaldo = async (id) => {
+    try {
+      await pedidoRepository.marcarPendienteSaldo(id);
+      await fetchPedidos();
+    } catch (error) {
+      console.error(`Error al solicitar saldo final pedido #${id}:`, error);
+      throw error;
+    }
+  };
+
+  const handleAnular = async (id, motivoAnulacion) => {
+    try {
+      await pedidoRepository.anular(id, motivoAnulacion);
       await fetchPedidos();
     } catch (error) {
       console.error(`Error al anular pedido #${id}:`, error);
@@ -79,15 +88,41 @@ export const usePedidos = (filters = {}) => {
     }
   };
 
+  const handleConfirmarEntrega = async (id) => {
+    try {
+      await pedidoRepository.confirmarEntrega(id);
+      await fetchPedidos();
+    } catch (error) {
+      console.error(`Error al confirmar entrega pedido #${id}:`, error);
+      throw error;
+    }
+  };
+
+  const handleActualizarRequiereDiseno = async (idPedido, idDetallePedido, requiereDiseno) => {
+    try {
+      await pedidoRepository.actualizarRequiereDiseno(idPedido, idDetallePedido, requiereDiseno);
+      await fetchPedidos();
+    } catch (error) {
+      console.error(`Error al actualizar requisito de diseno detalle #${idDetallePedido}:`, error);
+      throw error;
+    }
+  };
+
   return {
-    pedidos,
-    paginationMeta,
+    pedidos: data.items,
+    paginationMeta: data.meta,
     loading,
+    refreshing,
+    error,
     refetch:            fetchPedidos,
     handleCreate,
     handleUpdate,
+    handleUpdateEstimatedDelivery,
     handleMarcarEnProceso,
+    handlePendienteSaldo,
     handleFinalizar,
     handleAnular,
+    handleConfirmarEntrega,
+    handleActualizarRequiereDiseno,
   };
 };

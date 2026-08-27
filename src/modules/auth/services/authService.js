@@ -10,14 +10,19 @@ export const authService = {
     const { data } = await apiClient.post('/api/auth/login', { correo, contrasena });
     const { token, usuario } = data.data;
     localStorage.setItem(TOKEN_KEY, token);
-    const permissionsSession = await this.fetchPermissions();
-    const session = {
-      ...usuario,
-      permisos: permissionsSession.permisos,
-      codigos: permissionsSession.codigos,
-    };
-    localStorage.setItem(USER_KEY, JSON.stringify(session));
-    return session;
+    try {
+      const permissionsSession = await this.fetchPermissions();
+      const session = {
+        ...usuario,
+        permisos: permissionsSession.permisos,
+        codigos: permissionsSession.codigos,
+      };
+      localStorage.setItem(USER_KEY, JSON.stringify(session));
+      return session;
+    } catch (error) {
+      this.logout();
+      throw error;
+    }
   },
 
   async fetchPermissions() {
@@ -40,6 +45,21 @@ export const authService = {
       correo:     userData.correo,
       contrasena: userData.contrasena,
     });
+    return data;
+  },
+
+  async forgotPassword(correo) {
+    const { data } = await apiClient.post('/api/auth/forgot-password', { correo });
+    return data;
+  },
+
+  async resetPassword(token, password) {
+    const { data } = await apiClient.post('/api/auth/reset-password', { token, password });
+    return data;
+  },
+
+  async createClientPassword(token, password) {
+    const { data } = await apiClient.post('/api/auth/cliente/crear-password', { token, password });
     return data;
   },
 
