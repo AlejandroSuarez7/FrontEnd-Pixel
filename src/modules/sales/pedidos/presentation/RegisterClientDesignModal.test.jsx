@@ -18,9 +18,9 @@ const detail = {
 };
 
 describe('RegisterClientDesignModal', () => {
-  it('validates the URL and preserves the exact backend payload fields', async () => {
+  it('validates the file and preserves the exact backend payload fields', async () => {
     const onSubmit = vi.fn().mockResolvedValue({});
-    render(
+    const { container } = render(
       <RegisterClientDesignModal
         isOpen
         pedido={{ idPedido: 36 }}
@@ -30,15 +30,9 @@ describe('RegisterClientDesignModal', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/url del diseno/i), {
-      target: { value: 'archivo-local' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar diseno recibido' }));
-    expect(notifications.warning).toHaveBeenCalled();
-    expect(onSubmit).not.toHaveBeenCalled();
-
-    fireEvent.change(screen.getByLabelText(/url del diseno/i), {
-      target: { value: 'https://example.com/diseno.png' },
+    const file = new File(['design'], 'diseno.png', { type: 'image/png' });
+    fireEvent.change(container.querySelector('input[type="file"]'), {
+      target: { files: [file] },
     });
     fireEvent.change(screen.getByLabelText(/medio de recepcion/i), {
       target: { value: 'CORREO' },
@@ -49,7 +43,7 @@ describe('RegisterClientDesignModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Registrar diseno recibido' }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({
-      archivoDisenoInicialUrl: 'https://example.com/diseno.png',
+      archivo: file,
       medioRecepcion: 'CORREO',
       observaciones: 'Recibido por correo.',
     }));
@@ -60,7 +54,7 @@ describe('RegisterClientDesignModal', () => {
     const onSubmit = vi.fn(() => new Promise(resolve => {
       resolveRequest = resolve;
     }));
-    render(
+    const { container } = render(
       <RegisterClientDesignModal
         isOpen
         pedido={{ idPedido: 36 }}
@@ -70,8 +64,8 @@ describe('RegisterClientDesignModal', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/url del diseno/i), {
-      target: { value: 'https://example.com/diseno.png' },
+    fireEvent.change(container.querySelector('input[type="file"]'), {
+      target: { files: [new File(['design'], 'diseno.pdf', { type: 'application/pdf' })] },
     });
     const submit = screen.getByRole('button', { name: 'Registrar diseno recibido' });
     fireEvent.click(submit);
@@ -84,7 +78,7 @@ describe('RegisterClientDesignModal', () => {
 
   it('keeps the modal open when the request fails', async () => {
     const onSubmit = vi.fn().mockRejectedValue(new Error('No se pudo registrar el diseno recibido.'));
-    render(
+    const { container } = render(
       <RegisterClientDesignModal
         isOpen
         pedido={{ idPedido: 36 }}
@@ -94,8 +88,8 @@ describe('RegisterClientDesignModal', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/url del diseno/i), {
-      target: { value: 'https://example.com/diseno.png' },
+    fireEvent.change(container.querySelector('input[type="file"]'), {
+      target: { files: [new File(['design'], 'diseno.webp', { type: 'image/webp' })] },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Registrar diseno recibido' }));
 

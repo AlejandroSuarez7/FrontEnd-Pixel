@@ -23,20 +23,21 @@ describe('pedidoRepository', () => {
       },
     });
 
+    const file = new File(['design'], 'diseno-cliente.png', { type: 'image/png' });
     const result = await pedidoRepository.registrarDisenoRecibidoCliente(36, 'STAMP-102', {
-      archivoDisenoInicialUrl: ' https://example.com/diseno-cliente.png ',
+      archivo: file,
       medioRecepcion: 'WHATSAPP',
       observaciones: ' Recibido por WhatsApp. ',
     });
 
     expect(apiClient.patch).toHaveBeenCalledWith(
       'api/pedidos/36/requerimientos-diseno/STAMP-102/diseno-recibido-cliente',
-      {
-        archivoDisenoInicialUrl: 'https://example.com/diseno-cliente.png',
-        medioRecepcion: 'WHATSAPP',
-        observaciones: 'Recibido por WhatsApp.',
-      },
+      expect.any(FormData),
     );
+    const formData = apiClient.patch.mock.calls[0][1];
+    expect(formData.get('archivo')).toBe(file);
+    expect(formData.get('medioRecepcion')).toBe('WHATSAPP');
+    expect(formData.get('observaciones')).toBe('Recibido por WhatsApp.');
     expect(result.estado).toBe('ENVIADO');
   });
 

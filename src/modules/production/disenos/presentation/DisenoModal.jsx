@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '../../../../core/services/apiService';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
+import { DesignFileUploader } from '../../../../shared/components/DesignFileUploader/DesignFileUploader';
+import {
+  formatFileSize,
+  getDesignFileFormatLabel,
+  getDesignFileInfo,
+  validateDesignFile,
+} from '../../../../core/utils/designFile';
 import {
   canCreatePixelDesign,
   formatDesignRequirementLabel,
@@ -27,22 +34,10 @@ const styles = {
   inputLabel: 'disenos-input-label',
   inputField: 'disenos-input-field',
   detailsInfoBox: 'disenos-details-info-box',
-  imagePreview: 'disenos-image-preview',
-  imagePreviewMedia: 'disenos-image-preview-media',
   imagePreviewLink: 'disenos-image-preview-link',
   modalFooter: 'disenos-modal-footer',
   btnSecondary: 'disenos-btn-secondary',
   btnPrimary: 'disenos-btn-primary',
-};
-
-const isHttpUrl = value => {
-  if (!value) return true;
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
 };
 
 const getCoveredStampLabel = stamp => {
@@ -87,7 +82,7 @@ const DisenoModalContent = ({
   const [requirementsError, setRequirementsError] = useState('');
   const [requirementsRetry, setRequirementsRetry] = useState(0);
   const [idDisenador, setIdDisenador] = useState(diseno?.idDisenador || '');
-  const [archivoUrl, setArchivoUrl] = useState(diseno?.archivoUrl || '');
+  const [archivo, setArchivo] = useState(null);
   const [descripcion, setDescripcion] = useState(diseno?.descripcion || '');
   const [observaciones, setObservaciones] = useState(diseno?.observaciones || '');
   const [disenadores, setDisenadores] = useState([]);
@@ -101,7 +96,6 @@ const DisenoModalContent = ({
     Boolean(isStaff && !isEditing),
   );
   const [pedidosError, setPedidosError] = useState('');
-  const [previewError, setPreviewError] = useState(false);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const normalizedPreset = initialPresetRequirement;
@@ -120,11 +114,15 @@ const DisenoModalContent = ({
   const previousVersion = selectedRequirement
     ? getPreviousDesignVersion(selectedRequirement)
     : null;
+  const previousFile = getDesignFileInfo(previousVersion);
   const isCorrectionVersion = Boolean(selectedRequirement?.puedeCargarCorreccion);
   const selectedPedido = presetPedido
     || pedidosDisponibles.find(item => String(item.idPedido) === String(idPedido))
     || diseno?.pedido
     || null;
+  const storedFile = getDesignFileInfo(diseno);
+  const hasStoredFile = Boolean(storedFile.url);
+  const requiresNewFile = !isEditing || !hasStoredFile;
 
   useEffect(() => {
     if (isEditing || !getPedidos || lockPedido) return undefined;
@@ -249,8 +247,9 @@ const DisenoModalContent = ({
           notifications.error('Este requerimiento no permite crear un diseno del equipo PIXEL.');
           return;
         }
-        if (!isHttpUrl(archivoUrl.trim())) {
-          notifications.error('Ingresa un enlace http o https valido.');
+        const fileError = requiresNewFile ? validateDesignFile(archivo) : '';
+        if (fileError) {
+          notifications.error(fileError);
           return;
         }
 
@@ -258,7 +257,7 @@ const DisenoModalContent = ({
           ...(isEditing
             ? {
               idPedido,
-              archivoUrl,
+              archivo,
               descripcion,
               observaciones,
             }
@@ -266,7 +265,8 @@ const DisenoModalContent = ({
               requirement: selectedRequirement,
               idPedido: selectedRequirement.idPedido,
               idDisenador,
-              archivoUrl,
+              origenDiseno: 'PIXEL',
+              archivo,
               descripcion,
               observaciones,
             }),
@@ -280,7 +280,7 @@ const DisenoModalContent = ({
   const submitLabel = isSubmitting
     ? 'Guardando...'
     : isEditing
-      ? 'Guardar cambios'
+      ? hasStoredFile ? 'Guardar cambios' : 'Adjuntar archivo'
       : isCorrectionVersion
         ? 'Cargar diseno corregido'
         : 'Registrar diseno';
@@ -448,9 +448,9 @@ const DisenoModalContent = ({
                   <div className="disenos-correction-version">
                     <strong>Nueva version para revision</strong>
                     <span>La version rechazada se conserva en el historial.</span>
-                    {(previousVersion?.archivoUrl || previousVersion?.fileUrl) && (
+                    {(previousFile.url || previousVersion?.fileUrl) && (
                       <a
-                        href={previousVersion.archivoUrl || previousVersion.fileUrl}
+                        href={previousFile.url || previousVersion.fileUrl}
                         target="_blank"
                         rel="noreferrer"
                       >
@@ -502,45 +502,35 @@ const DisenoModalContent = ({
               </div>
             )}
 
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel} htmlFor="diseno-url">Enlace del diseno</label>
-              <input
-                id="diseno-url"
-                type="url"
-                value={archivoUrl}
-                onChange={event => {
-                  setArchivoUrl(event.target.value);
-                  setPreviewError(false);
-                }}
-                className={styles.inputField}
-                maxLength={500}
-                placeholder="https://drive.google.com/... o enlace accesible"
-              />
-            </div>
-
-            {archivoUrl.trim() && (
-              <div className={styles.imagePreview}>
-                {!previewError ? (
-                  <img
-                    src={archivoUrl.trim()}
-                    alt="Vista previa del diseno"
-                    className={styles.imagePreviewMedia}
-                    onError={() => setPreviewError(true)}
-                  />
-                ) : (
-                  <div className={styles.detailsInfoBox}>
-                    No se pudo previsualizar la imagen. El enlace seguira disponible.
-                  </div>
-                )}
+            {hasStoredFile ? (
+              <div className="disenos-stored-file">
+                <div>
+                  <strong title={storedFile.name || 'Diseno almacenado'}>
+                    {storedFile.name || 'Diseno almacenado'}
+                  </strong>
+                  <span>
+                    {[getDesignFileFormatLabel(storedFile), formatFileSize(storedFile.bytes)]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                </div>
                 <a
-                  href={archivoUrl.trim()}
+                  href={storedFile.url}
                   target="_blank"
                   rel="noreferrer"
                   className={styles.imagePreviewLink}
                 >
-                  Abrir enlace
+                  Abrir archivo
                 </a>
+                <small>El archivo almacenado no se puede reemplazar desde este formulario.</small>
               </div>
+            ) : (
+              <DesignFileUploader
+                file={archivo}
+                onFileChange={setArchivo}
+                disabled={isSubmitting}
+                loading={isSubmitting}
+              />
             )}
           </section>
 
@@ -590,6 +580,7 @@ const DisenoModalContent = ({
                 || loadingDisenadores
                 || loadingRequirements
                 || (!isEditing && !selectedRequirement)
+                || (requiresNewFile && !archivo)
               }
             >
               {submitLabel}

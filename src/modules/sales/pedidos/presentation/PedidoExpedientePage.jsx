@@ -27,6 +27,7 @@ import {
   getDesignCoverageInfo,
 } from '../../../../core/utils/designCoverage';
 import { formatPaymentOrigin } from '../../../../core/utils/paymentOrigin';
+import { getDesignFileInfo } from '../../../../core/utils/designFile';
 import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import { isClientUser } from '../../../../core/utils/permissions';
 import { PATHS } from '../../../../routes/paths';
@@ -139,7 +140,9 @@ const DesignRequirementCard = ({
   const previousVersion = getPreviousDesignVersion(requirement);
   const canRegisterResponse = canRegisterDesignClientResponse(currentDesign);
   const canUseClientFileEndpoint = Boolean(requirement.idRequerimientoDiseno);
-  const fileUrl = currentDesign?.archivoUrl || previousVersion?.archivoUrl || '';
+  const fileUrl = getDesignFileInfo(currentDesign).url
+    || getDesignFileInfo(previousVersion).url
+    || '';
   return (
     <article className="expediente-design-card">
       <div className="expediente-design-card-heading">

@@ -1,9 +1,12 @@
 import { createDiseno } from '../../domain/diseno.model';
 import { buildDesignTargetPayload } from '../../domain/designRequirement';
+import { getDesignFileInfo } from '../../../../../core/utils/designFile';
 
 export const disenoDTO = {
   fromApi(apiData) {
     if (!apiData) return null;
+
+    const archivo = getDesignFileInfo(apiData);
 
     return createDiseno({
       idDiseno: apiData.idDiseno,
@@ -14,7 +17,8 @@ export const disenoDTO = {
       tipoObjetivo: apiData.tipoObjetivo ?? null,
       esDisenoGeneral: apiData.esDisenoGeneral ?? false,
       idDisenador: apiData.idDisenador,
-      archivoUrl: apiData.archivoUrl,
+      archivoUrl: archivo.url || '',
+      archivo,
       descripcion: apiData.descripcion,
       observaciones: apiData.observaciones,
       origenDiseno: apiData.origenDiseno,
@@ -56,7 +60,6 @@ export const disenoDTO = {
       ...(domainData.origenDiseno !== 'CLIENTE' && domainData.idDisenador && { idDisenador: Number(domainData.idDisenador) }),
       origenDiseno: domainData.origenDiseno || 'DISENADOR',
       ...(domainData.medioRecepcion && { medioRecepcion: domainData.medioRecepcion }),
-      archivoUrl: domainData.archivoUrl?.trim() || null,
       descripcion: domainData.descripcion?.trim() || null,
       observaciones: domainData.observaciones?.trim() || null,
       observacionesCliente: domainData.observacionesCliente?.trim() || null,
@@ -66,7 +69,6 @@ export const disenoDTO = {
 
   toApiUpdate(domainData) {
     const payload = {};
-    if (domainData.archivoUrl !== undefined) payload.archivoUrl = domainData.archivoUrl?.trim() || null;
     if (domainData.descripcion !== undefined) payload.descripcion = domainData.descripcion?.trim() || null;
     if (domainData.observaciones !== undefined) payload.observaciones = domainData.observaciones?.trim() || null;
     return payload;

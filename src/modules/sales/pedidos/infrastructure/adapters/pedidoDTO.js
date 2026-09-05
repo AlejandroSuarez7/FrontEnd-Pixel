@@ -32,6 +32,7 @@ export const pedidoDTO = {
     const detalles = detallesSource.length > 0
       ? detallesSource.map(d => createDetallePedido({
           idDetallePedido: d.idDetallePedido,
+          idRequerimientoDiseno: d.idRequerimientoDiseno ?? null,
           idPedido:        d.idPedido,
           idTecnica:       d.idTecnica,
           descripcion:     d.descripcion ?? d.producto?.nombre,
@@ -95,6 +96,7 @@ export const pedidoDTO = {
       cotizacion:           apiData.cotizacion,
       detalles,
       disenos:              apiData.disenos ?? [],
+      requerimientosDiseno: apiData.requerimientosDiseno ?? apiData.requerimientos ?? [],
       abonos: apiData.abonos || [],
     });
   },

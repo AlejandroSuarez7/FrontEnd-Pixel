@@ -2,8 +2,37 @@ import { apiClient } from '../../../../core/services/apiService.js';
 import { createRequestError } from '../../../../core/utils/requestError.js';
 import { disenoDTO } from './adapters/diseno.dto.js';
 import { normalizeDesignRequirementsResponse } from '../domain/designRequirement.js';
+import { appendDefinedFormFields } from '../../../../core/utils/designFile.js';
 
 const ENDPOINT = 'api/disenos';
+
+const withUploadMessage = (error, fallback) => {
+  const status = error?.response?.status;
+  let message = error?.response?.data?.message;
+
+  if (status === 403) {
+    message = 'No tienes permiso para cargar este diseno.';
+  } else if (status === 502) {
+    message = 'No pudimos almacenar el archivo. Intenta nuevamente.';
+  } else if (status !== 400 || !message) {
+    message = fallback;
+  }
+
+  return createRequestError({
+    ...error,
+    response: error?.response
+      ? { ...error.response, data: { ...error.response.data, message } }
+      : undefined,
+    message,
+  }, fallback);
+};
+
+const buildDesignFormData = (payload, file) => {
+  const formData = new FormData();
+  formData.append('archivo', file);
+  appendDefinedFormFields(formData, payload);
+  return formData;
+};
 
 export class DisenoApiRepository {
   async list(filters = {}, options = {}) {
@@ -96,9 +125,14 @@ export class DisenoApiRepository {
   }
 
   async create(disenoData) {
+    return this.createDesignWithFile(disenoData);
+  }
+
+  async createDesignWithFile(disenoData) {
     try {
       const payload = disenoDTO.toApi(disenoData);
-      const { data } = await apiClient.post(ENDPOINT, payload);
+      const formData = buildDesignFormData(payload, disenoData.archivo);
+      const { data } = await apiClient.post(ENDPOINT, formData);
       return disenoDTO.fromApi(data.data);
     } catch (error) {
       const errorCode = error?.response?.data?.code;
@@ -124,17 +158,47 @@ export class DisenoApiRepository {
           },
         });
       }
-      throw createRequestError(error, 'No se pudo crear el diseno');
+      throw withUploadMessage(error, 'No se pudo crear el diseno');
     }
   }
 
   async update(idDiseno, disenoData) {
+    if (disenoData.archivo) {
+      return this.attachDesignFile(idDiseno, disenoData.archivo, disenoData);
+    }
+
     try {
       const payload = disenoDTO.toApiUpdate(disenoData);
       const { data } = await apiClient.patch(`${ENDPOINT}/${idDiseno}`, payload);
       return disenoDTO.fromApi(data.data);
     } catch (error) {
       throw createRequestError(error, 'No se pudo actualizar el diseno');
+    }
+  }
+
+  async attachDesignFile(idDiseno, file, data = {}) {
+    try {
+      const formData = buildDesignFormData(disenoDTO.toApiUpdate(data), file);
+      const { data: response } = await apiClient.patch(`${ENDPOINT}/${idDiseno}`, formData);
+      return disenoDTO.fromApi(response.data);
+    } catch (error) {
+      throw withUploadMessage(error, 'No se pudo adjuntar el archivo del diseno');
+    }
+  }
+
+  async uploadClientDesign(idPedido, idRequerimientoDiseno, file, payload = {}) {
+    try {
+      const requirementId = encodeURIComponent(String(idRequerimientoDiseno));
+      const formData = buildDesignFormData({
+        observacionesCliente: payload.observacionesCliente?.trim() || null,
+      }, file);
+      const { data } = await apiClient.patch(
+        `api/cliente/pedidos/${idPedido}/requerimientos-diseno/${requirementId}/diseno`,
+        formData,
+      );
+      return data.data ?? data;
+    } catch (error) {
+      throw withUploadMessage(error, 'No se pudo cargar el diseno');
     }
   }
 

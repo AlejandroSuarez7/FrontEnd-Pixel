@@ -32,6 +32,9 @@ import { ClientPaymentsPanel } from './ClientPaymentsPanel';
 import { notifications } from '../../../core/utils/notifications';
 import { getDesignCoverageInfo } from '../../../core/utils/designCoverage';
 import { pedidoRepository } from '../../sales/pedidos/infrastructure/pedido.repository';
+import { disenoRepository } from '../../production/disenos/infrastructure/diseno.repository';
+import { DesignFileUploader } from '../../../shared/components/DesignFileUploader/DesignFileUploader';
+import { getDesignFileInfo } from '../../../core/utils/designFile';
 import { formatCalendarDate } from '../../../core/utils/fechaFormato';
 import { navigateToLandingQuote } from '../../../core/utils/landingNavigation';
 import { AdminTrendsPanel } from './AdminTrendsPanel';
@@ -513,35 +516,65 @@ const AdminDashboard = ({ userName, data }) => {
   );
 };
 
-const ClientDesignUrlPanel = ({ order, onSaved }) => {
+export const ClientDesignFilePanel = ({ order, onSaved }) => {
   const [urls, setUrls] = useState({});
-  const [pendingDetailId, setPendingDetailId] = useState(null);
-  const clientDetails = (order?.details || []).filter((detail) => (
-    detail.requiereDiseno !== false
-    && String(detail.origenDiseno || '').toUpperCase() === 'CLIENTE'
+  const [files, setFiles] = useState({});
+  const [pendingItemId, setPendingItemId] = useState(null);
+  const sourceItems = order?.requirements?.length > 0 ? order.requirements : order?.details || [];
+  const clientItems = sourceItems.filter((item) => (
+    item.requiereDiseno !== false
+    && String(item.origenDiseno || '').toUpperCase() === 'CLIENTE'
   ));
 
-  if (!order || clientDetails.length === 0) return null;
+  if (!order || clientItems.length === 0) return null;
 
-  const saveDesignUrl = async (detail) => {
-    if (pendingDetailId) return;
-    const value = String(urls[detail.idDetallePedido] || '').trim();
+  const getItemKey = (item, index = 0) => (
+    item.idRequerimientoDiseno || item.idDetallePedido || `client-design-${index}`
+  );
+
+  const uploadDesign = async (item, index) => {
+    if (pendingItemId) return;
+    const itemKey = getItemKey(item, index);
+    const file = files[itemKey];
+    if (!file || !item.idRequerimientoDiseno) return;
+
+    setPendingItemId(itemKey);
+    try {
+      await disenoRepository.uploadClientDesign(
+        order.id,
+        item.idRequerimientoDiseno,
+        file,
+      );
+      notifications.success('Diseno enviado correctamente. Quedo pendiente de revision.');
+      setFiles(current => ({ ...current, [itemKey]: null }));
+      await onSaved?.();
+    } catch (error) {
+      notifications.error(error.message || 'No se pudo cargar el diseno.');
+    } finally {
+      setPendingItemId(null);
+    }
+  };
+
+  const saveLegacyDesignUrl = async (detail, index) => {
+    if (pendingItemId) return;
+    const itemKey = getItemKey(detail, index);
+    const value = String(urls[itemKey] || '').trim();
 
     if (!/^https?:\/\/\S+$/i.test(value)) {
       notifications.warning('Ingresa una URL valida que comience con http:// o https://.');
       return;
     }
 
-    setPendingDetailId(detail.idDetallePedido);
+    setPendingItemId(itemKey);
     try {
       await pedidoRepository.saveClientDesignUrl(order.id, detail.idDetallePedido, value);
       notifications.success('Diseno enviado correctamente. Quedo pendiente de revision.');
-      setUrls((current) => ({ ...current, [detail.idDetallePedido]: '' }));
+      setUrls(current => ({ ...current, [itemKey]: '' }));
       await onSaved?.();
     } catch (error) {
       notifications.error(error.message || 'No se pudo guardar el enlace del diseno.');
     } finally {
-      setPendingDetailId(null);
+      setPendingItemId(null);
     }
   };
 
@@ -552,40 +585,62 @@ const ClientDesignUrlPanel = ({ order, onSaved }) => {
         <h2>Tu diseno</h2>
       </div>
       <div className="dashboard-client-design-list">
-        {clientDetails.map((detail, index) => {
+        {clientItems.map((detail, index) => {
+          const itemKey = getItemKey(detail, index);
           const coverage = getDesignCoverageInfo(detail);
-          const fileUrl = coverage.fileUrl;
+          const currentDesign = detail.disenoVigente || detail.diseno || detail;
+          const storedFile = getDesignFileInfo(currentDesign);
+          const fileUrl = storedFile.url || coverage.fileUrl;
+          const isCurrentRequirement = Boolean(detail.idRequerimientoDiseno);
           return (
-            <article key={detail.idDetallePedido || index}>
+            <article key={itemKey}>
               <div>
-                <strong>{detail.producto?.nombre || detail.descripcion || `Producto ${index + 1}`}</strong>
+                <strong>{detail.producto?.nombre || detail.nombreProducto || detail.descripcion || `Producto ${index + 1}`}</strong>
                 <span>{detail.tecnica?.nombre || 'Tecnica no especificada'} · Cant. {Number(detail.cantidad || 0).toLocaleString('es-CO')}</span>
               </div>
               {fileUrl ? (
                 <a href={fileUrl} target="_blank" rel="noreferrer">
                   <Link2 size={15} /> Abrir diseno
                 </a>
+              ) : isCurrentRequirement ? (
+                <div className="dashboard-client-design-upload">
+                  <DesignFileUploader
+                    file={files[itemKey] || null}
+                    onFileChange={file => setFiles(current => ({ ...current, [itemKey]: file }))}
+                    disabled={Boolean(pendingItemId)}
+                    loading={pendingItemId === itemKey}
+                    label="Subir mi diseno"
+                    helpText="Adjunta una imagen o PDF con el diseno que deseas utilizar."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => uploadDesign(detail, index)}
+                    disabled={Boolean(pendingItemId) || !files[itemKey]}
+                  >
+                    {pendingItemId === itemKey ? 'Subiendo diseno...' : 'Enviar diseno'}
+                  </button>
+                </div>
               ) : (
                 <div className="dashboard-client-design-form">
-                  <label htmlFor={`client-design-${detail.idDetallePedido}`}>URL del diseno</label>
+                  <label htmlFor={`client-design-${detail.idDetallePedido}`}>Enlace de diseno historico</label>
                   <div>
                     <input
                       id={`client-design-${detail.idDetallePedido}`}
                       type="url"
                       placeholder="https://drive.google.com/... o enlace accesible"
-                      value={urls[detail.idDetallePedido] || ''}
+                      value={urls[itemKey] || ''}
                       onChange={(event) => setUrls((current) => ({
                         ...current,
-                        [detail.idDetallePedido]: event.target.value,
+                        [itemKey]: event.target.value,
                       }))}
-                      disabled={pendingDetailId === detail.idDetallePedido}
+                      disabled={pendingItemId === itemKey}
                     />
                     <button
                       type="button"
-                      onClick={() => saveDesignUrl(detail)}
-                      disabled={Boolean(pendingDetailId)}
+                      onClick={() => saveLegacyDesignUrl(detail, index)}
+                      disabled={Boolean(pendingItemId)}
                     >
-                      {pendingDetailId === detail.idDetallePedido ? 'Guardando...' : 'Guardar diseno'}
+                      {pendingItemId === itemKey ? 'Guardando...' : 'Guardar diseno'}
                     </button>
                   </div>
                 </div>
@@ -642,7 +697,7 @@ const ClientDashboard = ({ userName, data, onRefresh }) => {
         canUpload={hasPermission('abonos.cliente.crear')}
         canView={hasPermission('abonos.cliente.ver')}
       />
-      <ClientDesignUrlPanel order={selectedOrder} onSaved={onRefresh} />
+      <ClientDesignFilePanel order={selectedOrder} onSaved={onRefresh} />
 
       <OrdersTable title="Historial" orders={data.history} showCustomer={false} />
     </div>

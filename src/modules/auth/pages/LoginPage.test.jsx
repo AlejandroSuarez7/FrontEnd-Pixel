@@ -53,6 +53,32 @@ describe('LoginPage', () => {
     expect(document.querySelector('#contrasena')).toBeInTheDocument();
   });
 
+  it('shows and hides the password without changing its value', async () => {
+    const user = userEvent.setup();
+    render(<LoginPage />);
+    const passwordInput = document.querySelector('#contrasena');
+
+    await user.type(passwordInput, 'Valid123*');
+    expect(passwordInput).toHaveAttribute('type', 'password');
+
+    await user.click(screen.getByRole('button', { name: 'Mostrar contraseña' }));
+    expect(passwordInput).toHaveAttribute('type', 'text');
+    expect(passwordInput).toHaveValue('Valid123*');
+
+    await user.click(screen.getByRole('button', { name: 'Ocultar contraseña' }));
+    expect(passwordInput).toHaveAttribute('type', 'password');
+    expect(passwordInput).toHaveValue('Valid123*');
+  });
+
+  it('does not submit the login form when toggling password visibility', async () => {
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole('button', { name: 'Mostrar contraseña' }));
+
+    expect(loginMock).not.toHaveBeenCalled();
+  });
+
   it('shows a controlled error and keeps the page mounted when login fails', async () => {
     loginMock.mockRejectedValueOnce(new Error('Credenciales incorrectas'));
     const user = userEvent.setup();

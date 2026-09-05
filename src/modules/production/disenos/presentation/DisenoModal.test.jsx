@@ -97,7 +97,7 @@ describe('DisenoModal requirements flow', () => {
 
   it('submits the selected requirement without asking for a product or general checkbox', async () => {
     const onSubmit = vi.fn().mockResolvedValue({});
-    render(
+    const { container } = render(
       <DisenoModal
         isOpen
         onClose={vi.fn()}
@@ -117,6 +117,10 @@ describe('DisenoModal requirements flow', () => {
 
     expect(screen.queryByLabelText(/producto del pedido/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/aplica para todo el pedido/i)).not.toBeInTheDocument();
+    const file = new File(['design'], 'design.png', { type: 'image/png' });
+    fireEvent.change(container.querySelector('input[type="file"]'), {
+      target: { files: [file] },
+    });
     fireEvent.click(screen.getByRole('button', { name: /registrar diseno/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
@@ -125,6 +129,7 @@ describe('DisenoModal requirements flow', () => {
         idEstampadoPedido: 34,
       }),
       idPedido: 54,
+      archivo: file,
     })));
   });
 
@@ -168,6 +173,7 @@ describe('DisenoModal requirements flow', () => {
       'https://example.com/version-anterior.png',
     );
     expect(screen.getByText(/cambiar el color/i)).toBeInTheDocument();
+    expect(screen.getByText('Seleccionar archivo')).toBeInTheDocument();
   });
 
   it('cleans the previous requirement when the order changes', async () => {
@@ -194,5 +200,30 @@ describe('DisenoModal requirements flow', () => {
     fireEvent.change(orderSelector, { target: { value: '55' } });
     await waitFor(() => expect(screen.getByLabelText(/que diseno vas a registrar/i)).toHaveValue(''));
     expect(await screen.findByText(/no tiene disenos pendientes de creacion o correccion/i)).toBeInTheDocument();
+  });
+
+  it('does not offer file replacement when the design already has a stored file', () => {
+    const { container } = render(
+      <DisenoModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        diseno={{
+          idDiseno: 15,
+          idPedido: 54,
+          archivoUrl: 'https://files.pixel.test/design.png',
+          archivo: {
+            url: 'https://files.pixel.test/design.png',
+            nombre: 'design.png',
+            tipo: 'image/png',
+          },
+        }}
+        isStaff={false}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: 'Abrir archivo' })).toBeInTheDocument();
+    expect(container.querySelector('input[type="file"]')).not.toBeInTheDocument();
+    expect(screen.getByText(/no se puede reemplazar/i)).toBeInTheDocument();
   });
 });
