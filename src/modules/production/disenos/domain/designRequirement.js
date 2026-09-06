@@ -179,7 +179,7 @@ export const buildDesignTargetPayload = (requirement, formData = {}) => {
   }
 
   if (formData.idDisenador) payload.idDisenador = Number(formData.idDisenador);
-  payload.archivoUrl = cleanText(formData.archivoUrl);
+  if (formData.origenDiseno) payload.origenDiseno = formData.origenDiseno;
   payload.descripcion = cleanText(formData.descripcion);
   payload.observaciones = cleanText(formData.observaciones);
 

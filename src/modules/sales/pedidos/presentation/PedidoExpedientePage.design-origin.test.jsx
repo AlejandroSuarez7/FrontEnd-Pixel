@@ -154,13 +154,14 @@ describe('PedidoExpedientePage design origin', () => {
       puedeDefinirOrigen: false,
       puedeRegistrarDisenoCliente: true,
     };
-    render(<PedidoExpedientePage />);
+    const { container } = render(<PedidoExpedientePage />);
 
     fireEvent.click(screen.getByRole('tab', { name: /Disenos/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Registrar diseno recibido' }));
     const dialog = screen.getByRole('dialog', { name: 'Registrar diseno recibido' });
-    fireEvent.change(within(dialog).getByLabelText(/url del diseno/i), {
-      target: { value: 'https://example.com/diseno.png' },
+    const file = new File(['design'], 'diseno.png', { type: 'image/png' });
+    fireEvent.change(container.querySelector('input[type="file"]'), {
+      target: { files: [file] },
     });
     fireEvent.change(within(dialog).getByLabelText(/observaciones/i), {
       target: { value: 'Recibido por WhatsApp.' },
@@ -172,7 +173,7 @@ describe('PedidoExpedientePage design origin', () => {
         54,
         'STAMP-34',
         {
-          archivoDisenoInicialUrl: 'https://example.com/diseno.png',
+          archivo: file,
           medioRecepcion: 'WHATSAPP',
           observaciones: 'Recibido por WhatsApp.',
         },

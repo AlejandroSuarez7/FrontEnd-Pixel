@@ -17,7 +17,6 @@ const base = {
 };
 
 const form = {
-  archivoUrl: ' https://example.com/diseno.png ',
   idDisenador: '3',
   descripcion: ' Frontal ',
   observaciones: '',
@@ -88,13 +87,13 @@ describe('design requirement contract', () => {
 
     expect(payload).toMatchObject({
       ...target,
-      archivoUrl: 'https://example.com/diseno.png',
       idDisenador: 3,
       descripcion: 'Frontal',
       observaciones: null,
     });
     expect(payload).not.toHaveProperty('idRequerimientoDiseno');
     expect(payload).not.toHaveProperty('idDetalleEstampadoPedido');
+    expect(payload).not.toHaveProperty('archivoUrl');
 
     const targetKeys = [
       'idDetallePedido',

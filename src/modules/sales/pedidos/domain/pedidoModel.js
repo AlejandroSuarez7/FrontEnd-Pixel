@@ -41,6 +41,7 @@ export const createPedido = ({
   cotizacion = null,
   detalles   = [],
   disenos    = [],
+  requerimientosDiseno = [],
   abonos     = [],
 }) => ({
   idPedido,
@@ -76,11 +77,13 @@ export const createPedido = ({
   cotizacion,
   detalles,
   disenos: Array.isArray(disenos) ? disenos : [],
+  requerimientosDiseno: Array.isArray(requerimientosDiseno) ? requerimientosDiseno : [],
   abonos,
 });
 
 export const createDetallePedido = ({
   idDetallePedido,
+  idRequerimientoDiseno = null,
   idPedido,
   idTecnica,
   descripcion,
@@ -109,6 +112,7 @@ export const createDetallePedido = ({
   tecnica        = null,
 }) => ({
   idDetallePedido,
+  idRequerimientoDiseno,
   idPedido,
   idTecnica,
   descripcion,

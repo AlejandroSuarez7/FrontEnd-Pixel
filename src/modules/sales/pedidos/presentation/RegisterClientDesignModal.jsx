@@ -1,48 +1,30 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
+import { validateDesignFile } from '../../../../core/utils/designFile';
+import { DesignFileUploader } from '../../../../shared/components/DesignFileUploader/DesignFileUploader';
 
 const RECEIPT_METHODS = ['WHATSAPP', 'CORREO', 'PRESENCIAL', 'OTRO'];
 
-const isHttpUrl = (value) => {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
-
-export const RegisterClientDesignModal = ({
-  isOpen,
+const RegisterClientDesignModalContent = ({
   pedido,
   detail,
   onClose,
   onSubmit,
 }) => {
-  const [archivoDisenoInicialUrl, setArchivoDisenoInicialUrl] = useState('');
+  const [archivo, setArchivo] = useState(null);
   const [medioRecepcion, setMedioRecepcion] = useState('WHATSAPP');
   const [observaciones, setObservaciones] = useState('');
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setArchivoDisenoInicialUrl(detail?.archivoDisenoInicialUrl || '');
-    setMedioRecepcion('WHATSAPP');
-    setObservaciones('');
-  }, [detail?.archivoDisenoInicialUrl, detail?.idRequerimientoDiseno, isOpen]);
-
-  if (!isOpen || !detail) return null;
 
   const productName = detail.producto?.nombre || detail.descripcion || 'Producto no especificado';
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const url = archivoDisenoInicialUrl.trim();
-    if (!isHttpUrl(url)) {
-      notifications.warning('Ingresa una URL valida que comience por http:// o https://.');
+    const fileError = validateDesignFile(archivo);
+    if (fileError) {
+      notifications.warning(fileError);
       return;
     }
     if (!RECEIPT_METHODS.includes(medioRecepcion)) {
@@ -53,7 +35,7 @@ export const RegisterClientDesignModal = ({
     runLocked(async () => {
       try {
         await onSubmit({
-          archivoDisenoInicialUrl: url,
+          archivo,
           medioRecepcion,
           observaciones,
         });
@@ -84,18 +66,12 @@ export const RegisterClientDesignModal = ({
             <div><span>Cantidad</span><strong>{Number(detail.cantidad || 0).toLocaleString('es-CO')}</strong></div>
           </div>
 
-          <label>
-            <span>URL del diseno *</span>
-            <input
-              type="url"
-              value={archivoDisenoInicialUrl}
-              onChange={event => setArchivoDisenoInicialUrl(event.target.value)}
-              placeholder="https://..."
-              maxLength={500}
-              disabled={isSubmitting}
-              required
-            />
-          </label>
+          <DesignFileUploader
+            file={archivo}
+            onFileChange={setArchivo}
+            disabled={isSubmitting}
+            loading={isSubmitting}
+          />
 
           <label>
             <span>Medio de recepcion *</span>
@@ -125,12 +101,22 @@ export const RegisterClientDesignModal = ({
 
           <footer>
             <button type="button" onClick={onClose} disabled={isSubmitting}>Cancelar</button>
-            <button type="submit" className="primary" disabled={isSubmitting}>
+            <button type="submit" className="primary" disabled={isSubmitting || !archivo}>
               {isSubmitting ? 'Registrando...' : 'Registrar diseno recibido'}
             </button>
           </footer>
         </form>
       </div>
     </div>
+  );
+};
+
+export const RegisterClientDesignModal = props => {
+  if (!props.isOpen || !props.detail) return null;
+  return (
+    <RegisterClientDesignModalContent
+      key={props.detail.idRequerimientoDiseno || props.detail.idDetallePedido}
+      {...props}
+    />
   );
 };

@@ -407,6 +407,11 @@ const buildClientActiveOrder = (pedido = {}) => {
       : Array.isArray(pedido.detallesPedido)
         ? pedido.detallesPedido
         : [],
+    requirements: Array.isArray(pedido.requerimientosDiseno)
+      ? pedido.requerimientosDiseno
+      : Array.isArray(pedido.requerimientos)
+        ? pedido.requerimientos
+        : [],
     isPendingFinalBalance: estadoPedido === 'PENDIENTE_SALDO_FINAL'
       && pedido.puedeSolicitarSaldoFinal === true,
     isReadyToDeliver: ['FINALIZADO', 'TERMINADO'].includes(estadoPedido)

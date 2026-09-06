@@ -3,6 +3,7 @@ import { apiClient } from '../../../../core/services/apiService.js';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
 import { createRequestError } from '../../../../core/utils/requestError.js';
 import { pedidoDTO } from './adapters/pedidoDTO.js';
+import { appendDefinedFormFields } from '../../../../core/utils/designFile.js';
 
 const ENDPOINT = 'api/pedidos';
 
@@ -126,19 +127,32 @@ export class PedidoApiRepository {
   async registrarDisenoRecibidoCliente(idPedido, idRequerimientoDiseno, payload) {
     try {
       const requirementId = encodeURIComponent(String(idRequerimientoDiseno));
+      const formData = new FormData();
+      formData.append('archivo', payload.archivo);
+      appendDefinedFormFields(formData, {
+        medioRecepcion: payload.medioRecepcion,
+        observaciones: payload.observaciones?.trim() || null,
+        descripcion: payload.descripcion?.trim() || null,
+      });
       const { data } = await apiClient.patch(
         `${ENDPOINT}/${idPedido}/requerimientos-diseno/${requirementId}/diseno-recibido-cliente`,
-        {
-          archivoDisenoInicialUrl: payload.archivoDisenoInicialUrl.trim(),
-          medioRecepcion: payload.medioRecepcion,
-          ...(payload.observaciones?.trim() && {
-            observaciones: payload.observaciones.trim(),
-          }),
-        },
+        formData,
       );
       return data.data ?? data;
     } catch (error) {
-      throw createRequestError(error, 'No se pudo registrar el diseno recibido del cliente');
+      const status = error?.response?.status;
+      const message = status === 403
+        ? 'No tienes permiso para cargar este diseno.'
+        : status === 502
+          ? 'No pudimos almacenar el archivo. Intenta nuevamente.'
+          : error?.response?.data?.message;
+      throw createRequestError({
+        ...error,
+        response: error?.response
+          ? { ...error.response, data: { ...error.response.data, message } }
+          : undefined,
+        message,
+      }, 'No se pudo registrar el diseno recibido del cliente');
     }
   }
 

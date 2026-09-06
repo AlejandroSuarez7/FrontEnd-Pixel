@@ -7,9 +7,11 @@ import { notifications } from '../../../core/utils/notifications';
 import { isClientUser } from '../../../core/utils/permissions';
 import { authService } from '../services/authService';
 import { motion } from 'motion/react';
+import { Eye, EyeOff } from 'lucide-react';
 const LoginPage = () => {
   const [correo, setCorreo]       = useState('');
   const [contrasena, setContrasena] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
@@ -102,13 +104,24 @@ const LoginPage = () => {
 
               <div className="form-group">
                 <label htmlFor="password">Contraseña</label>
-                <input
-                  type="password"
-                  id="contrasena"
-                  value={contrasena}
-                  onChange={(e) => setContrasena(e.target.value)}
-                  required
-                />
+                <div className="login-password-input">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="contrasena"
+                    value={contrasena}
+                    onChange={(e) => setContrasena(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="login-password-toggle"
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword((current) => !current)}
+                  >
+                    {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                  </button>
+                </div>
                 <button
                   type="button"
                   className="forgot-password-link"

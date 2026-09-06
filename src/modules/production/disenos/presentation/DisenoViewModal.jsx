@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { FileText } from 'lucide-react';
 import { formatDate } from '../../../../core/utils/fechaFormato';
 import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import {
@@ -7,6 +8,12 @@ import {
   getQuoteSubtotalBruto,
   getQuoteTotal,
 } from '../../../../core/utils/formatters';
+import {
+  formatFileSize,
+  getDesignFileFormatLabel,
+  getDesignFileInfo,
+  isPdfDesignFile,
+} from '../../../../core/utils/designFile';
 import './DisenosPage.css';
 
 const styles = {
@@ -52,7 +59,7 @@ const getDesignTechniqueName = (diseno) => {
   return detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : 'No especificada');
 };
 
-export const DisenoViewModal = ({
+const DisenoViewModalContent = ({
   isOpen,
   onClose,
   diseno,
@@ -62,13 +69,11 @@ export const DisenoViewModal = ({
 }) => {
   const [previewError, setPreviewError] = useState(false);
 
-  useEffect(() => {
-    setPreviewError(false);
-  }, [diseno?.idDiseno, diseno?.archivoUrl, isOpen]);
-
   if (!isOpen || !diseno) return null;
 
-  const archivoUrl = diseno.archivoUrl?.trim();
+  const archivo = getDesignFileInfo(diseno);
+  const archivoUrl = archivo.url;
+  const isPdf = isPdfDesignFile(archivo);
   const estado = normalizeStatus(diseno.estado);
   const enviadoPorCliente = normalizeStatus(diseno.origenDiseno) === 'CLIENTE';
   const clienteNombre = diseno.pedido?.cliente?.nombre || 'Cliente no especificado';
@@ -111,7 +116,21 @@ export const DisenoViewModal = ({
               <span className="disenos-view-section-label">Diseno enviado</span>
               {archivoUrl ? (
                 <div className={styles.imagePreview}>
-                  {!previewError ? (
+                  {isPdf ? (
+                    <div className="disenos-view-document-card">
+                      <FileText size={30} aria-hidden="true" />
+                      <div>
+                        <strong title={archivo.name || 'Diseno en PDF'}>
+                          {archivo.name || 'Diseno en PDF'}
+                        </strong>
+                        <span>
+                          {[getDesignFileFormatLabel(archivo), formatFileSize(archivo.bytes)]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                      </div>
+                    </div>
+                  ) : !previewError ? (
                     <img
                       src={archivoUrl}
                       alt={`Vista previa del diseno ${diseno.idDiseno}`}
@@ -121,7 +140,19 @@ export const DisenoViewModal = ({
                   ) : (
                     <div className="disenos-view-file-empty">No fue posible previsualizar este archivo.</div>
                   )}
-                  <a href={archivoUrl} target="_blank" rel="noreferrer" className={styles.imagePreviewLink}>Abrir diseno</a>
+                  {!isPdf && (archivo.name || archivo.bytes) && (
+                    <div className="disenos-view-file-metadata">
+                      <strong title={archivo.name || 'Diseno almacenado'}>{archivo.name || 'Diseno almacenado'}</strong>
+                      <span>
+                        {[getDesignFileFormatLabel(archivo), formatFileSize(archivo.bytes)]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    </div>
+                  )}
+                  <a href={archivoUrl} target="_blank" rel="noreferrer" className={styles.imagePreviewLink}>
+                    {isPdf ? 'Abrir PDF' : 'Abrir archivo'}
+                  </a>
                 </div>
               ) : (
                 <div className="disenos-view-file-empty">Archivo no disponible.</div>
@@ -201,5 +232,16 @@ export const DisenoViewModal = ({
         </div>
       </div>
     </div>
+  );
+};
+
+export const DisenoViewModal = props => {
+  if (!props.isOpen || !props.diseno) return null;
+  const fileUrl = props.diseno.archivo?.url || props.diseno.archivoUrl || '';
+  return (
+    <DisenoViewModalContent
+      key={`${props.diseno.idDiseno || 'design'}-${fileUrl}`}
+      {...props}
+    />
   );
 };

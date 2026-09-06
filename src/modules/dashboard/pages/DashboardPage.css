@@ -2108,6 +2108,31 @@
   cursor: wait;
 }
 
+.dashboard-client-design-upload {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dashboard-client-design-upload > button {
+  justify-self: end;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 7px;
+  background: #6c5ce7;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-client-design-upload > button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
 @media (max-width: 700px) {
   .dashboard-client-design-list > article {
     grid-template-columns: 1fr;
@@ -2119,5 +2144,9 @@
 
   .dashboard-client-design-form button {
     min-height: 42px;
+  }
+
+  .dashboard-client-design-upload > button {
+    width: 100%;
   }
 }
