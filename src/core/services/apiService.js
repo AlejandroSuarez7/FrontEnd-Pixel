@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { notifications } from '../utils/notifications';
 
-const BASE_URL = 'http://localhost:3000/';
+const BASE_URL = '/api/';
 export const SESSION_EXPIRED_EVENT = 'pixel:session-expired';
 const AUTH_STORAGE_KEYS = ['token', 'pixel_user', 'pixel_permissions'];
 
