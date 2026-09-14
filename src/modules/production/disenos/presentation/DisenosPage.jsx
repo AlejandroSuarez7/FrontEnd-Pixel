@@ -127,7 +127,7 @@ export const DisenosPage = () => {
     handleApproveByClientAdmin,
     handleRejectByClientAdmin,
     handleDelete,
-    getPedidos,
+    getPendingDesignOrders,
     getRequerimientosDiseno,
   } = useDisenos({
     idPedido: filters.idPedido,
@@ -180,6 +180,8 @@ export const DisenosPage = () => {
   const handleSubmit = async (payload) => {
     if (selectedDiseno) {
       await handleUpdate(selectedDiseno.idDiseno, payload);
+      setIsModalOpen(false);
+      setSelectedDiseno(null);
     } else {
       await handleCreate(payload);
       if (payload.estado === 'APROBADO') {
@@ -188,8 +190,6 @@ export const DisenosPage = () => {
         notifications.success('Diseño enviado para revisión. El cliente será notificado por correo. Recuérdale revisar SPAM o correo no deseado si no lo encuentra.');
       }
     }
-    setIsModalOpen(false);
-    setSelectedDiseno(null);
   };
 
   const canApprove = (diseno) => {
@@ -416,7 +416,7 @@ export const DisenosPage = () => {
         onSubmit={handleSubmit}
         diseno={selectedDiseno}
         isStaff={isStaff}
-        getPedidos={getPedidos}
+        getPendingDesignOrders={getPendingDesignOrders}
         getRequerimientosDiseno={getRequerimientosDiseno}
       />
 

@@ -75,15 +75,15 @@ const ServicesPage = () => {
       {/* HEADER */}
       <div className={styles.headerWrapper}>
         <div>
-          <span className={styles.breadcrumb}>Servicios / Gestión</span>
-          <h1 className={styles.pageTitle}>Gestión de Servicios</h1>
+          <span className={styles.breadcrumb}>Catálogo / Técnicas</span>
+          <h1 className={styles.pageTitle}>Gestión de Técnicas</h1>
           <p className={styles.pageSubtitle}>
             Administra los tipos de técnicas, estampados y procesos de producción.
           </p>
         </div>
         {hasPermission('tecnicas.crear') && (
           <button onClick={handleOpenCreate} className={styles.primaryButton}>
-            Nuevo servicio
+            Nueva técnica
           </button>
         )}
       </div>
@@ -108,7 +108,7 @@ const ServicesPage = () => {
       <div className={styles.filterSection}>
         <input
           type="text"
-          placeholder="Buscar servicio por nombre o descripción..."
+          placeholder="Buscar técnica por nombre o descripción..."
           value={searchTerm}
           onChange={e => {
             setSearchTerm(e.target.value);
@@ -121,23 +121,23 @@ const ServicesPage = () => {
       {/* TABLA */}
       <div className={styles.tableContainer}>
         {loading ? (
-          <p className={styles.loadingText}>Cargando servicios de producción...</p>
+          <p className={styles.loadingText}>Cargando técnicas de producción...</p>
         ) : error && tecnicas.length === 0 ? (
           <div className={styles.loadingText}>
-            <p>No fue posible cargar las tecnicas.</p>
+            <p>No fue posible cargar las técnicas.</p>
             <button type="button" className={styles.primaryButton} onClick={refreshTecnicas}>
               Reintentar
             </button>
           </div>
         ) : tecnicas.length === 0 ? (
-          <p className={styles.loadingText}>No se encontraron servicios registrados.</p>
+          <p className={styles.loadingText}>No se encontraron técnicas registradas.</p>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
                 <tr className={styles.tableHeadRow}>
                   <th className={styles.tableHeader}>ID</th>
-                  <th className={styles.tableHeader}>Nombre del servicio</th>
+                  <th className={styles.tableHeader}>Nombre de la técnica</th>
                   <th className={styles.tableHeader}>Descripción</th>
                   <th className={styles.tableHeader}>Estado</th>
                   <th className={styles.tableHeader}>Acciones</th>

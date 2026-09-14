@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canAccessPath,
   filterSidebarByPermissions,
   getDefaultProtectedPath,
+  ROUTE_PERMISSIONS,
 } from '../../routes/SIDEBAR_CONFIG';
+import { PATHS } from '../../routes/paths';
 import {
   hasAllPermissions,
   hasAnyPermission,
@@ -87,5 +90,36 @@ describe('permission helpers', () => {
     expect(labels).toContain('Catalogo');
     expect(labels).toContain('Compras');
     expect(labels).not.toContain('Mis pedidos');
+  });
+
+  it('uses only disenos.produccion for production queue visibility and route access', () => {
+    const designer = { rol: { nombre: 'Diseñador' } };
+    const allowedPermissions = ['disenos.produccion'];
+    const deniedPermissions = ['pedidos.ver', 'pedidos.pasar_proceso', 'pedidos.finalizar', 'disenos.ver'];
+
+    const allowedProduction = filterSidebarByPermissions(allowedPermissions, designer)
+      .find((section) => section.label === 'Producción');
+    const deniedProduction = filterSidebarByPermissions(deniedPermissions, designer)
+      .find((section) => section.label === 'Producción');
+
+    expect(ROUTE_PERMISSIONS[PATHS.PRODUCTION]).toEqual(['disenos.produccion']);
+    expect(allowedProduction?.items.map((item) => item.label)).toContain('Cola de Producción');
+    expect(canAccessPath(allowedPermissions, PATHS.PRODUCTION, designer)).toBe(true);
+    expect(deniedProduction?.items.map((item) => item.label)).toEqual(['Gestión de Diseños']);
+    expect(canAccessPath(deniedPermissions, PATHS.PRODUCTION, designer)).toBe(false);
+  });
+
+  it('keeps admin queue access and design management separated by their real permissions', () => {
+    const admin = { rol: { nombre: 'Administrador' } };
+    const permissions = ['dashboard.admin', 'disenos.produccion', 'disenos.ver'];
+    const production = filterSidebarByPermissions(permissions, admin)
+      .find((section) => section.label === 'Producción');
+
+    expect(production?.items.map((item) => item.label)).toEqual([
+      'Cola de Producción',
+      'Gestión de Diseños',
+    ]);
+    expect(canAccessPath(permissions, PATHS.PRODUCTION, admin)).toBe(true);
+    expect(canAccessPath(permissions, PATHS.PRODUCTION_DESIGNS, admin)).toBe(true);
   });
 });

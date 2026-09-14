@@ -72,7 +72,7 @@ describe('DisenoModal requirements flow', () => {
         onClose={vi.fn()}
         onSubmit={vi.fn()}
         isStaff={false}
-        getPedidos={vi.fn().mockResolvedValue([pedido])}
+        getPendingDesignOrders={vi.fn().mockResolvedValue([pedido])}
         getRequerimientosDiseno={getRequirements}
       />,
     );
@@ -80,6 +80,8 @@ describe('DisenoModal requirements flow', () => {
     fireEvent.change(await screen.findByLabelText(/pedido/i), {
       target: { value: '54' },
     });
+
+    expect(screen.getByRole('option', { name: 'Pedido #54 - Cliente Pixel' })).toBeInTheDocument();
 
     const selector = await screen.findByLabelText(/qué diseño vas a registrar/i);
     const stampOption = await screen.findByRole('option', {
@@ -95,6 +97,73 @@ describe('DisenoModal requirements flow', () => {
     expect(selector).toHaveValue('STAMP-34');
   });
 
+  it('trusts the specialized endpoint response without applying order-state filters', async () => {
+    render(
+      <DisenoModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        isStaff={false}
+        getPendingDesignOrders={vi.fn().mockResolvedValue([{
+          ...pedido,
+          estadoPedido: 'FINALIZADO',
+        }])}
+        getRequerimientosDiseno={getRequirements}
+      />,
+    );
+
+    expect(await screen.findByRole('option', {
+      name: 'Pedido #54 - Cliente Pixel',
+    })).toBeInTheDocument();
+  });
+
+  it('shows a stable empty state and disables both selectors when no orders are pending', async () => {
+    render(
+      <DisenoModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        isStaff={false}
+        getPendingDesignOrders={vi.fn().mockResolvedValue([])}
+        getRequerimientosDiseno={getRequirements}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText('No hay pedidos con diseños pendientes.').length).toBeGreaterThan(0);
+    });
+    expect(screen.getByLabelText('Pedido *')).toBeDisabled();
+    expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toBeDisabled();
+    expect(getRequirements).not.toHaveBeenCalled();
+  });
+
+  it('shows a human orders error and retries without closing the modal', async () => {
+    const getPendingDesignOrders = vi.fn()
+      .mockRejectedValueOnce(new Error('AxiosError 500'))
+      .mockResolvedValueOnce([pedido]);
+    render(
+      <DisenoModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        isStaff={false}
+        getPendingDesignOrders={getPendingDesignOrders}
+        getRequerimientosDiseno={getRequirements}
+      />,
+    );
+
+    expect(await screen.findByText('No pudimos cargar los pedidos con diseños pendientes.'))
+      .toBeInTheDocument();
+    expect(screen.queryByText(/AxiosError|500/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Pedido *')).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByRole('option', { name: 'Pedido #54 - Cliente Pixel' }))
+      .toBeInTheDocument();
+    expect(screen.getByLabelText('Pedido *')).toBeEnabled();
+    expect(getPendingDesignOrders).toHaveBeenCalledTimes(2);
+  });
+
   it('submits the selected requirement without asking for a product or general checkbox', async () => {
     const onSubmit = vi.fn().mockResolvedValue({});
     const { container } = render(
@@ -103,7 +172,7 @@ describe('DisenoModal requirements flow', () => {
         onClose={vi.fn()}
         onSubmit={onSubmit}
         isStaff={false}
-        getPedidos={vi.fn().mockResolvedValue([pedido])}
+        getPendingDesignOrders={vi.fn().mockResolvedValue([pedido])}
         getRequerimientosDiseno={getRequirements}
       />,
     );
@@ -131,6 +200,69 @@ describe('DisenoModal requirements flow', () => {
       idPedido: 54,
       archivo: file,
     })));
+  });
+
+  it('refreshes pending orders after registering and clears an order no longer returned', async () => {
+    const getPendingDesignOrders = vi.fn()
+      .mockResolvedValueOnce([pedido])
+      .mockResolvedValueOnce([]);
+    const onSubmit = vi.fn().mockResolvedValue({});
+    const { container } = render(
+      <DisenoModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        isStaff={false}
+        getPendingDesignOrders={getPendingDesignOrders}
+        getRequerimientosDiseno={getRequirements}
+      />,
+    );
+
+    fireEvent.change(await screen.findByLabelText('Pedido *'), { target: { value: '54' } });
+    await waitFor(() => {
+      expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toHaveValue('STAMP-34');
+    });
+    fireEvent.change(container.querySelector('input[type="file"]'), {
+      target: { files: [new File(['design'], 'design.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /registrar diseño/i }));
+
+    await waitFor(() => expect(getPendingDesignOrders).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('heading', { name: 'Registrar diseño' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Pedido *')).toHaveValue('');
+    expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toHaveValue('');
+    expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toBeDisabled();
+    expect(screen.getAllByText('No hay pedidos con diseños pendientes.').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the order and reloads its requirements when it remains pending after registration', async () => {
+    const getPendingDesignOrders = vi.fn().mockResolvedValue([pedido]);
+    const onSubmit = vi.fn().mockResolvedValue({});
+    const { container } = render(
+      <DisenoModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        isStaff={false}
+        getPendingDesignOrders={getPendingDesignOrders}
+        getRequerimientosDiseno={getRequirements}
+      />,
+    );
+
+    fireEvent.change(await screen.findByLabelText('Pedido *'), { target: { value: '54' } });
+    await waitFor(() => {
+      expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toHaveValue('STAMP-34');
+    });
+    fireEvent.change(container.querySelector('input[type="file"]'), {
+      target: { files: [new File(['design'], 'design.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /registrar diseño/i }));
+
+    await waitFor(() => expect(getPendingDesignOrders).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(getRequirements).toHaveBeenCalledTimes(2));
+    expect(screen.getByLabelText('Pedido *')).toHaveValue('54');
+    expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toHaveValue('STAMP-34');
+    expect(screen.getByText('Seleccionar archivo')).toBeInTheDocument();
   });
 
   it('keeps a preset rejected requirement selected and shows its previous version', async () => {
@@ -188,7 +320,7 @@ describe('DisenoModal requirements flow', () => {
         onClose={vi.fn()}
         onSubmit={vi.fn()}
         isStaff={false}
-        getPedidos={vi.fn().mockResolvedValue([pedido, secondOrder])}
+        getPendingDesignOrders={vi.fn().mockResolvedValue([pedido, secondOrder])}
         getRequerimientosDiseno={getRequirements}
       />,
     );

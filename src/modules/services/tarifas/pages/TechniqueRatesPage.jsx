@@ -93,7 +93,7 @@ export const TechniqueRatesPage = () => {
         <div>
           <span className={styles.eyebrow}>Catálogo / Técnicas</span>
           <h1>Tarifas por técnica</h1>
-          <p>Consulta precios por dimensiones. La administración normal se realiza desde Gestión de Servicios.</p>
+          <p>Consulta precios por dimensiones. La administración normal se realiza desde Gestión de Técnicas.</p>
         </div>
         {hasPermission('tarifas.tecnicas.crear') && (
           <button type="button" className={styles.primaryButton} onClick={openCreate}>

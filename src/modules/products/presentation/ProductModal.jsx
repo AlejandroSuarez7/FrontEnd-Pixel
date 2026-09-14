@@ -217,7 +217,7 @@ export const ProductModal = ({
                   <strong>Rangos de descuento por cantidad</strong>
                   <p className={styles.rangeHelp}>
                     El descuento se aplica según la cantidad solicitada de este producto.
-                    Los precios se configuran desde Gestión de Servicios.
+                    Los precios se configuran desde Gestión de Técnicas.
                   </p>
                 </div>
                 <button

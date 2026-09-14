@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiClient } from '../../../../core/services/apiService';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
@@ -52,7 +52,7 @@ const DisenoModalContent = ({
   onSubmit,
   diseno,
   isStaff,
-  getPedidos,
+  getPendingDesignOrders,
   getRequerimientosDiseno,
   presetPedido = null,
   presetRequirement = null,
@@ -90,12 +90,13 @@ const DisenoModalContent = ({
     presetPedido ? [presetPedido] : [],
   );
   const [loadingPedidos, setLoadingPedidos] = useState(
-    Boolean(!isEditing && getPedidos && !lockPedido),
+    Boolean(!isEditing && getPendingDesignOrders && !lockPedido),
   );
   const [loadingDisenadores, setLoadingDisenadores] = useState(
     Boolean(isStaff && !isEditing),
   );
   const [pedidosError, setPedidosError] = useState('');
+  const idPedidoRef = useRef(initialPedidoId);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const normalizedPreset = initialPresetRequirement;
@@ -124,31 +125,74 @@ const DisenoModalContent = ({
   const hasStoredFile = Boolean(storedFile.url);
   const requiresNewFile = !isEditing || !hasStoredFile;
 
+  const clearPedidoSelection = useCallback(() => {
+    idPedidoRef.current = '';
+    setIdPedido('');
+    setIdRequirement('');
+    setRequirements([]);
+    setRequirementsSummary(null);
+    setRequirementsError('');
+    setLoadingRequirements(false);
+    setArchivo(null);
+  }, []);
+
+  const loadPendingDesignOrders = useCallback(async ({
+    isActive = () => true,
+    reloadCurrentRequirements = false,
+  } = {}) => {
+    if (!getPendingDesignOrders) return [];
+
+    await Promise.resolve();
+    if (!isActive()) return null;
+    setLoadingPedidos(true);
+    setPedidosError('');
+
+    try {
+      const data = await getPendingDesignOrders();
+      if (!isActive()) return null;
+
+      const nextOrders = Array.isArray(data) ? data : [];
+      setPedidosDisponibles(nextOrders);
+
+      const currentPedidoId = idPedidoRef.current;
+      const keepsCurrentPedido = currentPedidoId && nextOrders.some(
+        (item) => String(item.idPedido) === currentPedidoId,
+      );
+
+      if (currentPedidoId && !keepsCurrentPedido) {
+        clearPedidoSelection();
+      } else if (keepsCurrentPedido && reloadCurrentRequirements) {
+        setIdRequirement('');
+        setRequirements([]);
+        setRequirementsSummary(null);
+        setRequirementsError('');
+        setLoadingRequirements(true);
+        setRequirementsRetry((value) => value + 1);
+      }
+
+      return nextOrders;
+    } catch {
+      if (!isActive()) return null;
+      setPedidosDisponibles([]);
+      setPedidosError('No pudimos cargar los pedidos con diseños pendientes.');
+      return null;
+    } finally {
+      if (isActive()) setLoadingPedidos(false);
+    }
+  }, [clearPedidoSelection, getPendingDesignOrders]);
+
   useEffect(() => {
-    if (isEditing || !getPedidos || lockPedido) return undefined;
+    if (isEditing || !getPendingDesignOrders || lockPedido) return undefined;
 
     let active = true;
-
-    getPedidos()
-      .then(data => {
-        if (!active) return;
-        setPedidosDisponibles((data || []).filter(item => (
-          item.estadoPedido !== 'FINALIZADO' && item.estadoPedido !== 'ANULADO'
-        )));
-      })
-      .catch(error => {
-        if (!active) return;
-        setPedidosDisponibles([]);
-        setPedidosError(error.message || 'No se pudieron consultar los pedidos disponibles.');
-      })
-      .finally(() => {
-        if (active) setLoadingPedidos(false);
-      });
+    Promise.resolve().then(() => {
+      if (active) loadPendingDesignOrders({ isActive: () => active });
+    });
 
     return () => {
       active = false;
     };
-  }, [getPedidos, isEditing, lockPedido]);
+  }, [getPendingDesignOrders, isEditing, loadPendingDesignOrders, lockPedido]);
 
   useEffect(() => {
     if (isEditing || !idPedido || !getRequerimientosDiseno) return undefined;
@@ -227,6 +271,7 @@ const DisenoModalContent = ({
 
   const handlePedidoChange = event => {
     const nextPedidoId = event.target.value;
+    idPedidoRef.current = nextPedidoId;
     setIdPedido(nextPedidoId);
     setIdRequirement('');
     setRequirements([]);
@@ -271,6 +316,14 @@ const DisenoModalContent = ({
               observaciones,
             }),
         });
+
+        if (!isEditing && !lockPedido && getPendingDesignOrders) {
+          setIdRequirement('');
+          setRequirements([]);
+          setRequirementsSummary(null);
+          setArchivo(null);
+          await loadPendingDesignOrders({ reloadCurrentRequirements: true });
+        }
       } catch (error) {
         notifications.error(error.message || 'No se pudo procesar el diseño.');
       }
@@ -331,11 +384,23 @@ const DisenoModalContent = ({
                   value={idPedido}
                   onChange={handlePedidoChange}
                   className={styles.inputField}
-                  disabled={isSubmitting || isEditing || loadingPedidos}
+                  disabled={
+                    isSubmitting
+                    || isEditing
+                    || loadingPedidos
+                    || Boolean(pedidosError)
+                    || pedidosDisponibles.length === 0
+                  }
                   required={!isEditing}
                 >
                   <option value="">
-                    {loadingPedidos ? 'Cargando pedidos...' : 'Selecciona un pedido'}
+                    {loadingPedidos
+                      ? 'Cargando pedidos...'
+                      : pedidosError
+                        ? 'No fue posible cargar los pedidos'
+                        : pedidosDisponibles.length === 0
+                          ? 'No hay pedidos con diseños pendientes'
+                          : 'Selecciona un pedido'}
                   </option>
                   {isEditing && idPedido ? <option value={idPedido}>Pedido #{idPedido}</option> : null}
                   {pedidosDisponibles.map(item => (
@@ -347,9 +412,23 @@ const DisenoModalContent = ({
               </div>
             )}
 
-            {pedidosError && <p className={styles.detailsInfoBox}>{pedidosError}</p>}
+            {!isEditing && !loadingPedidos && !pedidosError && pedidosDisponibles.length === 0 && (
+              <p className={styles.detailsInfoBox}>No hay pedidos con diseños pendientes.</p>
+            )}
+            {pedidosError && (
+              <div className="disenos-requirement-error">
+                <p>{pedidosError}</p>
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={() => loadPendingDesignOrders({ reloadCurrentRequirements: true })}
+                >
+                  Reintentar
+                </button>
+              </div>
+            )}
 
-            {!isEditing && idPedido && (
+            {!isEditing && (
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel} htmlFor="diseno-requirement">
                   ¿Qué diseño vas a registrar? *
@@ -361,6 +440,9 @@ const DisenoModalContent = ({
                   className={styles.inputField}
                   disabled={
                     isSubmitting
+                    || !idPedido
+                    || loadingPedidos
+                    || Boolean(pedidosError)
                     || loadingRequirements
                     || lockPedido
                     || availableRequirements.length === 1

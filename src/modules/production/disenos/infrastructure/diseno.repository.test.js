@@ -101,6 +101,34 @@ describe('DisenoApiRepository requirements', () => {
     expect(result.archivo.name).toBe('design.png');
   });
 
+  it('uses the specialized pending-design orders endpoint without querying the general list', async () => {
+    apiClient.get.mockResolvedValue({
+      data: {
+        data: [{
+          idPedido: 64,
+          cliente: { nombre: 'Cliente ejemplo' },
+          cantidadRequerimientosPendientes: 2,
+        }],
+      },
+    });
+    const signal = new AbortController().signal;
+    const repository = new DisenoApiRepository();
+
+    const result = await repository.listPendingDesignOrders({ signal });
+
+    expect(apiClient.get).toHaveBeenCalledTimes(1);
+    expect(apiClient.get).toHaveBeenCalledWith(
+      'api/disenos/pedidos-pendientes',
+      { signal },
+    );
+    expect(result).toEqual([{
+      idPedido: 64,
+      cliente: { nombre: 'Cliente ejemplo' },
+      cantidadRequerimientosPendientes: 2,
+    }]);
+    expect(apiClient.get).not.toHaveBeenCalledWith('api/pedidos', expect.anything());
+  });
+
   it('attaches a file to an existing design using PATCH multipart', async () => {
     apiClient.patch.mockResolvedValue({ data: { data: { idDiseno: 15, archivoUrl: 'https://files.pixel.test/design.pdf' } } });
     const repository = new DisenoApiRepository();
