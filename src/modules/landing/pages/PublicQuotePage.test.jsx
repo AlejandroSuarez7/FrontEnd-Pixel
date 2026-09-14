@@ -182,6 +182,30 @@ describe('PublicQuotePage', () => {
     expect(JSON.stringify(payload)).not.toMatch(/localId|precioBase|subtotal|descuento/);
   });
 
+  it('keeps the selected design file after an upload error so the client can retry', async () => {
+    publicQuoteRepository.create.mockRejectedValue(new Error('No se pudo subir el diseño.'));
+    const user = userEvent.setup();
+    const { container } = render(<PublicQuotePage />);
+
+    await screen.findByRole('heading', { name: /configura un producto/i });
+    await fillContact(user);
+    await configureCatalogProduct(user);
+    await user.selectOptions(screen.getByLabelText(/diseño para este estampado/i), 'CLIENTE');
+    const file = new File(['logo'], 'logo-cliente.png', { type: 'image/png' });
+    await user.upload(container.querySelector('input[type="file"]'), file);
+    expect(screen.getByText('logo-cliente.png')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /añadir a la cotización/i }));
+    await user.click(screen.getByRole('button', { name: /enviar solicitud de cotización/i }));
+
+    await waitFor(() => expect(publicQuoteRepository.create).toHaveBeenCalledTimes(1));
+    expect(publicQuoteRepository.create.mock.calls[0][0].items[0].archivoDiseno).toBe(file);
+    expect(notificationsMock.error).toHaveBeenCalledWith('No se pudo subir el diseño.');
+
+    await user.click(within(screen.getByRole('complementary')).getByRole('button', { name: /editar/i }));
+    expect(screen.getByText('logo-cliente.png')).toBeInTheDocument();
+  });
+
   it('allows an OTRO product without stamps and omits idProducto', async () => {
     const user = userEvent.setup();
     render(<PublicQuotePage />);

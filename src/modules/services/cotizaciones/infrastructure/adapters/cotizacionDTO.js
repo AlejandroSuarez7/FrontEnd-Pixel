@@ -23,6 +23,7 @@ export const quotesDTO = {
       origenDiseno:        det.origenDiseno ?? 'PIXEL',
       esDisenoGeneral:     Boolean(det.esDisenoGeneral),
       archivoDisenoInicialUrl: det.archivoDisenoInicialUrl ?? '',
+      archivoDisenoInicial: det.archivoDisenoInicial ?? null,
       subtotal:            det.subtotal ?? null,
       subtotalBruto:       det.subtotalBruto ?? det.subtotal ?? null,
       subtotalConDescuento: det.subtotalConDescuento ?? null,
@@ -144,6 +145,7 @@ export const quotesDTO = {
           : {}),
         cantidad: Number(item.cantidad || 1),
         suministradoPor: String(item.suministradoPor || 'PIXEL').toUpperCase(),
+        ...(item.esDisenoGeneral ? { esDisenoGeneral: true } : {}),
         estampados: sourceStamps.map((stamp) => ({
           idTecnica: stamp.idTecnica ? Number(stamp.idTecnica) : null,
           idTarifaTecnica: stamp.idTarifaTecnica ? Number(stamp.idTarifaTecnica) : null,

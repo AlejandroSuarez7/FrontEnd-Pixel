@@ -18,6 +18,7 @@ import {
   getTechnique,
 } from '../domain/publicQuoteBuilder';
 import { StampTariffSelector } from './StampTariffSelector';
+import { DesignFileUploader } from '../../../shared/components/DesignFileUploader/DesignFileUploader';
 
 const LOCATION_SUGGESTIONS = [
   'Frente',
@@ -47,6 +48,13 @@ export const PublicQuoteProductEditor = ({
   const [openStampId, setOpenStampId] = useState(item.estampados?.[0]?.localId || null);
 
   const selectedProduct = getProduct(products, item.idProducto);
+  const clientProvidesDesign = item.requiereDiseno !== false && (
+    (item.esDisenoGeneral && item.origenDiseno === 'CLIENTE')
+    || (!item.esDisenoGeneral && item.estampados.some((stamp) => stamp.origenDiseno === 'CLIENTE'))
+  );
+  const historicalDesignUrl = item.archivoDisenoInicial?.secureUrl
+    || item.archivoDisenoInicialUrl
+    || '';
   const filteredProducts = useMemo(() => (
     item.idCategoriaProducto
       ? products.filter((product) => (
@@ -87,6 +95,8 @@ export const PublicQuoteProductEditor = ({
       origenDiseno: requiresDesign ? item.origenDiseno : 'NO_REQUIERE',
       esDisenoGeneral: requiresDesign ? item.esDisenoGeneral : false,
       archivoDisenoInicialUrl: requiresDesign ? item.archivoDisenoInicialUrl : '',
+      archivoDisenoInicial: requiresDesign ? item.archivoDisenoInicial : null,
+      archivoDiseno: requiresDesign ? item.archivoDiseno : null,
       estampados: item.estampados.map((stamp) => ({
         ...stamp,
         origenDiseno: requiresDesign ? stamp.origenDiseno : 'NO_REQUIERE',
@@ -101,6 +111,8 @@ export const PublicQuoteProductEditor = ({
       origenDiseno: requiresDesign ? 'PENDIENTE_DEFINIR' : 'NO_REQUIERE',
       esDisenoGeneral: false,
       archivoDisenoInicialUrl: '',
+      archivoDisenoInicial: null,
+      archivoDiseno: null,
       estampados: item.estampados.map((stamp) => ({
         ...stamp,
         origenDiseno: requiresDesign ? 'PENDIENTE_DEFINIR' : 'NO_REQUIERE',
@@ -557,7 +569,7 @@ export const PublicQuoteProductEditor = ({
                     value={item.origenDiseno}
                     onChange={(event) => onPatch({
                       origenDiseno: event.target.value,
-                      ...(event.target.value !== 'CLIENTE' ? { archivoDisenoInicialUrl: '' } : {}),
+                      ...(event.target.value !== 'CLIENTE' ? { archivoDiseno: null } : {}),
                     })}
                     disabled={disabled}
                   >
@@ -566,43 +578,24 @@ export const PublicQuoteProductEditor = ({
                     ))}
                   </select>
                 </label>
-                {item.origenDiseno === 'CLIENTE' && (
-                  <label>
-                    <span>Enlace del diseño</span>
-                    <input
-                      type="url"
-                      value={item.archivoDisenoInicialUrl}
-                      onChange={(event) => onPatch({ archivoDisenoInicialUrl: event.target.value })}
-                      maxLength={255}
-                      placeholder="https://drive.google.com/..."
-                      disabled={disabled}
-                    />
-                    <small>Puedes enviarlo después · {item.archivoDisenoInicialUrl.length} / 255</small>
-                  </label>
+              </div>
+            )}
+            {clientProvidesDesign && (
+              <div className="public-quote-design-upload wide">
+                <DesignFileUploader
+                  file={item.archivoDiseno || null}
+                  onFileChange={(file) => onPatch({ archivoDiseno: file })}
+                  disabled={disabled}
+                  label="Adjunta tu diseño"
+                  helpText="JPG, PNG, WEBP o PDF · Máximo 10 MB"
+                />
+                {historicalDesignUrl && !item.archivoDiseno && (
+                  <a href={historicalDesignUrl} target="_blank" rel="noreferrer">
+                    Ver archivo de diseño actual
+                  </a>
                 )}
               </div>
             )}
-            {!item.esDisenoGeneral
-              && item.estampados.some((stamp) => stamp.origenDiseno === 'CLIENTE')
-              && (
-                <div className="public-quote-field-grid two">
-                  <label className="wide">
-                    <span>Enlace del diseño</span>
-                    <input
-                      type="url"
-                      value={item.archivoDisenoInicialUrl}
-                      onChange={(event) => onPatch({ archivoDisenoInicialUrl: event.target.value })}
-                      maxLength={255}
-                      placeholder="https://drive.google.com/..."
-                      disabled={disabled}
-                    />
-                    <small>
-                      Puedes compartir un enlace accesible o enviarlo después ·{' '}
-                      {item.archivoDisenoInicialUrl.length} / 255
-                    </small>
-                  </label>
-                </div>
-              )}
           </>
         ) : (
           <p className="public-quote-no-design-note">Este producto se enviará como “No requiere diseño”.</p>

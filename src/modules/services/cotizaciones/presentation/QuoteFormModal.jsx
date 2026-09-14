@@ -6,6 +6,7 @@ import { publicQuoteRepository } from '../../../landing/infrastructure/publicQuo
 import { StampTariffSelector } from '../../../landing/components/StampTariffSelector';
 import { getStampSizeSummary } from '../../../landing/domain/stampTariffs';
 import { clientRepository } from '../../../users/infrastructure/client.repository';
+import { DesignFileUploader } from '../../../../shared/components/DesignFileUploader/DesignFileUploader';
 import styles from './quotes.module.css';
 
 const LOCATION_OPTIONS = [
@@ -18,10 +19,10 @@ const LOCATION_OPTIONS = [
 ];
 
 const DESIGN_OPTIONS = [
-  ['CLIENTE', 'El cliente aporta el diseno'],
-  ['PIXEL', 'PIXEL crea el diseno'],
+  ['CLIENTE', 'El cliente aporta el diseño'],
+  ['PIXEL', 'PIXEL crea el diseño'],
   ['PENDIENTE_DEFINIR', 'Se definira despues'],
-  ['NO_REQUIERE', 'No requiere diseno'],
+  ['NO_REQUIERE', 'No requiere diseño'],
 ];
 
 const STEPS = [
@@ -80,6 +81,10 @@ const createItem = (source = {}) => {
     suministradoPor: source.suministradoPor || 'PIXEL',
     observaciones: source.observaciones || '',
     producto: source.producto || null,
+    esDisenoGeneral: Boolean(source.esDisenoGeneral),
+    archivoDisenoInicial: source.archivoDisenoInicial || null,
+    archivoDisenoInicialUrl: source.archivoDisenoInicialUrl || '',
+    archivoDiseno: null,
     estampados: stamps,
   };
 };
@@ -343,11 +348,16 @@ export const QuoteFormModal = ({
           : item));
       }
 
-      const targetStamp = current.flatMap((item) => item.estampados)
-        .find((stamp) => stamp.localId === targetStampId);
+      const targetItem = current.find((item) => (
+        item.estampados.some((stamp) => stamp.localId === targetStampId)
+      ));
+      const targetStamp = targetItem?.estampados.find((stamp) => stamp.localId === targetStampId);
       const group = targetStamp?.grupoDisenoCompartido || nextSharedDesignGroup(current);
-      return current.map((item) => ({
+      return current.map((item, index) => ({
         ...item,
+        ...(index === itemIndex && targetItem?.archivoDiseno
+          ? { archivoDiseno: targetItem.archivoDiseno }
+          : {}),
         estampados: item.estampados.map((stamp) => (
           stamp.localId === stampId || stamp.localId === targetStampId
             ? { ...stamp, grupoDisenoCompartido: group }
@@ -363,6 +373,7 @@ export const QuoteFormModal = ({
       return current.map((item, index) => index === itemIndex
         ? {
             ...item,
+            esDisenoGeneral: enabled,
             estampados: item.estampados.map((stamp) => ({
               ...stamp,
               grupoDisenoCompartido: group,
@@ -557,9 +568,9 @@ export const QuoteFormModal = ({
       <section className={`${styles.modalContainer} ${styles.quoteRequestModal}`} role="dialog" aria-modal="true">
         <header className={styles.modalHeader}>
           <div>
-            <span className={styles.breadcrumb}>{isEditing ? 'Editar solicitud' : 'Cotizacion presencial'}</span>
+            <span className={styles.breadcrumb}>{isEditing ? 'Editar solicitud' : 'Cotización presencial'}</span>
             <h3 className={styles.modalTitle}>
-              {isEditing ? `Editar cotizacion #${quote.idCotizacion}` : 'Nueva solicitud de cotizacion'}
+              {isEditing ? `Editar cotización #${quote.idCotizacion}` : 'Nueva solicitud de cotización'}
             </h3>
           </div>
           <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting} aria-label="Cerrar">x</button>
@@ -594,7 +605,7 @@ export const QuoteFormModal = ({
                     Buscar cliente existente
                   </button>
                   <button type="button" className={clientMode === 'NEW' ? styles.quoteTypeActive : ''} onClick={() => changeClientMode('NEW')}>
-                    Registrar cotizacion sin acceso al portal
+                    Registrar cotización sin acceso al portal
                   </button>
                 </div>
 
@@ -652,7 +663,7 @@ export const QuoteFormModal = ({
                         <input type="tel" value={cliente.telefono} onChange={(event) => updateClient('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))} className={styles.inputField} maxLength={10} inputMode="numeric" />
                       </label>
                     </div>
-                    <p className={styles.quoteCompatibilityNotice}>No se creara un Usuario ni se solicitara contrasena para registrar esta cotizacion.</p>
+                    <p className={styles.quoteCompatibilityNotice}>No se creará un usuario ni se solicitará contraseña para registrar esta cotización.</p>
                   </>
                 )}
               </section>
@@ -779,7 +790,7 @@ export const QuoteFormModal = ({
                                 />
                               </label>
                               <label className={`${styles.inputGroup} ${styles.quoteRequestWide}`}>
-                                <span className={styles.inputLabel}>Descripcion</span>
+                                <span className={styles.inputLabel}>Descripción</span>
                                 <textarea
                                   value={item.descripcionPersonalizada}
                                   onChange={(event) => updateItem(itemIndex, 'descripcionPersonalizada', event.target.value)}
@@ -849,8 +860,30 @@ export const QuoteFormModal = ({
                                 ))}
                                 onChange={(event) => applyOneDesignForProduct(itemIndex, event.target.checked)}
                               />
-                              Usar el mismo diseno en todos los estampados de este producto
+                              Usar el mismo diseño en todos los estampados de este producto
                             </label>
+                          )}
+
+                          {item.estampados.some((stamp) => stamp.origenDiseno === 'CLIENTE') && (
+                            <div className={styles.quoteRequestWide}>
+                              <DesignFileUploader
+                                file={item.archivoDiseno || null}
+                                onFileChange={(file) => updateItem(itemIndex, 'archivoDiseno', file)}
+                                disabled={isSubmitting}
+                                label="Adjunta tu diseño"
+                                helpText="JPG, PNG, WEBP o PDF · Máximo 10 MB"
+                              />
+                              {(item.archivoDisenoInicial?.secureUrl || item.archivoDisenoInicialUrl)
+                                && !item.archivoDiseno && (
+                                  <a
+                                    href={item.archivoDisenoInicial?.secureUrl || item.archivoDisenoInicialUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    Ver archivo de diseño actual
+                                  </a>
+                                )}
+                            </div>
                           )}
 
                           <div className={styles.quoteStampsEditor}>
@@ -889,7 +922,7 @@ export const QuoteFormModal = ({
                                 {isStampOpen && (
                                 <div className={styles.quoteRequestGrid}>
                                   <label className={styles.inputGroup}>
-                                    <span className={styles.inputLabel}>Servicio o tecnica</span>
+                                    <span className={styles.inputLabel}>Servicio o técnica</span>
                                     <select
                                       value={stamp.idTecnica}
                                       onChange={(event) => updateStamp(itemIndex, stamp.localId, 'idTecnica', event.target.value)}
@@ -923,7 +956,7 @@ export const QuoteFormModal = ({
                                     messageClassName={styles.quoteCompatibilityNotice}
                                   />
                                   <label className={styles.inputGroup}>
-                                    <span className={styles.inputLabel}>Origen del diseno</span>
+                                    <span className={styles.inputLabel}>Origen del diseño</span>
                                     <select
                                       value={stamp.origenDiseno}
                                       onChange={(event) => updateStamp(itemIndex, stamp.localId, 'origenDiseno', event.target.value)}
@@ -933,22 +966,22 @@ export const QuoteFormModal = ({
                                     </select>
                                   </label>
                                   <label className={styles.inputGroup}>
-                                    <span className={styles.inputLabel}>Que diseno utilizara este estampado?</span>
+                                    <span className={styles.inputLabel}>¿Qué diseño utilizará este estampado?</span>
                                     <select
                                       value={sharedTarget?.localId || ''}
                                       onChange={(event) => shareDesignWithStamp(itemIndex, stamp.localId, event.target.value)}
                                       className={styles.selectField}
                                     >
-                                      <option value="">Diseno diferente</option>
+                                      <option value="">Diseño diferente</option>
                                       {availableDesigns.map((candidate) => (
                                         <option key={candidate.localId} value={candidate.localId}>
-                                          Usar el mismo diseno de Producto {candidate.itemIndex + 1} - {candidate.ubicacion || `Estampado ${candidate.stampIndex + 1}`}
+                                          Usar el mismo diseño de Producto {candidate.itemIndex + 1} - {candidate.ubicacion || `Estampado ${candidate.stampIndex + 1}`}
                                         </option>
                                       ))}
                                     </select>
                                   </label>
                                   <label className={`${styles.inputGroup} ${styles.quoteRequestWide}`}>
-                                    <span className={styles.inputLabel}>Descripcion del estampado</span>
+                                    <span className={styles.inputLabel}>Descripción del estampado</span>
                                     <input
                                       value={stamp.descripcion}
                                       onChange={(event) => updateStamp(itemIndex, stamp.localId, 'descripcion', event.target.value)}
@@ -1006,7 +1039,7 @@ export const QuoteFormModal = ({
 
             <div className={styles.quotePendingPriceNotice}>
               <strong>Precio pendiente de confirmacion</strong>
-              <span>PIXEL completara durante la revision los servicios, medidas o disenos que esten pendientes.</span>
+              <span>PIXEL completará durante la revisión los servicios, medidas o diseños que estén pendientes.</span>
             </div>
             </>
             )}
@@ -1046,7 +1079,7 @@ export const QuoteFormModal = ({
                         <ul>
                           {item.estampados.map((stamp) => (
                             <li key={stamp.localId}>
-                              {getStampSummary(stamp, catalogs.techniques)} - {DESIGN_OPTIONS.find(([value]) => value === stamp.origenDiseno)?.[1] || 'Diseno por definir'}
+                              {getStampSummary(stamp, catalogs.techniques)} - {DESIGN_OPTIONS.find(([value]) => value === stamp.origenDiseno)?.[1] || 'Diseño por definir'}
                             </li>
                           ))}
                         </ul>
@@ -1067,7 +1100,7 @@ export const QuoteFormModal = ({
                   <span>
                     {sendImmediateProposal
                       ? 'La solicitud se creara primero y luego se enviara el precio acordado al cliente.'
-                      : 'El equipo de PIXEL revisara servicios, medidas, descuentos y disenos antes de enviar la propuesta.'}
+                      : 'El equipo de PIXEL revisará servicios, medidas, descuentos y diseños antes de enviar la propuesta.'}
                   </span>
                 </div>
 

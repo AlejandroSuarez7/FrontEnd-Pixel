@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { notifications } from '../utils/notifications';
 
-const BASE_URL = '/api/';
+const BASE_URL = '';
 export const SESSION_EXPIRED_EVENT = 'pixel:session-expired';
 const AUTH_STORAGE_KEYS = ['token', 'pixel_user', 'pixel_permissions'];
 
@@ -11,6 +11,23 @@ export const apiClient = axios.create({
 });
 
 export const prepareApiRequest = (config) => {
+
+  if (
+    typeof config.url === 'string' &&
+    !/^https?:\/\//i.test(config.url)
+  ) {
+    let url = config.url.trim();
+
+    // Quitar barras iniciales
+    url = url.replace(/^\/+/, '');
+
+    // Si ya viene con api/, quitarlo temporalmente
+    url = url.replace(/^api\/+/i, '');
+
+    // Forzar SIEMPRE ruta absoluta bajo /api/
+    config.url = `/api/${url}`;
+  }
+
   const token = localStorage.getItem('token');
 
   if (token) {

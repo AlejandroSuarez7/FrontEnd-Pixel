@@ -40,7 +40,7 @@ describe('RegisterClientDesignModal', () => {
     fireEvent.change(screen.getByLabelText(/observaciones/i), {
       target: { value: 'Recibido por correo.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar diseno recibido' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar diseño recibido' }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({
       archivo: file,
@@ -67,7 +67,7 @@ describe('RegisterClientDesignModal', () => {
     fireEvent.change(container.querySelector('input[type="file"]'), {
       target: { files: [new File(['design'], 'diseno.pdf', { type: 'application/pdf' })] },
     });
-    const submit = screen.getByRole('button', { name: 'Registrar diseno recibido' });
+    const submit = screen.getByRole('button', { name: 'Registrar diseño recibido' });
     fireEvent.click(submit);
     fireEvent.click(submit);
 
@@ -77,7 +77,7 @@ describe('RegisterClientDesignModal', () => {
   });
 
   it('keeps the modal open when the request fails', async () => {
-    const onSubmit = vi.fn().mockRejectedValue(new Error('No se pudo registrar el diseno recibido.'));
+    const onSubmit = vi.fn().mockRejectedValue(new Error('No se pudo registrar el diseño recibido.'));
     const { container } = render(
       <RegisterClientDesignModal
         isOpen
@@ -91,11 +91,11 @@ describe('RegisterClientDesignModal', () => {
     fireEvent.change(container.querySelector('input[type="file"]'), {
       target: { files: [new File(['design'], 'diseno.webp', { type: 'image/webp' })] },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar diseno recibido' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar diseño recibido' }));
 
     await waitFor(() => {
-      expect(notifications.error).toHaveBeenCalledWith('No se pudo registrar el diseno recibido.');
+      expect(notifications.error).toHaveBeenCalledWith('No se pudo registrar el diseño recibido.');
     });
-    expect(screen.getByRole('dialog', { name: 'Registrar diseno recibido' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Registrar diseño recibido' })).toBeInTheDocument();
   });
 });

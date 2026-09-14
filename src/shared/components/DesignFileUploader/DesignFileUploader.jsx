@@ -15,7 +15,7 @@ export const DesignFileUploader = ({
   loading = false,
   error = '',
   label = 'Archivo *',
-  helpText = 'JPG, PNG, WEBP o PDF · Maximo 10 MB',
+  helpText = 'JPG, PNG, WEBP o PDF · Máximo 10 MB',
 }) => {
   const generatedId = useId();
   const inputRef = useRef(null);
@@ -94,7 +94,7 @@ export const DesignFileUploader = ({
       ) : (
         <div className="design-file-uploader-file">
           {previewUrl ? (
-            <img src={previewUrl} alt="Vista previa del diseno seleccionado" />
+            <img src={previewUrl} alt="Vista previa del diseño seleccionado" />
           ) : (
             <span className="design-file-uploader-icon" aria-hidden="true">
               {isPdf ? <FileText size={24} /> : <Image size={24} />}
@@ -103,7 +103,7 @@ export const DesignFileUploader = ({
           <div className="design-file-uploader-details">
             <strong title={file.name}>{file.name}</strong>
             <span>{getDesignFileFormatLabel(fileInfo)} · {formatFileSize(file.size)}</span>
-            {loading && <span className="design-file-uploader-progress">Subiendo diseno...</span>}
+            {loading && <span className="design-file-uploader-progress">Subiendo diseño...</span>}
           </div>
           <button
             type="button"

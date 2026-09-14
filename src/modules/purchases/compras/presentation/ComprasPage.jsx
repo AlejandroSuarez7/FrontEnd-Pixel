@@ -187,8 +187,8 @@ export const ComprasPage = () => {
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
         <div>
-          <span className={styles.breadcrumb}>Compras / Gestion</span>
-          <h1 className={styles.pageTitle}>Gestion de Compras</h1>
+          <span className={styles.breadcrumb}>Compras / Gestión</span>
+          <h1 className={styles.pageTitle}>Gestión de Compras</h1>
           <p className={styles.pageSubtitle}>
             {isDesigner ? 'Consulta el estado operativo de compras asociadas a pedidos.' : 'Control interno de compras de insumos por pedido.'}
           </p>

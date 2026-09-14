@@ -1,19 +1,19 @@
 export const DESIGN_COVERAGE_LABELS = {
-  NO_REQUIERE_DISENO: 'No requiere diseno',
+  NO_REQUIERE_DISENO: 'No requiere diseño',
   PENDIENTE_CREACION_PIXEL: 'Pendiente de creacion por PIXEL',
   PENDIENTE_ARCHIVO_CLIENTE: 'Pendiente de archivo del cliente',
-  DISENO_CLIENTE_PENDIENTE_VINCULACION: 'Diseno del cliente pendiente de registro',
-  DISENO_ENTREGADO_POR_CLIENTE: 'Diseno recibido',
-  DISENO_GENERAL_ENTREGADO_POR_CLIENTE: 'Diseno general entregado por el cliente',
-  ENVIADO: 'Diseno recibido',
+  DISENO_CLIENTE_PENDIENTE_VINCULACION: 'Diseño del cliente pendiente de registro',
+  DISENO_ENTREGADO_POR_CLIENTE: 'Diseño recibido',
+  DISENO_GENERAL_ENTREGADO_POR_CLIENTE: 'Diseño general entregado por el cliente',
+  ENVIADO: 'Diseño recibido',
   DISENO_ENVIADO: 'Pendiente de revision',
-  DISENO_GENERAL_ENVIADO: 'Diseno general enviado para revision',
-  DISENO_APROBADO: 'Diseno aprobado',
+  DISENO_GENERAL_ENVIADO: 'Diseño general enviado para revisión',
+  DISENO_APROBADO: 'Diseño aprobado',
   DISENO_RECHAZADO: 'Correcciones solicitadas',
   DISENO_GENERAL_RECHAZADO: 'Correcciones solicitadas',
   CORRECCIONES_SOLICITADAS: 'Correcciones solicitadas',
   DISENO_CORRECCIONES_SOLICITADAS: 'Correcciones solicitadas',
-  CUBIERTO_POR_DISENO_GENERAL: 'Cubierto por diseno general',
+  CUBIERTO_POR_DISENO_GENERAL: 'Cubierto por diseño general',
 };
 
 const CORRECTION_STATES = [
@@ -44,7 +44,8 @@ export const getDesignCoverageState = (detail = {}) => {
   }
   if (detail.diseno?.estado === 'ENVIADO') return 'DISENO_ENVIADO';
   if (String(detail.origenDiseno || '').toUpperCase() === 'CLIENTE') {
-    return detail.archivoDisenoInicialUrl
+    return detail.archivoDisenoInicial?.secureUrl
+      || detail.archivoDisenoInicialUrl
       ? 'DISENO_CLIENTE_PENDIENTE_VINCULACION'
       : 'PENDIENTE_ARCHIVO_CLIENTE';
   }
@@ -65,7 +66,7 @@ export const getDesignCoverageInfo = (detail = {}) => {
     label: DESIGN_COVERAGE_LABELS[state] || state.replaceAll('_', ' ').toLowerCase(),
     message: detail.mensajeEstadoDiseno || (
       state === 'DISENO_CLIENTE_PENDIENTE_VINCULACION'
-        ? 'El cliente entrego un archivo. Registralo para revisarlo en Gestion de Disenos.'
+        ? 'El cliente entregó un archivo. Regístralo para revisarlo en Gestión de Diseños.'
         : DESIGN_COVERAGE_LABELS[state] || ''
     ),
     covered: detail.cubiertoPorDiseno === true || [
@@ -90,7 +91,10 @@ export const getDesignCoverageInfo = (detail = {}) => {
     noDesignRequired: state === 'NO_REQUIERE_DISENO',
     isGeneral: Boolean(design?.esDisenoGeneral || detail.esDisenoGeneral),
     design,
-    fileUrl: design?.archivoUrl || detail.archivoDisenoInicialUrl || '',
+    fileUrl: design?.archivoUrl
+      || detail.archivoDisenoInicial?.secureUrl
+      || detail.archivoDisenoInicialUrl
+      || '',
   };
 };
 

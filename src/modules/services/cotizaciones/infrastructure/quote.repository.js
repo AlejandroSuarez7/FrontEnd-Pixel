@@ -1,5 +1,6 @@
 // infrastructure/quote.repository.js
 import { apiClient } from '../../../../core/services/apiService.js';
+import { buildQuoteRequestBody } from '../../../../core/services/quoteRequestBody.js';
 import { buildPaginationParams, normalizePaginatedResponse } from '../../../../core/utils/serverPagination.js';
 import { createRequestError } from '../../../../core/utils/requestError.js';
 import { quotesDTO } from './adapters/cotizacionDTO.js';
@@ -27,13 +28,19 @@ export class QuoteApiRepository {
 
   async createAsClient(quoteData) {
     const payload = quotesDTO.toApi(quoteData);
-    const { data } = await apiClient.post(`${ENDPOINT}/cliente`, payload);
+    const { data } = await apiClient.post(
+      `${ENDPOINT}/cliente`,
+      buildQuoteRequestBody(payload, quoteData.items || quoteData.detalles || []),
+    );
     return quotesDTO.fromApi(data.data);
   }
 
   async createAsStaff(quoteData) {
     const payload = quotesDTO.toApi(quoteData);
-    const { data } = await apiClient.post(`${ENDPOINT}`, payload);
+    const { data } = await apiClient.post(
+      `${ENDPOINT}`,
+      buildQuoteRequestBody(payload, quoteData.items || quoteData.detalles || []),
+    );
     return quotesDTO.fromApi(data.data);
   }
 

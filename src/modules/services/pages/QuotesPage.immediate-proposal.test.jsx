@@ -49,7 +49,7 @@ describe('QuotesPage immediate proposal', () => {
 
   it('creates the quote first and sends the proposal with its real id', async () => {
     render(<QuotesPage />);
-    fireEvent.click(screen.getByRole('button', { name: 'Nueva cotizacion presencial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva cotización presencial' }));
     fireEvent.click(screen.getByRole('button', { name: 'Simular creacion presencial' }));
 
     await waitFor(() => expect(mocks.sendProposal).toHaveBeenCalledWith(44, { precioFinal: 850000 }));
@@ -59,11 +59,11 @@ describe('QuotesPage immediate proposal', () => {
   it('keeps the created quote when the proposal request fails', async () => {
     mocks.sendProposal.mockRejectedValue(new Error('Network Error'));
     render(<QuotesPage />);
-    fireEvent.click(screen.getByRole('button', { name: 'Nueva cotizacion presencial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva cotización presencial' }));
     fireEvent.click(screen.getByRole('button', { name: 'Simular creacion presencial' }));
 
     await waitFor(() => expect(notifications.warning).toHaveBeenCalledWith(
-      'La solicitud fue creada, pero no pudimos enviar la propuesta. Puedes retomarla desde Gestion de Cotizaciones.',
+      'La solicitud fue creada, pero no pudimos enviar la propuesta. Puedes retomarla desde Gestión de Cotizaciones.',
     ));
     expect(mocks.handleCreate).toHaveBeenCalledTimes(1);
   });

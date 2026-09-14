@@ -54,10 +54,10 @@ export const DesignClientResponseModal = ({ isOpen, mode, diseno, onClose, onSub
         <div className={styles.modalHeader}>
           <div>
             <h3 className={styles.modalTitle}>
-              {isReject ? 'Solicitar correcciones al diseno' : 'Aprobar diseno en nombre del cliente'}
+              {isReject ? 'Solicitar correcciones al diseño' : 'Aprobar diseño en nombre del cliente'}
             </h3>
             <p className={styles.modalSubtitle}>
-              Diseno #{diseno.idDiseno} | Pedido #{diseno.idPedido}
+              Diseño #{diseno.idDiseno} | Pedido #{diseno.idPedido}
             </p>
           </div>
           <button type="button" onClick={onClose} className={styles.modalCloseBtn} disabled={isSubmitting}>x</button>
@@ -71,7 +71,7 @@ export const DesignClientResponseModal = ({ isOpen, mode, diseno, onClose, onSub
             <br />
             {isReject
               ? 'Registra los cambios solicitados por el cliente.'
-              : 'Usa esta opcion si el cliente aprobo el diseno por fuera del sistema.'}
+              : 'Usa esta opción si el cliente aprobó el diseño por fuera del sistema.'}
           </div>
 
           <div className={styles.inputGroup}>

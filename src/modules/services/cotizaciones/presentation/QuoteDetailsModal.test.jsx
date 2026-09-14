@@ -3,6 +3,33 @@ import { describe, expect, it, vi } from 'vitest';
 import { QuoteDetailsModal } from './QuoteDetailsModal';
 
 describe('QuoteDetailsModal long contact data', () => {
+  it('prefers the Cloudinary secure URL and keeps the historical fallback readable', () => {
+    render(
+      <QuoteDetailsModal
+        isOpen
+        onClose={vi.fn()}
+        quote={{
+          idCotizacion: 74,
+          estado: 'EN_REVISION',
+          cliente: { nombre: 'Cliente Pixel' },
+          detalles: [{
+            idDetalleCotizacion: 8,
+            cantidad: 1,
+            producto: { nombre: 'Camiseta' },
+            archivoDisenoInicial: { secureUrl: 'https://cloudinary.test/diseno.png' },
+            archivoDisenoInicialUrl: 'https://legacy.test/diseno.png',
+          }],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver detalle' }));
+    expect(screen.getByRole('link', { name: 'Ver diseño' })).toHaveAttribute(
+      'href',
+      'https://cloudinary.test/diseno.png',
+    );
+  });
+
   it('keeps the complete long email available inside the client summary', () => {
     const correo = 'cliente.con.un.correo.extremadamente.largo.para.validar@example-corporativo.com';
     render(

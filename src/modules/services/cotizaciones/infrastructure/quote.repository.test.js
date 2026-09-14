@@ -18,6 +18,35 @@ describe('QuoteApiRepository workflow contracts', () => {
     apiClient.patch.mockResolvedValue({ data: { data: {} } });
   });
 
+  it.each([
+    ['createAsClient', 'api/cotizaciones/cliente'],
+    ['createAsStaff', 'api/cotizaciones'],
+  ])('uses the shared multipart contract in %s', async (method, endpoint) => {
+    const file = new File(['design'], 'design.pdf', { type: 'application/pdf' });
+    await repository[method]({
+      items: [{
+        tipoProducto: 'CATALOGO',
+        idProducto: 10,
+        cantidad: 1,
+        suministradoPor: 'PIXEL',
+        archivoDiseno: file,
+        estampados: [{
+          ubicacion: 'FRENTE',
+          origenDiseno: 'CLIENTE',
+          grupoDisenoCompartido: 'LOGO-1',
+        }],
+      }],
+    });
+
+    const [actualEndpoint, body] = apiClient.post.mock.calls[0];
+    const payload = JSON.parse(body.get('payload'));
+    expect(actualEndpoint).toBe(endpoint);
+    expect(body).toBeInstanceOf(FormData);
+    expect(body.getAll('archivoDiseno')).toEqual([file]);
+    expect(payload.items[0].archivoDisenoIndice).toBe(0);
+    expect(payload.items[0].estampados[0].grupoDisenoCompartido).toBe('LOGO-1');
+  });
+
   it('sends the exact new proposal contract without legacy or UI fields', async () => {
     await repository.sendProposal(44, {
       precioFinal: '52000',

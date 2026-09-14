@@ -38,7 +38,7 @@ describe('ClientDesignFilePanel', () => {
     fireEvent.change(container.querySelector('input[type="file"]'), {
       target: { files: [file] },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Enviar diseno' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar diseño' }));
 
     await waitFor(() => {
       expect(disenoRepository.uploadClientDesign).toHaveBeenCalledWith(

@@ -30,7 +30,7 @@ const getQuoteTypeLabel = (type) => {
   const normalized = String(type || '').toUpperCase();
   if (normalized.includes('PUBLIC')) return 'Publica';
   if (normalized.includes('PRESENC')) return 'Presencial';
-  return type || 'Cotizacion';
+  return type || 'Cotización';
 };
 
 const PRODUCT_PAGE_SIZE = 10;
@@ -59,7 +59,7 @@ const getDetailTechniques = (detail) => {
     ? detail.estampados.map((stamp) => stamp.tecnica?.nombre).filter(Boolean)
     : [];
   if (names.length > 0) return [...new Set(names)].join(', ');
-  return detail?.tecnica?.nombre || 'Tecnica no registrada';
+  return detail?.tecnica?.nombre || 'Técnica no registrada';
 };
 
 const getSupplyLabel = (value) => (
@@ -68,13 +68,19 @@ const getSupplyLabel = (value) => (
 
 const getDesignOriginLabel = (value) => {
   const labels = {
-    CLIENTE: 'El cliente aporta el diseno',
-    PIXEL: 'PIXEL crea el diseno',
+    CLIENTE: 'El cliente aporta el diseño',
+    PIXEL: 'PIXEL crea el diseño',
     PENDIENTE_DEFINIR: 'Pendiente por definir',
-    NO_REQUIERE: 'No requiere diseno',
+    NO_REQUIERE: 'No requiere diseño',
   };
   return labels[String(value || '').toUpperCase()] || 'Pendiente por definir';
 };
+
+const getInitialDesignUrl = (detail) => (
+  detail?.archivoDisenoInicial?.secureUrl
+  || detail?.archivoDisenoInicialUrl
+  || ''
+);
 
 const getProductDiscountRangeLabel = (detail) => {
   const range = detail?.rangoProductoAplicado;
@@ -238,10 +244,10 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
       ? (detail?.origenDiseno === 'CLIENTE' ? 'Cliente' : 'PIXEL')
       : 'No aplica';
     const designStatus = !requiresDesign
-      ? 'No requiere diseno'
+      ? 'No requiere diseño'
       : detail?.origenDiseno === 'CLIENTE'
-        ? 'Diseno aportado por el cliente'
-        : 'PIXEL crea el diseno';
+        ? 'Diseño aportado por el cliente'
+        : 'PIXEL crea el diseño';
 
     return (
       <div className={styles.quoteSelectedProductPanel}>
@@ -269,14 +275,14 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
               <div><span>Subtotal neto de servicios</span><strong>{formatMoney(detailSubtotalWithDiscount)}</strong></div>
             </>
           )}
-          <div><span>Configuracion de diseno</span><strong>{designStatus}</strong></div>
-          <div><span>Origen del diseno</span><strong>{designOrigin}</strong></div>
+          <div><span>Configuración de diseño</span><strong>{designStatus}</strong></div>
+          <div><span>Origen del diseño</span><strong>{designOrigin}</strong></div>
           {isStaff && (
-            <div><span>Costo de diseno</span><strong>{requiresDesign && Number(detail.costoDiseno || 0) > 0 ? formatMoneyCOP(detail.costoDiseno) : 'No configurado'}</strong></div>
+            <div><span>Costo de diseño</span><strong>{requiresDesign && Number(detail.costoDiseno || 0) > 0 ? formatMoneyCOP(detail.costoDiseno) : 'No configurado'}</strong></div>
           )}
-          {detail?.esDisenoGeneral && <div><span>Alcance</span><strong>Diseno general del pedido</strong></div>}
-          {detail?.archivoDisenoInicialUrl && (
-            <div><span>Archivo aportado</span><a href={detail.archivoDisenoInicialUrl} target="_blank" rel="noreferrer">Ver diseno</a></div>
+          {detail?.esDisenoGeneral && <div><span>Alcance</span><strong>Diseño general del pedido</strong></div>}
+          {getInitialDesignUrl(detail) && (
+            <div><span>Archivo aportado</span><a href={getInitialDesignUrl(detail)} target="_blank" rel="noreferrer">Ver diseño</a></div>
           )}
           <div className={styles.quoteProductObservation}><span>Observaciones del item</span><strong>{detail.observaciones || 'Sin observaciones'}</strong></div>
         </div>
@@ -289,14 +295,14 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
         <div className={styles.quoteStampsList}>
           <span className={styles.quoteStampsTitle}>Estampados solicitados</span>
           {stamps.length === 0 ? (
-            <p>Esta cotizacion historica no tiene estampados separados.</p>
+            <p>Esta cotización histórica no tiene estampados separados.</p>
           ) : stamps.map((stamp, stampIndex) => (
             <article key={stamp.idDetalleEstampadoCotizacion || `${stamp.idTecnica}-${stampIndex}`}>
-              <strong>Estampado {stampIndex + 1}: {stamp.tecnica?.nombre || 'Tecnica no especificada'}</strong>
+              <strong>Estampado {stampIndex + 1}: {stamp.tecnica?.nombre || 'Técnica no especificada'}</strong>
               <span>Ubicacion: {String(stamp.ubicacion || 'Por definir').replaceAll('_', ' ').toLowerCase()}</span>
               <span>Medidas: {stamp.anchoCm && stamp.altoCm ? `${stamp.anchoCm} x ${stamp.altoCm} cm` : 'Por definir'}</span>
-              <span>Diseno: {getDesignOriginLabel(stamp.origenDiseno)}</span>
-              {stamp.grupoDisenoCompartido && <span>Diseno compartido con otro estampado</span>}
+              <span>Diseño: {getDesignOriginLabel(stamp.origenDiseno)}</span>
+              {stamp.grupoDisenoCompartido && <span>Diseño compartido con otro estampado</span>}
               {(stamp.descripcion || stamp.observaciones) && <small>{stamp.descripcion || stamp.observaciones}</small>}
             </article>
           ))}
@@ -310,8 +316,8 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
       <div className={`${styles.modalContainer} ${styles.quoteDetailsModal}`}>
         <div className={styles.quoteDetailsHeader}>
           <div>
-            <span className={styles.breadcrumb}>Cotizacion</span>
-            <h3 className={styles.modalTitle}>Cotizacion #{quote.idCotizacion}</h3>
+            <span className={styles.breadcrumb}>Cotización</span>
+            <h3 className={styles.modalTitle}>Cotización #{quote.idCotizacion}</h3>
             <div className={styles.quoteHeaderMeta}>
               <span className={styles.typeBadge}>{getQuoteTypeLabel(quote.tipoCotizacion)}</span>
               <span className={`${styles.statusBadge} ${getStatusClass(quote.estado)}`}>
@@ -358,7 +364,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
               <span>
                 {currentProposal
                   ? 'Revisa el valor y la vigencia antes de responder.'
-                  : 'El equipo de PIXEL revisara productos, medidas y disenos antes de enviarte una propuesta final.'}
+                  : 'El equipo de PIXEL revisará productos, medidas y diseños antes de enviarte una propuesta final.'}
               </span>
             </section>
           )}
@@ -402,7 +408,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
                   setSelectedProductIndex(null);
                 }}
                 className={styles.quoteProductSearch}
-                placeholder="Buscar producto, tecnica u observacion..."
+                placeholder="Buscar producto, técnica u observación..."
               />
               <span>
                 {searchableDetails.length} de {details.length} producto(s)
@@ -532,7 +538,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
                 <strong>{additionalCosts > 0 ? formatMoneyCOP(additionalCosts) : 'No aplica'}</strong>
               </div>
               <div>
-                <span>Costo de diseno</span>
+                <span>Costo de diseño</span>
                 <strong>{designCost > 0 ? formatMoneyCOP(designCost) : 'No aplica'}</strong>
               </div>
               </div>
@@ -577,10 +583,10 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
 
               {proposalDesigns.length > 0 && (
                 <div className={styles.clientProposalVisibleList}>
-                  <span>Disenos incluidos</span>
+                  <span>Diseños incluidos</span>
                   {proposalDesigns.map((design, index) => (
                     <div key={design.idDiseno || design.idDetalleCotizacion || design.idDetalleEstampadoCotizacion || design.grupoDisenoCompartido || index}>
-                      <strong>{design.descripcionVisible || `Diseno ${index + 1}`}</strong>
+                      <strong>{design.descripcionVisible || `Diseño ${index + 1}`}</strong>
                       <span>{formatMoneyCOP(design.costoDiseno ?? design.valor ?? 0)}</span>
                     </div>
                   ))}
@@ -622,7 +628,7 @@ export const QuoteDetailsModal = ({ isOpen, onClose, quote, isStaff = false }) =
                 </div>
                 {proposalDesigns.length > 0 && (
                   <div>
-                    <span>Disenos visibles</span>
+                    <span>Diseños visibles</span>
                     <strong>{proposalDesignsTotal > 0 ? formatMoneyCOP(proposalDesignsTotal) : 'No aplica'}</strong>
                   </div>
                 )}

@@ -81,7 +81,7 @@ describe('DisenoModal requirements flow', () => {
       target: { value: '54' },
     });
 
-    const selector = await screen.findByLabelText(/que diseno vas a registrar/i);
+    const selector = await screen.findByLabelText(/qué diseño vas a registrar/i);
     const stampOption = await screen.findByRole('option', {
       name: /camiseta - frente - dtf - 10 x 12 cm/i,
     });
@@ -111,7 +111,7 @@ describe('DisenoModal requirements flow', () => {
     fireEvent.change(await screen.findByLabelText(/pedido/i), {
       target: { value: '54' },
     });
-    fireEvent.change(await screen.findByLabelText(/que diseno vas a registrar/i), {
+    fireEvent.change(await screen.findByLabelText(/qué diseño vas a registrar/i), {
       target: { value: 'STAMP-34' },
     });
 
@@ -121,7 +121,7 @@ describe('DisenoModal requirements flow', () => {
     fireEvent.change(container.querySelector('input[type="file"]'), {
       target: { files: [file] },
     });
-    fireEvent.click(screen.getByRole('button', { name: /registrar diseno/i }));
+    fireEvent.click(screen.getByRole('button', { name: /registrar diseño/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
       requirement: expect.objectContaining({
@@ -166,8 +166,8 @@ describe('DisenoModal requirements flow', () => {
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'Cargar diseno corregido' })).toBeInTheDocument();
-    expect(screen.getByLabelText(/que diseno vas a registrar/i)).toHaveValue('STAMP-34');
+    expect(screen.getByRole('heading', { name: 'Cargar diseño corregido' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toHaveValue('STAMP-34');
     expect(screen.getByRole('link', { name: 'Ver version anterior' })).toHaveAttribute(
       'href',
       'https://example.com/version-anterior.png',
@@ -195,11 +195,11 @@ describe('DisenoModal requirements flow', () => {
 
     const orderSelector = await screen.findByLabelText(/pedido/i);
     fireEvent.change(orderSelector, { target: { value: '54' } });
-    await waitFor(() => expect(screen.getByLabelText(/que diseno vas a registrar/i)).toHaveValue('STAMP-34'));
+    await waitFor(() => expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toHaveValue('STAMP-34'));
 
     fireEvent.change(orderSelector, { target: { value: '55' } });
-    await waitFor(() => expect(screen.getByLabelText(/que diseno vas a registrar/i)).toHaveValue(''));
-    expect(await screen.findByText(/no tiene disenos pendientes de creacion o correccion/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText(/qué diseño vas a registrar/i)).toHaveValue(''));
+    expect(await screen.findByText(/no tiene diseños pendientes de creación o corrección/i)).toBeInTheDocument();
   });
 
   it('does not offer file replacement when the design already has a stored file', () => {

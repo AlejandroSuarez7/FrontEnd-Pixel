@@ -26,7 +26,7 @@ const ESTADO_PAGO_CLASS = {
 
 const ESTADO_PEDIDO_LABEL = {
   PENDIENTE: 'Pendiente',
-  EN_PROCESO: 'En produccion',
+  EN_PROCESO: 'En producción',
   PENDIENTE_SALDO_FINAL: 'Pendiente saldo final',
   FINALIZADO: 'Finalizado',
   ENTREGADO: 'Entregado',
@@ -129,7 +129,7 @@ export const PedidoDetailsModal = ({
           <div>
             <h3 className={styles.modalTitle}>Pedido #{pedido.idPedido}</h3>
             <p className={styles.modalSubtitle}>
-              Cliente: {clienteNombre} · Cotizacion #{pedido.idCotizacion || 'No asociada'}
+              Cliente: {clienteNombre} · Cotización #{pedido.idCotizacion || 'No asociada'}
             </p>
             {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>
@@ -157,7 +157,7 @@ export const PedidoDetailsModal = ({
             <div className={styles.orderSummaryCard}>
               <span>Estado pedido</span>
               <strong>{estadoPedidoLabel}</strong>
-              <small>Cotizacion #{pedido.idCotizacion || 'No asociada'}</small>
+              <small>Cotización #{pedido.idCotizacion || 'No asociada'}</small>
             </div>
             <div className={styles.orderSummaryCard}>
               <span>Estado pago</span>
@@ -183,7 +183,7 @@ export const PedidoDetailsModal = ({
 
           {pedido.estadoPedido === 'PENDIENTE_SALDO_FINAL' && (
             <div className={`${styles.detailsInfoBox} ${styles.orderNoticeWarning}`}>
-              <strong>Saldo final pendiente:</strong> El pedido termino produccion y falta confirmar el saldo final para coordinar la entrega.
+              <strong>Saldo final pendiente:</strong> El pedido terminó producción y falta confirmar el saldo final para coordinar la entrega.
             </div>
           )}
 
@@ -195,7 +195,7 @@ export const PedidoDetailsModal = ({
 
           {pedido.estadoPedido === 'ANULADO' && (
             <div className={`${styles.detailsInfoBox} ${styles.orderNoticeDanger}`}>
-              <strong>Pedido anulado:</strong> El historial, los abonos y los disenos asociados se conservan para consulta.
+              <strong>Pedido anulado:</strong> El historial, los abonos y los diseños asociados se conservan para consulta.
             </div>
           )}
 
@@ -253,8 +253,8 @@ export const PedidoDetailsModal = ({
                             <strong>{getProductCategoryName(det)}</strong>
                           </div>
                           <div>
-                            <span>Tecnica</span>
-                            <strong>{det.tecnica?.nombre || (det.idTecnica ? `Tecnica #${det.idTecnica}` : 'No especificada')}</strong>
+                            <span>Técnica</span>
+                            <strong>{det.tecnica?.nombre || (det.idTecnica ? `Técnica #${det.idTecnica}` : 'No especificada')}</strong>
                           </div>
                           <div>
                             <span>Precio base unitario</span>
@@ -269,7 +269,7 @@ export const PedidoDetailsModal = ({
                             <strong>{itemDiscountTotal !== null && itemDiscountTotal > 0 ? `-${fmt(itemDiscountTotal)}` : moneyOrText(itemDiscountTotal, 'No especificado')}</strong>
                           </div>
                           <div>
-                            <span>Costo de diseno</span>
+                            <span>Costo de diseño</span>
                             <strong>{moneyOrText(det.costoDiseno, 'No aplica')}</strong>
                           </div>
                           <div>
@@ -285,15 +285,15 @@ export const PedidoDetailsModal = ({
                             <strong>{moneyOrText(subtotalFinal)}</strong>
                           </div>
                           <div>
-                            <span>Requiere diseno</span>
+                            <span>Requiere diseño</span>
                             <strong>{det.requiereDiseno === false ? 'No' : 'Si'}</strong>
                           </div>
                           <div>
-                            <span>Diseno asociado</span>
+                            <span>Diseño asociado</span>
                             <strong>{designCoverage.label}</strong>
                           </div>
                           <div>
-                            <span>Origen del diseno</span>
+                            <span>Origen del diseño</span>
                             <strong>
                               {designCoverage.noDesignRequired
                                 ? 'No aplica'
@@ -307,7 +307,7 @@ export const PedidoDetailsModal = ({
                           <p className={styles.orderItemNote}>{designCoverage.message}</p>
                         )}
                         {designCoverage.isGeneral && (
-                          <p className={styles.orderItemNote}>Cubierto por un diseno general del pedido.</p>
+                          <p className={styles.orderItemNote}>Cubierto por un diseño general del pedido.</p>
                         )}
                         {designCoverage.fileUrl && (
                           <a
@@ -316,7 +316,7 @@ export const PedidoDetailsModal = ({
                             target="_blank"
                             rel="noreferrer"
                           >
-                            Ver archivo del diseno
+                            Ver archivo del diseño
                           </a>
                         )}
                         {canEditDesignRequirement && det.idDetallePedido && (
@@ -330,8 +330,8 @@ export const PedidoDetailsModal = ({
                               {pendingDesignRequirementId === det.idDetallePedido
                                 ? 'Actualizando...'
                                 : det.requiereDiseno === false
-                                  ? 'Marcar requiere diseno'
-                                  : 'Marcar no requiere diseno'}
+                                  ? 'Marcar requiere diseño'
+                                  : 'Marcar no requiere diseño'}
                             </button>
                           </div>
                         )}
@@ -361,7 +361,7 @@ export const PedidoDetailsModal = ({
                 <strong>{moneyOrText(costosAdicionales, 'No aplica')}</strong>
               </div>
               <div className={styles.orderMoneyRow}>
-                <span>Costo de diseno</span>
+                <span>Costo de diseño</span>
                 <strong>{moneyOrText(costoDiseno, 'No aplica')}</strong>
               </div>
               <div className={`${styles.orderMoneyRow} ${styles.orderMoneyTotal}`}>

@@ -139,16 +139,16 @@ const QuotesPage = () => {
       if (immediateProposal?.enabled) {
         try {
           await sendProposal(createdQuote.idCotizacion, immediateProposal.payload);
-          notifications.success('Cotizacion creada y propuesta enviada al cliente correctamente.');
+          notifications.success('Cotización creada y propuesta enviada al cliente correctamente.');
         } catch {
           setIsFormOpen(false);
           setFormQuote(null);
-          notifications.warning('La solicitud fue creada, pero no pudimos enviar la propuesta. Puedes retomarla desde Gestion de Cotizaciones.');
+          notifications.warning('La solicitud fue creada, pero no pudimos enviar la propuesta. Puedes retomarla desde Gestión de Cotizaciones.');
           return;
         }
       } else {
       notifications.success(
-        'Cotizacion creada correctamente. El cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.'
+        'Cotización creada correctamente. El cliente será notificado por correo. Recuérdale revisar SPAM o correo no deseado si no lo encuentra.'
       );
       }
     }
@@ -183,8 +183,8 @@ const QuotesPage = () => {
 
   const cancelQuote = async (quote) => {
     const accepted = await confirm({
-      title: 'Anular cotizacion',
-      message: `¿Confirmas anular la cotizacion #${quote.idCotizacion}?`,
+      title: 'Anular cotización',
+      message: `¿Confirmas anular la cotización #${quote.idCotizacion}?`,
       confirmText: 'Anular',
       variant: 'danger',
     });
@@ -192,9 +192,9 @@ const QuotesPage = () => {
 
     try {
       await handleCancel(quote.idCotizacion);
-      notifications.success('Cotizacion anulada correctamente.');
+      notifications.success('Cotización anulada correctamente.');
     } catch (requestError) {
-      notifications.error(requestError.message || 'No se pudo anular la cotizacion.');
+      notifications.error(requestError.message || 'No se pudo anular la cotización.');
     }
   };
 
@@ -269,7 +269,7 @@ const QuotesPage = () => {
             {isClient ? 'Panel cliente / Cotizaciones' : 'Ventas / Cotizaciones'}
           </span>
           <h1 className={styles.pageTitle}>
-            {isClient ? 'Mis cotizaciones' : 'Gestion de Cotizaciones'}
+            {isClient ? 'Mis cotizaciones' : 'Gestión de Cotizaciones'}
           </h1>
           <p className={styles.pageSubtitle}>
             {isClient
@@ -280,7 +280,7 @@ const QuotesPage = () => {
 
         {canCreateStaffQuote && (
           <button type="button" onClick={openCreate} className={styles.primaryButton}>
-            Nueva cotizacion presencial
+            Nueva cotización presencial
           </button>
         )}
       </div>
@@ -314,7 +314,7 @@ const QuotesPage = () => {
             <span>
               {isClient
                 ? 'Cuando envies una solicitud aparecera aqui.'
-                : 'Prueba con otra busqueda o crea una cotizacion presencial.'}
+                : 'Prueba con otra búsqueda o crea una cotización presencial.'}
             </span>
           </div>
         ) : (

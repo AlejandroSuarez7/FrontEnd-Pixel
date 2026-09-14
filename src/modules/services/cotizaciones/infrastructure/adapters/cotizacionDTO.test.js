@@ -55,6 +55,7 @@ describe('quotesDTO', () => {
         costoDiseno: '25000',
         requiereDiseno: false,
         origenDiseno: 'PIXEL',
+        archivoDisenoInicial: { secureUrl: 'https://cloudinary.test/diseno.pdf' },
       }],
     });
 
@@ -63,6 +64,7 @@ describe('quotesDTO', () => {
       costoDiseno: 25000,
       requiereDiseno: false,
       origenDiseno: 'PIXEL',
+      archivoDisenoInicial: { secureUrl: 'https://cloudinary.test/diseno.pdf' },
     });
   });
 

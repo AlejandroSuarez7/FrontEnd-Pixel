@@ -309,7 +309,7 @@ export const AbonosPage = () => {
       <div className={styles.headerWrapper}>
         <div>
           <span className={styles.breadcrumb}>Ventas / Abonos</span>
-          <h1 className={styles.pageTitle}>Gestion de Abonos</h1>
+          <h1 className={styles.pageTitle}>Gestión de Abonos</h1>
           <p className={styles.pageSubtitle}>
             Registra, revisa y confirma los pagos asociados a pedidos.
           </p>
@@ -432,7 +432,7 @@ export const AbonosPage = () => {
           <p className={styles.loadingText}>Cargando abonos...</p>
         ) : error ? (
           <div className="abonos-error-state" role="alert">
-            <strong>No se pudo cargar Gestion de Abonos</strong>
+            <strong>No se pudo cargar Gestión de Abonos</strong>
             <p>{error}</p>
             <button type="button" onClick={() => refetch()}>Reintentar</button>
           </div>

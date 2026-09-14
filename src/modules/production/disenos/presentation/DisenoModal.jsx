@@ -186,7 +186,7 @@ const DisenoModalContent = ({
       .catch(error => {
         if (controller.signal.aborted) return;
         setRequirements(normalizedPreset ? [normalizedPreset] : []);
-        setRequirementsError(error.message || 'No pudimos cargar los disenos pendientes.');
+        setRequirementsError(error.message || 'No pudimos cargar los diseños pendientes.');
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoadingRequirements(false);
@@ -240,11 +240,11 @@ const DisenoModalContent = ({
     await runLocked(async () => {
       try {
         if (!isEditing && !selectedRequirement) {
-          notifications.error('Selecciona el diseno pendiente que vas a registrar.');
+          notifications.error('Selecciona el diseño pendiente que vas a registrar.');
           return;
         }
         if (!isEditing && !canCreatePixelDesign(selectedRequirement)) {
-          notifications.error('Este requerimiento no permite crear un diseno del equipo PIXEL.');
+          notifications.error('Este requerimiento no permite crear un diseño del equipo PIXEL.');
           return;
         }
         const fileError = requiresNewFile ? validateDesignFile(archivo) : '';
@@ -272,7 +272,7 @@ const DisenoModalContent = ({
             }),
         });
       } catch (error) {
-        notifications.error(error.message || 'No se pudo procesar el diseno.');
+        notifications.error(error.message || 'No se pudo procesar el diseño.');
       }
     });
   };
@@ -282,8 +282,8 @@ const DisenoModalContent = ({
     : isEditing
       ? hasStoredFile ? 'Guardar cambios' : 'Adjuntar archivo'
       : isCorrectionVersion
-        ? 'Cargar diseno corregido'
-        : 'Registrar diseno';
+        ? 'Cargar diseño corregido'
+        : 'Registrar diseño';
 
   return (
     <div className={styles.overlay}>
@@ -292,10 +292,10 @@ const DisenoModalContent = ({
           <div>
             <h3 className={styles.modalTitle}>
               {isEditing
-                ? `Editar diseno #${diseno.idDiseno}`
+                ? `Editar diseño #${diseno.idDiseno}`
                 : isCorrectionVersion
-                  ? 'Cargar diseno corregido'
-                  : 'Registrar diseno'}
+                  ? 'Cargar diseño corregido'
+                  : 'Registrar diseño'}
             </h3>
             {!isEditing && (
               <p className="disenos-modal-subtitle">
@@ -316,7 +316,7 @@ const DisenoModalContent = ({
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <section className="disenos-modal-section">
-            <span className="disenos-modal-section-title">A. Pedido y diseno pendiente</span>
+            <span className="disenos-modal-section-title">A. Pedido y diseño pendiente</span>
 
             {lockPedido && selectedPedido ? (
               <div className="disenos-locked-context">
@@ -352,7 +352,7 @@ const DisenoModalContent = ({
             {!isEditing && idPedido && (
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel} htmlFor="diseno-requirement">
-                  ¿Que diseno vas a registrar? *
+                  ¿Qué diseño vas a registrar? *
                 </label>
                 <select
                   id="diseno-requirement"
@@ -369,8 +369,8 @@ const DisenoModalContent = ({
                 >
                   <option value="">
                     {loadingRequirements
-                      ? 'Consultando disenos pendientes...'
-                      : 'Selecciona un diseno pendiente'}
+                      ? 'Consultando diseños pendientes...'
+                      : 'Selecciona un diseño pendiente'}
                   </option>
                   {availableRequirements.map(requirement => (
                     <option
@@ -385,11 +385,11 @@ const DisenoModalContent = ({
             )}
 
             {!isEditing && loadingRequirements && (
-              <p className={styles.detailsInfoBox}>Consultando disenos pendientes...</p>
+              <p className={styles.detailsInfoBox}>Consultando diseños pendientes...</p>
             )}
             {!isEditing && requirementsError && (
               <div className="disenos-requirement-error">
-                <p>No pudimos cargar los disenos pendientes.</p>
+                <p>No pudimos cargar los diseños pendientes.</p>
                 <button
                   type="button"
                   className={styles.btnSecondary}
@@ -409,7 +409,7 @@ const DisenoModalContent = ({
               && !requirementsError
               && availableRequirements.length === 0 && (
               <p className={styles.detailsInfoBox}>
-                Este pedido no tiene disenos pendientes de creacion o correccion.
+                Este pedido no tiene diseños pendientes de creación o corrección.
               </p>
             )}
 
@@ -422,7 +422,7 @@ const DisenoModalContent = ({
                   {selectedRequirement.tipo === 'ESTAMPADO' && (
                     <>
                       <div><span>Ubicacion</span><strong>{getRequirementLocation(selectedRequirement)}</strong></div>
-                      <div><span>Tecnica</span><strong>{getRequirementTechnique(selectedRequirement)}</strong></div>
+                      <div><span>Técnica</span><strong>{getRequirementTechnique(selectedRequirement)}</strong></div>
                       <div><span>Medidas</span><strong>{getRequirementMeasures(selectedRequirement)}</strong></div>
                     </>
                   )}
@@ -433,7 +433,7 @@ const DisenoModalContent = ({
                 {selectedRequirement.tipo === 'GRUPO_COMPARTIDO'
                   && selectedRequirement.estampadosCubiertos.length > 0 && (
                   <div className="disenos-covered-list">
-                    <span>Este diseno cubrira:</span>
+                    <span>Este diseño cubrirá:</span>
                     <ul>
                       {selectedRequirement.estampadosCubiertos.map((stamp, index) => (
                         <li key={stamp.idEstampadoPedido || stamp.idDetalleEstampadoPedido || index}>
@@ -469,7 +469,7 @@ const DisenoModalContent = ({
 
             {requirementsSummary && (
               <small className="disenos-requirement-summary">
-                {requirementsSummary.totalDisenosAprobados || 0} de {requirementsSummary.totalDisenosRequeridos || 0} disenos aprobados
+                {requirementsSummary.totalDisenosAprobados || 0} de {requirementsSummary.totalDisenosRequeridos || 0} diseños aprobados
               </small>
             )}
           </section>
@@ -477,12 +477,12 @@ const DisenoModalContent = ({
           <section className="disenos-modal-section">
             <span className="disenos-modal-section-title">B. Archivo y responsable</span>
             {!isEditing && (
-              <p className={styles.detailsInfoBox}>Diseno a cargo del equipo PIXEL.</p>
+              <p className={styles.detailsInfoBox}>Diseño a cargo del equipo PIXEL.</p>
             )}
 
             {isStaff && !isEditing && (
               <div className={styles.inputGroup}>
-                <label className={styles.inputLabel} htmlFor="diseno-disenador">Disenador asignado</label>
+                <label className={styles.inputLabel} htmlFor="diseno-disenador">Diseñador asignado</label>
                 <select
                   id="diseno-disenador"
                   value={idDisenador}
@@ -505,8 +505,8 @@ const DisenoModalContent = ({
             {hasStoredFile ? (
               <div className="disenos-stored-file">
                 <div>
-                  <strong title={storedFile.name || 'Diseno almacenado'}>
-                    {storedFile.name || 'Diseno almacenado'}
+                  <strong title={storedFile.name || 'Diseño almacenado'}>
+                    {storedFile.name || 'Diseño almacenado'}
                   </strong>
                   <span>
                     {[getDesignFileFormatLabel(storedFile), formatFileSize(storedFile.bytes)]
@@ -535,9 +535,9 @@ const DisenoModalContent = ({
           </section>
 
           <section className="disenos-modal-section">
-            <span className="disenos-modal-section-title">C. Informacion del diseno</span>
+            <span className="disenos-modal-section-title">C. Información del diseño</span>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel} htmlFor="diseno-descripcion">Descripcion</label>
+              <label className={styles.inputLabel} htmlFor="diseno-descripcion">Descripción</label>
               <textarea
                 id="diseno-descripcion"
                 value={descripcion}

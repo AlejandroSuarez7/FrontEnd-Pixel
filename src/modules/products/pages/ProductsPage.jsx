@@ -197,7 +197,7 @@ export const ProductsPage = () => {
                     <td className={styles.tableCellName}>
                       {product.nombre}
                       <span className={styles.tableCellSecondary} style={{ display: 'block', padding: 0 }}>
-                        {product.descripcion || 'Sin descripcion'}
+                        {product.descripcion || 'Sin descripción'}
                       </span>
                     </td>
                     <td className={styles.tableCell}>{product.categoriaProducto?.nombre || 'Sin categoria'}</td>

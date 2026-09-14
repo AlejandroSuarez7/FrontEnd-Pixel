@@ -6,13 +6,13 @@ import './DisenosPage.css';
 const ORIGIN_OPTIONS = [
   {
     value: 'CLIENTE',
-    title: 'El cliente entrega el diseno',
+    title: 'El cliente entrega el diseño',
     description: 'El requerimiento quedara pendiente de recibir el archivo del cliente.',
   },
   {
     value: 'PIXEL',
-    title: 'PIXEL crea el diseno',
-    description: 'El equipo PIXEL podra crear y registrar el diseno para este requerimiento.',
+    title: 'PIXEL crea el diseño',
+    description: 'El equipo PIXEL podrá crear y registrar el diseño para este requerimiento.',
   },
 ];
 
@@ -37,7 +37,7 @@ const DesignOriginModalContent = ({ requirement, pedido, onClose, onSubmit }) =>
       <div className="disenos-origin-modal" role="dialog" aria-modal="true" aria-labelledby="design-origin-title">
         <header className="disenos-modal-header">
           <div>
-            <h3 id="design-origin-title" className="disenos-modal-title">Definir quien entrega el diseno</h3>
+            <h3 id="design-origin-title" className="disenos-modal-title">Definir quién entrega el diseño</h3>
             <p className="disenos-modal-subtitle">
               Pedido #{pedido?.idPedido || requirement.idPedido}
             </p>
@@ -55,10 +55,10 @@ const DesignOriginModalContent = ({ requirement, pedido, onClose, onSubmit }) =>
 
         <form onSubmit={handleSubmit} className="disenos-origin-form">
           <p className="disenos-origin-help">
-            Elige quien se encargara de entregar este diseno. Esta decision actualizara las acciones disponibles en el expediente.
+            Elige quién se encargará de entregar este diseño. Esta decisión actualizará las acciones disponibles en el expediente.
           </p>
 
-          <div className="disenos-origin-options" role="radiogroup" aria-label="Quien entrega el diseno">
+          <div className="disenos-origin-options" role="radiogroup" aria-label="Quién entrega el diseño">
             {ORIGIN_OPTIONS.map(option => (
               <label
                 key={option.value}

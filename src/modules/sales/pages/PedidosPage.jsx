@@ -75,7 +75,7 @@ const PedidosPage = () => {
   const onPendienteSaldoClick = async (id) => {
     const accepted = await confirm({
       title: 'Solicitar saldo final',
-      message: 'El cliente sera notificado por correo de que el pedido termino produccion, pero falta pagar el saldo final para coordinar la entrega. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.',
+      message: 'El cliente será notificado por correo de que el pedido terminó producción, pero falta pagar el saldo final para coordinar la entrega. Recuérdale revisar SPAM o correo no deseado si no lo encuentra.',
       confirmText: 'Confirmar',
       variant: 'warning',
     });
@@ -93,7 +93,7 @@ const PedidosPage = () => {
   const onFinalizarClick = async (id) => {
     const accepted = await confirm({
       title: 'Finalizar pedido',
-      message: 'Finalizar este pedido? Esta accion indica que la produccion esta completa.',
+      message: '¿Finalizar este pedido? Esta acción indica que la producción está completa.',
       confirmText: 'Finalizar',
       variant: 'success',
     });
@@ -111,7 +111,7 @@ const PedidosPage = () => {
   const onAnularClick = async (id) => {
     const result = await confirm({
       title: 'Anular pedido',
-      message: 'Estas seguro de anular este pedido? Esta accion conservara el historial, abonos y disenos asociados.',
+      message: '¿Estás seguro de anular este pedido? Esta acción conservará el historial, abonos y diseños asociados.',
       confirmText: 'Anular',
       variant: 'danger',
       input: true,
@@ -152,8 +152,8 @@ const PedidosPage = () => {
 
     const nextValue = detalle.requiereDiseno === false;
     const accepted = await confirm({
-      title: 'Actualizar requisito de diseno',
-      message: 'Confirmas cambiar si este producto requiere diseno?',
+      title: 'Actualizar requisito de diseño',
+      message: '¿Confirmas cambiar si este producto requiere diseño?',
       confirmText: 'Confirmar',
       variant: 'warning',
     });
@@ -174,9 +174,9 @@ const PedidosPage = () => {
           )),
         };
       });
-      notifications.success(nextValue ? 'El producto fue marcado como requiere diseno.' : 'El producto fue marcado como no requiere diseno.');
+      notifications.success(nextValue ? 'El producto fue marcado como requiere diseño.' : 'El producto fue marcado como no requiere diseño.');
     } catch (error) {
-      notifications.error(error.message || 'No se pudo actualizar el requisito de diseno.');
+      notifications.error(error.message || 'No se pudo actualizar el requisito de diseño.');
     } finally {
       setPendingDesignRequirementId(null);
     }

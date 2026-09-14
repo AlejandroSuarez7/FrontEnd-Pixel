@@ -49,6 +49,8 @@ export const createQuoteItem = (overrides = {}) => ({
   requiereDiseno: true,
   origenDiseno: 'PENDIENTE_DEFINIR',
   archivoDisenoInicialUrl: '',
+  archivoDisenoInicial: null,
+  archivoDiseno: null,
   esDisenoGeneral: false,
   estampados: [createStamp()],
   ...overrides,
@@ -326,6 +328,8 @@ export const hydrateQuoteItem = (detail = {}) => ({
     ? 'NO_REQUIERE'
     : detail.origenDiseno || 'PENDIENTE_DEFINIR',
   archivoDisenoInicialUrl: detail.archivoDisenoInicialUrl || '',
+  archivoDisenoInicial: detail.archivoDisenoInicial || null,
+  archivoDiseno: null,
   esDisenoGeneral: Boolean(detail.esDisenoGeneral),
   producto: detail.producto || null,
   descripcion: detail.descripcion || '',

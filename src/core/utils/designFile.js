@@ -20,10 +20,10 @@ export const validateDesignFile = file => {
     return 'Solo puedes subir archivos JPG, PNG, WEBP o PDF.';
   }
   if (!Number.isFinite(file.size) || file.size <= 0) {
-    return 'El archivo seleccionado esta vacio.';
+    return 'El archivo seleccionado está vacío.';
   }
   if (file.size > DESIGN_FILE_MAX_BYTES) {
-    return 'El archivo supera el tamano maximo permitido de 10 MB.';
+    return 'El archivo supera el tamaño máximo permitido de 10 MB.';
   }
   return '';
 };

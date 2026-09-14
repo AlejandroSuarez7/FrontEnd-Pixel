@@ -37,11 +37,11 @@ export const SIDEBAR_ITEMS = [
   { label: 'Inicio', icon: 'home', to: PATHS.HOME },
   { label: 'Dashboard', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
   {
-    label: 'Configuracion',
+    label: 'Configuración',
     icon: 'settings',
     key: 'config',
     items: [
-      { label: 'Gestion de Roles', to: PATHS.ROLES, permissions: ROUTE_PERMISSIONS[PATHS.ROLES] },
+      { label: 'Gestión de Roles', to: PATHS.ROLES, permissions: ROUTE_PERMISSIONS[PATHS.ROLES] },
     ],
   },
   {
@@ -49,7 +49,7 @@ export const SIDEBAR_ITEMS = [
     icon: 'groups',
     key: 'users',
     items: [
-      { label: 'Gestion de Usuarios', to: PATHS.USERS, permissions: ROUTE_PERMISSIONS[PATHS.USERS] },
+      { label: 'Gestión de Usuarios', to: PATHS.USERS, permissions: ROUTE_PERMISSIONS[PATHS.USERS] },
       { label: 'Clientes', to: PATHS.USERS_CLIENTS, permissions: ROUTE_PERMISSIONS[PATHS.USERS_CLIENTS] },
     ],
   },
@@ -60,7 +60,7 @@ export const SIDEBAR_ITEMS = [
     items: [
       { label: 'Categorias de productos', to: PATHS.SERVICES_PRODUCT_CATEGORIES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_PRODUCT_CATEGORIES] },
       { label: 'Productos cotizables', to: PATHS.SERVICES_PRODUCTS, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_PRODUCTS] },
-      { label: 'Gestion de Tecnicas', to: PATHS.SERVICES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES] },
+      { label: 'Gestión de Técnicas', to: PATHS.SERVICES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES] },
     ],
   },
   {
@@ -68,9 +68,9 @@ export const SIDEBAR_ITEMS = [
     icon: 'sell',
     key: 'sales',
     items: [
-      { label: 'Gestion de Cotizaciones', to: PATHS.SERVICES_QUOTES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_QUOTES] },
-      { label: 'Gestion de Pedidos', to: PATHS.ORDERS, permissions: ROUTE_PERMISSIONS[PATHS.ORDERS] },
-      { label: 'Gestion de Ventas', to: PATHS.SALES, permissions: ROUTE_PERMISSIONS[PATHS.SALES] },
+      { label: 'Gestión de Cotizaciones', to: PATHS.SERVICES_QUOTES, permissions: ROUTE_PERMISSIONS[PATHS.SERVICES_QUOTES] },
+      { label: 'Gestión de Pedidos', to: PATHS.ORDERS, permissions: ROUTE_PERMISSIONS[PATHS.ORDERS] },
+      { label: 'Gestión de Ventas', to: PATHS.SALES, permissions: ROUTE_PERMISSIONS[PATHS.SALES] },
     ],
   },
   {
@@ -83,12 +83,12 @@ export const SIDEBAR_ITEMS = [
     ],
   },
   {
-    label: 'Produccion',
+    label: 'Producción',
     icon: 'engineering',
     key: 'production',
     items: [
-      { label: 'Cola de Produccion', to: PATHS.PRODUCTION, permissions: ROUTE_PERMISSIONS[PATHS.PRODUCTION] },
-      { label: 'Gestion de Disenos', to: PATHS.PRODUCTION_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.PRODUCTION_DESIGNS] },
+      { label: 'Cola de Producción', to: PATHS.PRODUCTION, permissions: ROUTE_PERMISSIONS[PATHS.PRODUCTION] },
+      { label: 'Gestión de Diseños', to: PATHS.PRODUCTION_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.PRODUCTION_DESIGNS] },
     ],
   },
   { label: 'Mi Perfil', icon: 'account_circle', to: PATHS.PROFILE },
@@ -142,8 +142,8 @@ export const filterSidebarByPermissions = (permissions, user = null) => {
       { label: 'Inicio', icon: 'home', to: PATHS.HOME },
       { label: 'Mis pedidos', icon: 'dashboard', to: PATHS.DASHBOARD, permissions: ROUTE_PERMISSIONS[PATHS.DASHBOARD] },
       { label: 'Mis cotizaciones', icon: 'description', to: PATHS.CLIENT_QUOTES, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_QUOTES] },
-      { label: 'Mis disenos', icon: 'image', to: PATHS.CLIENT_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_DESIGNS] },
-      { label: 'Crear cotizacion', icon: 'add_circle', to: LANDING_QUOTE_PATH },
+      { label: 'Mis diseños', icon: 'image', to: PATHS.CLIENT_DESIGNS, permissions: ROUTE_PERMISSIONS[PATHS.CLIENT_DESIGNS] },
+      { label: 'Crear cotización', icon: 'add_circle', to: LANDING_QUOTE_PATH },
       { label: 'Mi perfil', icon: 'account_circle', to: PATHS.PROFILE },
     ].filter((item) => !item.permissions || hasAnyPermission(permissions, item.permissions));
   }

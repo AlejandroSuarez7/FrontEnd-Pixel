@@ -771,6 +771,20 @@ body:has(.public-quote-page),
   padding-top: 0;
 }
 
+.public-quote-design-upload {
+  min-width: 0;
+  margin-top: 0.7rem;
+}
+
+.public-quote-design-upload > a {
+  display: inline-flex;
+  margin-top: 0.5rem;
+  color: var(--quote-purple);
+  font-size: 0.78rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .public-quote-checkbox-row {
   display: flex !important;
   align-items: flex-start !important;

@@ -30,8 +30,8 @@ describe('DesignOriginModal', () => {
   });
 
   it.each([
-    ['El cliente entrega el diseno', 'CLIENTE'],
-    ['PIXEL crea el diseno', 'PIXEL'],
+    ['El cliente entrega el diseño', 'CLIENTE'],
+    ['PIXEL crea el diseño', 'PIXEL'],
   ])('submits %s as %s', async (label, expectedOrigin) => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     renderModal(onSubmit);
@@ -49,7 +49,7 @@ describe('DesignOriginModal', () => {
     }));
     renderModal(onSubmit);
 
-    fireEvent.click(screen.getByRole('radio', { name: /^El cliente entrega el diseno/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /^El cliente entrega el diseño/ }));
     const submitButton = screen.getByRole('button', { name: 'Guardar seleccion' });
     fireEvent.click(submitButton);
     fireEvent.click(submitButton);
@@ -64,12 +64,12 @@ describe('DesignOriginModal', () => {
     const onSubmit = vi.fn().mockRejectedValue(new Error('No pudimos guardar el cambio. Intenta nuevamente.'));
     renderModal(onSubmit);
 
-    fireEvent.click(screen.getByRole('radio', { name: /^PIXEL crea el diseno/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /^PIXEL crea el diseño/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Guardar seleccion' }));
 
     await waitFor(() => {
       expect(notifications.error).toHaveBeenCalledWith('No pudimos guardar el cambio. Intenta nuevamente.');
     });
-    expect(screen.getByRole('dialog', { name: 'Definir quien entrega el diseno' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Definir quién entrega el diseño' })).toBeInTheDocument();
   });
 });

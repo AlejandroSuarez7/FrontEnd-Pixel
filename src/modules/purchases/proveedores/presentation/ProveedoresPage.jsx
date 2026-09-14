@@ -137,7 +137,7 @@ export const ProveedoresPage = () => {
       <div className={styles.headerWrapper}>
         <div>
           <span className={styles.breadcrumb}>Compras / Proveedores</span>
-          <h1 className={styles.pageTitle}>Gestion de Proveedores</h1>
+          <h1 className={styles.pageTitle}>Gestión de Proveedores</h1>
           <p className={styles.pageSubtitle}>
             Administra proveedores disponibles para compras internas.
           </p>

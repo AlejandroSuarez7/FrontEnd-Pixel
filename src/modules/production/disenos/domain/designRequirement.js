@@ -84,31 +84,31 @@ export const formatDesignRequirementLabel = requirement => {
     case 'ESTAMPADO':
       return `${product} - ${getRequirementLocation(requirement)} - ${getRequirementTechnique(requirement)} - ${getRequirementMeasures(requirement)}`;
     case 'GRUPO_COMPARTIDO':
-      return `Diseno compartido - ${coveredCount} estampado${coveredCount === 1 ? '' : 's'}`;
+      return `Diseño compartido - ${coveredCount} estampado${coveredCount === 1 ? '' : 's'}`;
     case 'PRODUCTO_GENERAL':
-      return `Diseno general - ${product}`;
+      return `Diseño general - ${product}`;
     case 'PEDIDO_GENERAL':
-      return 'Diseno general de todo el pedido';
+      return 'Diseño general de todo el pedido';
     case 'LEGACY_PRODUCTO':
-      return `${product} - Diseno del producto`;
+      return `${product} - Diseño del producto`;
     default:
       return product;
   }
 };
 
 export const DESIGN_REQUIREMENT_STATUS_LABELS = {
-  NO_REQUIERE_DISENO: 'No requiere diseno',
-  PENDIENTE_DEFINIR_ORIGEN: 'Pendiente de definir quien entrega el diseno',
+  NO_REQUIERE_DISENO: 'No requiere diseño',
+  PENDIENTE_DEFINIR_ORIGEN: 'Pendiente de definir quién entrega el diseño',
   PENDIENTE_CREACION_PIXEL: 'Pendiente de creacion por PIXEL',
   PENDIENTE_ARCHIVO_CLIENTE: 'Pendiente de archivo del cliente',
-  PENDIENTE_RECEPCION_CLIENTE: 'Pendiente de recibir diseno del cliente',
-  DISENO_ENTREGADO_POR_CLIENTE: 'Diseno recibido',
+  PENDIENTE_RECEPCION_CLIENTE: 'Pendiente de recibir diseño del cliente',
+  DISENO_ENTREGADO_POR_CLIENTE: 'Diseño recibido',
   DISENO_ENVIADO: 'Pendiente de revision',
   ENVIADO: 'Pendiente de revision',
-  DISENO_APROBADO: 'Diseno aprobado',
+  DISENO_APROBADO: 'Diseño aprobado',
   DISENO_RECHAZADO: 'Correcciones solicitadas',
   CORRECCIONES_SOLICITADAS: 'Correcciones solicitadas',
-  CUBIERTO_POR_DISENO_GENERAL: 'Cubierto por diseno general',
+  CUBIERTO_POR_DISENO_GENERAL: 'Cubierto por diseño general',
 };
 
 export const formatDesignRequirementStatus = requirement => (
@@ -136,7 +136,7 @@ const cleanText = value => {
 
 export const buildDesignTargetPayload = (requirement, formData = {}) => {
   if (!requirement?.tipo || !requirement?.idPedido) {
-    throw new Error('Selecciona un diseno pendiente valido.');
+    throw new Error('Selecciona un diseño pendiente válido.');
   }
 
   const payload = {
@@ -154,7 +154,7 @@ export const buildDesignTargetPayload = (requirement, formData = {}) => {
       break;
     case 'GRUPO_COMPARTIDO':
       if (!requirement.grupoDisenoCompartido) {
-        throw new Error('El diseno compartido no tiene un grupo valido.');
+        throw new Error('El diseño compartido no tiene un grupo válido.');
       }
       payload.grupoDisenoCompartido = requirement.grupoDisenoCompartido;
       break;
@@ -175,7 +175,7 @@ export const buildDesignTargetPayload = (requirement, formData = {}) => {
       payload.idDetallePedido = Number(requirement.idDetallePedido);
       break;
     default:
-      throw new Error('El tipo de diseno seleccionado no es compatible.');
+      throw new Error('El tipo de diseño seleccionado no es compatible.');
   }
 
   if (formData.idDisenador) payload.idDisenador = Number(formData.idDisenador);

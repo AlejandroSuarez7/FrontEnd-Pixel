@@ -85,21 +85,21 @@ const formatDesignOrigin = (origen = '') => {
 };
 const getDesignDetail = (diseno) => diseno?.detallePedido || null;
 const getDesignProductName = (diseno) => {
-  if (diseno?.esDisenoGeneral) return 'Diseno general del pedido';
+  if (diseno?.esDisenoGeneral) return 'Diseño general del pedido';
   const detalle = getDesignDetail(diseno);
   return detalle?.producto?.nombre || detalle?.descripcion || diseno.descripcion || diseno.pedido?.detalles?.[0]?.descripcion || 'Producto no especificado';
 };
 const getDesignTechniqueName = (diseno) => {
   const detalle = getDesignDetail(diseno);
-  return detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : '');
+  return detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Técnica #${detalle.idTecnica}` : '');
 };
 const getDesignQuantity = (diseno) => getDesignDetail(diseno)?.cantidad;
 const getApprovalMessage = (response) => {
   const pedidoEstado = normalizeStatus(response?.data?.pedido?.estadoPedido || response?.pedido?.estadoPedido || response?.data?.estadoPedido);
   if (pedidoEstado === 'EN_PROCESO') {
-    return 'Diseno aprobado. Todos los disenos requeridos fueron aprobados y el pedido entro en produccion.';
+    return 'Diseño aprobado. Todos los diseños requeridos fueron aprobados y el pedido entró en producción.';
   }
-  return 'Diseno aprobado. El pedido seguira pendiente hasta que todos los disenos requeridos esten aprobados.';
+  return 'Diseño aprobado. El pedido seguirá pendiente hasta que todos los diseños requeridos estén aprobados.';
 };
 
 export const DisenosPage = () => {
@@ -183,9 +183,9 @@ export const DisenosPage = () => {
     } else {
       await handleCreate(payload);
       if (payload.estado === 'APROBADO') {
-        notifications.success('Diseno registrado como aprobado. El cliente sera notificado si corresponde.');
+        notifications.success('Diseño registrado como aprobado. El cliente será notificado si corresponde.');
       } else {
-        notifications.success('Diseno enviado para revision. El cliente sera notificado por correo. Recuerdale revisar SPAM o correo no deseado si no lo encuentra.');
+        notifications.success('Diseño enviado para revisión. El cliente será notificado por correo. Recuérdale revisar SPAM o correo no deseado si no lo encuentra.');
       }
     }
     setIsModalOpen(false);
@@ -213,8 +213,8 @@ export const DisenosPage = () => {
 
   const onApproveClick = async (diseno) => {
     const result = await confirm({
-      title: 'Aprobar diseno',
-      message: `Aprobar diseno #${diseno.idDiseno}?`,
+      title: 'Aprobar diseño',
+      message: `¿Aprobar diseño #${diseno.idDiseno}?`,
       confirmText: 'Aprobar',
       variant: 'success',
       input: true,
@@ -228,7 +228,7 @@ export const DisenosPage = () => {
       const response = await handleApprove(diseno.idDiseno, { observaciones: result.value });
       notifications.success(response.message || getApprovalMessage(response));
     } catch (error) {
-      notifications.error(error.message || 'No se pudo aprobar el diseno.');
+      notifications.error(error.message || 'No se pudo aprobar el diseño.');
     }
   };
 
@@ -270,15 +270,15 @@ export const DisenosPage = () => {
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
         <div>
-          <span className={styles.breadcrumb}>Produccion / Disenos</span>
-          <h1 className={styles.pageTitle}>Gestion de Disenos</h1>
+          <span className={styles.breadcrumb}>Producción / Diseños</span>
+          <h1 className={styles.pageTitle}>Gestión de Diseños</h1>
           <p className={styles.pageSubtitle}>
-            Administra archivos, envio y aprobacion de disenos asociados a pedidos.
+            Administra archivos, envío y aprobación de diseños asociados a pedidos.
           </p>
         </div>
         {hasPermission('disenos.crear') && (!userRole || userRole !== 'Cliente') ? (
           <button onClick={handleOpenCreate} className={styles.primaryButton}>
-            Nuevo diseno
+            Nuevo diseño
           </button>
         ) : null}
       </div>
@@ -327,14 +327,14 @@ export const DisenosPage = () => {
 
       <div className={styles.tableContainer}>
         {loading ? (
-          <p className={styles.loadingText}>Cargando disenos...</p>
+          <p className={styles.loadingText}>Cargando diseños...</p>
         ) : error && filteredDisenos.length === 0 ? (
           <div className={styles.loadingText}>
-            <p>{error.message || 'No se pudieron cargar los disenos.'}</p>
+            <p>{error.message || 'No se pudieron cargar los diseños.'}</p>
             <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
           </div>
         ) : filteredDisenos.length === 0 ? (
-          <p className={styles.loadingText}>No se encontraron disenos.</p>
+          <p className={styles.loadingText}>No se encontraron diseños.</p>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
@@ -344,8 +344,8 @@ export const DisenosPage = () => {
                   <th className={styles.tableHeader}>Pedido</th>
                   <th className={styles.tableHeader}>Cliente</th>
                   <th className={styles.tableHeader}>Origen</th>
-                  <th className={styles.tableHeader}>Producto / tecnica</th>
-                  <th className={styles.tableHeader}>Disenador</th>
+                  <th className={styles.tableHeader}>Producto / técnica</th>
+                  <th className={styles.tableHeader}>Diseñador</th>
                   <th className={styles.tableHeader}>Estado</th>
                   <th className={styles.tableHeader}>Envio</th>
                   <th className={styles.tableHeader}>Acciones</th>

@@ -40,10 +40,10 @@ const ESTADO_CLASS = {
 
 const normalizeStatus = (value = '') => String(value || '').toUpperCase();
 const formatDesignOrigin = (origen = '') => normalizeStatus(origen) === 'CLIENTE'
-  ? 'Diseno aportado por ti'
+  ? 'Diseño aportado por ti'
   : 'Equipo PIXEL';
 const getDesignProductName = (diseno) => {
-  if (diseno?.esDisenoGeneral) return 'Diseno general del pedido';
+  if (diseno?.esDisenoGeneral) return 'Diseño general del pedido';
   const detalle = diseno?.detallePedido;
   return detalle?.producto?.nombre || detalle?.descripcion || diseno?.descripcion || diseno?.pedido?.detalles?.[0]?.descripcion || 'Producto no especificado';
 };
@@ -51,7 +51,7 @@ const getDesignDetailText = (diseno) => {
   if (diseno?.esDisenoGeneral) return 'Aplica para todo el pedido';
   const detalle = diseno?.detallePedido;
   return [
-    detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : null),
+    detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Técnica #${detalle.idTecnica}` : null),
     detalle?.cantidad ? `Cant. ${detalle.cantidad}` : null,
   ].filter(Boolean).join(' | ') || 'Detalle no especificado';
 };
@@ -65,9 +65,9 @@ const canRespondDesign = (estado) => [
 const getApprovalMessage = (response) => {
   const pedidoEstado = normalizeStatus(response?.data?.pedido?.estadoPedido || response?.pedido?.estadoPedido || response?.data?.estadoPedido);
   if (pedidoEstado === 'EN_PROCESO') {
-    return 'Diseno aprobado. Todos los disenos requeridos fueron aprobados y el pedido entro en produccion.';
+    return 'Diseño aprobado. Todos los diseños requeridos fueron aprobados y el pedido entró en producción.';
   }
-  return 'Diseno aprobado. El pedido seguira pendiente hasta que todos los disenos requeridos esten aprobados.';
+  return 'Diseño aprobado. El pedido seguirá pendiente hasta que todos los diseños requeridos estén aprobados.';
 };
 
 export const ClientDisenosPage = () => {
@@ -111,15 +111,15 @@ export const ClientDisenosPage = () => {
       setSelectedDiseno(detail || diseno);
     } catch (error) {
       if (requestId !== detailRequestRef.current) return;
-      notifications.error(error.message || 'No se pudo cargar el detalle del diseno.');
+      notifications.error(error.message || 'No se pudo cargar el detalle del diseño.');
     }
   };
 
   const handleApprove = async (diseno) => {
     const accepted = await confirm({
-      title: 'Aprobar diseno',
-      message: 'Al aprobarlo, el pedido podra avanzar a produccion.',
-      confirmText: 'Aprobar diseno',
+      title: 'Aprobar diseño',
+      message: 'Al aprobarlo, el pedido podrá avanzar a producción.',
+      confirmText: 'Aprobar diseño',
       variant: 'success',
     });
 
@@ -133,7 +133,7 @@ export const ClientDisenosPage = () => {
         await fetchDisenos();
         return true;
       } catch (error) {
-        notifications.error(error.message || 'No se pudo aprobar el diseno.');
+        notifications.error(error.message || 'No se pudo aprobar el diseño.');
       } finally {
         setPendingActionId(null);
       }
@@ -143,7 +143,7 @@ export const ClientDisenosPage = () => {
   const handleReject = async (diseno) => {
     const result = await confirm({
       title: 'Solicitar cambios',
-      message: 'Indica que cambios necesitas para este diseno.',
+      message: 'Indica qué cambios necesitas para este diseño.',
       confirmText: 'Enviar cambios',
       variant: 'danger',
       input: true,
@@ -164,7 +164,7 @@ export const ClientDisenosPage = () => {
         await fetchDisenos();
         return true;
       } catch (error) {
-        notifications.error(error.message || 'No se pudo rechazar el diseno.');
+        notifications.error(error.message || 'No se pudo rechazar el diseño.');
       } finally {
         setPendingActionId(null);
       }
@@ -175,8 +175,8 @@ export const ClientDisenosPage = () => {
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
         <div>
-          <span className={styles.breadcrumb}>Panel cliente / Disenos</span>
-          <h1 className={styles.pageTitle}>Mis disenos</h1>
+          <span className={styles.breadcrumb}>Panel cliente / Diseños</span>
+          <h1 className={styles.pageTitle}>Mis diseños</h1>
           <p className={styles.pageSubtitle}>
             Revisa las propuestas enviadas y aprueba o solicita cambios cuando corresponda.
           </p>
@@ -192,16 +192,16 @@ export const ClientDisenosPage = () => {
 
       <section className={styles.tableContainer}>
         {loading ? (
-          <p className={styles.loadingText}>Cargando tus disenos...</p>
+          <p className={styles.loadingText}>Cargando tus diseños...</p>
         ) : error && disenos.length === 0 ? (
           <div className={styles.loadingText}>
-            <p>No fue posible cargar tus disenos.</p>
+            <p>No fue posible cargar tus diseños.</p>
             <button type="button" className={styles.btnPrimary} onClick={fetchDisenos}>
               Reintentar
             </button>
           </div>
         ) : disenos.length === 0 ? (
-          <p className={styles.loadingText}>Aun no tienes disenos enviados para revisar.</p>
+          <p className={styles.loadingText}>Aún no tienes diseños enviados para revisar.</p>
         ) : (
           <div className={styles.clientGrid}>
             {disenos.map((diseno) => {
@@ -222,11 +222,11 @@ export const ClientDisenosPage = () => {
                       openDetail(diseno);
                     }
                   }}
-                  aria-label={`Ver detalle del diseno ${diseno.idDiseno}`}
+                  aria-label={`Ver detalle del diseño ${diseno.idDiseno}`}
                 >
                   <div className={styles.clientCardHeader}>
                     <div>
-                      <strong>Diseno #{diseno.idDiseno}</strong>
+                      <strong>Diseño #{diseno.idDiseno}</strong>
                       <span>Pedido #{diseno.idPedido} | {formatDate(diseno.fechaEnvio || diseno.fechaCreacion)}</span>
                     </div>
                     <span className={`${styles.statusBadge} ${ESTADO_CLASS[normalizeStatus(diseno.estado)] || ''}`}>
@@ -237,7 +237,7 @@ export const ClientDisenosPage = () => {
                   <div className={styles.detailsInfoBox}>
                     <strong>Producto:</strong> {producto}
                     <span style={{ display: 'block', marginTop: 4 }}>{getDesignDetailText(diseno)}</span>
-                    {diseno.esDisenoGeneral && <span style={{ display: 'block', marginTop: 4 }}>Aplica a todos los productos que requieren diseno.</span>}
+                    {diseno.esDisenoGeneral && <span style={{ display: 'block', marginTop: 4 }}>Aplica a todos los productos que requieren diseño.</span>}
                   </div>
 
                   <div className={styles.detailsInfoBox}>

@@ -39,6 +39,39 @@ describe('publicQuoteRepository final contracts', () => {
     );
   });
 
+  it('creates a public quote as JSON when it has no files', async () => {
+    const payload = {
+      items: [{ idProducto: 10, origenDiseno: 'PIXEL', estampados: [] }],
+    };
+
+    await publicQuoteRepository.create(payload);
+
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/public/cotizaciones',
+      payload,
+      { skipAuthRedirect: true },
+    );
+  });
+
+  it('creates a public quote as multipart when a client design file exists', async () => {
+    const file = new File(['design'], 'design.jpeg', { type: 'image/jpeg' });
+
+    await publicQuoteRepository.create({
+      items: [{
+        idProducto: 10,
+        requiereDiseno: true,
+        origenDiseno: 'CLIENTE',
+        estampados: [{ origenDiseno: 'CLIENTE' }],
+        archivoDiseno: file,
+      }],
+    });
+
+    const body = apiClient.post.mock.calls[0][1];
+    expect(body).toBeInstanceOf(FormData);
+    expect(body.getAll('archivoDiseno')).toEqual([file]);
+    expect(JSON.parse(body.get('payload')).items[0].archivoDisenoIndice).toBe(0);
+  });
+
   it('uses the protected client edit endpoint with only items and observations', async () => {
     const items = [{
       tipoProducto: 'CATALOGO',

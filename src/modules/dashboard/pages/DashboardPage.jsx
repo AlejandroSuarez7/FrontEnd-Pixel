@@ -48,15 +48,15 @@ const kpiIcons = {
 };
 
 const trackingIcons = {
-  'Cotizacion aceptada': FileText,
+  'Cotización aceptada': FileText,
   'Comprobante en revision': FileSearch,
   'Pendiente de primer abono': Clock3,
   'Primer abono confirmado': BadgeDollarSign,
-  'Diseno en proceso': PencilRuler,
-  'Diseno pendiente de aprobacion': ShieldCheck,
-  'Diseno aprobado': ShieldCheck,
+  'Diseño en proceso': PencilRuler,
+  'Diseño pendiente de aprobación': ShieldCheck,
+  'Diseño aprobado': ShieldCheck,
   'Correcciones solicitadas': PencilRuler,
-  'En produccion': Factory,
+  'En producción': Factory,
   'Pendiente de saldo final': Clock3,
   'Pedido listo para reclamar / entregar': Truck,
   'Producto entregado': ShieldCheck,
@@ -65,8 +65,8 @@ const trackingIcons = {
 
 const statusClassMap = {
   Pendiente: 'statusPending',
-  'En produccion': 'statusProduction',
-  Produccion: 'statusProduction',
+  'En producción': 'statusProduction',
+  Producción: 'statusProduction',
   Terminado: 'statusDone',
   Entregado: 'statusDelivered',
   Solicitada: 'statusRequested',
@@ -83,7 +83,7 @@ const statusClassMap = {
 const readableStatus = (status) => {
   const labels = {
     PENDIENTE: 'Pendiente',
-    EN_PROCESO: 'En produccion',
+    EN_PROCESO: 'En producción',
     PENDIENTE_SALDO_FINAL: 'Pendiente saldo final',
     FINALIZADO: 'Terminado',
     ENTREGADO: 'Entregado',
@@ -92,6 +92,25 @@ const readableStatus = (status) => {
   };
 
   return labels[status] || status;
+};
+
+const DASHBOARD_VISIBLE_COPY = {
+  'Cotizacion aceptada': 'Cotización aceptada',
+  'Diseno en preparacion': 'Diseño en preparación',
+  'Diseno en proceso': 'Diseño en proceso',
+  'Diseno pendiente de revision': 'Diseño pendiente de revisión',
+  'Diseno pendiente de aprobacion': 'Diseño pendiente de aprobación',
+  'Diseno aprobado': 'Diseño aprobado',
+  'En produccion': 'En producción',
+  'No requiere diseno': 'No requiere diseño',
+  'Tu pedido esta esperando la aprobacion de los disenos.': 'Tu pedido está esperando la aprobación de los diseños.',
+  'Tu pedido se encuentra en produccion.': 'Tu pedido se encuentra en producción.',
+  'Tu pedido ya termino produccion.': 'Tu pedido ya terminó producción.',
+};
+
+const formatDashboardVisibleCopy = (value) => {
+  if (typeof value !== 'string') return value;
+  return DASHBOARD_VISIBLE_COPY[value] || value.replace(/\bdisenos aprobados\b/g, 'diseños aprobados');
 };
 
 const KpiCard = ({ item, onActivate }) => {
@@ -133,7 +152,7 @@ const RevenueKpiCard = ({ revenue, onActivate }) => {
   const options = [
     { key: 'daily', label: 'Dia' },
     { key: 'monthly', label: 'Mes' },
-    { key: 'yearly', label: 'Ano' },
+    { key: 'yearly', label: 'Año' },
   ];
 
   return (
@@ -339,7 +358,7 @@ const ActiveOrdersPanel = ({ orders, selectedOrderId, onSelectOrder }) => (
     {orders.length === 0 ? (
       <div className="dashboard-empty-state">
         <strong>No tienes pedidos activos</strong>
-        <p>Cuando una cotizacion avance a pedido, podras consultar aqui su progreso.</p>
+        <p>Cuando una cotización avance a pedido, podrás consultar aquí su progreso.</p>
       </div>
     ) : (
       <div className="dashboard-order-selector">
@@ -380,8 +399,8 @@ const TrackingPanel = ({ order }) => (
       <>
       {order.progressNotice && (
         <div className={`dashboard-final-balance-alert dashboard-progress-alert-${order.progressNotice.tone}`}>
-          <strong>{order.progressNotice.title}</strong>
-          {order.progressNotice.detail && <span>{order.progressNotice.detail}</span>}
+          <strong>{formatDashboardVisibleCopy(order.progressNotice.title)}</strong>
+          {order.progressNotice.detail && <span>{formatDashboardVisibleCopy(order.progressNotice.detail)}</span>}
           {order.progressNotice.balance != null && (
             <small>Saldo pendiente: {formatCopFull(order.progressNotice.balance)}</small>
           )}
@@ -394,16 +413,17 @@ const TrackingPanel = ({ order }) => (
       )}
       <div className="dashboard-tracking dashboard-tracking-timeline">
         {order.tracking.map((step) => {
-        const Icon = step.state === 'completed' ? Check : trackingIcons[step.label] || Clock3;
+        const visibleLabel = formatDashboardVisibleCopy(step.label);
+        const Icon = step.state === 'completed' ? Check : trackingIcons[visibleLabel] || Clock3;
         return (
           <article className={`tracking-step ${step.state}`} key={step.label}>
             <span className="tracking-marker">
               <Icon size={20} />
             </span>
             <div>
-              <strong>{step.label}</strong>
+              <strong>{visibleLabel}</strong>
               <small>{trackingStatusText[step.state] || 'Pendiente'}</small>
-              {step.detail && <p>{step.detail}</p>}
+              {step.detail && <p>{formatDashboardVisibleCopy(step.detail)}</p>}
             </div>
           </article>
         );
@@ -417,7 +437,7 @@ const TrackingPanel = ({ order }) => (
 const QuickActions = () => {
   const navigate = useNavigate();
   const actions = [
-    { label: 'Crear cotizacion', icon: FileText, onClick: () => navigateToLandingQuote(navigate) },
+    { label: 'Crear cotización', icon: FileText, onClick: () => navigateToLandingQuote(navigate) },
     { label: 'Actualizar perfil', icon: UserRound, onClick: () => navigate(PATHS.PROFILE) },
   ];
 
@@ -463,7 +483,7 @@ const ErrorDashboard = ({ message, onRetry }) => (
   </div>
 );
 
-const AdminDashboard = ({ userName, data }) => {
+export const AdminDashboard = ({ userName, data }) => {
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
   const destinations = {
@@ -485,7 +505,7 @@ const AdminDashboard = ({ userName, data }) => {
       <div className="dashboard-hero-card">
         <FileText size={24} />
         <strong>Datos en tiempo real</strong>
-        <span>Conectado a /api/dashboard/admin</span>
+        <span>Información actualizada automáticamente.</span>
       </div>
     </header>
 
@@ -545,11 +565,11 @@ export const ClientDesignFilePanel = ({ order, onSaved }) => {
         item.idRequerimientoDiseno,
         file,
       );
-      notifications.success('Diseno enviado correctamente. Quedo pendiente de revision.');
+      notifications.success('Diseño enviado correctamente. Quedó pendiente de revisión.');
       setFiles(current => ({ ...current, [itemKey]: null }));
       await onSaved?.();
     } catch (error) {
-      notifications.error(error.message || 'No se pudo cargar el diseno.');
+      notifications.error(error.message || 'No se pudo cargar el diseño.');
     } finally {
       setPendingItemId(null);
     }
@@ -568,11 +588,11 @@ export const ClientDesignFilePanel = ({ order, onSaved }) => {
     setPendingItemId(itemKey);
     try {
       await pedidoRepository.saveClientDesignUrl(order.id, detail.idDetallePedido, value);
-      notifications.success('Diseno enviado correctamente. Quedo pendiente de revision.');
+      notifications.success('Diseño enviado correctamente. Quedó pendiente de revisión.');
       setUrls(current => ({ ...current, [itemKey]: '' }));
       await onSaved?.();
     } catch (error) {
-      notifications.error(error.message || 'No se pudo guardar el enlace del diseno.');
+      notifications.error(error.message || 'No se pudo guardar el enlace del diseño.');
     } finally {
       setPendingItemId(null);
     }
@@ -582,7 +602,7 @@ export const ClientDesignFilePanel = ({ order, onSaved }) => {
     <section className="dashboard-panel dashboard-client-design-panel">
       <div className="dashboard-panel-title">
         <span>Archivos del cliente</span>
-        <h2>Tu diseno</h2>
+        <h2>Tu diseño</h2>
       </div>
       <div className="dashboard-client-design-list">
         {clientItems.map((detail, index) => {
@@ -596,11 +616,11 @@ export const ClientDesignFilePanel = ({ order, onSaved }) => {
             <article key={itemKey}>
               <div>
                 <strong>{detail.producto?.nombre || detail.nombreProducto || detail.descripcion || `Producto ${index + 1}`}</strong>
-                <span>{detail.tecnica?.nombre || 'Tecnica no especificada'} · Cant. {Number(detail.cantidad || 0).toLocaleString('es-CO')}</span>
+                <span>{detail.tecnica?.nombre || 'Técnica no especificada'} · Cant. {Number(detail.cantidad || 0).toLocaleString('es-CO')}</span>
               </div>
               {fileUrl ? (
                 <a href={fileUrl} target="_blank" rel="noreferrer">
-                  <Link2 size={15} /> Abrir diseno
+                  <Link2 size={15} /> Abrir diseño
                 </a>
               ) : isCurrentRequirement ? (
                 <div className="dashboard-client-design-upload">
@@ -609,20 +629,20 @@ export const ClientDesignFilePanel = ({ order, onSaved }) => {
                     onFileChange={file => setFiles(current => ({ ...current, [itemKey]: file }))}
                     disabled={Boolean(pendingItemId)}
                     loading={pendingItemId === itemKey}
-                    label="Subir mi diseno"
-                    helpText="Adjunta una imagen o PDF con el diseno que deseas utilizar."
+                    label="Subir mi diseño"
+                    helpText="Adjunta una imagen o PDF con el diseño que deseas utilizar."
                   />
                   <button
                     type="button"
                     onClick={() => uploadDesign(detail, index)}
                     disabled={Boolean(pendingItemId) || !files[itemKey]}
                   >
-                    {pendingItemId === itemKey ? 'Subiendo diseno...' : 'Enviar diseno'}
+                    {pendingItemId === itemKey ? 'Subiendo diseño...' : 'Enviar diseño'}
                   </button>
                 </div>
               ) : (
                 <div className="dashboard-client-design-form">
-                  <label htmlFor={`client-design-${detail.idDetallePedido}`}>Enlace de diseno historico</label>
+                  <label htmlFor={`client-design-${detail.idDetallePedido}`}>Enlace de diseño histórico</label>
                   <div>
                     <input
                       id={`client-design-${detail.idDetallePedido}`}
@@ -640,7 +660,7 @@ export const ClientDesignFilePanel = ({ order, onSaved }) => {
                       onClick={() => saveLegacyDesignUrl(detail, index)}
                       disabled={Boolean(pendingItemId)}
                     >
-                      {pendingItemId === itemKey ? 'Guardando...' : 'Guardar diseno'}
+                      {pendingItemId === itemKey ? 'Guardando...' : 'Guardar diseño'}
                     </button>
                   </div>
                 </div>

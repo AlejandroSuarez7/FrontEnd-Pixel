@@ -63,10 +63,10 @@ const formatMoney = value => new Intl.NumberFormat('es-CO', {
 const actionLabels = {
   REQUIERE_PRIMER_ABONO: 'Requiere primer abono',
   COMPROBANTE_PENDIENTE_REVISION: 'Comprobante pendiente de revision',
-  REQUIERE_DISENO: 'Requiere diseno',
-  DISENO_PENDIENTE_APROBACION: 'Diseno pendiente de aprobacion',
-  LISTO_PARA_PRODUCCION: 'Listo para produccion',
-  EN_PRODUCCION: 'En produccion',
+  REQUIERE_DISENO: 'Requiere diseño',
+  DISENO_PENDIENTE_APROBACION: 'Diseño pendiente de aprobación',
+  LISTO_PARA_PRODUCCION: 'Listo para producción',
+  EN_PRODUCCION: 'En producción',
   PENDIENTE_SALDO_FINAL: 'Pendiente saldo final',
   LISTO_PARA_ENTREGAR: 'Listo para entregar',
   ENTREGADO: 'Entregado',
@@ -80,10 +80,10 @@ const historyLabels = {
   ABONO_PENDIENTE: 'Abono pendiente de revision',
   ABONO_CONFIRMADO: 'Abono confirmado',
   ABONO_RECHAZADO: 'Abono rechazado',
-  DISENO_PENDIENTE: 'Diseno pendiente',
-  DISENO_ENVIADO: 'Diseno enviado al cliente',
-  DISENO_APROBADO: 'Diseno aprobado',
-  DISENO_RECHAZADO: 'Cambios solicitados al diseno',
+  DISENO_PENDIENTE: 'Diseño pendiente',
+  DISENO_ENVIADO: 'Diseño enviado al cliente',
+  DISENO_APROBADO: 'Diseño aprobado',
+  DISENO_RECHAZADO: 'Cambios solicitados al diseño',
 };
 
 const historyIcons = {
@@ -118,7 +118,7 @@ const getStatusTone = value => {
 const tabs = [
   { id: 'resumen', label: 'Resumen', icon: PackageCheck },
   { id: 'abonos', label: 'Abonos', icon: Receipt },
-  { id: 'disenos', label: 'Disenos', icon: Palette },
+  { id: 'disenos', label: 'Diseños', icon: Palette },
   { id: 'historial', label: 'Historial', icon: FileText },
 ];
 
@@ -146,9 +146,9 @@ const DesignRequirementCard = ({
   return (
     <article className="expediente-design-card">
       <div className="expediente-design-card-heading">
-        <span className="expediente-item-index">Diseno {index + 1}</span>
+        <span className="expediente-item-index">Diseño {index + 1}</span>
         <strong>{getRequirementProductName(requirement)}</strong>
-        <small>{requirement.tipo === 'GRUPO_COMPARTIDO' ? 'Diseno compartido' : 'Objetivo de diseno del pedido'}</small>
+        <small>{requirement.tipo === 'GRUPO_COMPARTIDO' ? 'Diseño compartido' : 'Objetivo de diseño del pedido'}</small>
       </div>
       <span className={`expediente-status-badge ${getStatusTone(requirement.estadoCoberturaDiseno)}`}>
         {formatDesignRequirementStatus(requirement)}
@@ -163,32 +163,32 @@ const DesignRequirementCard = ({
           <strong>Cubre {requirement.estampadosCubiertos.length} estampado(s)</strong>
           {requirement.estampadosCubiertos.map((stamp, coveredIndex) => (
             <small key={stamp.idEstampadoPedido || stamp.idDetalleEstampadoPedido || coveredIndex}>
-              {stamp.producto?.nombre || stamp.nombreProducto || 'Producto'} · {stamp.ubicacion || 'Ubicacion por definir'} · {stamp.tecnica?.nombre || stamp.nombreTecnica || 'Servicio por definir'}
+              {stamp.producto?.nombre || stamp.nombreProducto || 'Producto'} · {stamp.ubicacion || 'Ubicación por definir'} · {stamp.tecnica?.nombre || stamp.nombreTecnica || 'Servicio por definir'}
             </small>
           ))}
         </div>
       )}
       {['PEDIDO_GENERAL', 'PRODUCTO_GENERAL'].includes(requirement.tipo) && (
         <strong className="expediente-general-badge">
-          {requirement.tipo === 'PEDIDO_GENERAL' ? 'Diseno general del pedido' : 'Diseno general del producto'}
+          {requirement.tipo === 'PEDIDO_GENERAL' ? 'Diseño general del pedido' : 'Diseño general del producto'}
         </strong>
       )}
       {requirement.versiones.length > 0 && <small>Historial: {requirement.versiones.length} version(es)</small>}
       <div className="expediente-card-actions">
-        {fileUrl && <a className="expediente-button secondary" href={fileUrl} target="_blank" rel="noreferrer">Ver diseno <ExternalLink size={14} /></a>}
+        {fileUrl && <a className="expediente-button secondary" href={fileUrl} target="_blank" rel="noreferrer">Ver diseño <ExternalLink size={14} /></a>}
         {canManage && requirement.puedeCrearDiseno && requirement.origenDiseno === 'PIXEL' && (
           <button className="expediente-button primary" type="button" onClick={onCreate}>
-            Crear diseno
+            Crear diseño
           </button>
         )}
         {canManage && requirement.puedeCargarCorreccion && requirement.origenDiseno === 'PIXEL' && (
           <button className="expediente-button primary" type="button" onClick={onCreate}>
-            Cargar diseno corregido
+            Cargar diseño corregido
           </button>
         )}
         {canRegisterClientFile && requirement.puedeRegistrarDisenoCliente && canUseClientFileEndpoint && (
           <button className="expediente-button primary" type="button" onClick={onRegisterClientFile}>
-            Registrar diseno recibido
+            Registrar diseño recibido
           </button>
         )}
         {canDefineOrigin && (
@@ -196,7 +196,7 @@ const DesignRequirementCard = ({
           || requirement.origenDiseno === 'PENDIENTE_DEFINIR'
         ) && (
           <button className="expediente-button primary" type="button" onClick={onDefineOrigin}>
-            Definir quien entrega el diseno
+            Definir quién entrega el diseño
           </button>
         )}
         {requirement.puedeAprobar && canRegisterResponse && canApproveByClient && (
@@ -320,7 +320,7 @@ export const PedidoExpedientePage = () => {
     await disenoRepository.create(payload);
     setDesignModalContext(null);
     await Promise.all([loadExpediente(), loadDesignRequirements()]);
-    notifications.success('Diseno registrado correctamente.');
+    notifications.success('Diseño registrado correctamente.');
   };
 
   const handleRegisterClientDesign = async payload => {
@@ -331,7 +331,7 @@ export const PedidoExpedientePage = () => {
       payload,
     );
     setClientDesignDetail(null);
-    notifications.success('Diseno recibido. Quedo pendiente de revision.');
+    notifications.success('Diseño recibido. Quedó pendiente de revisión.');
     await loadDesignRequirements();
   };
 
@@ -345,8 +345,8 @@ export const PedidoExpedientePage = () => {
     setOriginRequirement(null);
     notifications.success(
       origin === 'CLIENTE'
-        ? 'El diseno quedo pendiente de recibir el archivo del cliente.'
-        : 'El diseno quedo a cargo del equipo PIXEL.',
+        ? 'El diseño quedó pendiente de recibir el archivo del cliente.'
+        : 'El diseño quedó a cargo del equipo PIXEL.',
     );
     await loadDesignRequirements();
   };
@@ -357,7 +357,7 @@ export const PedidoExpedientePage = () => {
       && !requirement.puedeCrearDiseno
       && !requirement.puedeCargarCorreccion
     ) {
-      notifications.info('Este requerimiento no admite un nuevo diseno.');
+      notifications.info('Este requerimiento no admite un nuevo diseño.');
       return;
     }
     setDesignModalContext({
@@ -369,7 +369,7 @@ export const PedidoExpedientePage = () => {
   const openDesignResponseModal = (mode, requirement) => {
     const design = requirement.disenoVigente;
     if (!canRegisterDesignClientResponse(design)) {
-      notifications.info('Este diseno ya no esta pendiente de respuesta del cliente.');
+      notifications.info('Este diseño ya no está pendiente de respuesta del cliente.');
       return;
     }
     setDesignResponseModal({
@@ -542,10 +542,10 @@ export const PedidoExpedientePage = () => {
                   <span className="expediente-item-index">Producto {index + 1}</span>
                   <strong>{detail.producto?.nombre || detail.descripcion || 'Producto no especificado'}</strong>
                   <small>Categoria: {getProductCategoryName(detail)}</small>
-                  <small>{detail.tecnica?.nombre || 'Tecnica no especificada'} · Cantidad {Number(detail.cantidad || 0).toLocaleString('es-CO')}</small>
+                  <small>{detail.tecnica?.nombre || 'Técnica no especificada'} · Cantidad {Number(detail.cantidad || 0).toLocaleString('es-CO')}</small>
                 </div>
                 <div className="expediente-product-design">
-                  <span>Diseno</span>
+                  <span>Diseño</span>
                   <strong className={`expediente-status-badge ${getStatusTone(coverage.state)}`}>{coverage.label}</strong>
                   <small>{coverage.message}</small>
                 </div>
@@ -553,17 +553,17 @@ export const PedidoExpedientePage = () => {
                   <span>Valor</span>
                   <strong>{formatMoney(detail.subtotalConDescuento ?? detail.subtotalFinal ?? detail.subtotal)}</strong>
                   <div className="expediente-card-actions">
-                    {coverage.fileUrl && <a className="expediente-button secondary" href={coverage.fileUrl} target="_blank" rel="noreferrer">Ver diseno</a>}
+                    {coverage.fileUrl && <a className="expediente-button secondary" href={coverage.fileUrl} target="_blank" rel="noreferrer">Ver diseño</a>}
                     {!readOnly && (hasPermission('disenos.crear') || hasPermission('disenos.editar')) && coverage.canCreate && (
                       <button className="expediente-button primary" type="button" onClick={() => openDesignModal(detail)}>
-                        {coverage.isCorrection ? 'Cargar diseno corregido' : 'Crear o asignar diseno'}
+                        {coverage.isCorrection ? 'Cargar diseño corregido' : 'Crear o asignar diseño'}
                       </button>
                     )}
                     {!readOnly && hasPermission('disenos.crear')
                       && coverage.canRegisterClientFile
                       && detail.idRequerimientoDiseno && (
                       <button className="expediente-button primary" type="button" onClick={() => setClientDesignDetail(detail)}>
-                        Registrar diseno recibido
+                        Registrar diseño recibido
                       </button>
                     )}
                   </div>
@@ -637,19 +637,19 @@ export const PedidoExpedientePage = () => {
       {activeTab === 'disenos' && (
         <section className="expediente-content">
           <div className="expediente-section-heading">
-            <div><span>Disenos</span><h2>Requerimientos de diseno</h2></div>
+            <div><span>Diseños</span><h2>Requerimientos de diseño</h2></div>
             {!readOnly && hasPermission('disenos.ver') && (
               <div className="expediente-heading-actions">
-                {hasPermission('disenos.crear') && <button type="button" onClick={() => openDesignModal(null)}>Nuevo diseno</button>}
+                {hasPermission('disenos.crear') && <button type="button" onClick={() => openDesignModal(null)}>Nuevo diseño</button>}
                 <button type="button" className="secondary" onClick={() => navigate('/dashboard/production/designs')}>Ver todos <ExternalLink size={15} /></button>
               </div>
             )}
           </div>
           {loadingDesignRequirements ? (
-            <p className="expediente-empty">Consultando disenos pendientes...</p>
+            <p className="expediente-empty">Consultando diseños pendientes...</p>
           ) : designRequirementsError ? (
             <div className="expediente-empty">
-              <p>No pudimos cargar los disenos pendientes.</p>
+              <p>No pudimos cargar los diseños pendientes.</p>
               <button type="button" className="expediente-button secondary" onClick={loadDesignRequirements}>
                 Reintentar
               </button>
@@ -674,7 +674,7 @@ export const PedidoExpedientePage = () => {
               />
             ))}
             {(designRequirementsData?.requerimientos || []).length === 0 && (
-              <p className="expediente-empty">Este pedido no tiene requerimientos de diseno.</p>
+              <p className="expediente-empty">Este pedido no tiene requerimientos de diseño.</p>
             )}
           </div>
           )}
@@ -696,7 +696,7 @@ export const PedidoExpedientePage = () => {
                   {(event.detalle || event.descripcion || event.observaciones) && <p>{event.detalle || event.descripcion || event.observaciones}</p>}
                 </div>
                 {event.idAbono && <small>Abono #{paymentById.get(event.idAbono)?.idAbono || event.idAbono}</small>}
-                {event.idDiseno && <small>Diseno #{event.idDiseno}</small>}
+                {event.idDiseno && <small>Diseño #{event.idDiseno}</small>}
               </article>
               );
             })}

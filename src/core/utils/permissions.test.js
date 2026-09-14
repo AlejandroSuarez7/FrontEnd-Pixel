@@ -55,13 +55,13 @@ describe('permission helpers', () => {
       'Inicio',
       'Mis pedidos',
       'Mis cotizaciones',
-      'Mis disenos',
-      'Crear cotizacion',
+      'Mis diseños',
+      'Crear cotización',
       'Mi perfil',
     ]);
     expect(items.find(item => item.label === 'Inicio')?.to).toBe('/');
     expect(items.find(item => item.label === 'Mis pedidos')?.to).toBe('/dashboard');
-    expect(items.find(item => item.label === 'Crear cotizacion')?.to).toBe('/cotizar');
+    expect(items.find(item => item.label === 'Crear cotización')?.to).toBe('/cotizar');
     expect(labels).not.toContain('Usuarios');
     expect(labels).not.toContain('Compras');
     expect(labels).not.toContain('Ventas');
@@ -82,7 +82,7 @@ describe('permission helpers', () => {
     const labels = filterSidebarByPermissions(permissions, user).map((item) => item.label);
 
     expect(labels).toContain('Dashboard');
-    expect(labels).toContain('Configuracion');
+    expect(labels).toContain('Configuración');
     expect(labels).toContain('Usuarios');
     expect(labels).toContain('Catalogo');
     expect(labels).toContain('Compras');

@@ -13,7 +13,7 @@ describe('design coverage helpers', () => {
       cubiertoPorDiseno: true,
     });
 
-    expect(info.label).toBe('No requiere diseno');
+    expect(info.label).toBe('No requiere diseño');
     expect(info.covered).toBe(true);
     expect(info.canCreate).toBe(false);
   });
@@ -51,8 +51,8 @@ describe('design coverage helpers', () => {
       archivoDisenoInicialUrl: 'https://example.com/diseno-cliente.png',
     })).toMatchObject({
       canRegisterClientFile: true,
-      label: 'Diseno del cliente pendiente de registro',
-      message: 'El cliente entrego un archivo. Registralo para revisarlo en Gestion de Disenos.',
+      label: 'Diseño del cliente pendiente de registro',
+      message: 'El cliente entregó un archivo. Regístralo para revisarlo en Gestión de Diseños.',
     });
     expect(getDesignCoverageInfo({
       estadoCoberturaDiseno: 'DISENO_ENTREGADO_POR_CLIENTE',
@@ -70,7 +70,7 @@ describe('design coverage helpers', () => {
 
     expect(info.covered).toBe(true);
     expect(info.isGeneral).toBe(true);
-    expect(info.label).toBe('Cubierto por diseno general');
+    expect(info.label).toBe('Cubierto por diseño general');
   });
 
   it('allows a client response only while the design is pending review', () => {

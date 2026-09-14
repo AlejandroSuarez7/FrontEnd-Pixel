@@ -184,7 +184,7 @@ export const CompraModal = ({
             <div key={index} className={styles.detailRow}>
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Insumo</label>
-                <input value={detalle.descripcionInsumo} onChange={event => updateDetalle(index, 'descripcionInsumo', event.target.value)} className={styles.inputField} placeholder="Descripcion insumo" required />
+                <input value={detalle.descripcionInsumo} onChange={event => updateDetalle(index, 'descripcionInsumo', event.target.value)} className={styles.inputField} placeholder="Descripción insumo" required />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Cantidad</label>

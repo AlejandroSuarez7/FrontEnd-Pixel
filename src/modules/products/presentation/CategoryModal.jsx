@@ -65,7 +65,7 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Descripcion</label>
+            <label className={styles.inputLabel}>Descripción</label>
             <textarea
               className={styles.inputField}
               value={form.descripcion}

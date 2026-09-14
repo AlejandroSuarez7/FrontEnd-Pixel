@@ -1,4 +1,5 @@
 import { apiClient } from '../../../core/services/apiService';
+import { buildQuoteRequestBody } from '../../../core/services/quoteRequestBody';
 
 const PUBLIC_ENDPOINT = '/api/public';
 
@@ -50,7 +51,8 @@ export const publicQuoteRepository = {
   },
 
   async create(payload) {
-    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones`, payload, { skipAuthRedirect: true });
+    const body = buildQuoteRequestBody(payload);
+    const { data } = await apiClient.post(`${PUBLIC_ENDPOINT}/cotizaciones`, body, { skipAuthRedirect: true });
     return data;
   },
 

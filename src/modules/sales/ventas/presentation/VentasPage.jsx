@@ -148,8 +148,8 @@ export const VentasPage = () => {
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
         <div>
-          <span className={styles.breadcrumb}>Ventas / Gestion</span>
-          <h1 className={styles.pageTitle}>Gestion de Ventas</h1>
+          <span className={styles.breadcrumb}>Ventas / Gestión</span>
+          <h1 className={styles.pageTitle}>Gestión de Ventas</h1>
           <p className={styles.pageSubtitle}>
             Consulta una venta por pedido desde el primer abono confirmado.
           </p>
@@ -300,7 +300,7 @@ export const VentasPage = () => {
                       <td className={styles.tableCell}>{formatDate(venta.fechaPrimerPago)}</td>
                       <td className={styles.tableCell}>
                         <span className={styles.techniqueList}>
-                          {venta.tecnicas?.length ? venta.tecnicas.map(tecnica => tecnica.nombre).join(', ') : 'Sin tecnica'}
+                          {venta.tecnicas?.length ? venta.tecnicas.map(tecnica => tecnica.nombre).join(', ') : 'Sin técnica'}
                         </span>
                       </td>
                       <td className={styles.tableCell}>{venta.cantidadTotalProductos}</td>

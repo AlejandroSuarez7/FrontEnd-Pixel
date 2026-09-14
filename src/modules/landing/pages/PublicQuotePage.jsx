@@ -263,7 +263,11 @@ const PublicQuoteBuilder = ({ auth }) => {
           version: PUBLIC_QUOTE_DRAFT_VERSION,
           owner: draftIdentity,
           contact,
-          items,
+          items: items.map((item) => {
+            const serializableItem = { ...item };
+            delete serializableItem.archivoDiseno;
+            return serializableItem;
+          }),
           designGroups,
           observations,
           savedAt: new Date().toISOString(),
@@ -400,6 +404,11 @@ const PublicQuoteBuilder = ({ auth }) => {
 
     const reference = designReferences.find((item) => item.key === referenceKey);
     if (!reference) return;
+    const referenceItem = (
+      reference.itemId === currentItem.localId
+        ? currentItem
+        : items.find((item) => item.localId === reference.itemId)
+    );
 
     let groupId = reference.groupId;
     if (!groupId) {
@@ -408,22 +417,29 @@ const PublicQuoteBuilder = ({ auth }) => {
       setDesignGroups((current) => [...current, group]);
     }
 
-    const connectStamps = (item) => ({
-      ...item,
-      estampados: (item.estampados || []).map((stamp) => {
-        if (stamp.localId === reference.stampId) {
-          return { ...stamp, grupoDisenoCompartido: groupId };
-        }
-        if (stamp.localId === stampId) {
-          return {
-            ...stamp,
-            grupoDisenoCompartido: groupId,
-            origenDiseno: reference.origin,
-          };
-        }
-        return stamp;
-      }),
-    });
+    const connectStamps = (item) => {
+      const containsTargetStamp = (item.estampados || [])
+        .some((stamp) => stamp.localId === stampId);
+      return {
+        ...item,
+        ...(containsTargetStamp && referenceItem?.archivoDiseno
+          ? { archivoDiseno: referenceItem.archivoDiseno }
+          : {}),
+        estampados: (item.estampados || []).map((stamp) => {
+          if (stamp.localId === reference.stampId) {
+            return { ...stamp, grupoDisenoCompartido: groupId };
+          }
+          if (stamp.localId === stampId) {
+            return {
+              ...stamp,
+              grupoDisenoCompartido: groupId,
+              origenDiseno: reference.origin,
+            };
+          }
+          return stamp;
+        }),
+      };
+    };
 
     setItems((current) => current.map(connectStamps));
     setCurrentItem((current) => connectStamps(current));
@@ -616,7 +632,10 @@ const PublicQuoteBuilder = ({ auth }) => {
                   : contact.telefono
               )?.trim() || '',
             },
-            items: payloadItems,
+            items: payloadItems.map((item, index) => ({
+              ...item,
+              archivoDiseno: items[index]?.archivoDiseno || null,
+            })),
             observaciones: observations.trim() || null,
           });
         }

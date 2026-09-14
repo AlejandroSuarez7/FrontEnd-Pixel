@@ -120,9 +120,9 @@ export const ProductionQueuePage = () => {
       setDragOverIndex(null);
       setIsEditingOrder(false);
       setCurrentPage(1);
-      notifications.success('Orden de produccion guardado correctamente.');
+      notifications.success('Orden de producción guardado correctamente.');
     } catch (error) {
-      notifications.error(error.message || 'No se pudo guardar la posicion de la cola.');
+      notifications.error(error.message || 'No se pudo guardar la posición de la cola.');
     }
   };
 
@@ -156,17 +156,17 @@ export const ProductionQueuePage = () => {
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
         <div>
-          <span className={styles.breadcrumb}>Produccion / Cola</span>
-          <h1 className={styles.pageTitle}>Cola de Produccion</h1>
+          <span className={styles.breadcrumb}>Producción / Cola</span>
+          <h1 className={styles.pageTitle}>Cola de Producción</h1>
           <p className={styles.pageSubtitle}>
-            Pedidos en proceso ordenados por llegada a produccion.
+            Pedidos en proceso ordenados por llegada a producción.
           </p>
         </div>
         {canEditPosition && total > 0 && (
           <div className={styles.headerActions}>
             {!isEditingOrder ? (
               <button type="button" className={styles.primaryButton} onClick={handleStartEdit}>
-                Cambiar Posicion
+                Cambiar posición
               </button>
             ) : (
               <>
@@ -195,10 +195,10 @@ export const ProductionQueuePage = () => {
 
       <div className={styles.tableContainer}>
         {loading ? (
-          <p className={styles.loadingText}>Cargando cola de produccion...</p>
+          <p className={styles.loadingText}>Cargando cola de producción...</p>
         ) : error && queueSource.length === 0 ? (
           <div className={styles.loadingText}>
-            <p>{error.message || 'No se pudo cargar la cola de produccion.'}</p>
+            <p>{error.message || 'No se pudo cargar la cola de producción.'}</p>
             <button type="button" className={styles.primaryButton} onClick={refetch}>Reintentar</button>
           </div>
         ) : queueSource.length === 0 ? (

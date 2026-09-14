@@ -95,8 +95,8 @@ describe('QuoteFormModal presencial', () => {
     renderModal({ onSubmit });
 
     expect(screen.getByRole('navigation', { name: 'Pasos de la solicitud' })).toBeInTheDocument();
-    expect(screen.getByText('Registrar cotizacion sin acceso al portal')).toBeInTheDocument();
-    expect(screen.getByText(/No se creara un Usuario/i)).toBeInTheDocument();
+    expect(screen.getByText('Registrar cotización sin acceso al portal')).toBeInTheDocument();
+    expect(screen.getByText(/No se creará un usuario/i)).toBeInTheDocument();
 
     await completeWalkInClient(user);
     selectCatalogProduct();
@@ -179,7 +179,7 @@ describe('QuoteFormModal presencial', () => {
     await completeWalkInClient(user);
     selectCatalogProduct();
     await user.click(screen.getByRole('button', { name: 'Agregar estampado' }));
-    await user.click(screen.getByLabelText(/Usar el mismo diseno en todos/i));
+    await user.click(screen.getByLabelText(/Usar el mismo diseño en todos/i));
     await goToReview(user);
     await user.click(screen.getByRole('button', { name: 'Crear solicitud' }));
 
@@ -198,7 +198,7 @@ describe('QuoteFormModal presencial', () => {
 
     await completeWalkInClient(user);
     selectCatalogProduct();
-    await user.selectOptions(screen.getByLabelText('Servicio o tecnica'), '2');
+    await user.selectOptions(screen.getByLabelText('Servicio o técnica'), '2');
     await user.selectOptions(await screen.findByLabelText('Tamaño del estampado'), '1');
     await goToReview(user);
 

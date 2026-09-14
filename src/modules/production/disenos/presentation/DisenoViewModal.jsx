@@ -34,9 +34,9 @@ const styles = {
 const normalizeStatus = (value = '') => String(value || '').toUpperCase();
 const formatDesignOrigin = (origen = '') => {
   const value = normalizeStatus(origen);
-  if (value === 'CLIENTE') return 'Diseno enviado por el cliente';
+  if (value === 'CLIENTE') return 'Diseño enviado por el cliente';
   if (value === 'OTRO') return 'Otro origen';
-  return 'Equipo PIXEL / Disenador';
+  return 'Equipo PIXEL / Diseñador';
 };
 
 const formatStatus = (status = '') => ({
@@ -50,13 +50,13 @@ const formatStatus = (status = '') => ({
 const safeDate = (value) => value ? formatDate(value) : 'No registrada';
 const isWaitingResponse = (status) => ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR'].includes(normalizeStatus(status));
 const getDesignProductName = (diseno) => {
-  if (diseno?.esDisenoGeneral) return 'Diseno general del pedido';
+  if (diseno?.esDisenoGeneral) return 'Diseño general del pedido';
   const detalle = diseno?.detallePedido;
   return detalle?.producto?.nombre || detalle?.descripcion || diseno?.descripcion || diseno?.pedido?.detalles?.[0]?.descripcion || 'Producto no especificado';
 };
 const getDesignTechniqueName = (diseno) => {
   const detalle = diseno?.detallePedido;
-  return detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Tecnica #${detalle.idTecnica}` : 'No especificada');
+  return detalle?.tecnica?.nombre || (detalle?.idTecnica ? `Técnica #${detalle.idTecnica}` : 'No especificada');
 };
 
 const DisenoViewModalContent = ({
@@ -93,7 +93,7 @@ const DisenoViewModalContent = ({
         <div className={styles.modalHeader}>
           <div>
             <div className="disenos-view-heading-row">
-              <h3 className={styles.modalTitle}>Diseno #{diseno.idDiseno}</h3>
+              <h3 className={styles.modalTitle}>Diseño #{diseno.idDiseno}</h3>
               <span className={`disenos-view-status disenos-view-status-${estado.toLowerCase()}`}>{formatStatus(estado)}</span>
             </div>
             <p className={styles.modalSubtitle}>Pedido #{diseno.idPedido} | {clienteNombre}</p>
@@ -103,25 +103,25 @@ const DisenoViewModalContent = ({
         </div>
 
         <div className="disenos-view-content">
-          <section className="disenos-view-summary" aria-label="Resumen del diseno">
+          <section className="disenos-view-summary" aria-label="Resumen del diseño">
             <div><span>Estado</span><strong>{formatStatus(estado)}</strong></div>
             <div><span>Enviado</span><strong>{safeDate(diseno.fechaEnvio)}</strong></div>
             <div><span>Respuesta</span><strong>{safeDate(diseno.fechaRespuestaCliente)}</strong></div>
             <div><span>Origen</span><strong>{enviadoPorCliente ? 'Cliente' : 'Equipo PIXEL'}</strong></div>
-            <div><span>Alcance</span><strong>{diseno.esDisenoGeneral ? 'Todo el pedido' : 'Producto especifico'}</strong></div>
+            <div><span>Alcance</span><strong>{diseno.esDisenoGeneral ? 'Todo el pedido' : 'Producto específico'}</strong></div>
           </section>
 
           <section className="disenos-view-design-grid">
             <div className="disenos-view-preview-column">
-              <span className="disenos-view-section-label">Diseno enviado</span>
+              <span className="disenos-view-section-label">Diseño enviado</span>
               {archivoUrl ? (
                 <div className={styles.imagePreview}>
                   {isPdf ? (
                     <div className="disenos-view-document-card">
                       <FileText size={30} aria-hidden="true" />
                       <div>
-                        <strong title={archivo.name || 'Diseno en PDF'}>
-                          {archivo.name || 'Diseno en PDF'}
+                        <strong title={archivo.name || 'Diseño en PDF'}>
+                          {archivo.name || 'Diseño en PDF'}
                         </strong>
                         <span>
                           {[getDesignFileFormatLabel(archivo), formatFileSize(archivo.bytes)]
@@ -133,7 +133,7 @@ const DisenoViewModalContent = ({
                   ) : !previewError ? (
                     <img
                       src={archivoUrl}
-                      alt={`Vista previa del diseno ${diseno.idDiseno}`}
+                      alt={`Vista previa del diseño ${diseno.idDiseno}`}
                       className={styles.imagePreviewMedia}
                       onError={() => setPreviewError(true)}
                     />
@@ -142,7 +142,7 @@ const DisenoViewModalContent = ({
                   )}
                   {!isPdf && (archivo.name || archivo.bytes) && (
                     <div className="disenos-view-file-metadata">
-                      <strong title={archivo.name || 'Diseno almacenado'}>{archivo.name || 'Diseno almacenado'}</strong>
+                      <strong title={archivo.name || 'Diseño almacenado'}>{archivo.name || 'Diseño almacenado'}</strong>
                       <span>
                         {[getDesignFileFormatLabel(archivo), formatFileSize(archivo.bytes)]
                           .filter(Boolean)
@@ -167,21 +167,21 @@ const DisenoViewModalContent = ({
                 {diseno.esDisenoGeneral && <p>Aplica para todo el pedido.</p>}
                 {!diseno.esDisenoGeneral && detallePedido && (
                   <p>
-                    Tecnica: {getDesignTechniqueName(diseno)}
+                    Técnica: {getDesignTechniqueName(diseno)}
                     {detallePedido.cantidad ? ` | Cant. ${detallePedido.cantidad}` : ''}
-                    {detallePedido.requiereDiseno === false ? ' | No requiere diseno' : ''}
+                    {detallePedido.requiereDiseno === false ? ' | No requiere diseño' : ''}
                   </p>
                 )}
                 {diseno.descripcion && diseno.descripcion !== producto && <p>{diseno.descripcion}</p>}
               </div>
               <div className="disenos-view-info-block">
-                <span className="disenos-view-section-label">Origen del diseno</span>
+                <span className="disenos-view-section-label">Origen del diseño</span>
                 <strong>{formatDesignOrigin(diseno.origenDiseno)}</strong>
                 <p>Medio: {diseno.medioRecepcion || 'No aplica'}</p>
               </div>
               <div className="disenos-view-info-block">
                 <span className="disenos-view-section-label">Responsable</span>
-                <strong>{enviadoPorCliente ? 'Diseno enviado por el cliente' : diseno.disenador?.nombre || 'Sin asignar'}</strong>
+                <strong>{enviadoPorCliente ? 'Diseño enviado por el cliente' : diseno.disenador?.nombre || 'Sin asignar'}</strong>
                 {!enviadoPorCliente && diseno.recibidoPor?.nombre && <p>Recibido por: {diseno.recibidoPor.nombre}</p>}
               </div>
             </div>
@@ -204,14 +204,14 @@ const DisenoViewModalContent = ({
             )}
           </section>
 
-          <section className="disenos-view-price-summary" aria-label="Resumen de la cotizacion">
+          <section className="disenos-view-price-summary" aria-label="Resumen de la cotización">
             <span>Subtotal: <strong>{formatMoneyCOP(subtotal)}</strong></span>
             <span>Descuento: <strong>{descuentoTotal > 0 ? `-${formatMoneyCOP(descuentoTotal)}` : 'Sin descuento'}</strong></span>
             <span>Adicionales: <strong>{formatMoneyCOP(costosAdicionales)}</strong></span>
             <span className="disenos-view-total">Total: <strong>{formatMoneyCOP(total)}</strong></span>
           </section>
 
-          {estado === 'APROBADO' && <p className="disenos-view-state-message success">Este diseno ya fue aprobado.</p>}
+          {estado === 'APROBADO' && <p className="disenos-view-state-message success">Este diseño ya fue aprobado.</p>}
           {estado === 'RECHAZADO' && <p className="disenos-view-state-message warning">Se solicitaron correcciones. Revisa las observaciones del cliente.</p>}
         </div>
 
@@ -223,7 +223,7 @@ const DisenoViewModalContent = ({
           )}
           {puedeResponder && onApprove && (
             <button type="button" className={styles.btnPrimary} onClick={onApprove} disabled={pendingAction}>
-              {pendingAction ? 'Procesando...' : 'Aprobar diseno'}
+              {pendingAction ? 'Procesando...' : 'Aprobar diseño'}
             </button>
           )}
           <button type="button" onClick={onClose} className={puedeResponder ? styles.btnSecondary : styles.btnPrimary} disabled={pendingAction}>

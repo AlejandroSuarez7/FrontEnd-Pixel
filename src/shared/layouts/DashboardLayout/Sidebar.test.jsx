@@ -50,13 +50,13 @@ describe('Sidebar accordion', () => {
     const catalogButton = screen.getByTitle('Catalogo');
 
     await waitFor(() => expect(usersButton).toHaveAttribute('aria-expanded', 'true'));
-    expect(screen.getByText('Gestion de Usuarios')).toBeInTheDocument();
+    expect(screen.getByText('Gestión de Usuarios')).toBeInTheDocument();
 
     await user.click(catalogButton);
 
     expect(catalogButton).toHaveAttribute('aria-expanded', 'true');
     expect(usersButton).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText('Gestion de Usuarios')).not.toBeInTheDocument();
+    expect(screen.queryByText('Gestión de Usuarios')).not.toBeInTheDocument();
     expect(screen.getByText('Categorias de productos')).toBeInTheDocument();
     expect(document.querySelectorAll('.menu-toggle.active')).toHaveLength(1);
   });
@@ -68,15 +68,15 @@ describe('Sidebar accordion', () => {
     await waitFor(() => expect(salesButton).toHaveAttribute('aria-expanded', 'true'));
 
     expect(salesButton).toHaveClass('active');
-    expect(screen.getByText('Gestion de Cotizaciones')).toBeInTheDocument();
+    expect(screen.getByText('Gestión de Cotizaciones')).toBeInTheDocument();
     expect(document.querySelectorAll('.menu-toggle.active')).toHaveLength(1);
   });
 
-  it('does not expose Gestion de Abonos as an independent navigation module', async () => {
+  it('does not expose Gestión de Abonos as an independent navigation module', async () => {
     renderSidebar('/dashboard/orders');
 
     await waitFor(() => expect(screen.getByTitle('Ventas')).toHaveAttribute('aria-expanded', 'true'));
-    expect(screen.queryByText('Gestion de Abonos')).not.toBeInTheDocument();
-    expect(screen.getByText('Gestion de Pedidos')).toBeInTheDocument();
+    expect(screen.queryByText('Gestión de Abonos')).not.toBeInTheDocument();
+    expect(screen.getByText('Gestión de Pedidos')).toBeInTheDocument();
   });
 });

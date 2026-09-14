@@ -132,9 +132,9 @@ describe('PedidoExpedientePage design origin', () => {
   it('shows the action, saves CLIENTE and refreshes requirements without reloading the page', async () => {
     render(<PedidoExpedientePage />);
 
-    fireEvent.click(screen.getByRole('tab', { name: /Disenos/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'Definir quien entrega el diseno' }));
-    fireEvent.click(screen.getByRole('radio', { name: /^El cliente entrega el diseno/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /Diseños/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Definir quién entrega el diseño' }));
+    fireEvent.click(screen.getByRole('radio', { name: /^El cliente entrega el diseño/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Guardar seleccion' }));
 
     await waitFor(() => {
@@ -142,7 +142,7 @@ describe('PedidoExpedientePage design origin', () => {
       expect(mocks.loadRequirements).toHaveBeenCalledTimes(1);
     });
     expect(mocks.loadExpediente).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog', { name: 'Definir quien entrega el diseno' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Definir quién entrega el diseño' })).not.toBeInTheDocument();
     expect(mocks.success).toHaveBeenCalled();
   });
 
@@ -156,9 +156,9 @@ describe('PedidoExpedientePage design origin', () => {
     };
     const { container } = render(<PedidoExpedientePage />);
 
-    fireEvent.click(screen.getByRole('tab', { name: /Disenos/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar diseno recibido' }));
-    const dialog = screen.getByRole('dialog', { name: 'Registrar diseno recibido' });
+    fireEvent.click(screen.getByRole('tab', { name: /Diseños/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar diseño recibido' }));
+    const dialog = screen.getByRole('dialog', { name: 'Registrar diseño recibido' });
     const file = new File(['design'], 'diseno.png', { type: 'image/png' });
     fireEvent.change(container.querySelector('input[type="file"]'), {
       target: { files: [file] },
@@ -166,7 +166,7 @@ describe('PedidoExpedientePage design origin', () => {
     fireEvent.change(within(dialog).getByLabelText(/observaciones/i), {
       target: { value: 'Recibido por WhatsApp.' },
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Registrar diseno recibido' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Registrar diseño recibido' }));
 
     await waitFor(() => {
       expect(pedidoRepository.registrarDisenoRecibidoCliente).toHaveBeenCalledWith(
@@ -181,8 +181,8 @@ describe('PedidoExpedientePage design origin', () => {
       expect(mocks.loadRequirements).toHaveBeenCalledTimes(1);
     });
     expect(mocks.loadExpediente).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog', { name: 'Registrar diseno recibido' })).not.toBeInTheDocument();
-    expect(mocks.success).toHaveBeenCalledWith('Diseno recibido. Quedo pendiente de revision.');
+    expect(screen.queryByRole('dialog', { name: 'Registrar diseño recibido' })).not.toBeInTheDocument();
+    expect(mocks.success).toHaveBeenCalledWith('Diseño recibido. Quedó pendiente de revisión.');
   });
 
   it('hides every mutation action when opened from sales in read-only mode', () => {
@@ -195,8 +195,8 @@ describe('PedidoExpedientePage design origin', () => {
     fireEvent.click(screen.getByRole('tab', { name: /Abonos/i }));
     expect(screen.queryByRole('button', { name: 'Registrar abono' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: /Disenos/i }));
-    expect(screen.queryByRole('button', { name: 'Nuevo diseno' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Definir quien entrega el diseno' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /Diseños/i }));
+    expect(screen.queryByRole('button', { name: 'Nuevo diseño' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Definir quién entrega el diseño' })).not.toBeInTheDocument();
   });
 });

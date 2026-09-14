@@ -41,7 +41,7 @@ const RegisterClientDesignModalContent = ({
         });
       } catch (error) {
         if (!error.wasNotified) {
-          notifications.error(error.message || 'No se pudo registrar el diseno recibido.');
+          notifications.error(error.message || 'No se pudo registrar el diseño recibido.');
         }
       }
     });
@@ -53,7 +53,7 @@ const RegisterClientDesignModalContent = ({
         <header>
           <div>
             <span>Pedido #{pedido?.idPedido}</span>
-            <h3 id="client-design-title">Registrar diseno recibido</h3>
+            <h3 id="client-design-title">Registrar diseño recibido</h3>
           </div>
           <button type="button" onClick={onClose} disabled={isSubmitting} aria-label="Cerrar">
             <X size={18} />
@@ -97,12 +97,12 @@ const RegisterClientDesignModalContent = ({
             />
           </label>
 
-          <p>El diseno quedara recibido y pendiente de revision. No se aprobara automaticamente.</p>
+          <p>El diseño quedará recibido y pendiente de revisión. No se aprobará automáticamente.</p>
 
           <footer>
             <button type="button" onClick={onClose} disabled={isSubmitting}>Cancelar</button>
             <button type="submit" className="primary" disabled={isSubmitting || !archivo}>
-              {isSubmitting ? 'Registrando...' : 'Registrar diseno recibido'}
+              {isSubmitting ? 'Registrando...' : 'Registrar diseño recibido'}
             </button>
           </footer>
         </form>

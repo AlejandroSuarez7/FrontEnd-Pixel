@@ -123,7 +123,7 @@ export const ProductCategoriesPage = () => {
               <thead>
                 <tr className={styles.tableHeadRow}>
                   <th className={styles.tableHeader}>Categoria</th>
-                  <th className={styles.tableHeader}>Descripcion</th>
+                  <th className={styles.tableHeader}>Descripción</th>
                   <th className={styles.tableHeader}>Estado</th>
                   <th className={styles.tableHeader}>Acciones</th>
                 </tr>
@@ -132,7 +132,7 @@ export const ProductCategoriesPage = () => {
                 {categories.map(category => (
                   <tr key={category.idCategoriaProducto} className={styles.tableBodyRow}>
                     <td className={styles.tableCellName}>{category.nombre}</td>
-                    <td className={styles.tableCell}>{category.descripcion || 'Sin descripcion'}</td>
+                    <td className={styles.tableCell}>{category.descripcion || 'Sin descripción'}</td>
                     <td className={styles.tableCell}>
                       <span className={`${styles.statusBadge} ${category.estado ? styles.statusActive : styles.statusInactive}`}>
                         {category.estado ? 'Activa' : 'Inactiva'}

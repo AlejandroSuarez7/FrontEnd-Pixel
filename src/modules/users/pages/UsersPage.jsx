@@ -153,8 +153,8 @@ export const UsersPage = () => {
     <div className={styles.pageContainer}>
       <div className={styles.headerWrapper}>
         <div>
-          <span className={styles.breadcrumb}>Configuracion / Acceso</span>
-          <h1 className={styles.pageTitle}>Gestion de Usuarios</h1>
+          <span className={styles.breadcrumb}>Configuración / Acceso</span>
+          <h1 className={styles.pageTitle}>Gestión de Usuarios</h1>
           <p className={styles.pageSubtitle}>
             Administra cuentas, roles y estados del personal y clientes del sistema.
           </p>
