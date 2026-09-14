@@ -76,8 +76,8 @@ export const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
       >
         <header className={styles.modalHeader}>
           <div>
-            <span className={styles.modalEyebrow}>Detalle del servicio</span>
-            <h3 id="service-details-title" className={styles.modalTitle}>Servicio #{service.id}</h3>
+            <span className={styles.modalEyebrow}>Detalle de la técnica</span>
+            <h3 id="service-details-title" className={styles.modalTitle}>Técnica #{service.id}</h3>
           </div>
           <button type="button" onClick={onClose} className={styles.modalCloseBtn} aria-label="Cerrar">×</button>
         </header>
@@ -86,7 +86,7 @@ export const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
           <div className={styles.detailsBody}>
             <div className={styles.detailsRow}>
               <span className={styles.detailsFieldLabel}>Nombre de la técnica</span>
-              <span className={styles.detailsFieldValue}>{service.nombre || 'Servicio sin nombre'}</span>
+              <span className={styles.detailsFieldValue}>{service.nombre || 'Técnica sin nombre'}</span>
             </div>
 
             <div className={styles.detailsRow}>
@@ -99,7 +99,7 @@ export const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
             <div className={styles.detailsDescriptionBlock}>
               <span className={styles.detailsFieldLabel}>Descripción completa</span>
               <p className={styles.detailsDescriptionText}>
-                {service.descripcion || 'Este servicio no cuenta con una descripción detallada en el sistema.'}
+                {service.descripcion || 'Esta técnica no cuenta con una descripción detallada en el sistema.'}
               </p>
             </div>
 
@@ -116,7 +116,7 @@ export const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
           <section className={styles.servicePricesSection} aria-labelledby="service-prices-title">
             <div className={styles.servicePricesHeading}>
               <div>
-                <span>Tarifas del servicio</span>
+                <span>Tarifas de la técnica</span>
                 <h4 id="service-prices-title">Precios configurados</h4>
               </div>
               {!loadingTariffs && !tariffError && (
@@ -138,7 +138,7 @@ export const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
               </div>
             ) : tariffs.length === 0 ? (
               <div className={styles.servicePricesState}>
-                <p>No hay precios configurados para este servicio.</p>
+                <p>No hay precios configurados para esta técnica.</p>
               </div>
             ) : (
               <div className={styles.servicePricesGrid}>

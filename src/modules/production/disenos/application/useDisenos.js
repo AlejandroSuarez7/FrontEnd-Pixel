@@ -51,6 +51,10 @@ export const useDisenos = (filters = {}) => {
 
   const getDisenosByPedido = useCallback((idPedido) => disenoRepository.listByPedido(idPedido), []);
   const getPendingProduction = useCallback(() => disenoRepository.listPendingProduction(), []);
+  const getPendingDesignOrders = useCallback(
+    (options) => disenoRepository.listPendingDesignOrders(options),
+    [],
+  );
   const getPedidos = useCallback((pedidoFilters) => disenoRepository.listPedidos(pedidoFilters), []);
   const getRequerimientosDiseno = useCallback(
     (idPedido, options) => disenoRepository.getRequerimientosDiseno(idPedido, options),
@@ -71,6 +75,7 @@ export const useDisenos = (filters = {}) => {
     handleDelete,
     getDisenosByPedido,
     getPendingProduction,
+    getPendingDesignOrders,
     getPedidos,
     getRequerimientosDiseno,
   };

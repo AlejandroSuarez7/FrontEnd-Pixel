@@ -14,6 +14,7 @@ const MODULE_NAMES = {
   permisos: 'Permisos',
   clientes: 'Clientes',
   dashboard: 'Dashboard',
+  produccion: 'Producción',
   tarifas_tecnicas: 'Tarifas por técnica',
   general: 'General',
 };
@@ -29,6 +30,7 @@ const ACTION_NAMES = {
   finalizar: 'Finalizar',
   pasar_proceso: 'Pasar a proceso',
   produccion: 'Producción',
+  cola_ver: 'Consultar cola de producción',
   precios: 'Gestionar precios de',
   resumen: 'Ver resumen de',
   cliente: 'Gestionar cliente de',
@@ -43,6 +45,7 @@ const ACTION_NAMES = {
 
 const ACTION_ORDER = [
   'ver',
+  'cola_ver',
   'crear',
   'editar',
   'confirmar',
@@ -75,7 +78,7 @@ const LABEL_OVERRIDES = {
   'cotizaciones.respuesta_cliente.registrar': 'Registrar respuestas de clientes',
   'cotizaciones.versiones.ver': 'Ver versiones de cotizaciones',
   'cotizaciones.cliente.responder': 'Responder propuestas de cotización',
-  'disenos.produccion': 'Enviar diseños a producción',
+  'disenos.produccion': 'Consultar cola de producción',
   'cotizaciones.crear_cliente': 'Crear cotizaciones de clientes',
   'cotizaciones.editar_cliente': 'Editar cotizaciones de clientes',
   'cotizaciones.crear_presencial': 'Crear cotizaciones presenciales',
@@ -104,6 +107,8 @@ export const formatActionName = (action = '') =>
   ACTION_NAMES[action] || capitalizeWords(action);
 
 export const formatPermissionLabel = (code = '', permission = null) => {
+  const backendLabel = permission?.label || permission?.nombre;
+  if (backendLabel && backendLabel !== code) return backendLabel;
   if (LABEL_OVERRIDES[code]) return LABEL_OVERRIDES[code];
 
   const [moduleFromCode = permission?.modulo || 'general', ...actionParts] = String(code).split('.');

@@ -58,6 +58,7 @@ describe('Sidebar accordion', () => {
     expect(usersButton).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByText('Gestión de Usuarios')).not.toBeInTheDocument();
     expect(screen.getByText('Categorias de productos')).toBeInTheDocument();
+    expect(screen.getByText('Gestión de Técnicas')).toBeInTheDocument();
     expect(document.querySelectorAll('.menu-toggle.active')).toHaveLength(1);
   });
 

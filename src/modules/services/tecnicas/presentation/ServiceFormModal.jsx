@@ -58,7 +58,7 @@ export const ServiceFormModal = ({
       })
       .catch((error) => {
         if (!controller.signal.aborted && error?.code !== 'ERR_CANCELED') {
-          notifications.error(error.message || 'No se pudieron cargar los precios del servicio.');
+          notifications.error(error.message || 'No se pudieron cargar los precios de la técnica.');
         }
       })
       .finally(() => {
@@ -97,7 +97,7 @@ export const ServiceFormModal = ({
 
   const addTariff = () => {
     if (!form.requiereMedidas && tariffs.some((tariff) => !tariff.removed)) {
-      notifications.warning('Este servicio solo puede tener un precio general.');
+      notifications.warning('Esta técnica solo puede tener un precio general.');
       return;
     }
     setTariffs((current) => [
@@ -110,7 +110,7 @@ export const ServiceFormModal = ({
     const accepted = await confirm({
       title: 'Quitar precio',
       message: tariff.idTarifa
-        ? 'Este precio se eliminará al guardar el servicio.'
+        ? 'Este precio se eliminará al guardar la técnica.'
         : '¿Quieres quitar este precio del formulario?',
       confirmText: 'Quitar',
       cancelText: 'Cancelar',
@@ -160,7 +160,7 @@ export const ServiceFormModal = ({
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (form.nombre.trim().length < 2) {
-      notifications.warning('Escribe un nombre válido para el servicio.');
+      notifications.warning('Escribe un nombre válido para la técnica.');
       return;
     }
 
@@ -187,7 +187,7 @@ export const ServiceFormModal = ({
             await syncTariffs(idTecnica);
           } catch (error) {
             notifications.warning(
-              `El servicio se guardó, pero uno de sus precios falló: ${error.message || 'revisa los datos y vuelve a guardar.'}`,
+              `La técnica se guardó, pero uno de sus precios falló: ${error.message || 'revisa los datos y vuelve a guardar.'}`,
             );
             return;
           }
@@ -195,12 +195,12 @@ export const ServiceFormModal = ({
 
         notifications.success(
           service || persistedServiceId
-            ? 'Servicio y precios actualizados correctamente.'
-            : 'Servicio y precios creados correctamente.',
+            ? 'Técnica y precios actualizados correctamente.'
+            : 'Técnica y precios creados correctamente.',
         );
         onClose();
       } catch (error) {
-        notifications.error(error.message || 'No se pudo guardar el servicio.');
+        notifications.error(error.message || 'No se pudo guardar la técnica.');
       }
     });
   };
@@ -212,9 +212,9 @@ export const ServiceFormModal = ({
       <div className={`${styles.modalContainer} ${styles.modalLg}`}>
         <div className={styles.modalHeader}>
           <div>
-            <span className={styles.modalEyebrow}>Gestión de servicios</span>
+            <span className={styles.modalEyebrow}>Gestión de técnicas</span>
             <h3 className={styles.modalTitle}>
-              {isEditMode ? `Editar servicio #${persistedServiceId || service?.id}` : 'Crear nuevo servicio'}
+              {isEditMode ? `Editar técnica #${persistedServiceId || service?.id}` : 'Crear nueva técnica'}
             </h3>
           </div>
           <button
@@ -233,13 +233,13 @@ export const ServiceFormModal = ({
             <div className={styles.serviceSectionHeading}>
               <div>
                 <span>Datos generales</span>
-                <strong>Información visible del servicio</strong>
+                <strong>Información visible de la técnica</strong>
               </div>
             </div>
 
             <div className={styles.serviceGeneralGrid}>
               <label className={styles.inputGroup}>
-                <span className={styles.inputLabel}>Nombre del servicio / técnica *</span>
+                <span className={styles.inputLabel}>Nombre de la técnica *</span>
                 <input
                   type="text"
                   value={form.nombre}
@@ -267,7 +267,7 @@ export const ServiceFormModal = ({
                   value={form.descripcion}
                   onChange={(event) => updateForm('descripcion', event.target.value)}
                   className={styles.textareaField}
-                  placeholder="Describe el servicio, materiales recomendados o notas"
+                  placeholder="Describe la técnica, materiales recomendados o notas"
                   maxLength={255}
                 />
               </label>
@@ -279,8 +279,8 @@ export const ServiceFormModal = ({
                   disabled={isSubmitting}
                 />
                 <span>
-                  <strong>Este servicio requiere ancho y alto</strong>
-                  <small>Desactívalo cuando el servicio tenga un único precio general.</small>
+                  <strong>Esta técnica requiere ancho y alto</strong>
+                  <small>Desactívalo cuando la técnica tenga un único precio general.</small>
                 </span>
               </label>
             </div>
@@ -293,7 +293,7 @@ export const ServiceFormModal = ({
                   <span>
                     {form.requiereMedidas
                       ? 'Precios por dimensiones'
-                      : 'Precio general del servicio'}
+                      : 'Precio general de la técnica'}
                   </span>
                   <strong>
                     {form.requiereMedidas
@@ -318,7 +318,7 @@ export const ServiceFormModal = ({
                 <p className={styles.serviceTariffState}>Cargando precios...</p>
               ) : visibleTariffs.length === 0 ? (
                 <p className={styles.serviceTariffState}>
-                  No hay precios configurados para este servicio.
+                  No hay precios configurados para esta técnica.
                 </p>
               ) : (
                 <div className={styles.serviceTariffList}>
@@ -458,7 +458,7 @@ export const ServiceFormModal = ({
               className={styles.btnPrimary}
               disabled={isSubmitting || loadingTariffs}
             >
-              {isSubmitting ? 'Guardando...' : isEditMode ? 'Guardar cambios' : 'Registrar servicio'}
+              {isSubmitting ? 'Guardando...' : isEditMode ? 'Guardar cambios' : 'Registrar técnica'}
             </button>
           </div>
         </form>

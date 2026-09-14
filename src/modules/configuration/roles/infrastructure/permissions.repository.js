@@ -8,6 +8,7 @@ const normalizePermission = (item) => ({
   codigo: item.codigo,
   modulo: item.modulo || 'general',
   accion: item.accion || item.codigo?.split('.')?.[1] || '',
+  label: item.label || item.nombre || null,
   descripcion: item.descripcion || item.codigo,
   estado: item.estado ?? true,
 });

@@ -112,6 +112,20 @@ export class DisenoApiRepository {
     }
   }
 
+  async listPendingDesignOrders(options = {}) {
+    try {
+      const { data } = await apiClient.get(`${ENDPOINT}/pedidos-pendientes`, {
+        signal: options.signal,
+      });
+      return Array.isArray(data.data) ? data.data : [];
+    } catch (error) {
+      throw createRequestError(
+        error,
+        'No pudimos cargar los pedidos con diseños pendientes.',
+      );
+    }
+  }
+
   async listPedidos(filters = {}) {
     try {
       const params = {};

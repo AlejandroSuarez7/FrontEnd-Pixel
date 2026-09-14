@@ -22,7 +22,7 @@ export const ROUTE_PERMISSIONS = {
   [PATHS.SALES_PAYMENTS]: ['abonos.ver'],
   [PATHS.SALES_RETURNS]: ['ventas.ver'],
   [PATHS.ORDERS]: ['pedidos.ver'],
-  [PATHS.PRODUCTION]: ['pedidos.ver', 'disenos.produccion'],
+  [PATHS.PRODUCTION]: ['disenos.produccion'],
   [PATHS.PRODUCTION_DESIGNS]: ['disenos.ver'],
   [PATHS.PRODUCTION_DELIVERY]: ['pedidos.ver'],
   [PATHS.SERVICES]: ['tecnicas.ver'],

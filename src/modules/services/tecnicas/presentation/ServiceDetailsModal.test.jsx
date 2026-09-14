@@ -84,7 +84,7 @@ describe('ServiceDetailsModal', () => {
 
     renderModal();
 
-    expect(await screen.findByText('No hay precios configurados para este servicio.'))
+    expect(await screen.findByText('No hay precios configurados para esta técnica.'))
       .toBeInTheDocument();
     expect(screen.queryByText(/undefined|null|prisma/i)).not.toBeInTheDocument();
   });
