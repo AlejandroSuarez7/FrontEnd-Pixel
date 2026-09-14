@@ -1,49 +1,125 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  hasAllPermissions as checkAllPermissions,
+  hasAnyPermission as checkAnyPermission,
+  hasPermission as checkPermission,
+  normalizePermissionCodes,
+} from '../core/utils/permissions';
+import { SESSION_EXPIRED_EVENT } from '../core/services/apiService';
 import { authService } from '../modules/auth/services/authService';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-
   const [user, setUser] = useState(null);
+  const [permissions, setPermissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const session = authService.getSession();
+    let isMounted = true;
 
-    if (session) {
-      setUser(session);
-    }
+    const restoreSession = async () => {
+      const session = authService.getSession();
+      if (!session) {
+        if (isMounted) setLoading(false);
+        return;
+      }
+
+      const restoredPermissions = normalizePermissionCodes(session.codigos);
+      if (isMounted) {
+        setUser(session);
+        setPermissions(restoredPermissions);
+      }
+
+      if (authService.getToken()) {
+        try {
+          const permissionsSession = await authService.fetchPermissions();
+          const refreshedUser = {
+            ...session,
+            permisos: permissionsSession.permisos,
+            codigos: permissionsSession.codigos,
+          };
+
+          localStorage.setItem('pixel_user', JSON.stringify(refreshedUser));
+
+          if (isMounted) {
+            setUser(refreshedUser);
+            setPermissions(permissionsSession.codigos);
+          }
+        } catch (error) {
+          console.error('No se pudieron refrescar los permisos de sesion:', error);
+        }
+      }
+
+      if (isMounted) setLoading(false);
+    };
+
+    restoreSession();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const login = (email, password) => {
-    try {
-      const loggedInUser = authService.login(email, password);
-      setUser(loggedInUser);
-    } catch (error) {
-      console.error('Error en login:', error);
-      throw error;
-    }
+  useEffect(() => {
+    const handleExpiredSession = () => {
+      setUser(null);
+      setPermissions([]);
+    };
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleExpiredSession);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpiredSession);
+  }, []);
+
+  const login = async (email, password) => {
+    const loggedInUser = await authService.login(email, password);
+    setUser(loggedInUser);
+    setPermissions(normalizePermissionCodes(loggedInUser.codigos));
+    return loggedInUser;
+  };
+
+  const register = async (userData) => {
+    await authService.register(userData);
   };
 
   const logout = () => {
-    try {
-      authService.logout();
-      setUser(null);
-    } catch (error) {
-      console.error('Error en logout:', error);
-      throw error;
-    }
+    authService.logout();
+    setUser(null);
+    setPermissions([]);
   };
+
+  const updateSession = (userData) => {
+    const updatedUser = { ...(user || {}), ...userData };
+    localStorage.setItem('pixel_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    setPermissions(normalizePermissionCodes(updatedUser.codigos || permissions));
+  };
+
+  const hasPermission = (code) => checkPermission(permissions, code);
+  const hasAnyPermission = (codes) => checkAnyPermission(permissions, codes);
+  const hasAllPermissions = (codes) => checkAllPermissions(permissions, codes);
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        permissions,
+        loading,
         login,
+        register,
         logout,
+        updateSession,
+        hasPermission,
+        hasAnyPermission,
+        hasAllPermissions,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider');
+  return context;
 };

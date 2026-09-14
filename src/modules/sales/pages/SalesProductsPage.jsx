@@ -1,10 +1,3 @@
-const SalesProductsPage = () => {
-  return (
-    <div>
-      <h1>Gestión de Productos</h1>
-      <p>Módulo en construcción</p>
-    </div>
-  );
-};
+import { VentasPage } from '../ventas/presentation/VentasPage';
 
-export default SalesProductsPage;
+export default VentasPage;

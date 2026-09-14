@@ -1,10 +1,5 @@
-const ProductionPage = () => {
-  return (
-    <div>
-      <h1>Gestión de Producción</h1>
-      <p>Módulo en construcción</p>
-    </div>
-  );
-};
+import { ProductionQueuePage } from '../queue/presentation/ProductionQueuePage';
+
+const ProductionPage = () => <ProductionQueuePage />;
 
 export default ProductionPage;

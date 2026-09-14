@@ -1,0 +1,235 @@
+.deletion-impact-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(30, 24, 48, 0.52);
+  backdrop-filter: blur(3px);
+}
+
+.deletion-impact-modal {
+  width: min(100%, 560px);
+  max-height: min(90vh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #eadff8;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(42, 28, 72, 0.22);
+}
+
+.deletion-impact-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid #eee8f6;
+}
+
+.deletion-impact-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #b42318;
+  background: #fff1f0;
+}
+
+.deletion-impact-header h2 {
+  margin: 0;
+  color: #231a36;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.deletion-impact-header p {
+  margin: 5px 0 0;
+  color: #746985;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.deletion-impact-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  color: #746985;
+  background: transparent;
+  cursor: pointer;
+}
+
+.deletion-impact-close:hover:not(:disabled) { background: #f6f2fa; }
+
+.deletion-impact-body {
+  min-height: 120px;
+  padding: 18px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.deletion-impact-lead {
+  margin: 0 0 14px;
+  color: #4d425e;
+  font-size: 13.5px;
+}
+
+.deletion-impact-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.deletion-impact-group {
+  padding: 13px 14px;
+  border: 1px solid #eadff8;
+  border-radius: 7px;
+  background: #fbf9fe;
+}
+
+.deletion-impact-group strong {
+  display: block;
+  color: #332744;
+  font-size: 13.5px;
+}
+
+.deletion-impact-group ul {
+  margin: 9px 0 0;
+  padding-left: 19px;
+  color: #5f536f;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.deletion-impact-omitted {
+  display: block;
+  margin-top: 8px;
+  color: #7251a7;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.deletion-impact-note,
+.deletion-impact-empty,
+.deletion-impact-blocked,
+.deletion-impact-error,
+.deletion-impact-delete-error,
+.deletion-impact-status {
+  padding: 12px 13px;
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.deletion-impact-note {
+  margin: 14px 0 0;
+  color: #6b5361;
+  background: #fff8ed;
+  border: 1px solid #f5dfbd;
+}
+
+.deletion-impact-empty,
+.deletion-impact-status {
+  color: #5f536f;
+  background: #f8f5fc;
+  border: 1px solid #eadff8;
+}
+
+.deletion-impact-blocked,
+.deletion-impact-error,
+.deletion-impact-delete-error {
+  color: #8f1d18;
+  background: #fff1f0;
+  border: 1px solid #f3c6c2;
+}
+
+.deletion-impact-blocked,
+.deletion-impact-error {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.deletion-impact-error button {
+  width: fit-content;
+  margin-top: 3px;
+  padding: 7px 11px;
+  border: 1px solid #cbb4ec;
+  border-radius: 6px;
+  color: #6332a8;
+  background: #fff;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.deletion-impact-final {
+  display: grid;
+  gap: 11px;
+  color: #4d425e;
+  font-size: 14px;
+}
+
+.deletion-impact-final > strong { color: #9f211b; }
+.deletion-impact-final p { margin: 0; }
+
+.deletion-impact-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid #eee8f6;
+  background: #fff;
+}
+
+.deletion-impact-footer button {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deletion-impact-footer button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.deletion-impact-cancel {
+  border: 1px solid #ddd4e8;
+  color: #5f536f;
+  background: #fff;
+}
+
+.deletion-impact-continue {
+  border: 1px solid #6d3cc5;
+  color: #fff;
+  background: #6d3cc5;
+}
+
+.deletion-impact-confirm {
+  border: 1px solid #b42318;
+  color: #fff;
+  background: #b42318;
+  box-shadow: 0 5px 14px rgba(180, 35, 24, 0.18);
+}
+
+@media (max-width: 560px) {
+  .deletion-impact-overlay { padding: 10px; }
+  .deletion-impact-modal { max-height: calc(100vh - 20px); }
+  .deletion-impact-header { padding: 17px 16px 14px; }
+  .deletion-impact-body { padding: 15px 16px; }
+  .deletion-impact-footer {
+    padding: 12px 16px 16px;
+    flex-direction: column-reverse;
+  }
+  .deletion-impact-footer button { width: 100%; }
+}

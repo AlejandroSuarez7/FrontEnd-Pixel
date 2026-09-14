@@ -1,10 +1,5 @@
-const SalesPaymentsPage = () => {
-  return (
-    <div>
-      <h1>Gestión de Abonos</h1>
-      <p>Módulo en construcción</p>
-    </div>
-  );
-};
+import { AbonosPage } from './../abonos/presentation/AbonosPage';
+
+const SalesPaymentsPage = () => <AbonosPage />;
 
 export default SalesPaymentsPage;
