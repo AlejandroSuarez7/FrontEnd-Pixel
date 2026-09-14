@@ -12,6 +12,7 @@ coverage/
 .env
 .env.*
 !.env.example
+package-lock.json
 
 # Logs
 *.log
