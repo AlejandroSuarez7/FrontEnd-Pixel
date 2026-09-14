@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://backend-pixelv2-1.onrender.com"
+      "destination": "https://backend-pixelv2-1.onrender.com/api/:path*"
     },
     {
       "source": "/:path*",
