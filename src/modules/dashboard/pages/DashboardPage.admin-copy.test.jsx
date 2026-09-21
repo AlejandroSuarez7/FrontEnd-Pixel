@@ -8,7 +8,12 @@ vi.mock('../../../store/AuthContext', () => ({
 }));
 
 vi.mock('./AdminTrendsPanel', () => ({
+  default: () => <div>Resumen de tendencias</div>,
   AdminTrendsPanel: () => <div>Resumen de tendencias</div>,
+}));
+
+vi.mock('./StatusDistribution', () => ({
+  default: () => <div>Distribución de pedidos</div>,
 }));
 
 const data = {
@@ -25,13 +30,14 @@ const data = {
 };
 
 describe('AdminDashboard visible copy', () => {
-  it('shows human synchronization copy without exposing request details', () => {
+  it('shows human synchronization copy without exposing request details', async () => {
     const { container } = render(
       <MemoryRouter>
         <AdminDashboard userName="Admin" data={data} />
       </MemoryRouter>,
     );
 
+    expect(await screen.findByText('Resumen de tendencias')).toBeInTheDocument();
     expect(screen.getByText('Datos en tiempo real')).toBeInTheDocument();
     expect(screen.getByText('Información actualizada automáticamente.')).toBeInTheDocument();
     expect(container).not.toHaveTextContent('/api/dashboard/admin');
