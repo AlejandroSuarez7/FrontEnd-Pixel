@@ -63,6 +63,7 @@ const DesignOriginModalContent = ({ requirement, pedido, onClose, onSubmit }) =>
               <label
                 key={option.value}
                 className={`disenos-origin-option ${origin === option.value ? 'selected' : ''}`}
+                aria-label={option.label}
               >
                 <input
                   type="radio"

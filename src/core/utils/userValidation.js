@@ -1,5 +1,15 @@
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TEN_DIGITS_REGEX = /^\d{10}$/;
+
+export const hasValidEmailFormat = (value) => {
+  const email = String(value).trim();
+  if (!email || /\s/.test(email)) return false;
+
+  const atIndex = email.indexOf('@');
+  if (atIndex <= 0 || atIndex !== email.lastIndexOf('@')) return false;
+
+  const dotIndex = email.lastIndexOf('.');
+  return dotIndex > atIndex + 1 && dotIndex < email.length - 1;
+};
 
 export const PASSWORD_RULES = [
   { id: 'length', label: 'Minimo 8 caracteres', test: (value) => value.length >= 8 },
@@ -10,7 +20,7 @@ export const PASSWORD_RULES = [
 ];
 
 export const onlyDigits = (value = '', maxLength = 10) =>
-  String(value).replace(/\D/g, '').slice(0, maxLength);
+  String(value).replaceAll(/\D/g, '').slice(0, maxLength);
 
 export const getPasswordRulesStatus = (password = '') =>
   PASSWORD_RULES.map((rule) => ({
@@ -31,7 +41,7 @@ export const getAuthFormValidationError = ({ telefono, correo, contrasena, confi
     return 'El telefono debe tener exactamente 10 digitos.';
   }
 
-  if (correo !== undefined && !EMAIL_REGEX.test(String(correo).trim())) {
+  if (correo !== undefined && !hasValidEmailFormat(correo)) {
     return 'El correo debe tener un formato valido.';
   }
 
@@ -55,7 +65,7 @@ export const getUserValidationError = ({
   isEditing = false,
 } = {}) => {
   if (!String(nombre || '').trim()) return 'El nombre no puede estar vacio.';
-  if (!EMAIL_REGEX.test(String(correo || '').trim())) return 'El correo debe tener un formato valido.';
+  if (!hasValidEmailFormat(correo || '')) return 'El correo debe tener un formato valido.';
   if (!idRol) return 'El rol es obligatorio.';
 
   if (!TEN_DIGITS_REGEX.test(String(documento || ''))) {

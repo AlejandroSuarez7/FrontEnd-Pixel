@@ -17,7 +17,7 @@ const Header = () => {
         <h2>Dashboard</h2>
         <div className="user-section">
           <span>{user?.email}</span>
-          <button onClick={handleLogout}>Cerrar Sesión</button>
+          <button type="button" onClick={handleLogout}>Cerrar Sesión</button>
         </div>
       </div>
     </header>

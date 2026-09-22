@@ -134,4 +134,46 @@ describe('tariffRepository contracts', () => {
     });
     expect(apiClient.delete).toHaveBeenCalledWith('/api/tarifas-tecnicas/8');
   });
+
+  it('lists public techniques and handles invalid catalog responses', async () => {
+    const signal = new AbortController().signal;
+    apiClient.get
+      .mockResolvedValueOnce({ data: { data: [{ idTecnica: 2, nombre: 'DTF' }] } })
+      .mockResolvedValueOnce({ data: { data: null } });
+    await expect(tariffRepository.listTechniques({ signal })).resolves.toHaveLength(1);
+    await expect(tariffRepository.listTechniques()).resolves.toEqual([]);
+    expect(apiClient.get).toHaveBeenNthCalledWith(1, '/api/public/tecnicas', { signal });
+  });
+
+  it('loads and normalizes technique discounts', async () => {
+    const signal = new AbortController().signal;
+    apiClient.get
+      .mockResolvedValueOnce({ data: { data: [{ idDescuento: '3', idTecnica: '2', cantidadMinima: '10', porcentaje: '7.5', estado: false }] } })
+      .mockResolvedValueOnce({ data: { data: {} } });
+
+    await expect(tariffRepository.listDiscounts(2, { signal })).resolves.toEqual([
+      expect.objectContaining({ idDescuento: 3, idTecnica: 2, cantidadMinima: 10, porcentaje: 7.5, estado: false }),
+    ]);
+    await expect(tariffRepository.listDiscounts(2)).resolves.toEqual([]);
+  });
+
+  it('replaces discounts with normalized payloads and maps the response', async () => {
+    apiClient.patch
+      .mockResolvedValueOnce({ data: { data: [{ idDescuento: 4, idTecnica: 2, cantidadMinima: 20, porcentaje: 12.5 }] } })
+      .mockResolvedValueOnce({ data: { data: null } });
+
+    await expect(tariffRepository.replaceDiscounts(2, [{ cantidadMinima: '20', porcentaje: '12,5', estado: 1 }]))
+      .resolves
+      .toEqual([expect.objectContaining({ porcentaje: 12.5, estado: true })]);
+    await expect(tariffRepository.replaceDiscounts(2, [])).resolves.toEqual([]);
+    expect(apiClient.patch).toHaveBeenNthCalledWith(1, '/api/tarifas-tecnicas/tecnicas/2/descuentos', {
+      descuentos: [{ cantidadMinima: 20, porcentaje: '12.5', estado: true }],
+    });
+  });
+
+  it('maps nullable tariff dimensions and inferred general state', async () => {
+    apiClient.post.mockResolvedValueOnce({ data: { data: { idTarifaTecnica: '9', idTecnica: '2', anchoHastaCm: null, altoHastaCm: null, precioUnitario: null, estado: false } } });
+    const result = await tariffRepository.create({ idTecnica: 2, nombre: 'General', esGeneral: true, precioUnitario: null, estado: false });
+    expect(result).toMatchObject({ idTarifa: 9, idTecnica: 2, anchoHastaCm: null, altoHastaCm: null, esGeneral: true, precioUnitario: null, estado: false, tecnica: null });
+  });
 });

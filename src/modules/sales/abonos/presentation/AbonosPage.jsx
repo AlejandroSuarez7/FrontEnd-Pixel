@@ -315,7 +315,7 @@ export const AbonosPage = () => {
           </p>
         </div>
         {hasPermission('abonos.crear') && (
-          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+          <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
             Nuevo abono
           </button>
         )}

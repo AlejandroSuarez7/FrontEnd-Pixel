@@ -11,7 +11,10 @@
 }
 
 .confirm-dialog {
+  position: static;
   width: min(440px, 100%);
+  margin: 0;
+  padding: 0;
   border: 1px solid #e5e9f2;
   border-radius: 10px;
   background: #fff;

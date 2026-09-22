@@ -75,10 +75,11 @@ export const DesignClientResponseModal = ({ isOpen, mode, diseno, onClose, onSub
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>
+            <label className={styles.inputLabel} htmlFor="design-response-medium">
               {isReject ? 'Medio de respuesta *' : 'Medio de aprobacion *'}
             </label>
             <select
+              id="design-response-medium"
               value={medio}
               onChange={(event) => setMedio(event.target.value)}
               className={styles.inputField}
@@ -92,10 +93,11 @@ export const DesignClientResponseModal = ({ isOpen, mode, diseno, onClose, onSub
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>
+            <label className={styles.inputLabel} htmlFor="design-response-observations">
               {isReject ? 'Cambios solicitados *' : 'Observaciones'}
             </label>
             <textarea
+              id="design-response-observations"
               value={observaciones}
               onChange={(event) => setObservaciones(event.target.value)}
               className={styles.inputField}

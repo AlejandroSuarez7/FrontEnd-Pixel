@@ -1,28 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import styles from '../../users/presentation/users.module.css';
 
-export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
+const CategoryModalContent = ({ onClose, onSubmit, category }) => {
   const [form, setForm] = useState({
-    nombre: '',
-    descripcion: '',
-    estado: true,
+    nombre: category?.nombre || '',
+    descripcion: category?.descripcion || '',
+    estado: category?.estado ?? true,
   });
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
   const isEditing = Boolean(category);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    setForm({
-      nombre: category?.nombre || '',
-      descripcion: category?.descripcion || '',
-      estado: category?.estado ?? true,
-    });
-  }, [isOpen, category]);
-
-  if (!isOpen) return null;
 
   const updateField = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -55,8 +43,9 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Nombre *</label>
+            <label className={styles.inputLabel} htmlFor="category-name">Nombre *</label>
             <input
+              id="category-name"
               className={styles.inputField}
               value={form.nombre}
               onChange={event => updateField('nombre', event.target.value)}
@@ -65,8 +54,9 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Descripción</label>
+            <label className={styles.inputLabel} htmlFor="category-description">Descripción</label>
             <textarea
+              id="category-description"
               className={styles.inputField}
               value={form.descripcion}
               onChange={event => updateField('descripcion', event.target.value)}
@@ -75,8 +65,9 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Estado</label>
+            <label className={styles.inputLabel} htmlFor="category-status">Estado</label>
             <select
+              id="category-status"
               className={styles.selectField}
               value={String(form.estado)}
               onChange={event => updateField('estado', event.target.value === 'true')}
@@ -95,5 +86,17 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
         </form>
       </div>
     </div>
+  );
+};
+
+export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
+  if (!isOpen) return null;
+  return (
+    <CategoryModalContent
+      key={category?.idCategoriaProducto ?? 'new-category'}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      category={category}
+    />
   );
 };

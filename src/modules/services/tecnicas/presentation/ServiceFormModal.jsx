@@ -271,7 +271,10 @@ export const ServiceFormModal = ({
                   maxLength={255}
                 />
               </label>
-              <label className={`${styles.serviceMeasureToggle} ${styles.serviceWideField}`}>
+              <label
+                className={`${styles.serviceMeasureToggle} ${styles.serviceWideField}`}
+                aria-label="Esta técnica requiere ancho y alto"
+              >
                 <input
                   type="checkbox"
                   checked={form.requiereMedidas}

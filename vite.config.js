@@ -8,5 +8,16 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setupTests.js',
+    testTimeout: 10_000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{js,jsx}'],
+      exclude: [
+        'src/**/*.{test,spec}.{js,jsx}',
+        'src/test/**',
+      ],
+    },
   },
 })

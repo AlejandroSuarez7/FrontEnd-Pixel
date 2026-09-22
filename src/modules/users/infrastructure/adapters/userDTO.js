@@ -19,6 +19,6 @@ export const userDTO = {
 
   fromApiList(apiUsers) {
     if (!Array.isArray(apiUsers)) return [];
-    return apiUsers.map(this.fromApi);
+    return apiUsers.map((apiUser) => this.fromApi(apiUser));
   }
 };

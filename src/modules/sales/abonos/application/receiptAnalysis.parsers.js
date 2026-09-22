@@ -116,21 +116,21 @@ const RECEIPT_PROFILES = {
 };
 
 const cleanText = value => String(value || '')
-  .replace(/\u00a0/g, ' ')
-  .replace(/[|¦]/g, 'I')
-  .replace(/[ \t]+/g, ' ')
+  .replaceAll('\u00a0', ' ')
+  .replaceAll(/[|¦]/g, 'I')
+  .replaceAll(/[ \t]+/g, ' ')
   .trim();
 
 export const normalizeReceiptText = value => cleanText(value)
-  .replace(/Ã¡/gi, 'a')
-  .replace(/Ã©/gi, 'e')
-  .replace(/Ã­/gi, 'i')
-  .replace(/Ã³/gi, 'o')
-  .replace(/Ãº/gi, 'u')
-  .replace(/Ã±/gi, 'n')
-  .replace(/Â/g, '')
+  .replaceAll(/Ã¡/gi, 'a')
+  .replaceAll(/Ã©/gi, 'e')
+  .replaceAll(/Ã­/gi, 'i')
+  .replaceAll(/Ã³/gi, 'o')
+  .replaceAll(/Ãº/gi, 'u')
+  .replaceAll(/Ã±/gi, 'n')
+  .replaceAll('Â', '')
   .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
+  .replaceAll(/[\u0300-\u036f]/g, '')
   .toLowerCase();
 
 const createLines = text => cleanText(text)
@@ -192,11 +192,11 @@ const toIsoDate = (year, month, day) => {
 
 export const parseColombianMoney = (rawValue) => {
   const value = cleanText(rawValue)
-    .replace(/\b(?:cop|col\s*\$?)\b/gi, '')
-    .replace(/[$]/g, '')
+    .replaceAll(/\b(?:cop|col\s*\$?)\b/gi, '')
+    .replaceAll(/[$]/g, '')
     .replace(/^s\s*(?=\d)/i, '')
-    .replace(/\s+/g, '')
-    .replace(/[^\d.,-]/g, '');
+    .replaceAll(/\s+/g, '')
+    .replaceAll(/[^\d.,-]/g, '');
 
   if (!value || value.startsWith('-') || !/\d/.test(value)) return null;
 
@@ -210,8 +210,8 @@ export const parseColombianMoney = (rawValue) => {
     const decimalIndex = Math.max(lastDot, lastComma);
     const decimalDigits = value.length - decimalIndex - 1;
     normalized = decimalDigits === 1 || decimalDigits === 2
-      ? `${value.slice(0, decimalIndex).replace(/[.,]/g, '')}.${value.slice(decimalIndex + 1)}`
-      : value.replace(/[.,]/g, '');
+      ? `${value.slice(0, decimalIndex).replaceAll(/[.,]/g, '')}.${value.slice(decimalIndex + 1)}`
+      : value.replaceAll(/[.,]/g, '');
   } else if (dots || commas) {
     const separator = dots ? '.' : ',';
     const count = dots || commas;
@@ -220,7 +220,7 @@ export const parseColombianMoney = (rawValue) => {
     if (count === 1 && (trailingDigits === 1 || trailingDigits === 2)) {
       normalized = `${value.slice(0, index)}.${value.slice(index + 1)}`;
     } else {
-      normalized = value.replace(/[.,]/g, '');
+      normalized = value.replaceAll(/[.,]/g, '');
     }
   } else {
     normalized = value;
@@ -265,7 +265,7 @@ export const rankAmountCandidates = (text, profile = {}) => {
         match[0].length,
         NON_AMOUNT_LABELS,
       );
-      const digits = match[0].replace(/\D/g, '');
+      const digits = match[0].replaceAll(/\D/g, '');
       let score = positiveScore + profileBoost(context, profile.amountLabels);
       if (hasCurrency) score += 24;
       if (/[.,\s]\d{3}/.test(match[0])) score += 12;
@@ -317,7 +317,7 @@ export const rankReferenceCandidates = (text, profile = {}) => {
       const normalizedValue = sameLineMatch?.[1] || nextLineMatch?.[1];
       const sourceLine = sameLineMatch ? line.raw : nextLine?.raw || '';
       const rawValue = normalizedValue
-        ? sourceLine.match(new RegExp(normalizedValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))?.[0] || normalizedValue
+        ? sourceLine.match(new RegExp(normalizedValue.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))?.[0] || normalizedValue
         : null;
       if (!rawValue) return;
 
@@ -420,7 +420,7 @@ export const parseGenericReceipt = (text, engineConfidence = 0, profile = {}) =>
     + clamp(engineConfidence) * 0.11
   );
   const calidadLectura = Math.round(clamp(functionalConfidence));
-  const fragmentedText = normalizeReceiptText(text).replace(/\s/g, '').length < 24;
+  const fragmentedText = normalizeReceiptText(text).replaceAll(/\s/g, '').length < 24;
 
   return {
     montoDetectado: bestAmount?.value ?? null,

@@ -1,31 +1,17 @@
 // presentation/presentation/RoleFormModal.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import styles from './roles.module.css';
 
-export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
-  const [nombre, setNombre]           = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [estado, setEstado]           = useState(true);
+const RoleFormModalContent = ({ onClose, onSubmit, role }) => {
+  const [nombre, setNombre] = useState(role?.nombre || '');
+  const [descripcion, setDescripcion] = useState(role?.descripcion || '');
+  const [estado, setEstado] = useState(role?.estado ?? true);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditMode = !!role;
   const isCoreRole = isEditMode && (role.nombre === 'Admin' || role.nombre === 'Cliente');
-
-  useEffect(() => {
-    if (role) {
-      setNombre(role.nombre || '');
-      setDescripcion(role.descripcion || '');
-      setEstado(role.estado ?? true);
-    } else {
-      setNombre('');
-      setDescripcion('');
-      setEstado(true);
-    }
-  }, [role, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,8 +43,9 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
         <form onSubmit={handleSubmit} className={styles.form}>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Nombre del rol *</label>
+            <label className={styles.inputLabel} htmlFor="role-name">Nombre del rol *</label>
             <input
+              id="role-name"
               type="text"
               value={nombre}
               onChange={e => setNombre(e.target.value)}
@@ -71,8 +58,9 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Descripción de permisos</label>
+            <label className={styles.inputLabel} htmlFor="role-description">Descripción de permisos</label>
             <textarea
+              id="role-description"
               value={descripcion}
               onChange={e => setDescripcion(e.target.value)}
               className={styles.textareaField}
@@ -112,5 +100,17 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
         </form>
       </div>
     </div>
+  );
+};
+
+export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
+  if (!isOpen) return null;
+  return (
+    <RoleFormModalContent
+      key={role?.id ?? 'new-role'}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      role={role}
+    />
   );
 };

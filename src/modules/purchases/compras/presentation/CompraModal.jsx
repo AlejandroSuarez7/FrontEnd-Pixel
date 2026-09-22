@@ -27,50 +27,37 @@ const styles = {
 
 const emptyDetalle = { descripcionInsumo: '', cantidad: 1, costoUnitario: 0 };
 
-export const CompraModal = ({
-  isOpen,
+const getInitialDetails = (compra) => (
+  compra?.detalles?.length
+    ? compra.detalles.map((detail) => ({
+        descripcionInsumo: detail.descripcionInsumo || '',
+        cantidad: detail.cantidad || 1,
+        costoUnitario: detail.costoUnitario || 0,
+      }))
+    : [emptyDetalle]
+);
+
+const CompraModalContent = ({
   onClose,
   onSubmit,
   compra,
   getPedidos,
   getProveedoresActivos,
 }) => {
-  const [idPedido, setIdPedido] = useState('');
-  const [idProveedor, setIdProveedor] = useState('');
-  const [observaciones, setObservaciones] = useState('');
+  const [idPedido, setIdPedido] = useState(compra?.idPedido || '');
+  const [idProveedor, setIdProveedor] = useState(compra?.idProveedor || '');
+  const [observaciones, setObservaciones] = useState(compra?.observaciones || '');
   const [confirmar, setConfirmar] = useState(false);
-  const [detalles, setDetalles] = useState([emptyDetalle]);
+  const [detalles, setDetalles] = useState(() => getInitialDetails(compra));
   const [pedidos, setPedidos] = useState([]);
   const [proveedores, setProveedores] = useState([]);
-  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(true);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(compra);
 
   useEffect(() => {
-    if (compra) {
-      setIdPedido(compra.idPedido || '');
-      setIdProveedor(compra.idProveedor || '');
-      setObservaciones(compra.observaciones || '');
-      setConfirmar(false);
-      setDetalles(compra.detalles?.length ? compra.detalles.map(det => ({
-        descripcionInsumo: det.descripcionInsumo || '',
-        cantidad: det.cantidad || 1,
-        costoUnitario: det.costoUnitario || 0,
-      })) : [emptyDetalle]);
-    } else {
-      setIdPedido('');
-      setIdProveedor('');
-      setObservaciones('');
-      setConfirmar(false);
-      setDetalles([emptyDetalle]);
-    }
-  }, [compra, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
     let cancelled = false;
-    setLoadingOptions(true);
     Promise.all([getPedidos(), getProveedoresActivos()])
       .then(([pedidosData, proveedoresData]) => {
         if (cancelled) return;
@@ -90,13 +77,11 @@ export const CompraModal = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, getPedidos, getProveedoresActivos]);
+  }, [getPedidos, getProveedoresActivos]);
 
   const totalEstimado = useMemo(() => detalles.reduce((sum, det) =>
     sum + Number(det.cantidad || 0) * Number(det.costoUnitario || 0), 0
   ), [detalles]);
-
-  if (!isOpen) return null;
 
   const updateDetalle = (index, field, value) => {
     setDetalles(prev => prev.map((det, itemIndex) =>
@@ -147,8 +132,8 @@ export const CompraModal = ({
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Pedido *</label>
-              <select value={idPedido} onChange={event => setIdPedido(event.target.value)} className={styles.inputField} disabled={isSubmitting || isEditing || loadingOptions} required>
+              <label className={styles.inputLabel} htmlFor="purchase-order">Pedido *</label>
+              <select id="purchase-order" value={idPedido} onChange={event => setIdPedido(event.target.value)} className={styles.inputField} disabled={isSubmitting || isEditing || loadingOptions} required>
                 <option value="">{loadingOptions ? 'Cargando pedidos...' : 'Selecciona un pedido'}</option>
                 {isEditing && idPedido ? <option value={idPedido}>Pedido #{idPedido}</option> : null}
                 {pedidos.map(pedido => (
@@ -159,8 +144,8 @@ export const CompraModal = ({
               </select>
             </div>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Proveedor *</label>
-              <select value={idProveedor} onChange={event => setIdProveedor(event.target.value)} className={styles.inputField} disabled={isSubmitting || loadingOptions} required>
+              <label className={styles.inputLabel} htmlFor="purchase-supplier">Proveedor *</label>
+              <select id="purchase-supplier" value={idProveedor} onChange={event => setIdProveedor(event.target.value)} className={styles.inputField} disabled={isSubmitting || loadingOptions} required>
                 <option value="">{loadingOptions ? 'Cargando proveedores...' : 'Selecciona un proveedor'}</option>
                 {proveedores.map(proveedor => (
                   <option key={proveedor.idProveedor} value={proveedor.idProveedor}>
@@ -172,8 +157,8 @@ export const CompraModal = ({
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Observaciones</label>
-            <textarea value={observaciones} onChange={event => setObservaciones(event.target.value)} className={styles.inputField} rows={2} maxLength={500} />
+            <label className={styles.inputLabel} htmlFor="purchase-observations">Observaciones</label>
+            <textarea id="purchase-observations" value={observaciones} onChange={event => setObservaciones(event.target.value)} className={styles.inputField} rows={2} maxLength={500} />
           </div>
 
           <div className={styles.detailsInfoBox}>
@@ -183,16 +168,16 @@ export const CompraModal = ({
           {detalles.map((detalle, index) => (
             <div key={index} className={styles.detailRow}>
               <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Insumo</label>
-                <input value={detalle.descripcionInsumo} onChange={event => updateDetalle(index, 'descripcionInsumo', event.target.value)} className={styles.inputField} placeholder="Descripción insumo" required />
+                <label className={styles.inputLabel} htmlFor={`purchase-item-${index}-name`}>Insumo</label>
+                <input id={`purchase-item-${index}-name`} value={detalle.descripcionInsumo} onChange={event => updateDetalle(index, 'descripcionInsumo', event.target.value)} className={styles.inputField} placeholder="Descripción insumo" required />
               </div>
               <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Cantidad</label>
-                <input type="number" min="1" value={detalle.cantidad} onChange={event => updateDetalle(index, 'cantidad', event.target.value)} className={styles.inputField} placeholder="Ej: 2" required />
+                <label className={styles.inputLabel} htmlFor={`purchase-item-${index}-quantity`}>Cantidad</label>
+                <input id={`purchase-item-${index}-quantity`} type="number" min="1" value={detalle.cantidad} onChange={event => updateDetalle(index, 'cantidad', event.target.value)} className={styles.inputField} placeholder="Ej: 2" required />
               </div>
               <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Costo unitario</label>
-                <input type="number" min="1" value={detalle.costoUnitario} onChange={event => updateDetalle(index, 'costoUnitario', event.target.value)} className={styles.inputField} placeholder="Ej: 45000" required />
+                <label className={styles.inputLabel} htmlFor={`purchase-item-${index}-unit-cost`}>Costo unitario</label>
+                <input id={`purchase-item-${index}-unit-cost`} type="number" min="1" value={detalle.costoUnitario} onChange={event => updateDetalle(index, 'costoUnitario', event.target.value)} className={styles.inputField} placeholder="Ej: 45000" required />
               </div>
               {detalles.length > 1 && (
                 <button type="button" onClick={() => removeDetalle(index)} className={`${styles.actionBtn} ${styles.actionBtnCancel}`} disabled={isSubmitting}>Quitar</button>
@@ -220,5 +205,15 @@ export const CompraModal = ({
         </form>
       </div>
     </div>
+  );
+};
+
+export const CompraModal = ({ isOpen, ...props }) => {
+  if (!isOpen) return null;
+  return (
+    <CompraModalContent
+      key={props.compra?.idCompra ?? 'new-purchase'}
+      {...props}
+    />
   );
 };

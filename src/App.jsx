@@ -1,6 +1,6 @@
 import { Toaster } from 'sonner';
 import AppRouter from './routes/AppRouter';
-import { ConfirmProvider } from './shared/components/ConfirmDialog/ConfirmProvider';
+import { ConfirmProvider } from './shared/components/ConfirmDialog/ConfirmDialogProvider';
 import './App.css';
 import 'sonner/dist/styles.css';
 

@@ -277,7 +277,7 @@ export const DisenosPage = () => {
           </p>
         </div>
         {hasPermission('disenos.crear') && (!userRole || userRole !== 'Cliente') ? (
-          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+          <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
             Nuevo diseño
           </button>
         ) : null}

@@ -34,7 +34,7 @@ export const normalizeDesignRequirementsResponse = (payload = {}) => {
 
   return {
     requerimientos: requirements
-      .map(normalizeDesignRequirement)
+      .map((requirement) => normalizeDesignRequirement(requirement))
       .filter(requirement => requirement.idRequerimientoDiseno),
     resumen: root?.resumen ?? {
       totalDisenosRequeridos: 0,

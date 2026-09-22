@@ -136,7 +136,7 @@ export const ProductsPage = () => {
           <p className={styles.pageSubtitle}>Administra el catálogo visible en solicitudes. Los precios viven en Técnicas.</p>
         </div>
         {hasPermission('productos.crear') && (
-          <button className={styles.primaryButton} onClick={openCreate}>Nuevo producto</button>
+          <button type="button" className={styles.primaryButton} onClick={openCreate}>Nuevo producto</button>
         )}
       </div>
 

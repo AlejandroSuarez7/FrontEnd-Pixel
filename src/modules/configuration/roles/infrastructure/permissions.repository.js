@@ -17,7 +17,7 @@ export class PermissionsApiRepository {
   async list() {
     const { data } = await apiClient.get(ENDPOINT);
     const items = data.data || data || [];
-    return Array.isArray(items) ? items.map(normalizePermission) : [];
+    return Array.isArray(items) ? items.map((item) => normalizePermission(item)) : [];
   }
 
   async listByRole(idRol) {

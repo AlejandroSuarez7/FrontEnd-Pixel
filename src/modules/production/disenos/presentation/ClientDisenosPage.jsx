@@ -213,16 +213,6 @@ export const ClientDisenosPage = () => {
                 <article
                   key={diseno.idDiseno}
                   className={styles.clientCard}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openDetail(diseno)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      openDetail(diseno);
-                    }
-                  }}
-                  aria-label={`Ver detalle del diseño ${diseno.idDiseno}`}
                 >
                   <div className={styles.clientCardHeader}>
                     <div>
@@ -252,13 +242,16 @@ export const ClientDisenosPage = () => {
                   )}
 
                   <div className={styles.clientActions}>
+                    <button type="button" className={styles.btnSecondary} onClick={() => openDetail(diseno)}>
+                      Ver detalle
+                    </button>
                     {canRespond && canReject && (
-                      <button type="button" className={styles.btnSecondary} onClick={(event) => { event.stopPropagation(); handleReject(diseno); }} disabled={isPending}>
+                      <button type="button" className={styles.btnSecondary} onClick={() => handleReject(diseno)} disabled={isPending}>
                         {pendingActionId === diseno.idDiseno ? 'Enviando...' : 'Solicitar cambios'}
                       </button>
                     )}
                     {canRespond && canApprove && (
-                      <button type="button" className={styles.btnPrimary} onClick={(event) => { event.stopPropagation(); handleApprove(diseno); }} disabled={isPending}>
+                      <button type="button" className={styles.btnPrimary} onClick={() => handleApprove(diseno)} disabled={isPending}>
                         {pendingActionId === diseno.idDiseno ? 'Aprobando...' : 'Aprobar'}
                       </button>
                     )}

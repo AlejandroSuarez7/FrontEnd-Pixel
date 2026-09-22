@@ -92,8 +92,8 @@ const LABEL_OVERRIDES = {
 
 const capitalizeWords = (value = '') =>
   value
-    .replace(/_/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replaceAll('_', ' ')
+    .replaceAll(/\s+/g, ' ')
     .trim()
     .split(' ')
     .filter(Boolean)

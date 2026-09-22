@@ -1,3 +1,5 @@
+import { hasValidEmailFormat } from '../../../core/utils/userValidation';
+
 export const PUBLIC_QUOTE_DRAFT_VERSION = 3;
 export const MAX_PUBLIC_QUOTE_ITEMS = 50;
 export const MAX_ITEM_STAMPS = 20;
@@ -214,7 +216,7 @@ export const validateContact = (contact, isClient = false) => {
   if (!isClient && contact.nombre.trim().length < 2) {
     errors.nombre = 'Ingresa tu nombre completo.';
   }
-  if (!isClient && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.correo.trim())) {
+  if (!isClient && !hasValidEmailFormat(contact.correo)) {
     errors.correo = 'Ingresa un correo válido.';
   }
   if (!isClient && !/^\d{10}$/.test(contact.telefono.trim())) {

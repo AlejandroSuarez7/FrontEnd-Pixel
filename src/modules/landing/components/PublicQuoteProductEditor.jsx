@@ -534,7 +534,7 @@ export const PublicQuoteProductEditor = ({
             <strong>Define cómo llegará el arte</strong>
           </div>
         </div>
-        <label className="public-quote-checkbox-row">
+        <label className="public-quote-checkbox-row" aria-label="Este producto requiere diseño">
           <input
             type="checkbox"
             checked={item.requiereDiseno}
@@ -549,7 +549,7 @@ export const PublicQuoteProductEditor = ({
 
         {item.requiereDiseno ? (
           <>
-            <label className="public-quote-checkbox-row">
+            <label className="public-quote-checkbox-row" aria-label="Usar el mismo diseño en todos los estampados de este producto">
               <input
                 type="checkbox"
                 checked={item.esDisenoGeneral}

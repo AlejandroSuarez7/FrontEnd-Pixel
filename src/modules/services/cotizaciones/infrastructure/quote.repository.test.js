@@ -4,8 +4,10 @@ import { QuoteApiRepository } from './quote.repository.js';
 
 vi.mock('../../../../core/services/apiService.js', () => ({
   apiClient: {
+    get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -14,8 +16,10 @@ describe('QuoteApiRepository workflow contracts', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    apiClient.get.mockResolvedValue({ data: { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } } });
     apiClient.post.mockResolvedValue({ data: { data: {} } });
     apiClient.patch.mockResolvedValue({ data: { data: {} } });
+    apiClient.delete.mockResolvedValue({ data: { message: 'deleted' } });
   });
 
   it.each([
@@ -196,5 +200,32 @@ describe('QuoteApiRepository workflow contracts', () => {
     });
     expect(payload).not.toHaveProperty('cliente');
     expect(payload).not.toHaveProperty('idCliente');
+  });
+
+  it('covers reads, pricing, approval, cancellation and deletion', async () => {
+    apiClient.get.mockResolvedValue({ data: { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } } });
+    await repository.list({ estado: 'PENDIENTE' }, { signal: 'signal' });
+    await repository.getById(1, { signal: 'detail' });
+    await repository.listVersions(1, { signal: 'versions' });
+    await repository.assignPrices(1, {
+      costosAdicionales: '10', observaciones: ' Nota ', motivoCambio: ' Ajuste ',
+      detalles: [{ idDetalleCotizacion: '2', idProducto: '3', idTecnica: '4', producto: { nombre: 'Camiseta' }, cantidad: '2', precioBase: '100', costoDiseno: '5', requiereDiseno: false, origenDiseno: 'CLIENTE', esDisenoGeneral: true, archivoDisenoInicialUrl: ' url ' }],
+    });
+    await repository.approve(1);
+    await repository.cancel(1);
+    await repository.hardDelete(1);
+    expect(apiClient.patch).toHaveBeenCalledWith('api/cotizaciones/1/cotizar', expect.objectContaining({ costosAdicionales: 10 }));
+    expect(apiClient.delete).toHaveBeenCalledWith('api/cotizaciones/1/eliminar');
+  });
+
+  it('returns an empty version list for non-arrays', async () => {
+    apiClient.get.mockResolvedValueOnce({ data: { data: {} } });
+    await expect(repository.listVersions(1)).resolves.toEqual([]);
+  });
+
+  it.each(['approve', 'cancel', 'hardDelete'])('wraps %s request errors', async (method) => {
+    const target = method === 'hardDelete' ? apiClient.delete : apiClient.patch;
+    target.mockRejectedValueOnce(new Error('offline'));
+    await expect(repository[method](1)).rejects.toThrow();
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import {
@@ -13,12 +13,11 @@ const userRepository = new UserApiRepository();
 
 const getSessionUserId = (session) => session?.idUsuario || session?.id;
 
-const ProfilePage = () => {
-  const { user, updateSession } = useAuth();
+const ProfilePageContent = ({ user, updateSession }) => {
   const [form, setForm] = useState({
-    nombre: '',
-    correo: '',
-    telefono: '',
+    nombre: user?.nombre || '',
+    correo: user?.correo || '',
+    telefono: user?.telefono || '',
     contrasena: '',
     confirmarContrasena: '',
   });
@@ -27,16 +26,6 @@ const ProfilePage = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
-
-  useEffect(() => {
-    setForm({
-      nombre: user?.nombre || '',
-      correo: user?.correo || '',
-      telefono: user?.telefono || '',
-      contrasena: '',
-      confirmarContrasena: '',
-    });
-  }, [user]);
 
   const passwordRulesStatus = getPasswordRulesStatus(form.contrasena);
   const passwordValidationError = isChangingPassword
@@ -134,8 +123,9 @@ const ProfilePage = () => {
           {error && <p className={styles.statusBadge + ' ' + styles.statusInactive}>{error}</p>}
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Nombre completo *</label>
+            <label className={styles.inputLabel} htmlFor="profile-name">Nombre completo *</label>
             <input
+              id="profile-name"
               type="text"
               value={form.nombre}
               onChange={handleChange('nombre')}
@@ -146,8 +136,9 @@ const ProfilePage = () => {
 
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Correo electronico *</label>
+              <label className={styles.inputLabel} htmlFor="profile-email">Correo electronico *</label>
               <input
+                id="profile-email"
                 type="email"
                 value={form.correo}
                 onChange={handleChange('correo')}
@@ -156,8 +147,9 @@ const ProfilePage = () => {
               />
             </div>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Telefono</label>
+              <label className={styles.inputLabel} htmlFor="profile-phone">Telefono</label>
               <input
+                id="profile-phone"
                 type="text"
                 value={form.telefono}
                 onChange={handleChange('telefono')}
@@ -251,6 +243,18 @@ const ProfilePage = () => {
       </div>
     </div>
   );
+};
+
+const ProfilePage = () => {
+  const { user, updateSession } = useAuth();
+  const userKey = [
+    getSessionUserId(user) || 'anonymous',
+    user?.nombre || '',
+    user?.correo || '',
+    user?.telefono || '',
+  ].join(':');
+
+  return <ProfilePageContent key={userKey} user={user} updateSession={updateSession} />;
 };
 
 export default ProfilePage;

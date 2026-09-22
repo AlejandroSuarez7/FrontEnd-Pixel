@@ -7,12 +7,17 @@ vi.mock('../../../../core/services/apiService', () => ({
     get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
 describe('DisenoApiRepository requirements', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    apiClient.get.mockResolvedValue({ data: { data: [] } });
+    apiClient.post.mockResolvedValue({ data: { data: { idDiseno: 1 } } });
+    apiClient.patch.mockResolvedValue({ data: { data: { idDiseno: 1 }, message: 'ok' } });
+    apiClient.delete.mockResolvedValue({ data: { message: 'deleted' } });
   });
 
   it('uses the exact requirements endpoint and nested response', async () => {
@@ -168,5 +173,45 @@ describe('DisenoApiRepository requirements', () => {
 
     await expect(repository.create({ archivo: new File(['x'], 'x.png', { type: 'image/png' }), idPedido: 1 }))
       .rejects.toMatchObject({ message });
+  });
+
+  it('covers list, mutation, client and production success workflows', async () => {
+    const repository = new DisenoApiRepository();
+    apiClient.get.mockResolvedValue({ data: { data: [{ idDiseno: 1, estado: 'ENVIADO' }] } });
+    await repository.list({ estado: 'ENVIADO', idDisenador: '4' }, { signal: 'signal' });
+    await repository.list({ idPedido: 9, estado: 'ENVIADO' }, { signal: 'signal' });
+    await repository.listPendingProduction();
+    await repository.listPedidos();
+    await repository.listPedidos({ search: 'ana' });
+    await repository.update(1, { descripcion: ' Editado ' });
+    await repository.approve(1, { observaciones: ' OK ' });
+    await repository.approveByClientAdmin(1, { medioAprobacion: 'WHATSAPP', observaciones: ' Sí ' });
+    await repository.rejectByClientAdmin(1, { medioRespuesta: 'CORREO', observacionesCliente: ' Cambiar ' });
+    await repository.listClientDesigns({ signal: 'client-signal' });
+    await repository.getClientDesign(1, { signal: 'detail-signal' });
+    await repository.approveClientDesign(1);
+    await repository.rejectClientDesign(1, { observacionesCliente: ' Más azul ' });
+    await repository.remove(1);
+    expect(apiClient.get).toHaveBeenCalledWith('api/pedidos/buscar', { params: { termino: 'ana' } });
+    expect(apiClient.delete).toHaveBeenCalledWith('api/disenos/1');
+  });
+
+  it.each([
+    ['ACTIVE_DESIGN_ALREADY_EXISTS', 'Ya existe un diseno activo para este objetivo.'],
+    ['DESIGN_TARGET_ALREADY_COVERED', 'Este diseno ya esta cubierto por un diseno general.'],
+  ])('maps create conflict %s', async (code, message) => {
+    apiClient.post.mockRejectedValueOnce({ response: { status: 409, data: { code } } });
+    const repository = new DisenoApiRepository();
+    await expect(repository.create({ archivo: new File(['x'], 'x.png'), idPedido: 1 })).rejects.toMatchObject({ message });
+  });
+
+  it.each([
+    [403, 'No tienes permiso para definir el origen del diseno.'],
+    [409, 'El origen de este diseno ya fue definido.'],
+    [null, 'No pudimos guardar el cambio. Intenta nuevamente.'],
+  ])('maps origin error %s', async (status, message) => {
+    apiClient.patch.mockRejectedValueOnce(status ? { response: { status, data: {} } } : new Error('network'));
+    const repository = new DisenoApiRepository();
+    await expect(repository.definirOrigenRequerimiento(1, 'A/B', 'CLIENTE')).rejects.toMatchObject({ message });
   });
 });

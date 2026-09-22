@@ -291,7 +291,11 @@ export const RolePermissionsModal = ({ isOpen, onClose, role, canAssignPermissio
                   </div>
                   {!isCollapsed && <div className={styles.permissionGrid}>
                     {modulePermissions.map((permission) => (
-                      <label className={styles.permissionItem} key={permission.codigo}>
+                      <label
+                        className={styles.permissionItem}
+                        key={permission.codigo}
+                        aria-label={`${formatPermissionLabel(permission.codigo, permission)} (${permission.codigo})`}
+                      >
                         <input
                           type="checkbox"
                           checked={selectedCodes.includes(permission.codigo)}

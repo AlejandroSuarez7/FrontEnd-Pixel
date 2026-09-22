@@ -12,7 +12,9 @@ const fromApi = (category) => ({
   fechaCreacion: category.fechaCreacion,
 });
 
-const fromApiList = (categories) => (Array.isArray(categories) ? categories.map(fromApi) : []);
+const fromApiList = (categories) => (
+  Array.isArray(categories) ? categories.map((category) => fromApi(category)) : []
+);
 
 export const categoryRepository = {
   async list(filters = {}, options = {}) {

@@ -110,7 +110,7 @@ const RegisterPage = () => {
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label htmlFor="telefono">
-                    Telefono
+                    Telefono{' '}
                     <span className="field-hint">{formData.telefono.length}/10</span>
                   </label>
                   <input

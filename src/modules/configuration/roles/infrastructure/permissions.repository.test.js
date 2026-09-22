@@ -45,4 +45,38 @@ describe('PermissionsApiRepository', () => {
       permisos: ['disenos.produccion'],
     });
   });
+
+  it('normalizes catalog aliases and returns an empty list for invalid responses', async () => {
+    apiClient.get
+      .mockResolvedValueOnce({ data: [{ id: 3, codigo: 'roles.ver', nombre: 'Ver roles' }] })
+      .mockResolvedValueOnce({ data: { data: null } });
+    const repository = new PermissionsApiRepository();
+
+    await expect(repository.list()).resolves.toEqual([expect.objectContaining({
+      idPermiso: 3,
+      modulo: 'general',
+      accion: 'ver',
+      label: 'Ver roles',
+      descripcion: 'roles.ver',
+      estado: true,
+    })]);
+    await expect(repository.list()).resolves.toEqual([]);
+  });
+
+  it('loads permission codes from arrays and object aliases', async () => {
+    apiClient.get
+      .mockResolvedValueOnce({ data: { data: ['roles.ver', { codigo: 'roles.editar' }] } })
+      .mockResolvedValueOnce({ data: { codigos: ['roles.eliminar'] } });
+    const repository = new PermissionsApiRepository();
+
+    await expect(repository.listByRole(2)).resolves.toEqual(['roles.ver', 'roles.editar']);
+    await expect(repository.listByRole(3)).resolves.toEqual(['roles.eliminar']);
+    expect(apiClient.get).toHaveBeenNthCalledWith(1, 'api/permisos/roles/2');
+  });
+
+  it('synchronizes the backend permission catalog', async () => {
+    apiClient.post.mockResolvedValueOnce({ data: { synchronized: true } });
+    await expect(new PermissionsApiRepository().syncCatalog()).resolves.toEqual({ synchronized: true });
+    expect(apiClient.post).toHaveBeenCalledWith('api/permisos/sincronizar');
+  });
 });

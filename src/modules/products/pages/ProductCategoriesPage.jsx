@@ -89,7 +89,7 @@ export const ProductCategoriesPage = () => {
           <p className={styles.pageSubtitle}>Organiza los productos cotizables que ve el cliente en la landing.</p>
         </div>
         {hasPermission('categorias_producto.crear') && (
-          <button className={styles.primaryButton} onClick={openCreate}>Nueva categoria</button>
+          <button type="button" className={styles.primaryButton} onClick={openCreate}>Nueva categoria</button>
         )}
       </div>
 

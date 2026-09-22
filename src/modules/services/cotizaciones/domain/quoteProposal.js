@@ -242,7 +242,7 @@ export const createProposalForm = (quote = {}, now = new Date()) => {
     || quote.disenos
     || [];
   const designs = Array.isArray(sourceDesigns) && sourceDesigns.length > 0
-    ? sourceDesigns.map(createDesignFromSource).filter(Boolean)
+    ? sourceDesigns.map((source, index) => createDesignFromSource(source, index)).filter(Boolean)
     : deriveDesignsFromDetails(quote.detalles || []);
 
   const legacyAdditional = toFiniteNumber(existingProposal?.costosAdicionales ?? 0);
@@ -341,7 +341,7 @@ export const getSuggestedItemSubtotal = (item = {}) => (
 );
 
 export const sanitizeMoneyInput = (value) => {
-  const digits = String(value ?? '').replace(/[^\d]/g, '');
+  const digits = String(value ?? '').replaceAll(/[^\d]/g, '');
   return digits.replace(/^0+(?=\d)/, '') || (digits ? '0' : '');
 };
 

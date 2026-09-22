@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { notifications } from '../../../../core/utils/notifications';
-import { ConfirmProvider } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { ConfirmProvider } from '../../../../shared/components/ConfirmDialog/ConfirmDialogProvider';
 import { abonoRepository } from '../infrastructure/abono.repository';
 import { ReviewConfirmAbonoModal } from './ReviewConfirmAbonoModal';
 

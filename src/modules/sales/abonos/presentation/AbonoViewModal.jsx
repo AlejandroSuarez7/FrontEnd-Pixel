@@ -51,7 +51,7 @@ export const AbonoViewModal = ({ isOpen, onClose, abono }) => {
             </p>
             {clienteContacto && <p className={styles.modalSubtitle}>{clienteContacto}</p>}
           </div>
-          <button onClick={onClose} className={styles.modalCloseBtn}>x</button>
+          <button type="button" onClick={onClose} className={styles.modalCloseBtn}>x</button>
         </div>
 
         <div className={styles.form}>
@@ -113,7 +113,7 @@ export const AbonoViewModal = ({ isOpen, onClose, abono }) => {
         </div>
 
         <div className={styles.modalFooter}>
-          <button onClick={onClose} className={styles.btnPrimary}>
+          <button type="button" onClick={onClose} className={styles.btnPrimary}>
             Cerrar ventana
           </button>
         </div>

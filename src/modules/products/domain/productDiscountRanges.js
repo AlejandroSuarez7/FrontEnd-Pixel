@@ -9,7 +9,7 @@ export const createDiscountRange = (source = {}) => ({
 
 export const normalizeDiscountRanges = (ranges = []) => (
   (Array.isArray(ranges) ? ranges : [])
-    .map(createDiscountRange)
+    .map((range) => createDiscountRange(range))
     .sort((left, right) => Number(left.cantidadMinima) - Number(right.cantidadMinima))
 );
 

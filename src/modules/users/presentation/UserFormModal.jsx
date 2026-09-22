@@ -93,8 +93,9 @@ export const UserFormModal = ({
 
           {/* Nombre */}
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Nombre completo *</label>
+            <label className={styles.inputLabel} htmlFor="user-name">Nombre completo *</label>
             <input
+              id="user-name"
               type="text"
               value={nombre}
               onChange={e => setNombre(e.target.value)}
@@ -107,8 +108,9 @@ export const UserFormModal = ({
           {/* Correo + Documento */}
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Correo electrónico *</label>
+              <label className={styles.inputLabel} htmlFor="user-email">Correo electrónico *</label>
               <input
+                id="user-email"
                 type="email"
                 value={correo}
                 onChange={e => setCorreo(e.target.value)}
@@ -118,8 +120,9 @@ export const UserFormModal = ({
               />
             </div>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Documento (ID)</label>
+              <label className={styles.inputLabel} htmlFor="user-document">Documento (ID)</label>
               <input
+                id="user-document"
                 type="text"
                 value={documento}
                 onChange={e => setDocumento(onlyDigits(e.target.value))}
@@ -133,8 +136,9 @@ export const UserFormModal = ({
           {/* Teléfono + Rol */}
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Teléfono</label>
+              <label className={styles.inputLabel} htmlFor="user-phone">Teléfono</label>
               <input
+                id="user-phone"
                 type="text"
                 value={telefono}
                 onChange={e => setTelefono(onlyDigits(e.target.value))}
@@ -144,8 +148,9 @@ export const UserFormModal = ({
               />
             </div>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Rol del sistema *</label>
+              <label className={styles.inputLabel} htmlFor="user-role">Rol del sistema *</label>
               <select
+                id="user-role"
                 value={idRol}
                 onChange={e => setIdRol(e.target.value)}
                 className={styles.selectField}
@@ -166,8 +171,9 @@ export const UserFormModal = ({
 
           {/* Dirección */}
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Dirección de residencia</label>
+            <label className={styles.inputLabel} htmlFor="user-address">Dirección de residencia</label>
             <input
+              id="user-address"
               type="text"
               value={direccion}
               onChange={e => setDireccion(e.target.value)}
@@ -179,10 +185,11 @@ export const UserFormModal = ({
           {/* Contraseña + Estado (estado solo en edición) */}
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>
+              <label className={styles.inputLabel} htmlFor="user-password">
                 {isEditing ? 'Nueva contraseña (opcional)' : 'Contraseña *'}
               </label>
               <input
+                id="user-password"
                 type="password"
                 value={contrasena}
                 onChange={e => setContrasena(e.target.value)}
@@ -193,8 +200,9 @@ export const UserFormModal = ({
             </div>
             {isEditing && (
               <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>Estado de cuenta</label>
+                <label className={styles.inputLabel} htmlFor="user-status">Estado de cuenta</label>
                 <select
+                  id="user-status"
                   value={String(estado)}
                   onChange={e => setEstado(e.target.value === 'true')}
                   className={styles.selectField}

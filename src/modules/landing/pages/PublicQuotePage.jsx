@@ -142,7 +142,7 @@ const PublicQuoteBuilder = ({ auth }) => {
   const [items, setItems] = useState(() => (
     editId
       ? []
-      : (initialDraft?.items || []).map(hydrateQuoteItem)
+      : (initialDraft?.items || []).map((item) => hydrateQuoteItem(item))
   ));
   const [currentItem, setCurrentItem] = useState(() => createQuoteItem());
   const [editingItemId, setEditingItemId] = useState(null);
@@ -221,7 +221,7 @@ const PublicQuoteBuilder = ({ auth }) => {
         if (controller.signal.aborted || !mountedRef.current) return;
         const quote = extractQuote(response);
         const details = quote.detalles || quote.items || [];
-        const hydratedItems = details.map(hydrateQuoteItem);
+        const hydratedItems = details.map((detail) => hydrateQuoteItem(detail));
         const groupIds = [...new Set(
           hydratedItems.flatMap((item) => item.estampados || [])
             .map((stamp) => stamp.grupoDisenoCompartido)
@@ -441,7 +441,7 @@ const PublicQuoteBuilder = ({ auth }) => {
       };
     };
 
-    setItems((current) => current.map(connectStamps));
+    setItems((current) => current.map((item) => connectStamps(item)));
     setCurrentItem((current) => connectStamps(current));
     setItemError('');
   };
@@ -750,7 +750,7 @@ const PublicQuoteBuilder = ({ auth }) => {
         </div>
       )}
 
-      {editId && !isClient && (
+      {Boolean(editId) && !isClient && (
         <div className="public-quote-access-message" role="alert">
           <ShieldAlert size={22} />
           <div>
@@ -815,7 +815,7 @@ const PublicQuoteBuilder = ({ auth }) => {
                   value={contact.telefono}
                   onChange={(event) => updateContact(
                     'telefono',
-                    event.target.value.replace(/\D/g, '').slice(0, 10),
+                    event.target.value.replaceAll(/\D/g, '').slice(0, 10),
                   )}
                   maxLength={10}
                   readOnly={isClient}

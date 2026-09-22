@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { notifications } from '../../../../core/utils/notifications';
+import { hasValidEmailFormat } from '../../../../core/utils/userValidation';
 import { publicQuoteRepository } from '../../../landing/infrastructure/publicQuote.repository';
 import { StampTariffSelector } from '../../../landing/components/StampTariffSelector';
 import { getStampSizeSummary } from '../../../landing/domain/stampTariffs';
@@ -62,7 +63,7 @@ const createItem = (source = {}) => {
       })
     : null;
   const stamps = Array.isArray(source.estampados) && source.estampados.length > 0
-    ? source.estampados.map(createStamp)
+    ? source.estampados.map((stamp) => createStamp(stamp))
     : [legacyStamp || createStamp()];
 
   return {
@@ -179,7 +180,7 @@ export const QuoteFormModal = ({
   const debouncedClientSearch = useDebounce(clientSearch, 350);
   const [observaciones, setObservaciones] = useState(() => quote?.observaciones || '');
   const [items, setItems] = useState(() => (
-    quote?.detalles?.length ? quote.detalles.map(createItem) : [createItem()]
+    quote?.detalles?.length ? quote.detalles.map((detail) => createItem(detail)) : [createItem()]
   ));
   const [activeItemIndex, setActiveItemIndex] = useState(0);
   const [activeStampId, setActiveStampId] = useState(() => items[0]?.estampados?.[0]?.localId || null);
@@ -448,7 +449,7 @@ export const QuoteFormModal = ({
     }
     if (cliente.nombre.trim().length < 2) return 'El nombre completo del cliente es obligatorio.';
     if (!/^\d{10}$/.test(cliente.telefono.trim())) return 'El telefono debe tener exactamente 10 digitos.';
-    if (cliente.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo.trim())) {
+    if (cliente.correo.trim() && !hasValidEmailFormat(cliente.correo)) {
       return 'Ingresa un correo valido.';
     }
     return null;
@@ -660,7 +661,7 @@ export const QuoteFormModal = ({
                       </label>
                       <label className={styles.inputGroup}>
                         <span className={styles.inputLabel}>Telefono *</span>
-                        <input type="tel" value={cliente.telefono} onChange={(event) => updateClient('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))} className={styles.inputField} maxLength={10} inputMode="numeric" />
+                        <input type="tel" value={cliente.telefono} onChange={(event) => updateClient('telefono', event.target.value.replaceAll(/\D/g, '').slice(0, 10))} className={styles.inputField} maxLength={10} inputMode="numeric" />
                       </label>
                     </div>
                     <p className={styles.quoteCompatibilityNotice}>No se creará un usuario ni se solicitará contraseña para registrar esta cotización.</p>
@@ -859,8 +860,9 @@ export const QuoteFormModal = ({
                                   && stamp.grupoDisenoCompartido === item.estampados[0].grupoDisenoCompartido
                                 ))}
                                 onChange={(event) => applyOneDesignForProduct(itemIndex, event.target.checked)}
-                              />
-                              Usar el mismo diseño en todos los estampados de este producto
+                               />
+                              {' '}
+                               Usar el mismo diseño en todos los estampados de este producto
                             </label>
                           )}
 

@@ -91,7 +91,7 @@ const getDesignProgress = (pedido = {}) => {
     pedido.totalDisenosAprobados,
     pedido.totalDisenosPendientes,
   ].some(value => value !== null && value !== undefined);
-  const coverage = requiredDetails.map(getDesignCoverageInfo);
+  const coverage = requiredDetails.map((detail) => getDesignCoverageInfo(detail));
 
   if (hasCentralizedTotals) {
     const totalRequired = toNumber(pedido.totalDisenosRequeridos);
@@ -446,7 +446,8 @@ const buildClientActiveOrders = (payload = {}) => {
   addUniqueOrders(pedidos, payload.pedidos);
   addUniqueOrders(pedidos, payload.historialPedidos);
 
-  return pedidos.map(buildClientActiveOrder).filter((order) => order.id !== 'undefined');
+  return pedidos.map((pedido) => buildClientActiveOrder(pedido))
+    .filter((order) => order.id !== 'undefined');
 };
 const adaptAdminDashboard = (payload) => {
   const kpis = payload.kpis || {};

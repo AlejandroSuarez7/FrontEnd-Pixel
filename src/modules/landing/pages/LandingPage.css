@@ -2600,7 +2600,8 @@
   margin-bottom: 12px;
 }
 
-.footer-links a {
+.footer-links a,
+.footer-links .footer-link-text {
   color: #9ca3af;
   text-decoration: none;
   transition: color 0.3s ease;

@@ -123,7 +123,7 @@ export const createQuoteDetail = ({
     idProducto,
     idTecnica,
     descripcion,
-    cantidad: parseInt(cantidad, 10),
+    cantidad: Number.parseInt(cantidad, 10),
     precioBase: precioBase !== null ? Number(precioBase) : null,
     descuentoPorcentaje: descuentoPorcentaje !== null && descuentoPorcentaje !== undefined && descuentoPorcentaje !== ''
       ? Number(String(descuentoPorcentaje).replace(',', '.'))

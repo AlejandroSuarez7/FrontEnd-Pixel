@@ -110,30 +110,24 @@ const DASHBOARD_VISIBLE_COPY = {
 
 const formatDashboardVisibleCopy = (value) => {
   if (typeof value !== 'string') return value;
-  return DASHBOARD_VISIBLE_COPY[value] || value.replace(/\bdisenos aprobados\b/g, 'diseños aprobados');
+  return DASHBOARD_VISIBLE_COPY[value] || value.replaceAll(/\bdisenos aprobados\b/g, 'diseños aprobados');
 };
 
 const KpiCard = ({ item, onActivate }) => {
   const Icon = kpiIcons[item.iconKey] || Clock3;
-  const interactiveProps = onActivate
-    ? {
-        role: 'link',
-        tabIndex: 0,
-        onClick: onActivate,
-        onKeyDown: (event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onActivate();
-          }
-        },
-      }
-    : {};
 
   return (
     <article
       className={`dashboard-kpi-card dashboard-tone-${item.tone}${onActivate ? ' dashboard-kpi-card-link' : ''}`}
-      {...interactiveProps}
     >
+      {onActivate && (
+        <button
+          type="button"
+          className="dashboard-kpi-card-action"
+          onClick={onActivate}
+          aria-label={`Abrir ${item.label}`}
+        />
+      )}
       <div>
         <p className="dashboard-kpi-label">{item.label}</p>
         <strong>{item.value}</strong>
@@ -158,16 +152,15 @@ const RevenueKpiCard = ({ revenue, onActivate }) => {
   return (
     <article
       className={`dashboard-kpi-card dashboard-revenue-card dashboard-tone-success${onActivate ? ' dashboard-kpi-card-link' : ''}`}
-      role={onActivate ? 'link' : undefined}
-      tabIndex={onActivate ? 0 : undefined}
-      onClick={onActivate}
-      onKeyDown={(event) => {
-        if (onActivate && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          onActivate();
-        }
-      }}
     >
+      {onActivate && (
+        <button
+          type="button"
+          className="dashboard-kpi-card-action"
+          onClick={onActivate}
+          aria-label="Abrir ventas"
+        />
+      )}
       <div className="dashboard-kpi-content">
         <p className="dashboard-kpi-label">Ingresos</p>
         <strong>{selected.value}</strong>
@@ -183,10 +176,7 @@ const RevenueKpiCard = ({ revenue, onActivate }) => {
               type="button"
               key={option.key}
               className={period === option.key ? 'active' : ''}
-              onClick={(event) => {
-                event.stopPropagation();
-                setPeriod(option.key);
-              }}
+              onClick={() => setPeriod(option.key)}
             >
               {option.label}
             </button>

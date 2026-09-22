@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import './ProveedoresPage.css';
@@ -21,33 +21,15 @@ const styles = {
   btnPrimary: 'proveedores-btn-primary',
 };
 
-export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
-  const [nombre, setNombre] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [correo, setCorreo] = useState('');
-  const [direccion, setDireccion] = useState('');
-  const [estado, setEstado] = useState(true);
+const ProveedorModalContent = ({ onClose, onSubmit, proveedor }) => {
+  const [nombre, setNombre] = useState(proveedor?.nombre || '');
+  const [telefono, setTelefono] = useState(proveedor?.telefono || '');
+  const [correo, setCorreo] = useState(proveedor?.correo || '');
+  const [direccion, setDireccion] = useState(proveedor?.direccion || '');
+  const [estado, setEstado] = useState(proveedor?.estado ?? true);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(proveedor);
-
-  useEffect(() => {
-    if (proveedor) {
-      setNombre(proveedor.nombre || '');
-      setTelefono(proveedor.telefono || '');
-      setCorreo(proveedor.correo || '');
-      setDireccion(proveedor.direccion || '');
-      setEstado(proveedor.estado ?? true);
-    } else {
-      setNombre('');
-      setTelefono('');
-      setCorreo('');
-      setDireccion('');
-      setEstado(true);
-    }
-  }, [proveedor, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -78,8 +60,9 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Nombre *</label>
+            <label className={styles.inputLabel} htmlFor="supplier-name">Nombre *</label>
             <input
+              id="supplier-name"
               type="text"
               value={nombre}
               onChange={event => setNombre(event.target.value)}
@@ -92,8 +75,9 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
 
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Telefono</label>
+              <label className={styles.inputLabel} htmlFor="supplier-phone">Telefono</label>
               <input
+                id="supplier-phone"
                 type="text"
                 value={telefono}
                 onChange={event => setTelefono(event.target.value)}
@@ -103,8 +87,9 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
               />
             </div>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Correo</label>
+              <label className={styles.inputLabel} htmlFor="supplier-email">Correo</label>
               <input
+                id="supplier-email"
                 type="email"
                 value={correo}
                 onChange={event => setCorreo(event.target.value)}
@@ -116,8 +101,9 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Direccion</label>
+            <label className={styles.inputLabel} htmlFor="supplier-address">Direccion</label>
             <input
+              id="supplier-address"
               type="text"
               value={direccion}
               onChange={event => setDireccion(event.target.value)}
@@ -147,5 +133,17 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
         </form>
       </div>
     </div>
+  );
+};
+
+export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
+  if (!isOpen) return null;
+  return (
+    <ProveedorModalContent
+      key={proveedor?.idProveedor ?? 'new-supplier'}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      proveedor={proveedor}
+    />
   );
 };

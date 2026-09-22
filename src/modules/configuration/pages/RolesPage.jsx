@@ -97,7 +97,7 @@ const RolesPage = () => {
           </p>
         </div>
         {hasPermission('roles.crear') && (
-          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+          <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
             Nuevo rol
           </button>
         )}

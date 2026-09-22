@@ -28,7 +28,7 @@ export const clientRepository = {
     const config = { params };
     if (options.signal) config.signal = options.signal;
     const { data } = await apiClient.get(ENDPOINT, config);
-    return normalizePaginatedResponse(data, items => items.map(mapClient));
+    return normalizePaginatedResponse(data, (items) => items.map((item) => mapClient(item)));
   },
 
   async getById(idCliente) {

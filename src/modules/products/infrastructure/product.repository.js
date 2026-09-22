@@ -20,7 +20,9 @@ const fromApi = (product) => ({
   rangos: normalizeDiscountRanges(product.rangosDescuento || product.rangos || []),
 });
 
-const fromApiList = (products) => (Array.isArray(products) ? products.map(fromApi) : []);
+const fromApiList = (products) => (
+  Array.isArray(products) ? products.map((product) => fromApi(product)) : []
+);
 
 export const productRepository = {
   async list(filters = {}, options = {}) {

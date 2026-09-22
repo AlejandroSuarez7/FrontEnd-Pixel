@@ -38,7 +38,7 @@ export const tariffRepository = {
     });
     const { data } = await apiClient.get(ENDPOINT, { params, signal: options.signal });
     return normalizePaginatedResponse(data, (items) => (
-      Array.isArray(items) ? items.map(normalizeTariff) : []
+      Array.isArray(items) ? items.map((item) => normalizeTariff(item)) : []
     ));
   },
 
@@ -77,7 +77,7 @@ export const tariffRepository = {
     const { data } = await apiClient.get(`${ENDPOINT}/tecnicas/${idTecnica}/descuentos`, {
       signal: options.signal,
     });
-    return Array.isArray(data.data) ? data.data.map(normalizeDiscount) : [];
+    return Array.isArray(data.data) ? data.data.map((item) => normalizeDiscount(item)) : [];
   },
 
   async replaceDiscounts(idTecnica, discounts) {
@@ -88,6 +88,6 @@ export const tariffRepository = {
         estado: Boolean(discount.estado),
       })),
     });
-    return Array.isArray(data.data) ? data.data.map(normalizeDiscount) : [];
+    return Array.isArray(data.data) ? data.data.map((item) => normalizeDiscount(item)) : [];
   },
 };

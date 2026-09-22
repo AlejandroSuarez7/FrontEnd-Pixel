@@ -82,7 +82,7 @@ const ServicesPage = () => {
           </p>
         </div>
         {hasPermission('tecnicas.crear') && (
-          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+          <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
             Nueva técnica
           </button>
         )}

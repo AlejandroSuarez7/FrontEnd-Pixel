@@ -1,0 +1,6 @@
+projectKey=pixel-frontend
+serverUrl=http://localhost:9001
+serverVersion=26.9.0.129388
+dashboardUrl=http://localhost:9001/dashboard?id=pixel-frontend
+ceTaskId=70509b2e-7977-43b9-8b39-e41168386a34
+ceTaskUrl=http://localhost:9001/api/ce/task?id=70509b2e-7977-43b9-8b39-e41168386a34

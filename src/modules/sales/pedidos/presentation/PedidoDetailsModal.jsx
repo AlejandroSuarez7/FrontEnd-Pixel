@@ -201,19 +201,19 @@ export const PedidoDetailsModal = ({
 
           <div className={`${styles.readOnlyGrid} ${styles.orderDatesGrid}`}>
             <div className={styles.readOnlyItem}>
-              Fecha de creacion
+              Fecha de creacion{' '}
               <strong>{formatDateValue(pedido.fechaCreacion, 'No aplica')}</strong>
             </div>
             <div className={styles.readOnlyItem}>
-              Entrega estimada
+              Entrega estimada{' '}
               <strong>{formatDateValue(pedido.fechaEntregaEstimada)}</strong>
             </div>
             <div className={styles.readOnlyItem}>
-              Fecha finalizado
+              Fecha finalizado{' '}
               <strong>{formatDateValue(pedido.fechaFinalizado, 'No aplica')}</strong>
             </div>
             <div className={styles.readOnlyItem}>
-              Fecha entregado
+              Fecha entregado{' '}
               <strong>{formatDateValue(pedido.fechaEntregado, 'No aplica')}</strong>
             </div>
           </div>

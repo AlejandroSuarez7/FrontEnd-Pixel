@@ -23,9 +23,9 @@ const ACTION_LABELS = {
 
 const normalizeKey = value => String(value || '')
   .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
+  .replaceAll(/[\u0300-\u036f]/g, '')
   .toLowerCase()
-  .replace(/[^a-z]/g, '');
+  .replaceAll(/[^a-z]/g, '');
 
 const describeAffectedGroup = (group) => {
   const quantity = Math.max(0, Number(group?.cantidad) || 0);

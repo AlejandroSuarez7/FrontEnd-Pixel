@@ -33,7 +33,7 @@ export const hasAllPermissions = (permissions = [], codes = []) => {
 export const normalizeText = (value = '') =>
   String(value)
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replaceAll(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 
 export const getUserRoleName = (user) =>

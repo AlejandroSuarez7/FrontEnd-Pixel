@@ -217,8 +217,9 @@ export const AbonoModal = ({
               </div>
             ) : (
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Pedido *</label>
+              <label className={styles.inputLabel} htmlFor="payment-order">Pedido *</label>
               <select
+                id="payment-order"
                 value={idPedido}
                 onChange={handlePedidoChange}
                 className={styles.inputField}
@@ -254,8 +255,9 @@ export const AbonoModal = ({
             <span className="abonos-modal-section-title">B. Datos del pago</span>
             <div className={styles.formRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Monto *</label>
+              <label className={styles.inputLabel} htmlFor="payment-amount">Monto *</label>
               <input
+                id="payment-amount"
                 type="number"
                 min="1"
                 value={monto}
@@ -268,8 +270,9 @@ export const AbonoModal = ({
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Metodo de pago *</label>
+            <label className={styles.inputLabel} htmlFor="payment-method">Metodo de pago *</label>
             <select
+              id="payment-method"
               value={metodoPago}
               onChange={handleMetodoPagoChange}
               className={styles.inputField}
@@ -282,8 +285,9 @@ export const AbonoModal = ({
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Referencia</label>
+            <label className={styles.inputLabel} htmlFor="payment-reference">Referencia</label>
             <input
+              id="payment-reference"
               type="text"
               value={referencia}
               onChange={event => setReferencia(event.target.value)}
@@ -294,8 +298,9 @@ export const AbonoModal = ({
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Fecha del pago</label>
+            <label className={styles.inputLabel} htmlFor="payment-date">Fecha del pago</label>
             <input
+              id="payment-date"
               type="date"
               value={fechaPago}
               onChange={event => setFechaPago(event.target.value)}
@@ -308,8 +313,9 @@ export const AbonoModal = ({
             <span className="abonos-modal-section-title">C. Comprobante y observaciones</span>
           {metodoPago !== 'EFECTIVO' && !isEditing && (
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Comprobante (opcional)</label>
+              <label className={styles.inputLabel} htmlFor="payment-receipt">Comprobante (opcional)</label>
               <input
+                id="payment-receipt"
                 type="file"
                 accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                 onChange={event => setArchivo(event.target.files?.[0] || null)}
@@ -320,8 +326,9 @@ export const AbonoModal = ({
           )}
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Observaciones</label>
+            <label className={styles.inputLabel} htmlFor="payment-observations">Observaciones</label>
             <textarea
+              id="payment-observations"
               value={observaciones}
               onChange={event => setObservaciones(event.target.value)}
               className={styles.inputField}

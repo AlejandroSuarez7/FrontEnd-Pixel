@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
 import { usePagination } from '../../../../core/hooks/usePagination';
 import { formatCalendarDate } from '../../../../core/utils/fechaFormato';
@@ -72,18 +72,14 @@ export const ProductionQueuePage = () => {
   const userRole = user?.rol?.nombre || user?.rol || user?.nombreRol || 'Cliente';
   const canEditPosition = canReorderQueue(userRole) && hasPermission('disenos.produccion');
   const { pedidos, loading, error, refetch, saveOrder, savingOrder } = useProductionQueue();
-  const [orderedPedidos, setOrderedPedidos] = useState([]);
+  const [savedOrder, setSavedOrder] = useState([]);
   const [draftPedidos, setDraftPedidos] = useState([]);
   const [isEditingOrder, setIsEditingOrder] = useState(false);
   const [hasCustomOrder, setHasCustomOrder] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
-  useEffect(() => {
-    if (isEditingOrder) return;
-    setOrderedPedidos(prev => (hasCustomOrder ? mergeQueueOrder(prev, pedidos) : pedidos));
-  }, [pedidos, hasCustomOrder, isEditingOrder]);
-
+  const orderedPedidos = hasCustomOrder ? mergeQueueOrder(savedOrder, pedidos) : pedidos;
   const queueSource = isEditingOrder ? draftPedidos : orderedPedidos;
   const {
     currentPage,
@@ -113,7 +109,7 @@ export const ProductionQueuePage = () => {
   const handleSaveEdit = async () => {
     try {
       await saveOrder(draftPedidos);
-      setOrderedPedidos(draftPedidos);
+      setSavedOrder(draftPedidos);
       setHasCustomOrder(true);
       setDraftPedidos([]);
       setDragIndex(null);

@@ -387,22 +387,22 @@ const LandingPage = () => {
           <ul className="service-features">
 
             <li>
-              <span className="feature-dot purple-gradient"></span>
+              <span className="feature-dot purple-gradient" />{' '}
               Alta durabilidad
             </li>
 
             <li>
-              <span className="feature-dot purple-gradient"></span>
+              <span className="feature-dot purple-gradient" />{' '}
               Ideal para grandes cantidades
             </li>
 
             <li>
-              <span className="feature-dot purple-gradient"></span>
+              <span className="feature-dot purple-gradient" />{' '}
               Colores vibrantes
             </li>
 
             <li>
-              <span className="feature-dot purple-gradient"></span>
+              <span className="feature-dot purple-gradient" />{' '}
               Económico en volumen
             </li>
 
@@ -451,22 +451,22 @@ const LandingPage = () => {
           <ul className="service-features">
 
             <li>
-              <span className="feature-dot blue-gradient"></span>
+              <span className="feature-dot blue-gradient" />{' '}
               Detalles ultra precisos
             </li>
 
             <li>
-              <span className="feature-dot blue-gradient"></span>
+              <span className="feature-dot blue-gradient" />{' '}
               Colores ilimitados
             </li>
 
             <li>
-              <span className="feature-dot blue-gradient"></span>
+              <span className="feature-dot blue-gradient" />{' '}
               Flexible en tejidos
             </li>
 
             <li>
-              <span className="feature-dot blue-gradient"></span>
+              <span className="feature-dot blue-gradient" />{' '}
               Sin pedido mínimo
             </li>
 
@@ -514,22 +514,22 @@ const LandingPage = () => {
           <ul className="service-features">
 
             <li>
-              <span className="feature-dot pink-gradient"></span>
+              <span className="feature-dot pink-gradient" />{' '}
               Colores brillantes
             </li>
 
             <li>
-              <span className="feature-dot pink-gradient"></span>
+              <span className="feature-dot pink-gradient" />{' '}
               No se siente al tacto
             </li>
 
             <li>
-              <span className="feature-dot pink-gradient"></span>
+              <span className="feature-dot pink-gradient" />{' '}
               Ideal para poliéster
             </li>
 
             <li>
-              <span className="feature-dot pink-gradient"></span>
+              <span className="feature-dot pink-gradient" />{' '}
               Durabilidad extrema
             </li>
 
@@ -578,22 +578,22 @@ const LandingPage = () => {
           <ul className="service-features">
 
             <li>
-              <span className="feature-dot yellow-gradient"></span>
+              <span className="feature-dot yellow-gradient" />{' '}
               Diseños personalizados
             </li>
 
             <li>
-              <span className="feature-dot yellow-gradient"></span>
+              <span className="feature-dot yellow-gradient" />{' '}
               Producciones pequeñas
             </li>
 
             <li>
-              <span className="feature-dot yellow-gradient"></span>
+              <span className="feature-dot yellow-gradient" />{' '}
               Alta resolución
             </li>
 
             <li>
-              <span className="feature-dot yellow-gradient"></span>
+              <span className="feature-dot yellow-gradient" />{' '}
               Rápida producción
             </li>
 
@@ -661,7 +661,7 @@ const LandingPage = () => {
 
           <div className="comparative-card-title">
 
-            <span className="comparative-dot purple-bg"></span>
+            <span className="comparative-dot purple-bg" />{' '}
 
             Serigrafía
 
@@ -681,27 +681,27 @@ const LandingPage = () => {
             <ul className="comparative-list">
 
               <li>
-                <span className="comparative-check">✔</span>
+                <span className="comparative-check">✔</span>{' '}
                 Excelente para grandes cantidades
               </li>
 
               <li>
-                <span className="comparative-check">✔</span>
+                <span className="comparative-check">✔</span>{' '}
                 Muy económico en volumen
               </li>
 
               <li>
-                <span className="comparative-check">✔</span>
+                <span className="comparative-check">✔</span>{' '}
                 Colores sólidos y vibrantes
               </li>
 
               <li>
-                <span className="comparative-check">✔</span>
+                <span className="comparative-check">✔</span>{' '}
                 Alta durabilidad
               </li>
 
               <li>
-                <span className="comparative-check">✔</span>
+                <span className="comparative-check">✔</span>{' '}
                 Acabado profesional
               </li>
 
@@ -719,17 +719,17 @@ const LandingPage = () => {
             <ul className="comparative-list">
 
               <li>
-                <span className="comparative-x">✖</span>
+                <span className="comparative-x">✖</span>{' '}
                 Costo alto en pocas unidades
               </li>
 
               <li>
-                <span className="comparative-x">✖</span>
+                <span className="comparative-x">✖</span>{' '}
                 No ideal para diseños complejos
               </li>
 
               <li>
-                <span className="comparative-x">✖</span>
+                <span className="comparative-x">✖</span>{' '}
                 Tiempo de preparación mayor
               </li>
 
@@ -756,7 +756,7 @@ const LandingPage = () => {
 
           <div className="comparative-card-title">
 
-            <span className="comparative-dot blue-bg"></span>
+            <span className="comparative-dot blue-bg" />{' '}
 
             DTF
 
@@ -823,7 +823,7 @@ const LandingPage = () => {
 
           <div className="comparative-card-title">
 
-            <span className="comparative-dot pink-bg"></span>
+            <span className="comparative-dot pink-bg" />{' '}
 
             Sublimación
 
@@ -892,7 +892,7 @@ const LandingPage = () => {
 
           <div className="comparative-card-title">
 
-            <span className="comparative-dot yellow-bg"></span>
+            <span className="comparative-dot yellow-bg" />{' '}
 
             Digital
 
@@ -1306,7 +1306,7 @@ const LandingPage = () => {
                 type="tel"
                 inputMode="numeric"
                 value={contactForm.telefono}
-                onChange={(event) => updateContactForm('telefono', event.target.value.replace(/\D/g, '').slice(0, 10))}
+                onChange={(event) => updateContactForm('telefono', event.target.value.replaceAll(/\D/g, '').slice(0, 10))}
                 placeholder="3000000000"
                 minLength={10}
                 maxLength={10}
@@ -1381,21 +1381,21 @@ const LandingPage = () => {
         {/* Social */}
         <div className="footer-socials">
 
-          <a href="#" className="footer-social-link" aria-label="Instagram">
+          <span className="footer-social-link" aria-hidden="true">
             <FaInstagram className="footer-social-icon" />
-          </a>
+          </span>
 
-          <a href="#" className="footer-social-link" aria-label="Facebook">
+          <span className="footer-social-link" aria-hidden="true">
             <FaFacebookF className="footer-social-icon" />
-          </a>
+          </span>
 
-          <a href="#" className="footer-social-link" aria-label="Twitter">
+          <span className="footer-social-link" aria-hidden="true">
             <FaTwitter className="footer-social-icon" />
-          </a>
+          </span>
 
-          <a href="#" className="footer-social-link" aria-label="YouTube">
+          <span className="footer-social-link" aria-hidden="true">
             <FaYoutube className="footer-social-icon" />
-          </a>
+          </span>
 
         </div>
 
@@ -1411,19 +1411,19 @@ const LandingPage = () => {
         <ul className="footer-links">
 
           <li>
-            <a href="#">Serigrafía</a>
+            <a href="#servicios">Serigrafía</a>
           </li>
 
           <li>
-            <a href="#">DTF</a>
+            <a href="#servicios">DTF</a>
           </li>
 
           <li>
-            <a href="#">Sublimación</a>
+            <a href="#servicios">Sublimación</a>
           </li>
 
           <li>
-            <a href="#">Digital</a>
+            <a href="#servicios">Digital</a>
           </li>
 
         </ul>
@@ -1440,19 +1440,19 @@ const LandingPage = () => {
         <ul className="footer-links">
 
           <li>
-            <a href="#">Camisetas</a>
+            <a href="#productos">Camisetas</a>
           </li>
 
           <li>
-            <a href="#">Sudaderas</a>
+            <a href="#productos">Sudaderas</a>
           </li>
 
           <li>
-            <a href="#">Gorras</a>
+            <a href="#productos">Gorras</a>
           </li>
 
           <li>
-            <a href="#">Accesorios</a>
+            <a href="#productos">Accesorios</a>
           </li>
 
         </ul>
@@ -1469,19 +1469,19 @@ const LandingPage = () => {
         <ul className="footer-links">
 
           <li>
-            <a href="#">Sobre Nosotros</a>
+            <a href="#inicio">Sobre Nosotros</a>
           </li>
 
           <li>
-            <a href="#">Blog</a>
+            <span className="footer-link-text">Blog</span>
           </li>
 
           <li>
-            <a href="#">Testimonios</a>
+            <span className="footer-link-text">Testimonios</span>
           </li>
 
           <li>
-            <a href="#">Contacto</a>
+            <a href="#contacto">Contacto</a>
           </li>
 
         </ul>
@@ -1498,19 +1498,19 @@ const LandingPage = () => {
         <ul className="footer-links">
 
           <li>
-            <a href="#">Términos</a>
+            <span className="footer-link-text">Términos</span>
           </li>
 
           <li>
-            <a href="#">Privacidad</a>
+            <span className="footer-link-text">Privacidad</span>
           </li>
 
           <li>
-            <a href="#">Envíos</a>
+            <span className="footer-link-text">Envíos</span>
           </li>
 
           <li>
-            <a href="#">Devoluciones</a>
+            <span className="footer-link-text">Devoluciones</span>
           </li>
 
         </ul>

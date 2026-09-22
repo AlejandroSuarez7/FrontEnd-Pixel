@@ -15,7 +15,7 @@ export const normalizePublicTariff = (source = {}) => ({
 
 export const normalizePublicTariffs = (items = []) => (
   (Array.isArray(items) ? items : [])
-    .map(normalizePublicTariff)
+    .map((tariff) => normalizePublicTariff(tariff))
     .filter((tariff) => Number.isInteger(tariff.idTarifaTecnica) && tariff.idTarifaTecnica > 0)
 );
 

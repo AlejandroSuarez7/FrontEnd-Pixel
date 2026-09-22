@@ -41,8 +41,9 @@ export const PedidoEditModal = ({ isOpen, onClose, onSubmit, pedido }) => {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Fecha estimada de entrega</label>
+            <label className={styles.inputLabel} htmlFor="order-estimated-delivery">Fecha estimada de entrega</label>
             <input
+              id="order-estimated-delivery"
               type="date"
               value={fechaEntregaEstimada}
               onChange={(event) => setFechaEntregaEstimada(event.target.value)}

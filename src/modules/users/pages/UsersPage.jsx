@@ -160,7 +160,7 @@ export const UsersPage = () => {
           </p>
         </div>
         {hasPermission('usuarios.crear') && (
-          <button onClick={handleOpenCreate} className={styles.primaryButton}>
+          <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
             Nuevo usuario
           </button>
         )}
