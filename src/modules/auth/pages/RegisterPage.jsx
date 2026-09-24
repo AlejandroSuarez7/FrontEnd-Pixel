@@ -147,7 +147,7 @@ const RegisterPage = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label htmlFor="contrasena">Contrasena</label>
+                  <label htmlFor="contrasena">Contraseña</label>
                   <input
                     type="password"
                     id="contrasena"
@@ -161,14 +161,14 @@ const RegisterPage = () => {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label htmlFor="confirmarContrasena">Confirmar contrasena</label>
+                  <label htmlFor="confirmarContrasena">Confirmar contraseña</label>
                   <input
                     type="password"
                     id="confirmarContrasena"
                     name="confirmarContrasena"
                     value={formData.confirmarContrasena}
                     onChange={handleChange}
-                    placeholder="Repite tu contrasena"
+                    placeholder="Repite tu contraseña"
                     className={
                       formData.confirmarContrasena.length > 0
                         ? formData.contrasena === formData.confirmarContrasena ? 'input-valid' : 'input-invalid'

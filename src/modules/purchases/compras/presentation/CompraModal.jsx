@@ -27,50 +27,39 @@ const styles = {
 
 const emptyDetalle = { descripcionInsumo: '', cantidad: 1, costoUnitario: 0 };
 
-export const CompraModal = ({
-  isOpen,
+const getCompraDetalles = (compra) => compra?.detalles?.length
+  ? compra.detalles.map(detalle => ({
+    descripcionInsumo: detalle.descripcionInsumo || '',
+    cantidad: detalle.cantidad || 1,
+    costoUnitario: detalle.costoUnitario || 0,
+  }))
+  : [{ ...emptyDetalle }];
+
+const getCompraFormKey = (compra) => compra
+  ? `${compra.idCompra}|${compra.idPedido}|${compra.idProveedor}|${compra.observaciones}|${JSON.stringify(compra.detalles || [])}`
+  : 'new-purchase';
+
+const CompraFormContent = ({
   onClose,
   onSubmit,
   compra,
   getPedidos,
   getProveedoresActivos,
 }) => {
-  const [idPedido, setIdPedido] = useState('');
-  const [idProveedor, setIdProveedor] = useState('');
-  const [observaciones, setObservaciones] = useState('');
+  const [idPedido, setIdPedido] = useState(() => compra?.idPedido || '');
+  const [idProveedor, setIdProveedor] = useState(() => compra?.idProveedor || '');
+  const [observaciones, setObservaciones] = useState(() => compra?.observaciones || '');
   const [confirmar, setConfirmar] = useState(false);
-  const [detalles, setDetalles] = useState([emptyDetalle]);
+  const [detalles, setDetalles] = useState(() => getCompraDetalles(compra));
   const [pedidos, setPedidos] = useState([]);
   const [proveedores, setProveedores] = useState([]);
-  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(true);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(compra);
 
   useEffect(() => {
-    if (compra) {
-      setIdPedido(compra.idPedido || '');
-      setIdProveedor(compra.idProveedor || '');
-      setObservaciones(compra.observaciones || '');
-      setConfirmar(false);
-      setDetalles(compra.detalles?.length ? compra.detalles.map(det => ({
-        descripcionInsumo: det.descripcionInsumo || '',
-        cantidad: det.cantidad || 1,
-        costoUnitario: det.costoUnitario || 0,
-      })) : [emptyDetalle]);
-    } else {
-      setIdPedido('');
-      setIdProveedor('');
-      setObservaciones('');
-      setConfirmar(false);
-      setDetalles([emptyDetalle]);
-    }
-  }, [compra, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
     let cancelled = false;
-    setLoadingOptions(true);
     Promise.all([getPedidos(), getProveedoresActivos()])
       .then(([pedidosData, proveedoresData]) => {
         if (cancelled) return;
@@ -90,13 +79,11 @@ export const CompraModal = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, getPedidos, getProveedoresActivos]);
+  }, [getPedidos, getProveedoresActivos]);
 
   const totalEstimado = useMemo(() => detalles.reduce((sum, det) =>
     sum + Number(det.cantidad || 0) * Number(det.costoUnitario || 0), 0
   ), [detalles]);
-
-  if (!isOpen) return null;
 
   const updateDetalle = (index, field, value) => {
     setDetalles(prev => prev.map((det, itemIndex) =>
@@ -220,5 +207,27 @@ export const CompraModal = ({
         </form>
       </div>
     </div>
+  );
+};
+
+export const CompraModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  compra,
+  getPedidos,
+  getProveedoresActivos,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <CompraFormContent
+      key={getCompraFormKey(compra)}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      compra={compra}
+      getPedidos={getPedidos}
+      getProveedoresActivos={getProveedoresActivos}
+    />
   );
 };

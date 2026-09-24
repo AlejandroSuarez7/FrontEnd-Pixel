@@ -2,14 +2,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { VentasPage } from './VentasPage';
 
-const mocks = vi.hoisted(() => ({ navigate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ navigate: vi.fn(), permissions: new Set() }));
 
 vi.mock('react-router-dom', async importOriginal => ({
   ...(await importOriginal()),
   useNavigate: () => mocks.navigate,
 }));
 vi.mock('../../../../store/AuthContext', () => ({
-  useAuth: () => ({ hasPermission: permission => permission === 'pedidos.ver' }),
+  useAuth: () => ({ hasPermission: permission => mocks.permissions.has(permission) }),
 }));
 vi.mock('../../../users/infrastructure/user.repository', () => ({
   UserApiRepository: class {
@@ -36,7 +36,11 @@ vi.mock('../application/useVentas', () => ({
 }));
 
 describe('VentasPage historical order access', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.permissions.clear();
+    mocks.permissions.add('pedidos.ver');
+  });
 
   it('uses human date labels and opens the existing expediente in read-only mode', () => {
     render(<VentasPage />);
@@ -48,5 +52,15 @@ describe('VentasPage historical order access', () => {
     fireEvent.click(screen.getByLabelText('Acciones'));
     fireEvent.click(screen.getByRole('button', { name: 'Ver expediente' }));
     expect(mocks.navigate).toHaveBeenCalledWith('/dashboard/orders/36/expediente?mode=readonly&from=sales');
+  });
+
+  it('muestra Generar reporte únicamente con ventas.ver', () => {
+    const { rerender } = render(<VentasPage />);
+    expect(screen.queryByRole('button', { name: 'Generar reporte' })).not.toBeInTheDocument();
+
+    mocks.permissions.add('ventas.ver');
+    rerender(<VentasPage />);
+    expect(screen.getByRole('button', { name: 'Generar reporte' }))
+      .toHaveClass('report-trigger-button');
   });
 });

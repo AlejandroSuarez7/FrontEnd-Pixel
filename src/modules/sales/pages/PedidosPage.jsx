@@ -5,9 +5,10 @@ import { Pagination } from '../../../core/components/Pagination';
 import { notifications } from '../../../core/utils/notifications';
 import { formatCalendarDate } from '../../../core/utils/fechaFormato';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
-import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmContext';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../store/AuthContext';
+import { ReportModal } from '../../reports/presentation/ReportModal';
 import { usePedidos } from '../pedidos/application/usePedidos';
 import { PedidoDetailsModal } from '../pedidos/presentation/PedidoDetailsModal';
 import styles from '../pedidos/presentation/pedidos.module.css';
@@ -36,6 +37,7 @@ const PedidosPage = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const {
     pedidos,
@@ -201,6 +203,13 @@ const PedidosPage = () => {
               : 'Consulta el estado y avance de tus pedidos.'}
           </p>
         </div>
+        <div className="report-page-actions">
+          {hasPermission('pedidos.ver') && (
+            <button type="button" className="report-trigger-button" onClick={() => setIsReportOpen(true)}>
+              Generar reporte
+            </button>
+          )}
+        </div>
       </div>
 
       {/* KPIs */}
@@ -359,6 +368,7 @@ const PedidosPage = () => {
         onToggleDesignRequirement={onToggleDesignRequirement}
         pendingDesignRequirementId={pendingDesignRequirementId}
       />
+      {isReportOpen && <ReportModal type="pedidos" onClose={() => setIsReportOpen(false)} />}
     </div>
   );
 };

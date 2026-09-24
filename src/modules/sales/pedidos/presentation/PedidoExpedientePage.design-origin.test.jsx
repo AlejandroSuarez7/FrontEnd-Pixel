@@ -56,7 +56,7 @@ vi.mock('../../../../store/AuthContext', () => ({
   useAuth: () => ({ hasPermission: () => true }),
 }));
 
-vi.mock('../../../../shared/components/ConfirmDialog/ConfirmProvider', () => ({
+vi.mock('../../../../shared/components/ConfirmDialog/ConfirmContext', () => ({
   useConfirm: () => vi.fn(),
 }));
 

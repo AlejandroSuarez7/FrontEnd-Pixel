@@ -26,17 +26,17 @@ const ResetPasswordPage = () => {
     }
 
     if (password !== confirmPassword) {
-      notifications.warning('Las contrasenas no coinciden.');
+      notifications.warning('Las contraseñas no coinciden.');
       return;
     }
 
     setLoading(true);
     try {
       await authService.resetPassword(token, password);
-      notifications.success('Contrasena actualizada correctamente.');
+      notifications.success('Contraseña actualizada correctamente.');
       navigate('/login');
     } catch (error) {
-      notifications.error(error.message || 'No se pudo actualizar la contrasena.');
+      notifications.error(error.message || 'No se pudo actualizar la contraseña.');
     } finally {
       setLoading(false);
     }
@@ -55,10 +55,10 @@ const ResetPasswordPage = () => {
         <div className="auth-form-panel">
           <div className="login-card">
             <span className="auth-badge"><div className="logo-forms">PIXEL</div></span>
-            <h2>Nueva contrasena</h2>
+            <h2>Nueva contraseña</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label htmlFor="password">Nueva contrasena</label>
+                <label htmlFor="password">Nueva contraseña</label>
                 <input
                   type="password"
                   id="password"
@@ -69,7 +69,7 @@ const ResetPasswordPage = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="confirmPassword">Confirmar contrasena</label>
+                <label htmlFor="confirmPassword">Confirmar contraseña</label>
                 <input
                   type="password"
                   id="confirmPassword"
@@ -91,7 +91,7 @@ const ResetPasswordPage = () => {
               )}
 
               <button type="submit" className="btn-primary" disabled={loading || isSubmitting}>
-                {loading || isSubmitting ? 'Actualizando...' : 'Actualizar contrasena'}
+                {loading || isSubmitting ? 'Actualizando...' : 'Actualizar contraseña'}
               </button>
             </form>
           </div>
@@ -100,7 +100,7 @@ const ResetPasswordPage = () => {
         <div className="auth-image-panel">
           <div className="auth-image-content">
             <h3>Recupera tu acceso</h3>
-            <p>Crea una contrasena segura para volver al panel de PIXEL.</p>
+            <p>Crea una contraseña segura para volver al panel de PIXEL.</p>
           </div>
         </div>
       </motion.div>

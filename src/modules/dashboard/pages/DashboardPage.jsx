@@ -15,15 +15,8 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from 'recharts';
 import { useAuth } from '../../../store/AuthContext';
 import { PATHS } from '../../../routes/paths';
 import { isClientUser } from '../../../core/utils/permissions';
@@ -37,8 +30,10 @@ import { DesignFileUploader } from '../../../shared/components/DesignFileUploade
 import { getDesignFileInfo } from '../../../core/utils/designFile';
 import { formatCalendarDate } from '../../../core/utils/fechaFormato';
 import { navigateToLandingQuote } from '../../../core/utils/landingNavigation';
-import { AdminTrendsPanel } from './AdminTrendsPanel';
 import './DashboardPage.css';
+
+const AdminTrendsPanel = lazy(() => import('./AdminTrendsPanel'));
+const StatusDistribution = lazy(() => import('./StatusDistribution'));
 
 const kpiIcons = {
   clock: Clock3,
@@ -207,78 +202,11 @@ const SectionHeader = ({ eyebrow, title }) => (
 const formatCopFull = (value = 0) =>
   `$${Number(value || 0).toLocaleString('es-CO')}`;
 
-const ChartEmptyState = () => (
-  <div className="dashboard-chart-empty">
-    <strong>No hay datos suficientes para mostrar esta grafica.</strong>
-    <span>Cuando existan registros confirmados, la visualizacion aparecera aqui.</span>
-  </div>
+const DashboardChartFallback = ({ label }) => (
+  <section className="dashboard-panel dashboard-state-panel" role="status">
+    <strong>{label}</strong>
+  </section>
 );
-
-const StatusDistribution = ({ data }) => {
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  const chartData = data.filter((item) => Number(item.value || 0) > 0);
-
-  return (
-    <section className="dashboard-panel dashboard-status-panel">
-      <SectionHeader eyebrow="Estados" title="Distribucion de pedidos" />
-      {total === 0 ? (
-        <ChartEmptyState />
-      ) : (
-        <div className="dashboard-donut-wrap">
-          <div className="dashboard-pie-wrap">
-            <ResponsiveContainer width="100%" height={210}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  dataKey="value"
-                  nameKey="label"
-                  innerRadius={62}
-                  outerRadius={88}
-                  paddingAngle={3}
-                  stroke="#ffffff"
-                  strokeWidth={3}
-                >
-                  {chartData.map((item) => (
-                    <Cell key={item.label} fill={item.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  allowEscapeViewBox={{ x: true, y: true }}
-                  position={{ x: 158, y: 66 }}
-                  wrapperStyle={{ zIndex: 20, pointerEvents: 'none' }}
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const item = payload[0];
-                    return (
-                      <div className="dashboard-chart-tooltip">
-                        <strong>{item.name}</strong>
-                        <span style={{ color: item.payload.color }}>
-                          {Number(item.value || 0).toLocaleString('es-CO')} pedidos
-                        </span>
-                      </div>
-                    );
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="dashboard-pie-center" aria-hidden="true">
-              <strong>{total}</strong>
-              <span>pedidos</span>
-            </div>
-          </div>
-          <div className="dashboard-status-list">
-            {data.map((item) => (
-              <div key={item.label}>
-                <span><i style={{ backgroundColor: item.color }} />{item.label}</span>
-                <strong>{item.value}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-};
 
 const OrdersTable = ({ title, orders, showCustomer = true }) => (
   <section className="dashboard-panel dashboard-table-panel">
@@ -524,8 +452,12 @@ export const AdminDashboard = ({ userName, data }) => {
     </section>
 
     <div className="dashboard-grid dashboard-grid-charts">
-      <AdminTrendsPanel />
-      <StatusDistribution data={data.orderStatus} />
+      <Suspense fallback={<DashboardChartFallback label="Cargando tendencias..." />}>
+        <AdminTrendsPanel />
+      </Suspense>
+      <Suspense fallback={<DashboardChartFallback label="Cargando distribución..." />}>
+        <StatusDistribution data={data.orderStatus} />
+      </Suspense>
     </div>
 
     <div className="dashboard-grid dashboard-grid-bottom">

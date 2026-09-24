@@ -6,11 +6,11 @@ vi.mock('../../../store/AuthContext', () => ({
   useAuth: () => ({
     user: { rol: { nombre: 'Cliente' } },
     permissions: ['cotizaciones.cliente.ver'],
-    hasPermission: () => true,
+    hasPermission: (code) => code === 'cotizaciones.cliente.ver',
   }),
 }));
 
-vi.mock('../../../shared/components/ConfirmDialog/ConfirmProvider', () => ({
+vi.mock('../../../shared/components/ConfirmDialog/ConfirmContext', () => ({
   useConfirm: () => vi.fn(),
 }));
 
@@ -38,5 +38,6 @@ describe('QuotesPage client actions', () => {
     expect(screen.getByRole('heading', { name: 'Mis cotizaciones' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nueva solicitud' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Nueva solicitud' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Generar reporte' })).not.toBeInTheDocument();
   });
 });

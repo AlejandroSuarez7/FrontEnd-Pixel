@@ -5,11 +5,12 @@ import { formatMoneyCOP } from '../../../core/utils/formatters';
 import { notifications } from '../../../core/utils/notifications';
 import { isClientUser } from '../../../core/utils/permissions';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
-import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmContext';
 import { SafeDeleteModal } from '../../../shared/components/SafeDeleteModal/SafeDeleteModal';
 import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../store/AuthContext';
+import { ReportModal } from '../../reports/presentation/ReportModal';
 import { useQuotes } from '../cotizaciones/application/useQuotes';
 import { QuoteFormModal } from '../cotizaciones/presentation/QuoteFormModal';
 import { QuoteDetailsModal } from '../cotizaciones/presentation/QuoteDetailsModal';
@@ -79,6 +80,7 @@ const getQuoteDisplayTotal = (quote, isClient) => {
 
 const QuotesPage = () => {
   const { user, permissions, hasPermission } = useAuth();
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const confirm = useConfirm();
   const isClient = isClientUser(user, permissions);
   const isStaff = !isClient;
@@ -278,11 +280,18 @@ const QuotesPage = () => {
           </p>
         </div>
 
-        {canCreateStaffQuote && (
-          <button type="button" onClick={openCreate} className={styles.primaryButton}>
-            Nueva cotización presencial
-          </button>
-        )}
+        <div className="report-page-actions">
+          {hasPermission('cotizaciones.ver') && (
+            <button type="button" className="report-trigger-button" onClick={() => setIsReportOpen(true)}>
+              Generar reporte
+            </button>
+          )}
+          {canCreateStaffQuote && (
+            <button type="button" onClick={openCreate} className={styles.primaryButton}>
+              Nueva cotización presencial
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={styles.filterSection}>
@@ -458,6 +467,7 @@ const QuotesPage = () => {
         successMessage="Cotización eliminada correctamente."
         onClose={() => setDeletionQuote(null)}
       />
+      {isReportOpen && <ReportModal type="cotizaciones" onClose={() => setIsReportOpen(false)} />}
     </div>
   );
 };

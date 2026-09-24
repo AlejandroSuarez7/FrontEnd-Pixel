@@ -1,7 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { ConfirmContext } from './ConfirmContext';
 import './ConfirmDialog.css';
-
-const ConfirmContext = createContext(null);
 
 const defaultOptions = {
   title: 'Confirmar accion',
@@ -110,10 +109,4 @@ export const ConfirmProvider = ({ children }) => {
       )}
     </ConfirmContext.Provider>
   );
-};
-
-export const useConfirm = () => {
-  const context = useContext(ConfirmContext);
-  if (!context) throw new Error('useConfirm debe usarse dentro de ConfirmProvider');
-  return context.confirm;
 };

@@ -108,7 +108,7 @@ export class PedidoApiRepository {
       });
       return data;
     } catch (error) {
-      throw createRequestError(error, 'No se pudo actualizar el requisito de diseno');
+      throw createRequestError(error, 'No se pudo actualizar el requisito de diseño');
     }
   }
 
@@ -120,7 +120,7 @@ export class PedidoApiRepository {
       );
       return data.data || data;
     } catch (error) {
-      throw createRequestError(error, 'No se pudo guardar el enlace del diseno');
+      throw createRequestError(error, 'No se pudo guardar el enlace del diseño');
     }
   }
 
@@ -142,7 +142,7 @@ export class PedidoApiRepository {
     } catch (error) {
       const status = error?.response?.status;
       const message = status === 403
-        ? 'No tienes permiso para cargar este diseno.'
+        ? 'No tienes permiso para cargar este diseño.'
         : status === 502
           ? 'No pudimos almacenar el archivo. Intenta nuevamente.'
           : error?.response?.data?.message;
@@ -152,7 +152,7 @@ export class PedidoApiRepository {
           ? { ...error.response, data: { ...error.response.data, message } }
           : undefined,
         message,
-      }, 'No se pudo registrar el diseno recibido del cliente');
+      }, 'No se pudo registrar el diseño recibido del cliente');
     }
   }
 

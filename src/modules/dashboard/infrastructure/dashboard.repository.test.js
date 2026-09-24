@@ -237,7 +237,7 @@ describe('dashboardRepository', () => {
     );
     const tracking = result.client.activeOrders[0].tracking;
 
-    expect(tracking.find(step => step.label === 'Diseno pendiente de revision')?.state)
+    expect(tracking.find(step => step.label === 'Diseño pendiente de revisión')?.state)
       .toBe('current');
     expect(tracking.find(step => step.label === 'En produccion')?.state)
       .toBe('pending');
@@ -281,9 +281,9 @@ describe('dashboardRepository', () => {
       ['dashboard.cliente'],
     );
     const approvedStep = result.client.activeOrders[0].tracking
-      .find(step => step.label === 'Diseno aprobado');
+      .find(step => step.label === 'Diseño aprobado');
 
-    expect(approvedStep.detail).toBe('1 de 2 disenos aprobados');
+    expect(approvedStep.detail).toBe('1 de 2 diseños aprobados');
     expect(approvedStep.state).not.toBe('completed');
   });
 
@@ -321,9 +321,9 @@ describe('dashboardRepository', () => {
       ['dashboard.cliente'],
     );
     const approvedStep = result.client.activeOrders[0].tracking
-      .find(step => step.label === 'Diseno aprobado');
+      .find(step => step.label === 'Diseño aprobado');
 
-    expect(approvedStep.detail).toBe('2 de 2 disenos aprobados');
+    expect(approvedStep.detail).toBe('2 de 2 diseños aprobados');
     expect(approvedStep.state).toBe('completed');
   });
 
@@ -431,16 +431,16 @@ describe('dashboardRepository', () => {
     );
     const order = result.client.activeOrders[0];
     const production = order.tracking.find(step => step.label === 'En produccion');
-    const designApproved = order.tracking.find(step => step.label === 'Diseno aprobado');
+    const designApproved = order.tracking.find(step => step.label === 'Diseño aprobado');
 
     expect(production.state).toBe('pending');
     expect(designApproved.state).toBe('pending');
-    expect(designApproved.detail).toBe('1 de 2 disenos aprobados');
+    expect(designApproved.detail).toBe('1 de 2 diseños aprobados');
     expect(order.isPendingFinalBalance).toBe(false);
     expect(order.progressNotice).toEqual({
       tone: 'warning',
-      title: 'Tu pedido esta esperando la aprobacion de los disenos.',
-      detail: 'Actualmente hay 1 de 2 disenos aprobados.',
+      title: 'Tu pedido está esperando la aprobación de los diseños.',
+      detail: 'Actualmente hay 1 de 2 diseños aprobados.',
     });
     expect(order.progressNotice.title).not.toContain('termino produccion');
   });

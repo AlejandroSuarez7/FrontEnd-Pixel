@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pagination } from '../../../../core/components/Pagination';
 import { usePagination } from '../../../../core/hooks/usePagination';
 import { formatCalendarDate } from '../../../../core/utils/fechaFormato';
@@ -79,12 +79,8 @@ export const ProductionQueuePage = () => {
   const [dragIndex, setDragIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
-  useEffect(() => {
-    if (isEditingOrder) return;
-    setOrderedPedidos(prev => (hasCustomOrder ? mergeQueueOrder(prev, pedidos) : pedidos));
-  }, [pedidos, hasCustomOrder, isEditingOrder]);
-
-  const queueSource = isEditingOrder ? draftPedidos : orderedPedidos;
+  const currentOrder = hasCustomOrder ? mergeQueueOrder(orderedPedidos, pedidos) : pedidos;
+  const queueSource = isEditingOrder ? draftPedidos : currentOrder;
   const {
     currentPage,
     pageSize,
@@ -98,7 +94,7 @@ export const ProductionQueuePage = () => {
   const alDia = queueSource.filter(pedido => Number(pedido.saldoPendiente || 0) === 0).length;
 
   const handleStartEdit = () => {
-    setDraftPedidos(orderedPedidos);
+    setDraftPedidos(currentOrder);
     setIsEditingOrder(true);
     setCurrentPage(1);
   };

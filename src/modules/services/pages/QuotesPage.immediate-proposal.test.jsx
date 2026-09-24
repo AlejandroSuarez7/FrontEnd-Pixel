@@ -16,7 +16,7 @@ vi.mock('../../../store/AuthContext', () => ({
   }),
 }));
 
-vi.mock('../../../shared/components/ConfirmDialog/ConfirmProvider', () => ({ useConfirm: () => vi.fn() }));
+vi.mock('../../../shared/components/ConfirmDialog/ConfirmContext', () => ({ useConfirm: () => vi.fn() }));
 vi.mock('../../../core/utils/notifications', () => ({
   notifications: { success: vi.fn(), warning: vi.fn(), error: vi.fn() },
 }));
@@ -49,7 +49,11 @@ describe('QuotesPage immediate proposal', () => {
 
   it('creates the quote first and sends the proposal with its real id', async () => {
     render(<QuotesPage />);
-    fireEvent.click(screen.getByRole('button', { name: 'Nueva cotización presencial' }));
+    const reportButton = screen.getByRole('button', { name: 'Generar reporte' });
+    const primaryButton = screen.getByRole('button', { name: 'Nueva cotización presencial' });
+    expect(reportButton).toHaveClass('report-trigger-button');
+    expect(primaryButton).not.toHaveClass('report-trigger-button');
+    fireEvent.click(primaryButton);
     fireEvent.click(screen.getByRole('button', { name: 'Simular creacion presencial' }));
 
     await waitFor(() => expect(mocks.sendProposal).toHaveBeenCalledWith(44, { precioFinal: 850000 }));

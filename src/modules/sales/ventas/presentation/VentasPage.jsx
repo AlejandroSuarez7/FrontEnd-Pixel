@@ -8,6 +8,7 @@ import { formatDate } from '../../../../core/utils/fechaFormato';
 import { UserApiRepository } from '../../../users/infrastructure/user.repository';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../../store/AuthContext';
+import { ReportModal } from '../../../reports/presentation/ReportModal';
 import { useVentas } from '../application/useVentas';
 import './VentasPage.css';
 
@@ -89,6 +90,7 @@ const getClientesActivos = () => {
 export const VentasPage = () => {
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     fechaInicio: '',
@@ -153,6 +155,13 @@ export const VentasPage = () => {
           <p className={styles.pageSubtitle}>
             Consulta una venta por pedido desde el primer abono confirmado.
           </p>
+        </div>
+        <div className="report-page-actions">
+          {hasPermission('ventas.ver') && (
+            <button type="button" className="report-trigger-button" onClick={() => setIsReportOpen(true)}>
+              Generar reporte
+            </button>
+          )}
         </div>
       </div>
 
@@ -331,6 +340,7 @@ export const VentasPage = () => {
           </>
         )}
       </div>
+      {isReportOpen && <ReportModal type="ventas" onClose={() => setIsReportOpen(false)} />}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import {
@@ -12,31 +12,22 @@ import styles from '../presentation/users.module.css';
 const userRepository = new UserApiRepository();
 
 const getSessionUserId = (session) => session?.idUsuario || session?.id;
+const createProfileForm = (user) => ({
+  nombre: user?.nombre || '',
+  correo: user?.correo || '',
+  telefono: user?.telefono || '',
+  contrasena: '',
+  confirmarContrasena: '',
+});
 
 const ProfilePage = () => {
   const { user, updateSession } = useAuth();
-  const [form, setForm] = useState({
-    nombre: '',
-    correo: '',
-    telefono: '',
-    contrasena: '',
-    confirmarContrasena: '',
-  });
+  const [form, setForm] = useState(() => createProfileForm(user));
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
-
-  useEffect(() => {
-    setForm({
-      nombre: user?.nombre || '',
-      correo: user?.correo || '',
-      telefono: user?.telefono || '',
-      contrasena: '',
-      confirmarContrasena: '',
-    });
-  }, [user]);
 
   const passwordRulesStatus = getPasswordRulesStatus(form.contrasena);
   const passwordValidationError = isChangingPassword
@@ -65,7 +56,7 @@ const ProfilePage = () => {
       }
 
       if (isChangingPassword && !passwordChangeIsValid) {
-        const errorMessage = passwordValidationError || 'Las contrasenas no coinciden.';
+        const errorMessage = passwordValidationError || 'Las contraseñas no coinciden.';
         setError(errorMessage);
         notifications.warning(errorMessage);
         return;
@@ -86,7 +77,7 @@ const ProfilePage = () => {
       setLoading(true);
       try {
         const updatedUser = await userRepository.update(idUsuario, payload);
-        updateSession({
+        const nextSession = {
           ...user,
           idUsuario,
           nombre: updatedUser.nombre,
@@ -95,8 +86,9 @@ const ProfilePage = () => {
           documento: updatedUser.documento,
           direccion: updatedUser.direccion,
           estado: updatedUser.estado,
-        });
-        setForm(prev => ({ ...prev, contrasena: '', confirmarContrasena: '' }));
+        };
+        updateSession(nextSession);
+        setForm(createProfileForm(nextSession));
         setIsChangingPassword(false);
         setMessage('Perfil actualizado correctamente.');
         notifications.success('Perfil actualizado correctamente.');

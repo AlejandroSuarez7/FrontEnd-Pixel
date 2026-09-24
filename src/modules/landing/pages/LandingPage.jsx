@@ -956,7 +956,7 @@ const LandingPage = () => {
 {/* ===== PRODUCTOS SECTION ===== */}
 
 <section
-      id="productos"
+      id="ejemplos"
       className="products-section"
     >
 
@@ -972,7 +972,7 @@ const LandingPage = () => {
     <div className="products-header">
 
       <h2 className="products-title">
-        Productos
+        Ejemplos
       </h2>
 
       <p className="products-subtitle">
@@ -1434,7 +1434,7 @@ const LandingPage = () => {
       <div className="footer-column">
 
         <h4 className="footer-productos-tittle">
-          Productos
+          Ejemplos
         </h4>
 
         <ul className="footer-links">

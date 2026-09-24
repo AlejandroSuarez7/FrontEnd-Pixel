@@ -2,7 +2,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
-import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmContext';
 import {
   createServiceTariff,
   hasServiceTariffErrors,

@@ -8,7 +8,7 @@ import { ServiceFormModal } from './ServiceFormModal';
 vi.mock('../../../../core/utils/notifications', () => ({
   notifications: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
-vi.mock('../../../../shared/components/ConfirmDialog/ConfirmProvider', () => ({
+vi.mock('../../../../shared/components/ConfirmDialog/ConfirmContext', () => ({
   useConfirm: () => vi.fn().mockResolvedValue(true),
 }));
 vi.mock('../../tarifas/infrastructure/tariff.repository', () => ({
