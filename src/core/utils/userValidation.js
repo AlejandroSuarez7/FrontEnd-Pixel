@@ -2,11 +2,11 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TEN_DIGITS_REGEX = /^\d{10}$/;
 
 export const PASSWORD_RULES = [
-  { id: 'length', label: 'Minimo 8 caracteres', test: (value) => value.length >= 8 },
-  { id: 'upper', label: 'Al menos una mayuscula', test: (value) => /[A-Z]/.test(value) },
-  { id: 'lower', label: 'Al menos una minuscula', test: (value) => /[a-z]/.test(value) },
-  { id: 'number', label: 'Al menos un numero', test: (value) => /[0-9]/.test(value) },
-  { id: 'special', label: 'Al menos un caracter especial', test: (value) => /[^A-Za-z0-9]/.test(value) },
+  { id: 'length', label: 'Mínimo 8 caracteres', test: (value) => value.length >= 8 },
+  { id: 'upper', label: 'Al menos una mayúscula', test: (value) => /[A-Z]/.test(value) },
+  { id: 'lower', label: 'Al menos una minúscula', test: (value) => /[a-z]/.test(value) },
+  { id: 'number', label: 'Al menos un número', test: (value) => /[0-9]/.test(value) },
+  { id: 'special', label: 'Al menos un carácter especial', test: (value) => /[^A-Za-z0-9]/.test(value) },
 ];
 
 export const onlyDigits = (value = '', maxLength = 10) =>
@@ -19,9 +19,9 @@ export const getPasswordRulesStatus = (password = '') =>
   }));
 
 export const getPasswordValidationError = (password = '') => {
-  if (!password.trim()) return 'La contrasena no puede estar vacia.';
+  if (!password.trim()) return 'La contraseña no puede estar vacía.';
   if (!getPasswordRulesStatus(password).every((rule) => rule.passed)) {
-    return 'La contrasena no cumple todos los requisitos.';
+    return 'La contraseña no cumple todos los requisitos.';
   }
   return null;
 };
@@ -39,7 +39,7 @@ export const getAuthFormValidationError = ({ telefono, correo, contrasena, confi
   if (passwordError) return passwordError;
 
   if (confirmarContrasena !== undefined && contrasena !== confirmarContrasena) {
-    return 'Las contrasenas no coinciden.';
+    return 'Las contraseñas no coinciden.';
   }
 
   return null;

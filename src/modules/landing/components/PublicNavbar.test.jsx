@@ -13,7 +13,7 @@ const SECTION_IDS = [
   'como-funciona',
   'servicios',
   'comparativo',
-  'productos',
+  'ejemplos',
   'contacto',
 ];
 
@@ -90,11 +90,11 @@ describe('PublicNavbar section tracking', () => {
     emitVisibleSections([{ id: 'servicios', top: 92 }]);
     emitVisibleSections([
       { id: 'servicios', top: -200, visible: false },
-      { id: 'productos', top: 92 },
+      { id: 'ejemplos', top: 92 },
     ]);
 
     expect(observerInstances).toHaveLength(1);
-    expect(getDesktopLink('Productos')).toHaveAttribute('aria-current', 'page');
+    expect(getDesktopLink('Ejemplos')).toHaveAttribute('aria-current', 'page');
 
     unmount();
     expect(observerInstances[0].disconnect).toHaveBeenCalledOnce();
@@ -105,7 +105,7 @@ describe('PublicNavbar section tracking', () => {
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 1600 });
 
     emitVisibleSections([
-      { id: 'productos', top: 90 },
+      { id: 'ejemplos', top: 90 },
       { id: 'contacto', top: 560 },
     ]);
 
@@ -134,9 +134,9 @@ describe('PublicNavbar section tracking', () => {
 
   it('activates a direct hash and closes the mobile menu after section navigation', async () => {
     const user = userEvent.setup();
-    renderNavbar('/#productos');
+    renderNavbar('/#ejemplos');
 
-    expect(getDesktopLink('Productos')).toHaveAttribute('aria-current', 'page');
+    expect(getDesktopLink('Ejemplos')).toHaveAttribute('aria-current', 'page');
 
     await user.click(screen.getByRole('button', { name: 'Abrir menú' }));
     expect(document.querySelector('.sheet-container')).toHaveAttribute('aria-hidden', 'false');

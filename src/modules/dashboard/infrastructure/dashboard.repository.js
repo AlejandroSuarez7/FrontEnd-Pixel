@@ -125,8 +125,8 @@ const getDesignProgress = (pedido = {}) => {
       hasClientDesignPending,
       hasPixelCreationPending: coverage.some(item => item.state === 'PENDIENTE_CREACION_PIXEL'),
       label: totalRequired > 0
-        ? `${approvedCount} de ${totalRequired} disenos aprobados`
-        : 'No requiere diseno',
+        ? `${approvedCount} de ${totalRequired} diseños aprobados`
+        : 'No requiere diseño',
       authoritative: true,
     };
   }
@@ -156,7 +156,7 @@ const getDesignProgress = (pedido = {}) => {
       rejectedDesign: disenos.find(diseno => normalizeStatus(diseno.estado) === 'RECHAZADO') || null,
       hasClientDesignPending,
       hasPixelCreationPending,
-      label: `${approvedCount} de ${requiredDetails.length} disenos aprobados`,
+      label: `${approvedCount} de ${requiredDetails.length} diseños aprobados`,
       authoritative: false,
     };
   }
@@ -170,7 +170,7 @@ const getDesignProgress = (pedido = {}) => {
       hasWaitingApproval: false,
       hasRejected: false,
       rejectedDesign: disenos.find((diseno) => normalizeStatus(diseno.estado) === 'RECHAZADO') || null,
-      label: 'No requiere diseno',
+      label: 'No requiere diseño',
       hasClientDesignPending: false,
       hasPixelCreationPending: false,
       authoritative: false,
@@ -193,7 +193,7 @@ const getDesignProgress = (pedido = {}) => {
     hasWaitingApproval: disenos.some((diseno) => ['ENVIADO', 'PENDIENTE_APROBACION', 'PENDIENTE_DE_APROBACION', 'POR_APROBAR', 'EN_REVISION'].includes(normalizeStatus(diseno.estado))),
     hasRejected: disenos.some((diseno) => ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(normalizeStatus(diseno.estado))),
     rejectedDesign: disenos.find((diseno) => ['RECHAZADO', 'RECHAZADA', 'CORRECCION', 'CORRECCIONES'].includes(normalizeStatus(diseno.estado))) || null,
-    label: `${approvedCount} de ${requiredDetails.length} disenos aprobados`,
+    label: `${approvedCount} de ${requiredDetails.length} diseños aprobados`,
     hasClientDesignPending: false,
     hasPixelCreationPending: false,
     authoritative: false,
@@ -269,13 +269,13 @@ const buildClientTrackingSteps = (pedido = {}) => {
     { label: 'Pendiente de primer abono', completed: firstPaymentConfirmed, current: !firstPaymentConfirmed && !hasPendingReceipt },
     { label: 'Primer abono confirmado', completed: firstPaymentConfirmed },
     {
-      label: designProgress.hasPixelCreationPending ? 'Diseno en preparacion' : 'Diseno en proceso',
+      label: designProgress.hasPixelCreationPending ? 'Diseño en preparación' : 'Diseño en proceso',
       completed: designWaitingApproval || designRejected || designApproved || productionStarted || finalized,
       current: firstPaymentConfirmed && !designWaitingApproval && !designRejected && !designApproved && !productionStarted && !finalized,
       visible: designProgress.totalRequired > 0,
     },
     {
-      label: designProgress.hasClientDesignPending ? 'Diseno pendiente de revision' : 'Diseno pendiente de aprobacion',
+      label: designProgress.hasClientDesignPending ? 'Diseño pendiente de revisión' : 'Diseño pendiente de aprobación',
       completed: designRejected || designApproved || productionStarted || finalized,
       current: designWaitingApproval && !designRejected && !designApproved,
       detail: designProgress.label,
@@ -288,7 +288,7 @@ const buildClientTrackingSteps = (pedido = {}) => {
       visible: designProgress.totalRequired > 0 && designRejected,
     },
     {
-      label: 'Diseno aprobado',
+      label: 'Diseño aprobado',
       completed: designApproved || productionStarted || finalized,
       detail: designProgress.label,
       visible: designProgress.totalRequired > 0,
@@ -351,8 +351,8 @@ const buildClientProgressNotice = (pedido = {}) => {
   ) {
     return {
       tone: 'warning',
-      title: 'Tu pedido esta esperando la aprobacion de los disenos.',
-      detail: `Actualmente hay ${designProgress.approvedCount} de ${designProgress.totalRequired} disenos aprobados.`,
+      title: 'Tu pedido está esperando la aprobación de los diseños.',
+      detail: `Actualmente hay ${designProgress.approvedCount} de ${designProgress.totalRequired} diseños aprobados.`,
     };
   }
   if (['EN_PROCESO', 'PRODUCCION', 'EN_PRODUCCION'].includes(estadoPedido)) {

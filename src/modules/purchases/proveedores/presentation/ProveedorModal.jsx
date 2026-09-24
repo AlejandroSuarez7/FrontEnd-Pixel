@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import './ProveedoresPage.css';
@@ -21,33 +21,19 @@ const styles = {
   btnPrimary: 'proveedores-btn-primary',
 };
 
-export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
-  const [nombre, setNombre] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [correo, setCorreo] = useState('');
-  const [direccion, setDireccion] = useState('');
-  const [estado, setEstado] = useState(true);
+const getProveedorFormKey = (proveedor) => proveedor
+  ? `${proveedor.idProveedor}|${proveedor.nombre}|${proveedor.telefono}|${proveedor.correo}|${proveedor.direccion}|${proveedor.estado}`
+  : 'new-provider';
+
+const ProveedorFormContent = ({ onClose, onSubmit, proveedor }) => {
+  const [nombre, setNombre] = useState(() => proveedor?.nombre || '');
+  const [telefono, setTelefono] = useState(() => proveedor?.telefono || '');
+  const [correo, setCorreo] = useState(() => proveedor?.correo || '');
+  const [direccion, setDireccion] = useState(() => proveedor?.direccion || '');
+  const [estado, setEstado] = useState(() => proveedor?.estado ?? true);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditing = Boolean(proveedor);
-
-  useEffect(() => {
-    if (proveedor) {
-      setNombre(proveedor.nombre || '');
-      setTelefono(proveedor.telefono || '');
-      setCorreo(proveedor.correo || '');
-      setDireccion(proveedor.direccion || '');
-      setEstado(proveedor.estado ?? true);
-    } else {
-      setNombre('');
-      setTelefono('');
-      setCorreo('');
-      setDireccion('');
-      setEstado(true);
-    }
-  }, [proveedor, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -147,5 +133,18 @@ export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
         </form>
       </div>
     </div>
+  );
+};
+
+export const ProveedorModal = ({ isOpen, onClose, onSubmit, proveedor }) => {
+  if (!isOpen) return null;
+
+  return (
+    <ProveedorFormContent
+      key={getProveedorFormKey(proveedor)}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      proveedor={proveedor}
+    />
   );
 };

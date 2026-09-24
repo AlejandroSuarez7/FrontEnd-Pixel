@@ -1,31 +1,21 @@
 // presentation/presentation/RoleFormModal.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../../core/utils/notifications';
 import styles from './roles.module.css';
 
-export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
-  const [nombre, setNombre]           = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [estado, setEstado]           = useState(true);
+const getRoleFormKey = (role) => role
+  ? `${role.id}|${role.nombre}|${role.descripcion}|${role.estado}`
+  : 'new-role';
+
+const RoleFormContent = ({ onClose, onSubmit, role }) => {
+  const [nombre, setNombre] = useState(() => role?.nombre || '');
+  const [descripcion, setDescripcion] = useState(() => role?.descripcion || '');
+  const [estado, setEstado] = useState(() => role?.estado ?? true);
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
 
   const isEditMode = !!role;
   const isCoreRole = isEditMode && (role.nombre === 'Admin' || role.nombre === 'Cliente');
-
-  useEffect(() => {
-    if (role) {
-      setNombre(role.nombre || '');
-      setDescripcion(role.descripcion || '');
-      setEstado(role.estado ?? true);
-    } else {
-      setNombre('');
-      setDescripcion('');
-      setEstado(true);
-    }
-  }, [role, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -112,5 +102,18 @@ export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
         </form>
       </div>
     </div>
+  );
+};
+
+export const RoleFormModal = ({ isOpen, onClose, onSubmit, role }) => {
+  if (!isOpen) return null;
+
+  return (
+    <RoleFormContent
+      key={getRoleFormKey(role)}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      role={role}
+    />
   );
 };

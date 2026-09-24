@@ -573,7 +573,7 @@ const DisenoModalContent = ({
                   disabled={isSubmitting || loadingDisenadores}
                 >
                   <option value="">
-                    {loadingDisenadores ? 'Cargando disenadores...' : 'Sin asignar'}
+                    {loadingDisenadores ? 'Cargando diseñadores...' : 'Sin asignar'}
                   </option>
                   {disenadores.map(user => (
                     <option key={user.idUsuario} value={user.idUsuario}>

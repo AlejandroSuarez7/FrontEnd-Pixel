@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useLatestListRequest } from '../../../../core/hooks/useLatestListRequest';
 import { notifications } from '../../../../core/utils/notifications';
 import { useAsyncLock } from '../../../../core/hooks/useAsyncLock';
-import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmContext';
 import { useAuth } from '../../../../store/AuthContext';
 import { formatDate } from '../../../../core/utils/fechaFormato';
 import { disenoRepository } from '../infrastructure/diseno.repository';
@@ -148,7 +148,7 @@ export const ClientDisenosPage = () => {
       variant: 'danger',
       input: true,
       inputLabel: 'Cambios solicitados',
-      inputPlaceholder: 'Ej: Cambiar color, tamano o ubicacion del logo...',
+      inputPlaceholder: 'Ej: Cambiar color, tamaño o ubicación del logo...',
       requiredInput: true,
     });
 

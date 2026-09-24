@@ -160,7 +160,7 @@ describe('DisenoApiRepository requirements', () => {
   );
 
   it.each([
-    [403, 'No tienes permiso para cargar este diseno.'],
+    [403, 'No tienes permiso para cargar este diseño.'],
     [502, 'No pudimos almacenar el archivo. Intenta nuevamente.'],
   ])('maps upload status %s to a human message', async (status, message) => {
     apiClient.post.mockRejectedValue({ response: { status, data: {} } });

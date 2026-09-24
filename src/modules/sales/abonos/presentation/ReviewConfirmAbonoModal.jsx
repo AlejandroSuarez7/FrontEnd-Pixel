@@ -6,7 +6,7 @@ import { createTemporaryObjectUrl } from '../../../../core/services/protectedFil
 import { formatCalendarDate, toCalendarDateInput } from '../../../../core/utils/fechaFormato';
 import { notifications } from '../../../../core/utils/notifications';
 import { formatPaymentOrigin } from '../../../../core/utils/paymentOrigin';
-import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmContext';
 import { abonoRepository } from '../infrastructure/abono.repository';
 import './AbonosPage.css';
 

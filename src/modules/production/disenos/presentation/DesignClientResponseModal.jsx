@@ -102,7 +102,7 @@ export const DesignClientResponseModal = ({ isOpen, mode, diseno, onClose, onSub
               rows={4}
               maxLength={700}
               placeholder={isReject
-                ? 'Ej: Cambiar color, tamano, ubicacion del logo...'
+                ? 'Ej: Cambiar color, tamaño, ubicación del logo...'
                 : 'Ej: El cliente aprobo por WhatsApp.'}
               disabled={isSubmitting}
               required={isReject}

@@ -31,7 +31,7 @@ import { getDesignFileInfo } from '../../../../core/utils/designFile';
 import { getProductCategoryName } from '../../../../core/utils/productCategory';
 import { isClientUser } from '../../../../core/utils/permissions';
 import { PATHS } from '../../../../routes/paths';
-import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmContext';
 import { useAuth } from '../../../../store/AuthContext';
 import { abonoRepository } from '../../abonos/infrastructure/abono.repository';
 import { AbonoModal } from '../../abonos/presentation/AbonoModal';

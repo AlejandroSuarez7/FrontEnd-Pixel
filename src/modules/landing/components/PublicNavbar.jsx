@@ -10,7 +10,7 @@ const PUBLIC_NAV_ITEMS = [
   { label: '¿Cómo funciona?', to: '/#como-funciona', hash: '#como-funciona', section: 'como-funciona' },
   { label: 'Servicios', to: '/#servicios', hash: '#servicios', section: 'servicios' },
   { label: 'Comparativo', to: '/#comparativo', hash: '#comparativo', section: 'comparativo' },
-  { label: 'Productos', to: '/#productos', hash: '#productos', section: 'productos' },
+  { label: 'Ejemplos', to: '/#ejemplos', hash: '#ejemplos', section: 'ejemplos' },
   { label: 'Cotizar', to: '/cotizar', quote: true, section: 'cotizar' },
   { label: 'Contacto', to: '/#contacto', hash: '#contacto', section: 'contacto' },
 ];

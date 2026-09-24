@@ -10,7 +10,7 @@ import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { useContextualBack } from '../../../core/hooks/useContextualBack';
 import { notifications } from '../../../core/utils/notifications';
 import { isClientUser } from '../../../core/utils/permissions';
-import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmContext';
 import { useAuth } from '../../../store/AuthContext';
 import { PublicQuoteProductEditor } from '../components/PublicQuoteProductEditor';
 import { PublicQuoteSummary } from '../components/PublicQuoteSummary';

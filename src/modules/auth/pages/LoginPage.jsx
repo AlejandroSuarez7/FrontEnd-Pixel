@@ -54,11 +54,11 @@ const LoginPage = () => {
 
     try {
       await authService.forgotPassword(forgotEmail);
-      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena. Si no lo encuentras, revisa SPAM o correo no deseado.');
+      notifications.info('Si el correo existe, recibirás instrucciones para recuperar tu contraseña. Si no lo encuentras, revisa SPAM o correo no deseado.');
       setForgotOpen(false);
       setForgotEmail('');
     } catch {
-      notifications.info('Si el correo existe, recibiras instrucciones para recuperar tu contrasena. Si no lo encuentras, revisa SPAM o correo no deseado.');
+      notifications.info('Si el correo existe, recibirás instrucciones para recuperar tu contraseña. Si no lo encuentras, revisa SPAM o correo no deseado.');
     } finally {
       setForgotLoading(false);
     }
@@ -130,7 +130,7 @@ const LoginPage = () => {
                     setForgotOpen(true);
                   }}
                 >
-                  Olvide mi contrasena
+                  Olvidé mi contraseña
                 </button>
               </div>
 
@@ -158,7 +158,7 @@ const LoginPage = () => {
       {forgotOpen && (
         <div className="auth-modal-overlay">
           <div className="auth-modal-card">
-            <h3>Recuperar contrasena</h3>
+            <h3>Recuperar contraseña</h3>
             <p>Escribe tu correo y te enviaremos instrucciones si existe una cuenta asociada.</p>
             <form onSubmit={handleForgotPassword}>
               <div className="form-group">

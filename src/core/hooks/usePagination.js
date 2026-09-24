@@ -1,20 +1,37 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export const PAGE_SIZE = 10;
 
 export const usePagination = (items = [], pageSize = PAGE_SIZE) => {
-  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(Math.ceil(items.length / pageSize), 1);
+  const [pagination, setPagination] = useState(() => ({
+    currentPage: 1,
+    itemsLength: items.length,
+    pageSize,
+  }));
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [items.length, pageSize]);
+  const dependenciesChanged = pagination.itemsLength !== items.length
+    || pagination.pageSize !== pageSize;
+  const currentPage = dependenciesChanged
+    ? 1
+    : Math.min(pagination.currentPage, totalPages);
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  if (dependenciesChanged) {
+    setPagination({ currentPage: 1, itemsLength: items.length, pageSize });
+  }
+
+  const setCurrentPage = (nextPage) => {
+    setPagination(previous => {
+      const requestedPage = typeof nextPage === 'function'
+        ? nextPage(previous.currentPage)
+        : nextPage;
+      return {
+        currentPage: Math.min(Math.max(requestedPage, 1), totalPages),
+        itemsLength: items.length,
+        pageSize,
+      };
+    });
+  };
 
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * pageSize;

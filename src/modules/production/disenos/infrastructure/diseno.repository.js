@@ -11,7 +11,7 @@ const withUploadMessage = (error, fallback) => {
   let message = error?.response?.data?.message;
 
   if (status === 403) {
-    message = 'No tienes permiso para cargar este diseno.';
+    message = 'No tienes permiso para cargar este diseño.';
   } else if (status === 502) {
     message = 'No pudimos almacenar el archivo. Intenta nuevamente.';
   } else if (status !== 400 || !message) {
@@ -54,7 +54,7 @@ export class DisenoApiRepository {
       const { data } = await apiClient.get(`api/pedidos/${idPedido}/disenos`, { signal: options.signal });
       return disenoDTO.fromApiList(data.data || []);
     } catch (error) {
-      throw createRequestError(error, 'No se pudieron consultar los disenos del pedido');
+      throw createRequestError(error, 'No se pudieron consultar los diseños del pedido');
     }
   }
 
@@ -66,7 +66,7 @@ export class DisenoApiRepository {
       );
       return normalizeDesignRequirementsResponse(response);
     } catch (error) {
-      throw createRequestError(error, 'No pudimos cargar los disenos pendientes');
+      throw createRequestError(error, 'No pudimos cargar los diseños pendientes');
     }
   }
 
@@ -83,9 +83,9 @@ export class DisenoApiRepository {
       let message = error?.response?.data?.message;
 
       if (status === 403) {
-        message = 'No tienes permiso para definir el origen del diseno.';
+        message = 'No tienes permiso para definir el origen del diseño.';
       } else if (status === 409) {
-        message = 'El origen de este diseno ya fue definido.';
+        message = 'El origen de este diseño ya fue definido.';
       } else if (!error?.response) {
         message = 'No pudimos guardar el cambio. Intenta nuevamente.';
       }
@@ -156,7 +156,7 @@ export class DisenoApiRepository {
             ...error.response,
             data: {
               ...error.response.data,
-              message: 'Ya existe un diseno activo para este objetivo.',
+              message: 'Ya existe un diseño activo para este objetivo.',
             },
           },
         });
@@ -167,12 +167,12 @@ export class DisenoApiRepository {
             ...error.response,
             data: {
               ...error.response.data,
-              message: 'Este diseno ya esta cubierto por un diseno general.',
+              message: 'Este diseño ya está cubierto por un diseño general.',
             },
           },
         });
       }
-      throw withUploadMessage(error, 'No se pudo crear el diseno');
+      throw withUploadMessage(error, 'No se pudo crear el diseño');
     }
   }
 
@@ -186,7 +186,7 @@ export class DisenoApiRepository {
       const { data } = await apiClient.patch(`${ENDPOINT}/${idDiseno}`, payload);
       return disenoDTO.fromApi(data.data);
     } catch (error) {
-      throw createRequestError(error, 'No se pudo actualizar el diseno');
+      throw createRequestError(error, 'No se pudo actualizar el diseño');
     }
   }
 
@@ -196,7 +196,7 @@ export class DisenoApiRepository {
       const { data: response } = await apiClient.patch(`${ENDPOINT}/${idDiseno}`, formData);
       return disenoDTO.fromApi(response.data);
     } catch (error) {
-      throw withUploadMessage(error, 'No se pudo adjuntar el archivo del diseno');
+      throw withUploadMessage(error, 'No se pudo adjuntar el archivo del diseño');
     }
   }
 
@@ -212,7 +212,7 @@ export class DisenoApiRepository {
       );
       return data.data ?? data;
     } catch (error) {
-      throw withUploadMessage(error, 'No se pudo cargar el diseno');
+      throw withUploadMessage(error, 'No se pudo cargar el diseño');
     }
   }
 
@@ -223,7 +223,7 @@ export class DisenoApiRepository {
       });
       return data;
     } catch (error) {
-      throw createRequestError(error, 'No se pudo aprobar el diseno');
+      throw createRequestError(error, 'No se pudo aprobar el diseño');
     }
   }
 
@@ -258,7 +258,7 @@ export class DisenoApiRepository {
       });
       return disenoDTO.fromApiList(data.data || []);
     } catch (error) {
-      throw createRequestError(error, 'No se pudieron consultar tus disenos');
+      throw createRequestError(error, 'No se pudieron consultar tus diseños');
     }
   }
 
@@ -269,7 +269,7 @@ export class DisenoApiRepository {
       });
       return disenoDTO.fromApi(data.data);
     } catch (error) {
-      throw createRequestError(error, 'No se pudo consultar el diseno');
+      throw createRequestError(error, 'No se pudo consultar el diseño');
     }
   }
 
@@ -278,7 +278,7 @@ export class DisenoApiRepository {
       const { data } = await apiClient.patch(`api/cliente/disenos/${idDiseno}/aprobar`);
       return data;
     } catch (error) {
-      throw createRequestError(error, 'No se pudo aprobar el diseno');
+      throw createRequestError(error, 'No se pudo aprobar el diseño');
     }
   }
 
@@ -289,7 +289,7 @@ export class DisenoApiRepository {
       });
       return data;
     } catch (error) {
-      throw createRequestError(error, 'No se pudo rechazar el diseno');
+      throw createRequestError(error, 'No se pudo rechazar el diseño');
     }
   }
 
@@ -298,7 +298,7 @@ export class DisenoApiRepository {
       const { data } = await apiClient.delete(`${ENDPOINT}/${idDiseno}`);
       return data;
     } catch (error) {
-      throw createRequestError(error, 'No se pudo eliminar el diseno');
+      throw createRequestError(error, 'No se pudo eliminar el diseño');
     }
   }
 }

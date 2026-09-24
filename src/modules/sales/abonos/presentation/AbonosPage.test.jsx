@@ -15,7 +15,7 @@ vi.mock('../../../../store/AuthContext', () => ({
   }),
 }));
 
-vi.mock('../../../../shared/components/ConfirmDialog/ConfirmProvider', () => ({
+vi.mock('../../../../shared/components/ConfirmDialog/ConfirmContext', () => ({
   useConfirm: () => vi.fn(),
 }));
 
@@ -108,6 +108,10 @@ describe('AbonosPage navigation and filters', () => {
     renderPage();
 
     expect(screen.getByText('No hay abonos para los filtros seleccionados.')).toBeInTheDocument();
+    const reportButton = screen.getByRole('button', { name: 'Generar reporte' });
+    const primaryButton = screen.getByRole('button', { name: 'Nuevo abono' });
+    expect(reportButton).toHaveClass('report-trigger-button');
+    expect(primaryButton).not.toHaveClass('report-trigger-button');
     expect(useAbonos).toHaveBeenCalledWith(expect.objectContaining({
       page: 1,
       idCliente: '',

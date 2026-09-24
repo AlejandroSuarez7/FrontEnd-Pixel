@@ -5,11 +5,12 @@ import { Pagination } from '../../../../core/components/Pagination';
 import { useDebounce } from '../../../../core/hooks/useDebounce';
 import { notifications } from '../../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../../core/utils/serverPagination';
-import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../../shared/components/ConfirmDialog/ConfirmContext';
 import { SafeDeleteModal } from '../../../../shared/components/SafeDeleteModal/SafeDeleteModal';
 import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../../shared/components/TableActions/TableActions';
 import { useAuth } from '../../../../store/AuthContext';
+import { ReportModal } from '../../../reports/presentation/ReportModal';
 import { clientRepository } from '../../../users/infrastructure/client.repository';
 import { useAbonos } from '../application/useAbonos';
 import { AbonoModal } from './AbonoModal';
@@ -117,6 +118,7 @@ export const AbonosPage = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [reviewAbono, setReviewAbono] = useState(null);
   const [deletionAbono, setDeletionAbono] = useState(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const debouncedSearch = useDebounce(filters.search, 350);
   const debouncedClientSearch = useDebounce(clientSearch, 350);
 
@@ -314,11 +316,18 @@ export const AbonosPage = () => {
             Registra, revisa y confirma los pagos asociados a pedidos.
           </p>
         </div>
-        {hasPermission('abonos.crear') && (
-          <button onClick={handleOpenCreate} className={styles.primaryButton}>
-            Nuevo abono
-          </button>
-        )}
+        <div className="report-page-actions">
+          {hasPermission('abonos.ver') && (
+            <button type="button" className="report-trigger-button" onClick={() => setIsReportOpen(true)}>
+              Generar reporte
+            </button>
+          )}
+          {hasPermission('abonos.crear') && (
+            <button type="button" onClick={handleOpenCreate} className={styles.primaryButton}>
+              Nuevo abono
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={styles.kpiGrid}>
@@ -546,6 +555,7 @@ export const AbonosPage = () => {
         successMessage="Abono eliminado correctamente."
         onClose={() => setDeletionAbono(null)}
       />
+      {isReportOpen && <ReportModal type="abonos" onClose={() => setIsReportOpen(false)} />}
     </div>
   );
 };

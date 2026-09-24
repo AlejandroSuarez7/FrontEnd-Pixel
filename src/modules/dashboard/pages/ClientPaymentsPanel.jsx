@@ -376,7 +376,7 @@ export const ClientPaymentsPanel = ({ order, canUpload, canView }) => {
         </div>
       )}
 
-      <small className="dashboard-upload-help">Archivos permitidos: JPG, PNG o PDF. Tamano maximo: 10 MB.</small>
+      <small className="dashboard-upload-help">Archivos permitidos: JPG, PNG o PDF. Tamaño máximo: 10 MB.</small>
 
       {isUploadOpen && (
         <div className="dashboard-receipt-upload-overlay" role="presentation">

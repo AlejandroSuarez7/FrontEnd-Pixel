@@ -3,7 +3,7 @@ import { Pagination } from '../../../core/components/Pagination';
 import { useDebounce } from '../../../core/hooks/useDebounce';
 import { notifications } from '../../../core/utils/notifications';
 import { DEFAULT_PAGE_SIZE } from '../../../core/utils/serverPagination';
-import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmProvider';
+import { useConfirm } from '../../../shared/components/ConfirmDialog/ConfirmContext';
 import { SafeDeleteModal } from '../../../shared/components/SafeDeleteModal/SafeDeleteModal';
 import { SAFE_DELETE_IMPACT_ENDPOINTS } from '../../../shared/components/SafeDeleteModal/safeDeleteEndpoints';
 import { TableActions } from '../../../shared/components/TableActions/TableActions';

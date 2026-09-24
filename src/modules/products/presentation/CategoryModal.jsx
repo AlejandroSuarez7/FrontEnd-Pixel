@@ -1,28 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAsyncLock } from '../../../core/hooks/useAsyncLock';
 import { notifications } from '../../../core/utils/notifications';
 import styles from '../../users/presentation/users.module.css';
 
-export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
-  const [form, setForm] = useState({
-    nombre: '',
-    descripcion: '',
-    estado: true,
-  });
+const getCategoryForm = (category) => ({
+  nombre: category?.nombre || '',
+  descripcion: category?.descripcion || '',
+  estado: category?.estado ?? true,
+});
+
+const getCategoryFormKey = (category) => category
+  ? `${category.idCategoria}|${category.nombre}|${category.descripcion}|${category.estado}`
+  : 'new-category';
+
+const CategoryFormContent = ({ onClose, onSubmit, category }) => {
+  const [form, setForm] = useState(() => getCategoryForm(category));
   const { isLocked: isSubmitting, runLocked } = useAsyncLock();
   const isEditing = Boolean(category);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    setForm({
-      nombre: category?.nombre || '',
-      descripcion: category?.descripcion || '',
-      estado: category?.estado ?? true,
-    });
-  }, [isOpen, category]);
-
-  if (!isOpen) return null;
 
   const updateField = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -95,5 +89,18 @@ export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
         </form>
       </div>
     </div>
+  );
+};
+
+export const CategoryModal = ({ isOpen, onClose, onSubmit, category }) => {
+  if (!isOpen) return null;
+
+  return (
+    <CategoryFormContent
+      key={getCategoryFormKey(category)}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      category={category}
+    />
   );
 };
